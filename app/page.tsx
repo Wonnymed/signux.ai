@@ -26,7 +26,7 @@ const SUGGESTIONS = [
 
 type Message = { role: "user" | "assistant"; content: string };
 
-const OPERATIONS = ["Import/Export", "Offshore/Holdings", "Crypto", "Servi\u00e7os digitais", "E-commerce", "Investimentos", "Outro"];
+const OPERATIONS = ["Import/Export", "Offshore/Holdings", "Crypto", "Serviços digitais", "E-commerce", "Investimentos", "Outro"];
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -90,6 +90,115 @@ export default function Home() {
 
   const activeAgent = AGENTS.find(a => a.id === agent) || AGENTS[0];
 
+  const canSubmitOnboard = onboardName.trim() && onboardCountry.trim();
+
+  /* ── ONBOARDING FULLSCREEN ── */
+  if (onboarded === false) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#0A0A0A" }}>
+        <div style={{ maxWidth: 440, width: "100%", padding: "48px 40px" }}>
+          <div style={{ fontSize: 14, letterSpacing: "0.3em", color: GOLD, fontFamily: SERIF, textAlign: "center", marginBottom: 4 }}>SIGNUX</div>
+          <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "rgba(255,255,255,0.15)", textAlign: "center", textTransform: "uppercase", marginBottom: 48 }}>Operational Intelligence</div>
+          <div style={{ width: 40, height: 1, background: "rgba(201,168,76,0.2)", margin: "0 auto 48px" }} />
+          <div style={{ fontSize: 15, color: "rgba(255,255,255,0.4)", textAlign: "center", fontFamily: SERIF, fontStyle: "italic", marginBottom: 40 }}>Antes de começar, preciso de contexto.</div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {/* Nome */}
+            <div style={{ marginBottom: 32 }}>
+              <label style={{ fontSize: 10, letterSpacing: "0.12em", color: "rgba(255,255,255,0.2)", textTransform: "uppercase", marginBottom: 8, display: "block" }}>Seu nome</label>
+              <input
+                value={onboardName}
+                onChange={e => setOnboardName(e.target.value)}
+                placeholder="Como quer ser chamado"
+                className="onboard-input"
+                style={{ width: "100%", padding: "14px 0", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "white", fontSize: 15, fontFamily: "'DM Sans', sans-serif", outline: "none" }}
+              />
+            </div>
+
+            {/* País */}
+            <div style={{ marginBottom: 32 }}>
+              <label style={{ fontSize: 10, letterSpacing: "0.12em", color: "rgba(255,255,255,0.2)", textTransform: "uppercase", marginBottom: 8, display: "block" }}>País de residência fiscal</label>
+              <input
+                value={onboardCountry}
+                onChange={e => setOnboardCountry(e.target.value)}
+                placeholder="Ex: Brasil, Portugal, EUA"
+                className="onboard-input"
+                style={{ width: "100%", padding: "14px 0", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "white", fontSize: 15, fontFamily: "'DM Sans', sans-serif", outline: "none" }}
+              />
+            </div>
+
+            {/* Operações */}
+            <div style={{ marginBottom: 40 }}>
+              <label style={{ fontSize: 10, letterSpacing: "0.12em", color: "rgba(255,255,255,0.2)", textTransform: "uppercase", marginBottom: 8, display: "block" }}>O que você opera?</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {OPERATIONS.map(op => (
+                  <button
+                    key={op}
+                    onClick={() => setOnboardOps(prev => prev.includes(op) ? prev.filter(o => o !== op) : [...prev, op])}
+                    className="onboard-pill"
+                    style={{
+                      padding: "8px 18px",
+                      borderRadius: 20,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      fontFamily: "'DM Sans', sans-serif",
+                      background: onboardOps.includes(op) ? "rgba(201,168,76,0.08)" : "transparent",
+                      border: onboardOps.includes(op) ? "1px solid rgba(201,168,76,0.2)" : "1px solid rgba(255,255,255,0.08)",
+                      color: onboardOps.includes(op) ? GOLD : "rgba(255,255,255,0.35)",
+                    }}
+                  >
+                    {op}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Botão */}
+            <button
+              onClick={() => {
+                if (!canSubmitOnboard) return;
+                updateProfile({ name: onboardName.trim(), taxResidence: onboardCountry.trim(), operations: onboardOps });
+                setProfileName(onboardName.trim());
+                setOnboarded(true);
+              }}
+              disabled={!canSubmitOnboard}
+              style={{
+                width: "100%",
+                padding: 16,
+                borderRadius: 8,
+                background: "linear-gradient(135deg, #C9A84C, #A0832A)",
+                color: "#0A0A0A",
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: SERIF,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                border: "none",
+                cursor: canSubmitOnboard ? "pointer" : "not-allowed",
+                marginTop: 8,
+                opacity: canSubmitOnboard ? 1 : 0.4,
+                transition: "opacity 0.2s",
+              }}
+            >
+              Começar
+            </button>
+          </div>
+        </div>
+
+        <style>{`
+          .onboard-input::placeholder { color: rgba(255,255,255,0.15); }
+          .onboard-input:focus { border-bottom-color: rgba(201,168,76,0.3) !important; }
+          .onboard-pill:hover { border-color: rgba(255,255,255,0.15) !important; }
+        `}</style>
+      </div>
+    );
+  }
+
+  /* ── Loading state ── */
+  if (onboarded === null) return null;
+
+  /* ── MAIN APP ── */
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       {/* Mobile overlay */}
@@ -104,40 +213,43 @@ export default function Home() {
         <div style={{ height: 1, background: "rgba(255,255,255,0.04)", marginBottom: 24 }} />
         <div style={{ fontSize: 9, letterSpacing: "0.15em", color: "rgba(255,255,255,0.15)", textTransform: "uppercase", marginBottom: 16 }}>Agents</div>
         <div style={{ flex: 1 }}>
-          {AGENTS.map(a => (
-            <div
-              key={a.id}
-              onClick={() => { setAgent(a.id); setSidebarOpen(false); }}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 8,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 4,
-                transition: "all 0.2s",
-                background: agent === a.id ? "rgba(201,168,76,0.06)" : "transparent",
-                border: agent === a.id ? "1px solid rgba(201,168,76,0.1)" : "1px solid transparent",
-              }}
-              onMouseEnter={e => { if (agent !== a.id) e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-              onMouseLeave={e => { if (agent !== a.id) e.currentTarget.style.background = "transparent"; }}
-            >
-              <span style={{ fontSize: 18 }}>{a.icon}</span>
-              <div>
-                <div style={{ fontSize: 13, color: "white" }}>{a.label}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{a.desc}</div>
+          {AGENTS.map((a, idx) => (
+            <div key={a.id}>
+              <div
+                onClick={() => { setAgent(a.id); setSidebarOpen(false); }}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  transition: "all 0.2s",
+                  background: agent === a.id ? "rgba(201,168,76,0.04)" : "transparent",
+                  border: agent === a.id ? "1px solid rgba(201,168,76,0.08)" : "1px solid transparent",
+                }}
+                onMouseEnter={e => { if (agent !== a.id) e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+                onMouseLeave={e => { if (agent !== a.id) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{ fontSize: 18 }}>{a.icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, color: "white" }}>{a.label}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{a.desc}</div>
+                </div>
               </div>
+              {idx < AGENTS.length - 1 && (
+                <div style={{ height: 1, background: "rgba(255,255,255,0.03)", margin: "2px 12px" }} />
+              )}
             </div>
           ))}
         </div>
         <button
           onClick={() => { setMessages([]); setSidebarOpen(false); }}
-          style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", cursor: "pointer", padding: "8px 0", background: "none", border: "none", textAlign: "left", fontFamily: "'DM Sans', sans-serif", marginTop: "auto", transition: "color 0.2s" }}
+          style={{ fontSize: 11, color: "rgba(255,255,255,0.15)", cursor: "pointer", padding: "8px 0", background: "none", border: "none", textAlign: "left", fontFamily: "'DM Sans', sans-serif", marginTop: "auto", transition: "color 0.2s" }}
           onMouseEnter={e => (e.currentTarget.style.color = "rgba(201,168,76,0.5)")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
+          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.15)")}
         >
-          + Nova conversa
+          Nova conversa
         </button>
       </aside>
 
@@ -152,16 +264,14 @@ export default function Home() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {rates && (
-              <div className="rates-ticker" style={{ display: "flex", gap: 12, fontSize: 10, color: "rgba(255,255,255,0.2)" }}>
-                <span>USD/BRL {rates.USDBRL?.toFixed(2)}</span>
-                <span>USD/CNY {rates.USDCNY?.toFixed(2)}</span>
-                <span>USD/HKD {rates.USDHKD?.toFixed(2)}</span>
+              <div className="rates-ticker" style={{ fontSize: 9, color: "rgba(255,255,255,0.12)" }}>
+                USD/BRL {rates.USDBRL?.toFixed(2)} · USD/CNY {rates.USDCNY?.toFixed(2)} · USD/HKD {rates.USDHKD?.toFixed(2)}
               </div>
             )}
             {messages.length > 0 && (
               <button
                 onClick={() => {
-                  const text = messages.map(m => (m.role === "user" ? "Voc\u00ea: " : "Signux: ") + m.content).join("\n\n---\n\n");
+                  const text = messages.map(m => (m.role === "user" ? "Você: " : "Signux: ") + m.content).join("\n\n---\n\n");
                   const blob = new Blob([text], { type: "text/plain" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
@@ -169,9 +279,9 @@ export default function Home() {
                   a.download = "signux-conversa.txt";
                   a.click();
                 }}
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "rgba(255,255,255,0.2)", padding: 4, transition: "color 0.2s" }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "rgba(255,255,255,0.15)", padding: 4, transition: "color 0.2s" }}
                 onMouseEnter={e => (e.currentTarget.style.color = GOLD)}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.15)")}
                 title="Salvar conversa"
               >
                 ↓
@@ -183,104 +293,30 @@ export default function Home() {
 
         {/* Messages */}
         <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column" }} className="messages-area">
-          {onboarded === null ? null : messages.length === 0 && !onboarded ? (
-            /* Onboarding */
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, textAlign: "center", maxWidth: 480, margin: "0 auto", width: "100%" }}>
-              <div className="welcome-title" style={{ fontSize: 56, fontFamily: SERIF, fontWeight: 300, color: "white", marginBottom: 4 }}>Signux</div>
-              <div style={{ fontSize: 15, color: "rgba(255,255,255,0.2)", marginBottom: 40 }}>Antes de come&ccedil;ar, preciso de contexto.</div>
-              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16, textAlign: "left" }}>
-                <div>
-                  <label style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, display: "block" }}>Seu nome</label>
-                  <input
-                    value={onboardName}
-                    onChange={e => setOnboardName(e.target.value)}
-                    placeholder="Como quer ser chamado"
-                    style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "white", fontSize: 14, outline: "none", fontFamily: "'DM Sans', sans-serif" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, display: "block" }}>Pa&iacute;s de resid&ecirc;ncia fiscal</label>
-                  <input
-                    value={onboardCountry}
-                    onChange={e => setOnboardCountry(e.target.value)}
-                    placeholder="Ex: Brasil, Portugal, EUA"
-                    style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "white", fontSize: 14, outline: "none", fontFamily: "'DM Sans', sans-serif" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8, display: "block" }}>O que voc&ecirc; opera?</label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {OPERATIONS.map(op => (
-                      <button
-                        key={op}
-                        onClick={() => setOnboardOps(prev => prev.includes(op) ? prev.filter(o => o !== op) : [...prev, op])}
-                        style={{
-                          padding: "8px 14px",
-                          borderRadius: 20,
-                          fontSize: 12,
-                          cursor: "pointer",
-                          transition: "all 0.2s",
-                          fontFamily: "'DM Sans', sans-serif",
-                          background: onboardOps.includes(op) ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
-                          border: onboardOps.includes(op) ? `1px solid ${GOLD}` : "1px solid rgba(255,255,255,0.06)",
-                          color: onboardOps.includes(op) ? GOLD : "rgba(255,255,255,0.4)",
-                        }}
-                      >
-                        {op}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    if (!onboardName.trim()) return;
-                    updateProfile({ name: onboardName.trim(), taxResidence: onboardCountry.trim(), operations: onboardOps });
-                    setProfileName(onboardName.trim());
-                    setOnboarded(true);
-                  }}
-                  disabled={!onboardName.trim()}
-                  style={{
-                    marginTop: 8,
-                    padding: "14px 24px",
-                    borderRadius: 10,
-                    background: onboardName.trim() ? GOLD : "rgba(201,168,76,0.2)",
-                    border: "none",
-                    color: "#0A0A0A",
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: onboardName.trim() ? "pointer" : "not-allowed",
-                    fontFamily: "'DM Sans', sans-serif",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  Come&ccedil;ar
-                </button>
-              </div>
-            </div>
-          ) : messages.length === 0 ? (
+          {messages.length === 0 ? (
             /* Welcome screen */
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, textAlign: "center", maxWidth: 600, margin: "0 auto", width: "100%" }}>
-              <div className="welcome-title" style={{ fontSize: 56, fontFamily: SERIF, fontWeight: 300, color: "white", marginBottom: 4 }}>{profileName ? `Ol\u00e1, ${profileName}` : "Signux"}</div>
-              <div style={{ fontSize: 15, color: "rgba(255,255,255,0.2)", marginBottom: 48 }}>All signal. Zero noise.</div>
-              <div className="suggestions-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: "100%" }}>
+              <div className="welcome-title" style={{ fontSize: 28, fontFamily: SERIF, fontWeight: 300, color: "white", marginBottom: 4 }}>Olá, {profileName || "Operador"}.</div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.2)", marginBottom: 48 }}>O que quer resolver hoje?</div>
+              <div className="suggestions-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%" }}>
                 {SUGGESTIONS.map(s => (
                   <div
                     key={s}
                     onClick={() => send(s)}
                     style={{
-                      padding: "14px 16px",
+                      padding: "16px 20px",
                       borderRadius: 10,
-                      background: "rgba(255,255,255,0.02)",
+                      background: "transparent",
                       border: "1px solid rgba(255,255,255,0.04)",
                       fontSize: 13,
-                      color: "rgba(255,255,255,0.4)",
+                      color: "rgba(255,255,255,0.3)",
                       cursor: "pointer",
                       transition: "all 0.2s",
                       textAlign: "left",
                       lineHeight: 1.5,
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.12)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.1)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "rgba(201,168,76,0.02)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "rgba(255,255,255,0.3)"; e.currentTarget.style.background = "transparent"; }}
                   >
                     {s}
                   </div>
@@ -288,14 +324,14 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 800, margin: "0 auto", width: "100%" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 800, margin: "0 auto", width: "100%" }}>
               {messages.map((m, i) => (
                 <div
                   key={i}
                   style={{
                     alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                    maxWidth: m.role === "user" ? "70%" : "85%",
-                    padding: m.role === "user" ? "14px 18px" : "16px 20px",
+                    maxWidth: m.role === "user" ? "70%" : "80%",
+                    padding: m.role === "user" ? "14px 20px" : "20px 24px",
                     borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                     background: m.role === "user" ? "rgba(201,168,76,0.06)" : "rgba(255,255,255,0.02)",
                     border: m.role === "user" ? "1px solid rgba(201,168,76,0.08)" : "1px solid rgba(255,255,255,0.04)",
@@ -324,10 +360,10 @@ export default function Home() {
                 </div>
               ))}
               {loading && (
-                <div style={{ alignSelf: "flex-start", padding: "16px 20px", borderRadius: "18px 18px 18px 4px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div style={{ alignSelf: "flex-start", padding: "20px 24px", borderRadius: "18px 18px 18px 4px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
                   <div style={{ display: "flex", gap: 5 }}>
                     {[0, 1, 2].map(i => (
-                      <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: GOLD, animation: `dotPulse 1.4s ease-in-out ${i * 0.2}s infinite` }} />
+                      <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(201,168,76,0.4)", animation: `dotPulse 1.4s ease-in-out ${i * 0.2}s infinite` }} />
                     ))}
                   </div>
                 </div>
@@ -351,8 +387,8 @@ export default function Home() {
                 flex: 1,
                 resize: "none",
                 padding: "14px 16px",
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.03)",
+                borderRadius: 14,
+                background: "rgba(255,255,255,0.02)",
                 border: "1px solid rgba(255,255,255,0.06)",
                 color: "white",
                 fontSize: 14,
@@ -366,10 +402,11 @@ export default function Home() {
             <button
               onClick={() => send()}
               disabled={!input.trim() || loading}
+              className="send-btn"
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 10,
+                borderRadius: 12,
                 background: GOLD,
                 border: "none",
                 cursor: input.trim() && !loading ? "pointer" : "not-allowed",
@@ -377,7 +414,7 @@ export default function Home() {
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: input.trim() && !loading ? 1 : 0.3,
-                transition: "opacity 0.2s",
+                transition: "opacity 0.2s, transform 0.15s",
                 flexShrink: 0,
               }}
             >
@@ -393,6 +430,7 @@ export default function Home() {
           40% { opacity: 1; transform: scale(1); }
         }
         textarea::placeholder { color: rgba(255,255,255,0.15); }
+        .send-btn:hover:not(:disabled) { transform: scale(1.05); }
         @media (max-width: 768px) {
           .sidebar {
             position: fixed !important;
@@ -407,7 +445,7 @@ export default function Home() {
           .messages-area { padding: 16px !important; }
           .input-area { padding: 12px 16px !important; }
           .suggestions-grid { grid-template-columns: 1fr !important; }
-          .welcome-title { font-size: 40px !important; }
+          .welcome-title { font-size: 24px !important; }
           .rates-ticker { display: none !important; }
         }
       `}</style>
