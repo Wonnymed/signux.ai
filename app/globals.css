@@ -11,10 +11,8 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
 ::selection { background: rgba(201,168,76,0.2); }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 3px; }
-input, textarea { font-family: 'DM Sans', sans-serif; }
