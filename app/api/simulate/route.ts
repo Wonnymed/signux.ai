@@ -1,9 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// STAGE 1: GRAPH BUILD — Extract entities from scenario
+function sendSSE(controller: ReadableStreamDefaultController, encoder: TextEncoder, data: any) {
+  controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+}
+
 async function buildGraph(scenario: string) {
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -26,7 +29,6 @@ async function buildGraph(scenario: string) {
   catch { return { entities: [], relationships: [], key_variables: [], critical_questions: [] }; }
 }
 
-// STAGE 2: ENV SETUP — Generate agent personas based on graph
 async function setupAgents(graph: any, scenario: string) {
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -63,58 +65,6 @@ Create agents that would NATURALLY be involved in this scenario. Be creative and
   catch { return { agents: [], simulation_parameters: { rounds: 3, scenario_type: "deal", time_horizon: "30 days", key_metrics: [] } }; }
 }
 
-// STAGE 3: SIMULATE — Run multi-round agent interactions
-async function runSimulation(agents: any[], scenario: string, graph: any, params: any, userContext: any) {
-  const allMessages: any[] = [];
-
-  for (let round = 1; round <= Math.min(params.rounds || 3, 4); round++) {
-    for (const agent of agents) {
-      const previousDiscussion = allMessages
-        .map(m => `[${m.agentName} (${m.role}) — Round ${m.round}]: ${m.content}`)
-        .join("\n\n");
-
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: `You are ${agent.name}, ${agent.role}.
-
-PERSONALITY: ${agent.personality}
-KNOWLEDGE: ${agent.knowledge}
-OBJECTIVES: ${agent.objectives}
-BIAS: ${agent.bias}
-
-You are in round ${round} of ${params.rounds} of a business simulation.
-
-RULES:
-- Stay in character at ALL times. You ARE this person.
-- Reference specific numbers, prices, timelines, regulations when possible.
-- React to what other agents said — agree, disagree, challenge, build upon.
-- In round 1: Give your initial analysis and position.
-- In round 2+: Respond to others, refine your position, negotiate, challenge assumptions.
-- Be specific. Real numbers. Real timelines. Real risks.
-- If you disagree with another agent, say so directly and explain why.
-- Speak in the user's language (Portuguese if scenario is in Portuguese).`,
-        messages: [{
-          role: "user",
-          content: `SCENARIO: ${scenario}\n\nENTITY GRAPH: ${JSON.stringify(graph)}\n\nUSER CONTEXT: ${JSON.stringify(userContext || {})}\n\nPREVIOUS DISCUSSION:\n${previousDiscussion || "This is the opening round. Present your initial analysis."}\n\nYour analysis for round ${round}:`
-        }],
-      });
-
-      const content = (response.content[0] as any).text || "";
-      allMessages.push({
-        agentId: agent.id,
-        agentName: agent.name,
-        role: agent.role,
-        emoji: agent.emoji,
-        content,
-        round,
-      });
-    }
-  }
-  return allMessages;
-}
-
-// STAGE 4: REPORT — Generate comprehensive analysis
 async function generateReport(scenario: string, graph: any, agents: any[], simulation: any[], params: any) {
   const simText = simulation.map(m =>
     `[${m.emoji} ${m.agentName} (${m.role}) — Round ${m.round}]:\n${m.content}`
@@ -187,32 +137,107 @@ If NO-GO: what would need to change for it to become viable`
   return (response.content[0] as any).text || "";
 }
 
-// MAIN ENDPOINT
 export async function POST(req: NextRequest) {
-  try {
-    const { scenario, context } = await req.json();
+  const { scenario, context } = await req.json();
+  const encoder = new TextEncoder();
 
-    const graph = await buildGraph(scenario);
-    const { agents, simulation_parameters } = await setupAgents(graph, scenario);
-    const simulation = await runSimulation(agents, scenario, graph, simulation_parameters, context);
-    const report = await generateReport(scenario, graph, agents, simulation, simulation_parameters);
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        // Stage 1: Graph
+        sendSSE(controller, encoder, { type: "stage", stage: 0, label: "Extraindo entidades e relações..." });
+        const graph = await buildGraph(scenario);
+        sendSSE(controller, encoder, { type: "stage_done", stage: 0, data: { graph } });
 
-    return NextResponse.json({
-      stages: {
-        graph,
-        agents,
-        simulation_parameters,
-      },
-      simulation,
-      report,
-      metadata: {
-        total_interactions: simulation.length,
-        rounds: simulation_parameters.rounds,
-        agents_count: agents.length,
-        timestamp: new Date().toISOString(),
+        // Stage 2: Agents
+        sendSSE(controller, encoder, { type: "stage", stage: 1, label: "Gerando agentes especializados..." });
+        const { agents, simulation_parameters } = await setupAgents(graph, scenario);
+        sendSSE(controller, encoder, { type: "stage_done", stage: 1, data: { agents, simulation_parameters } });
+
+        // Stage 3+4: Simulation rounds
+        sendSSE(controller, encoder, { type: "stage", stage: 2, label: "Rodando simulação multi-agente..." });
+        const allMessages: any[] = [];
+        const rounds = Math.min(simulation_parameters.rounds || 3, 4);
+
+        for (let round = 1; round <= rounds; round++) {
+          if (round > 1) {
+            sendSSE(controller, encoder, { type: "stage", stage: 3, label: `Agentes debatendo — rodada ${round}...` });
+          }
+          for (const agent of agents) {
+            sendSSE(controller, encoder, { type: "agent_start", agentName: agent.name, emoji: agent.emoji, role: agent.role, round });
+
+            const previousDiscussion = allMessages
+              .map(m => `[${m.agentName} (${m.role}) — Round ${m.round}]: ${m.content}`)
+              .join("\n\n");
+
+            const response = await client.messages.create({
+              model: "claude-sonnet-4-20250514",
+              max_tokens: 1000,
+              system: `You are ${agent.name}, ${agent.role}.
+
+PERSONALITY: ${agent.personality}
+KNOWLEDGE: ${agent.knowledge}
+OBJECTIVES: ${agent.objectives}
+BIAS: ${agent.bias}
+
+You are in round ${round} of ${rounds} of a business simulation.
+
+RULES:
+- Stay in character at ALL times. You ARE this person.
+- Reference specific numbers, prices, timelines, regulations when possible.
+- React to what other agents said — agree, disagree, challenge, build upon.
+- In round 1: Give your initial analysis and position.
+- In round 2+: Respond to others, refine your position, negotiate, challenge assumptions.
+- Be specific. Real numbers. Real timelines. Real risks.
+- If you disagree with another agent, say so directly and explain why.
+- Speak in the user's language (Portuguese if scenario is in Portuguese).`,
+              messages: [{
+                role: "user",
+                content: `SCENARIO: ${scenario}\n\nENTITY GRAPH: ${JSON.stringify(graph)}\n\nUSER CONTEXT: ${JSON.stringify(context || {})}\n\nPREVIOUS DISCUSSION:\n${previousDiscussion || "This is the opening round. Present your initial analysis."}\n\nYour analysis for round ${round}:`
+              }],
+            });
+
+            const content = (response.content[0] as any).text || "";
+            const msg = { agentId: agent.id, agentName: agent.name, role: agent.role, emoji: agent.emoji, content, round };
+            allMessages.push(msg);
+            sendSSE(controller, encoder, { type: "agent_done", ...msg });
+          }
+        }
+
+        // Stage 5: Report
+        sendSSE(controller, encoder, { type: "stage", stage: 4, label: "Compilando relatório final..." });
+        const report = await generateReport(scenario, graph, agents, allMessages, simulation_parameters);
+        sendSSE(controller, encoder, { type: "stage_done", stage: 4 });
+
+        // Final result
+        sendSSE(controller, encoder, {
+          type: "complete",
+          result: {
+            stages: { graph, agents, simulation_parameters },
+            simulation: allMessages,
+            report,
+            metadata: {
+              total_interactions: allMessages.length,
+              rounds: simulation_parameters.rounds,
+              agents_count: agents.length,
+              timestamp: new Date().toISOString(),
+            },
+          },
+        });
+
+        controller.close();
+      } catch (err: any) {
+        sendSSE(controller, encoder, { type: "error", error: err.message });
+        controller.close();
       }
-    });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }

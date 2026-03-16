@@ -84,7 +84,9 @@ export default function Home() {
   const [simResult, setSimResult] = useState<any>(null);
   const [simScenario, setSimScenario] = useState("");
   const [simStage, setSimStage] = useState(0);
+  const [simLiveAgents, setSimLiveAgents] = useState<{ emoji: string; name: string; done: boolean }[]>([]);
   const [resultTab, setResultTab] = useState<"report" | "simulation" | "graph">("report");
+  const [tokenCount, setTokenCount] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -99,18 +101,6 @@ export default function Home() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Simulation stage animation
-  useEffect(() => {
-    if (!simulating) { setSimStage(0); return; }
-    const timers = [
-      setTimeout(() => setSimStage(1), 3000),
-      setTimeout(() => setSimStage(2), 6000),
-      setTimeout(() => setSimStage(3), 12000),
-      setTimeout(() => setSimStage(4), 18000),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [simulating]);
-
   const send = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg || loading) return;
@@ -119,14 +109,50 @@ export default function Home() {
     setMessages(newMessages);
     setInput("");
     setLoading(true);
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, agent, profile: getProfile(), rates }),
       });
-      const data = await res.json();
-      setMessages([...newMessages, { role: "assistant", content: data.response || data.error || "Erro ao processar." }]);
+
+      if (!res.body) throw new Error("No stream");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "text") {
+              assistantContent += data.text;
+              setMessages([...newMessages, { role: "assistant", content: assistantContent }]);
+            } else if (data.type === "done") {
+              setTokenCount(prev => prev + (data.tokens || 0));
+            } else if (data.type === "error") {
+              if (!assistantContent) {
+                assistantContent = data.error || "Erro ao processar.";
+                setMessages([...newMessages, { role: "assistant", content: assistantContent }]);
+              }
+            }
+          } catch {}
+        }
+      }
+
+      if (!assistantContent) {
+        setMessages([...newMessages, { role: "assistant", content: "Erro ao processar." }]);
+      }
     } catch {
       setMessages([...newMessages, { role: "assistant", content: "Erro de conexão. Tente novamente." }]);
     }
@@ -138,15 +164,48 @@ export default function Home() {
     if (!simScenario.trim()) return;
     setSimulating(true);
     setSimResult(null);
+    setSimLiveAgents([]);
+    setSimStage(0);
     setResultTab("report");
+
     try {
       const res = await fetch("/api/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scenario: simScenario, context: getProfile() }),
       });
-      const data = await res.json();
-      setSimResult(data);
+
+      if (!res.body) throw new Error("No stream");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "stage") {
+              setSimStage(data.stage);
+            } else if (data.type === "agent_start") {
+              setSimLiveAgents(prev => [...prev, { emoji: data.emoji, name: data.agentName, done: false }]);
+            } else if (data.type === "agent_done") {
+              setSimLiveAgents(prev => prev.map(a => a.name === data.agentName && !a.done ? { ...a, done: true } : a));
+            } else if (data.type === "complete") {
+              setSimResult(data.result);
+            } else if (data.type === "error") {
+              setSimResult({ error: data.error || "Erro na simulação." });
+            }
+          } catch {}
+        }
+      }
     } catch {
       setSimResult({ error: "Erro na simulação. Tente novamente." });
     }
@@ -279,11 +338,11 @@ export default function Home() {
           <div style={{ maxWidth: 500, width: "100%", textAlign: "center" }}>
             <div style={{ fontSize: 24, fontFamily: SERIF, color: "white", marginBottom: 8 }}>Simulação em andamento</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", marginBottom: 48 }}>Múltiplos agentes analisando seu cenário...</div>
+            {/* Pipeline stages */}
             <div style={{ display: "flex", flexDirection: "column", gap: 0, textAlign: "left" }}>
               {SIM_STAGES.map((stage, idx) => {
                 const isDone = idx < simStage;
                 const isCurrent = idx === simStage;
-                const isPending = idx > simStage;
                 return (
                   <div key={idx} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0" }}>
                     <span style={{ fontSize: 18, width: 28, textAlign: "center", ...(isDone ? { color: GOLD } : isCurrent ? { animation: "iconPulse 1.5s ease-in-out infinite" } : { opacity: 0.2 }) }}>
@@ -296,8 +355,21 @@ export default function Home() {
                 );
               })}
             </div>
+            {/* Live agent updates */}
+            {simLiveAgents.length > 0 && (
+              <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 6, textAlign: "left" }}>
+                <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "rgba(255,255,255,0.15)", textTransform: "uppercase", marginBottom: 4 }}>Agentes</div>
+                {simLiveAgents.map((a, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 14, ...(a.done ? {} : { animation: "iconPulse 1.5s ease-in-out infinite" }) }}>{a.emoji}</span>
+                    <span style={{ fontSize: 12, color: a.done ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.7)", flex: 1 }}>{a.name}</span>
+                    <span style={{ fontSize: 10, color: a.done ? GOLD : "rgba(255,255,255,0.15)" }}>{a.done ? "✓" : "..."}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Progress bar */}
-            <div style={{ width: "100%", height: 2, background: "rgba(255,255,255,0.04)", borderRadius: 1, marginTop: 32 }}>
+            <div style={{ width: "100%", height: 2, background: "rgba(255,255,255,0.04)", borderRadius: 1, marginTop: 24 }}>
               <div style={{ height: "100%", background: "linear-gradient(90deg, #C9A84C, #A0832A)", borderRadius: 1, transition: "width 0.5s ease", width: `${(simStage / 4) * 100}%` }} />
             </div>
           </div>
@@ -560,6 +632,7 @@ export default function Home() {
             )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {tokenCount > 0 && <div className="rates-ticker" style={{ fontSize: 9, color: "rgba(255,255,255,0.1)" }}>{tokenCount.toLocaleString()} tokens</div>}
             {rates && <div className="rates-ticker" style={{ fontSize: 9, color: "rgba(255,255,255,0.12)" }}>USD/BRL {rates.USDBRL?.toFixed(2)} · USD/CNY {rates.USDCNY?.toFixed(2)} · USD/HKD {rates.USDHKD?.toFixed(2)}</div>}
             {mode === "chat" && messages.length > 0 && (
               <button onClick={() => { const text = messages.map(m => (m.role === "user" ? "Você: " : "Signux: ") + m.content).join("\n\n---\n\n"); const blob = new Blob([text], { type: "text/plain" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "signux-conversa.txt"; a.click(); }}

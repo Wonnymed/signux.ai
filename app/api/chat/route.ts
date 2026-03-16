@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -122,16 +122,44 @@ export async function POST(req: NextRequest) {
 
     const fullSystemPrompt = systemPrompt + contextPrefix;
 
-    const response = await client.messages.create({
+    const stream = client.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
       system: fullSystemPrompt,
       messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
     });
 
-    const text = response.content.map((c: any) => c.text || "").join("");
-    return NextResponse.json({ response: text });
+    const encoder = new TextEncoder();
+
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          stream.on("text", (text) => {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text", text })}\n\n`));
+          });
+
+          const finalMessage = await stream.finalMessage();
+          const usage = finalMessage.usage;
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done", tokens: (usage?.input_tokens || 0) + (usage?.output_tokens || 0) })}\n\n`));
+          controller.close();
+        } catch (err: any) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", error: err.message })}\n\n`));
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
