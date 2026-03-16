@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 const GOLD = "#C9A84C";
 const SERIF = "'Cormorant Garamond', serif";
@@ -182,12 +183,25 @@ export default function Home() {
                     fontSize: 14,
                     lineHeight: m.role === "user" ? 1.7 : 1.8,
                     color: m.role === "user" ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.75)",
-                    whiteSpace: "pre-wrap",
+                    ...(m.role === "user" ? { whiteSpace: "pre-wrap" as const } : {}),
                     wordBreak: "break-word",
                     fontFamily: "'DM Sans', sans-serif",
                   }}
                 >
-                  {m.content}
+                  {m.role === "user" ? m.content : (
+                    <ReactMarkdown components={{
+                      h1: ({children}) => <h1 style={{ fontSize: 20, fontWeight: 500, fontFamily: "'Cormorant Garamond', serif", marginBottom: 12, marginTop: 16, color: "#C9A84C" }}>{children}</h1>,
+                      h2: ({children}) => <h2 style={{ fontSize: 17, fontWeight: 500, fontFamily: "'Cormorant Garamond', serif", marginBottom: 10, marginTop: 14, color: "#C9A84C" }}>{children}</h2>,
+                      h3: ({children}) => <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 8, marginTop: 12, color: "rgba(255,255,255,0.85)" }}>{children}</h3>,
+                      p: ({children}) => <p style={{ marginBottom: 10, lineHeight: 1.8 }}>{children}</p>,
+                      ul: ({children}) => <ul style={{ paddingLeft: 20, marginBottom: 10 }}>{children}</ul>,
+                      ol: ({children}) => <ol style={{ paddingLeft: 20, marginBottom: 10 }}>{children}</ol>,
+                      li: ({children}) => <li style={{ marginBottom: 6, lineHeight: 1.7 }}>{children}</li>,
+                      strong: ({children}) => <strong style={{ color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>{children}</strong>,
+                      code: ({children}) => <code style={{ background: "rgba(201,168,76,0.08)", padding: "2px 6px", borderRadius: 4, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", color: "#C9A84C" }}>{children}</code>,
+                      blockquote: ({children}) => <blockquote style={{ borderLeft: "2px solid rgba(201,168,76,0.3)", paddingLeft: 16, margin: "12px 0", color: "rgba(255,255,255,0.5)" }}>{children}</blockquote>,
+                    }}>{m.content}</ReactMarkdown>
+                  )}
                 </div>
               ))}
               {loading && (
