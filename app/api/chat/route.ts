@@ -193,9 +193,24 @@ export async function POST(req: NextRequest) {
 
     let contextPrefix = "";
     if (profile) {
-      const langMap: Record<string, string> = { en: "English", pt: "Portuguese", es: "Spanish", zh: "Chinese", ko: "Korean", ja: "Japanese", fr: "French", de: "German", it: "Italian" };
+      const langMap: Record<string, string> = {
+        en: "English", "pt-BR": "Portuguese", es: "Spanish", fr: "French", de: "German",
+        it: "Italian", nl: "Dutch", ru: "Russian", "zh-Hans": "Chinese (Simplified)",
+        "zh-Hant": "Chinese (Traditional)", ja: "Japanese", ko: "Korean", ar: "Arabic",
+        hi: "Hindi", tr: "Turkish", pl: "Polish", sv: "Swedish", da: "Danish",
+        no: "Norwegian", fi: "Finnish", cs: "Czech", ro: "Romanian", hu: "Hungarian",
+        uk: "Ukrainian", el: "Greek", id: "Indonesian", vi: "Vietnamese", th: "Thai",
+        he: "Hebrew",
+      };
       const userLang = langMap[profile.language] || "English";
       contextPrefix = `\n\nUSER PROFILE (use this context to personalize responses):\n- Name: ${profile.name}\n- Tax residence: ${profile.taxResidence}\n- Operations: ${profile.operations?.join(", ")}\n- Existing structures: ${profile.structures?.join(", ") || "None"}\n- Monthly volume: ${profile.monthlyVolume || "Not specified"}\n- Languages: ${profile.languages?.join(", ") || "Not specified"}\n- Preferred language: ${userLang}\n\nIMPORTANT: You MUST respond in ${userLang}. Use this context to give specific, personalized recommendations instead of generic advice.\n`;
+
+      if (profile.aboutYou) {
+        contextPrefix += `\nABOUT THE USER (provided by user in settings — use to deeply personalize responses):\n${profile.aboutYou}\n`;
+      }
+      if (profile.customInstructions) {
+        contextPrefix += `\nCUSTOM INSTRUCTIONS (follow these strictly):\n${profile.customInstructions}\n`;
+      }
     }
     if (rates) {
       contextPrefix += `\nCURRENT EXCHANGE RATES (use these for calculations):\n- 1 USD = ${rates.USDBRL} BRL\n- 1 USD = ${rates.USDHKD} HKD\n- 1 USD = ${rates.USDCNY} CNY\n- 1 USD = ${rates.USDEUR} EUR\n- 1 USD = ${rates.USDKRW} KRW\nUpdated: ${rates.updated}\n`;

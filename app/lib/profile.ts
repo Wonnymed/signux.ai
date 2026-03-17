@@ -9,6 +9,12 @@ export type UserProfile = {
   languages: string[];
   interests: string[];
   history: string[];
+  aboutYou: string;
+  customInstructions: string;
+  memoryEnabled: boolean;
+  referenceHistory: boolean;
+  theme: "auto" | "light" | "dark";
+  webSearchEnabled: boolean;
 };
 
 const PROFILE_KEY = "signux_profile";
@@ -20,7 +26,7 @@ export function getProfile(): UserProfile | null {
 }
 
 export function updateProfile(updates: Partial<UserProfile>) {
-  const current = getProfile() || { name: "", email: "", taxResidence: "", language: "en", operations: [], structures: [], monthlyVolume: "", languages: [], interests: [], history: [] };
+  const current = getProfile() || { name: "", email: "", taxResidence: "", language: "en", operations: [], structures: [], monthlyVolume: "", languages: [], interests: [], history: [], aboutYou: "", customInstructions: "", memoryEnabled: true, referenceHistory: true, theme: "auto" as const, webSearchEnabled: true };
   const updated = { ...current, ...updates };
   localStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
   return updated;

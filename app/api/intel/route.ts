@@ -6,7 +6,15 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 export async function POST(req: NextRequest) {
   const { focus_areas, language } = await req.json();
 
-  const langMap: Record<string, string> = { en: "English", pt: "Portuguese", es: "Spanish", zh: "Chinese", ko: "Korean", ja: "Japanese", fr: "French", de: "German", it: "Italian" };
+  const langMap: Record<string, string> = {
+    en: "English", "pt-BR": "Portuguese", es: "Spanish", fr: "French", de: "German",
+    it: "Italian", nl: "Dutch", ru: "Russian", "zh-Hans": "Chinese (Simplified)",
+    "zh-Hant": "Chinese (Traditional)", ja: "Japanese", ko: "Korean", ar: "Arabic",
+    hi: "Hindi", tr: "Turkish", pl: "Polish", sv: "Swedish", da: "Danish",
+    no: "Norwegian", fi: "Finnish", cs: "Czech", ro: "Romanian", hu: "Hungarian",
+    uk: "Ukrainian", el: "Greek", id: "Indonesian", vi: "Vietnamese", th: "Thai",
+    he: "Hebrew",
+  };
   const userLang = langMap[language] || "English";
 
   const encoder = new TextEncoder();
