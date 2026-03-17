@@ -308,16 +308,6 @@ export function IconChat({ size = 20, ...p }: { size?: number } & React.SVGProps
   );
 }
 
-// Agent icon map helper
-export const AGENT_ICONS: Record<string, React.FC<{ size?: number }>> = {
-  auto: IconZap,
-  offshore: IconBuilding,
-  china: IconShip,
-  opsec: IconShield,
-  geointel: IconGlobe,
-  language: IconTranslate,
-};
-
 // Sim stage icon map
 export const SIM_STAGE_ICONS: React.FC<{ size?: number }>[] = [
   IconSearch,

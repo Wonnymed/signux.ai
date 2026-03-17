@@ -5,12 +5,11 @@ import ReactMarkdown from "react-markdown";
 import { getProfile, updateProfile } from "../lib/profile";
 import { t, Language } from "../lib/i18n";
 import {
-  IconZap, IconBuilding, IconShip, IconShield, IconGlobe, IconTranslate,
-  IconCopy, IconRetry, IconThumbUp, IconThumbDown, IconExport, IconPlus,
+  IconZap, IconCopy, IconRetry, IconThumbUp, IconThumbDown, IconExport, IconPlus,
   IconChevron, IconClose, IconMenu, IconArrowUp, IconCheck, IconWarning,
   IconInfo, IconSearch, IconAgents, IconSimulate, IconDebate, IconReport,
   IconGraph, IconFile, IconLink, IconArrowDown, IconChat, IconSettings,
-  AGENT_ICONS, SIM_STAGE_ICONS,
+  SIM_STAGE_ICONS,
 } from "../components/Icons";
 
 /* ═══ Toast System ═══ */
@@ -39,15 +38,18 @@ const SHORTCUTS = [
   { keys: ["?"], desc: "Show shortcuts" },
 ];
 
-/* ═══ Agent definitions ═══ */
-const AGENTS = [
-  { id: "auto", labelKey: "agent.auto", descKey: "agent.auto.desc" },
-  { id: "offshore", labelKey: "agent.offshore", descKey: "agent.offshore.desc" },
-  { id: "china", labelKey: "agent.china", descKey: "agent.china.desc" },
-  { id: "opsec", labelKey: "agent.opsec", descKey: "agent.opsec.desc" },
-  { id: "geointel", labelKey: "agent.geointel", descKey: "agent.geointel.desc" },
-  { id: "language", labelKey: "agent.language", descKey: "agent.language.desc" },
-];
+/* ═══ Agent Category Colors ═══ */
+const AGENT_CATEGORY_COLORS: Record<string, { bg: string; color: string; border: string }> = {
+  supply: { bg: "rgba(59,130,246,0.08)", color: "#3B82F6", border: "rgba(59,130,246,0.25)" },
+  logistics: { bg: "rgba(16,185,129,0.08)", color: "#10B981", border: "rgba(16,185,129,0.25)" },
+  finance: { bg: "rgba(245,158,11,0.08)", color: "#F59E0B", border: "rgba(245,158,11,0.25)" },
+  regulatory: { bg: "rgba(239,68,68,0.08)", color: "#EF4444", border: "rgba(239,68,68,0.25)" },
+  market: { bg: "rgba(168,85,247,0.08)", color: "#A855F7", border: "rgba(168,85,247,0.25)" },
+  legal: { bg: "rgba(236,72,153,0.08)", color: "#EC4899", border: "rgba(236,72,153,0.25)" },
+  cultural: { bg: "rgba(20,184,166,0.08)", color: "#14B8A6", border: "rgba(20,184,166,0.25)" },
+  operations: { bg: "rgba(99,102,241,0.08)", color: "#6366F1", border: "rgba(99,102,241,0.25)" },
+};
+const DEFAULT_CATEGORY_COLOR = { bg: "var(--bg-secondary)", color: "var(--text-secondary)", border: "var(--border)" };
 
 const SUGGESTION_KEYS = [
   "suggestion.1", "suggestion.2", "suggestion.3",
@@ -93,11 +95,6 @@ const MD_COMPONENTS = {
   td: ({ children }: any) => <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--border-light)", color: "var(--text-secondary)" }}>{children}</td>,
 };
 
-function AgentIcon({ id, size = 20 }: { id: string; size?: number }) {
-  const Comp = AGENT_ICONS[id] || IconZap;
-  return <Comp size={size} />;
-}
-
 function StageIcon({ index, size = 20 }: { index: number; size?: number }) {
   const Comp = SIM_STAGE_ICONS[index] || IconSearch;
   return <Comp size={size} />;
@@ -109,7 +106,6 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [agent, setAgent] = useState("auto");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [lang, setLang] = useState<Language>("en");
@@ -120,7 +116,8 @@ export default function Home() {
   const [simResult, setSimResult] = useState<any>(null);
   const [simScenario, setSimScenario] = useState("");
   const [simStage, setSimStage] = useState(0);
-  const [simLiveAgents, setSimLiveAgents] = useState<{ name: string; done: boolean }[]>([]);
+  const [simLiveAgents, setSimLiveAgents] = useState<{ name: string; role?: string; category?: string; done: boolean }[]>([]);
+  const [simTotalAgents, setSimTotalAgents] = useState(0);
   const [resultTab, setResultTab] = useState<"report" | "simulation" | "graph">("report");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [simRounds, setSimRounds] = useState(3);
@@ -204,7 +201,7 @@ export default function Home() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, agent, profile: getProfile(), rates }),
+        body: JSON.stringify({ messages: newMessages, profile: getProfile(), rates }),
       });
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
@@ -254,6 +251,7 @@ export default function Home() {
     setSimulating(true);
     setSimResult(null);
     setSimLiveAgents([]);
+    setSimTotalAgents(0);
     setSimStage(0);
     setResultTab("report");
     setSimStartTime(Date.now());
@@ -277,7 +275,8 @@ export default function Home() {
           try {
             const data = JSON.parse(line.slice(6));
             if (data.type === "stage") setSimStage(data.stage);
-            else if (data.type === "agent_start") setSimLiveAgents(prev => [...prev, { name: data.agentName, done: false }]);
+            else if (data.type === "stage_done" && data.totalAgents) setSimTotalAgents(data.totalAgents);
+            else if (data.type === "agent_start") setSimLiveAgents(prev => [...prev, { name: data.agentName, role: data.role, category: data.category, done: false }]);
             else if (data.type === "agent_done") setSimLiveAgents(prev => prev.map(a => a.name === data.agentName && !a.done ? { ...a, done: true } : a));
             else if (data.type === "complete") setSimResult(data.result);
             else if (data.type === "error") setSimResult({ error: data.error || "Simulation error." });
@@ -302,7 +301,6 @@ export default function Home() {
   const handleKey = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
   const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; };
 
-  const activeAgent = AGENTS.find(a => a.id === agent) || AGENTS[0];
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "OP";
 
   useEffect(() => {
@@ -416,6 +414,11 @@ export default function Home() {
                 </div>
               </div>
               <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>{t(SIM_STAGE_KEYS[simStage] || "stage.0", lang)}</div>
+              {simLiveAgents.length > 0 && simTotalAgents > 0 && (
+                <div style={{ fontSize: 12, color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 2 }}>
+                  {t("sim.agent_progress", lang, { current: String(simLiveAgents.filter(a => a.done).length), total: String(simTotalAgents) })}
+                </div>
+              )}
               <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>~{remaining > 60 ? `${Math.ceil(remaining / 60)} min` : `${remaining}s`} remaining</div>
             </div>
             <div className="sim-progress-layout" style={{ display: "grid", gridTemplateColumns: simLiveAgents.length > 0 ? "200px 1fr" : "1fr", gap: 24 }}>
@@ -445,14 +448,21 @@ export default function Home() {
               {simLiveAgents.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ fontSize: 11, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>{t("sim.agents_in_sim", lang)}</div>
-                  {simLiveAgents.map((a, i) => (
-                    <div key={`${a.name}-${i}`} style={{ padding: "12px 16px", borderRadius: 10, background: "var(--bg-secondary)", border: a.done ? "1px solid var(--accent)" : "1px solid var(--border-light)", transition: "all 0.3s", animation: "fadeInUp 0.3s ease-out", borderLeftWidth: 3, borderLeftColor: a.done ? "var(--accent)" : "var(--border-light)" }}>
-                      <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500, marginBottom: 2 }}>{a.name}</div>
-                      <div style={{ fontSize: 11, color: a.done ? "var(--success)" : "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 6 }}>
-                        {a.done ? <><IconCheck size={12} /> {t("common.online", lang)}</> : <>{t("common.loading", lang)}</>}
+                  {simLiveAgents.map((a, i) => {
+                    const catColor = AGENT_CATEGORY_COLORS[a.category || ""] || DEFAULT_CATEGORY_COLOR;
+                    return (
+                      <div key={`${a.name}-${i}`} style={{ padding: "12px 16px", borderRadius: 10, background: "var(--bg-secondary)", border: `1px solid ${a.done ? catColor.border : "var(--border-light)"}`, transition: "all 0.3s", animation: "fadeInUp 0.3s ease-out", borderLeftWidth: 3, borderLeftColor: catColor.color }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                          <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{a.name}</span>
+                          {a.category && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 8, background: catColor.bg, color: catColor.color, letterSpacing: "0.05em", textTransform: "uppercase" }}>{t(`sim.category.${a.category}`, lang)}</span>}
+                        </div>
+                        {a.role && <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 4 }}>{a.role}</div>}
+                        <div style={{ fontSize: 11, color: a.done ? "var(--success)" : "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 6 }}>
+                          {a.done ? <><IconCheck size={12} /> {t("common.online", lang)}</> : <>{t("common.loading", lang)}</>}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -484,8 +494,13 @@ export default function Home() {
       const reportText = simResult.report || "";
       const verdictIsNoGo = /NO[- ]?GO/i.test(reportText.slice(Math.max(0, reportText.lastIndexOf("VERDICT"))));
       const uniqueRounds = [...new Set(simulation.map((m: any) => m.round))].sort();
+      const uniqueCategories = [...new Set(simAgents.map((a: any) => a.category).filter(Boolean))] as string[];
       const uniqueAgentNames = [...new Set(simulation.map((m: any) => m.agentName))] as string[];
-      const filteredSimulation = agentFilter ? simulation.filter((m: any) => m.agentName === agentFilter) : simulation;
+      const filteredSimulation = agentFilter
+        ? (uniqueCategories.includes(agentFilter)
+            ? simulation.filter((m: any) => m.category === agentFilter)
+            : simulation.filter((m: any) => m.agentName === agentFilter))
+        : simulation;
       const toggleSection = (key: string) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
       const getRiskColor = (text: string) => {
         const l = text.toLowerCase();
@@ -555,15 +570,19 @@ export default function Home() {
             </div>
             <div style={{ fontSize: 11, letterSpacing: "0.05em", color: "var(--text-tertiary)", marginBottom: 12, textTransform: "uppercase" }}>{t("sim.agents_in_sim", lang)}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 32 }}>
-              {simAgents.map((a: any) => (
-                <div key={a.id || a.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 20, background: "var(--bg-secondary)", border: "1px solid var(--border-light)" }}>
-                  <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--bg-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: "var(--text-secondary)" }}>{a.name.charAt(0)}</div>
-                  <div>
-                    <div style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 500 }}>{a.name}</div>
-                    <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{a.role}</div>
+              {simAgents.map((a: any) => {
+                const catColor = AGENT_CATEGORY_COLORS[a.category || ""] || DEFAULT_CATEGORY_COLOR;
+                return (
+                  <div key={a.id || a.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 20, background: "var(--bg-secondary)", border: `1px solid ${catColor.border}`, borderLeft: `3px solid ${catColor.color}` }}>
+                    <div style={{ width: 24, height: 24, borderRadius: "50%", background: catColor.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: catColor.color }}>{a.name.charAt(0)}</div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 500 }}>{a.name}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{a.role}</div>
+                    </div>
+                    {a.category && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 8, background: catColor.bg, color: catColor.color, textTransform: "uppercase", letterSpacing: "0.05em" }}>{t(`sim.category.${a.category}`, lang)}</span>}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div style={{ display: "flex", gap: 4, marginBottom: 28, padding: 4, background: "var(--bg-secondary)", borderRadius: 10, border: "1px solid var(--border-light)", width: "fit-content" }}>
               {(["report", "simulation", "graph"] as const).map(tab => (
@@ -636,11 +655,20 @@ export default function Home() {
             )}
             {resultTab === "simulation" && (
               <div style={{ animation: "fadeIn 0.2s ease" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                  <button onClick={() => setAgentFilter(null)} style={{ padding: "6px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", border: "none", background: !agentFilter ? "var(--accent-light)" : "var(--bg-secondary)", color: !agentFilter ? "var(--accent)" : "var(--text-tertiary)" }}>{t("sim.filter_all", lang)}</button>
+                  {uniqueCategories.map(cat => {
+                    const cc = AGENT_CATEGORY_COLORS[cat] || DEFAULT_CATEGORY_COLOR;
+                    return (
+                      <button key={cat} onClick={() => setAgentFilter(agentFilter === cat ? null : cat)}
+                        style={{ padding: "6px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", border: agentFilter === cat ? `1px solid ${cc.border}` : "1px solid transparent", background: agentFilter === cat ? cc.bg : "var(--bg-secondary)", color: agentFilter === cat ? cc.color : "var(--text-tertiary)", transition: "all 0.15s" }}>{t(`sim.category.${cat}`, lang)}</button>
+                    );
+                  })}
+                </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-                  <button onClick={() => setAgentFilter(null)} style={{ padding: "6px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", border: "none", background: !agentFilter ? "var(--accent-light)" : "var(--bg-secondary)", color: !agentFilter ? "var(--accent)" : "var(--text-tertiary)" }}>All</button>
                   {uniqueAgentNames.map(name => (
                     <button key={name} onClick={() => setAgentFilter(agentFilter === name ? null : name)}
-                      style={{ padding: "6px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer", border: "none", background: agentFilter === name ? "var(--accent-light)" : "var(--bg-secondary)", color: agentFilter === name ? "var(--accent)" : "var(--text-tertiary)" }}>{name}</button>
+                      style={{ padding: "4px 10px", borderRadius: 20, fontSize: 10, cursor: "pointer", border: "none", background: agentFilter === name ? "var(--accent-light)" : "var(--bg-secondary)", color: agentFilter === name ? "var(--accent)" : "var(--text-tertiary)" }}>{name}</button>
                   ))}
                 </div>
                 {uniqueRounds.map((round: any) => {
@@ -657,13 +685,14 @@ export default function Home() {
                         {roundMsgs.map((msg: any, i: number) => {
                           const hasDebate = msg.content.toLowerCase().includes("discordo") || msg.content.toLowerCase().includes("disagree") || msg.content.toLowerCase().includes("however");
                           return (
-                            <div key={`${round}-${msg.agentName}-${i}`} style={{ padding: 18, borderRadius: 10, background: "var(--bg-secondary)", border: "1px solid var(--border-light)", borderLeft: hasDebate ? "3px solid var(--warning)" : "3px solid var(--border-light)" }}>
+                            <div key={`${round}-${msg.agentName}-${i}`} style={{ padding: 18, borderRadius: 10, background: "var(--bg-secondary)", border: "1px solid var(--border-light)", borderLeft: hasDebate ? "3px solid var(--warning)" : `3px solid ${(AGENT_CATEGORY_COLORS[msg.category || ""] || DEFAULT_CATEGORY_COLOR).color}` }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                                <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--bg-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", flexShrink: 0 }}>{msg.agentName.charAt(0)}</div>
+                                <div style={{ width: 36, height: 36, borderRadius: 10, background: (AGENT_CATEGORY_COLORS[msg.category || ""] || DEFAULT_CATEGORY_COLOR).bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: (AGENT_CATEGORY_COLORS[msg.category || ""] || DEFAULT_CATEGORY_COLOR).color, flexShrink: 0 }}>{msg.agentName.charAt(0)}</div>
                                 <div style={{ flex: 1 }}>
                                   <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{msg.agentName}</div>
-                                  <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{msg.role}</div>
+                                  <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{msg.role}{msg.category && ` · ${t(`sim.category.${msg.category}`, lang)}`}</div>
                                 </div>
+                                {msg.category && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 8, background: (AGENT_CATEGORY_COLORS[msg.category] || DEFAULT_CATEGORY_COLOR).bg, color: (AGENT_CATEGORY_COLORS[msg.category] || DEFAULT_CATEGORY_COLOR).color, letterSpacing: "0.05em", textTransform: "uppercase" }}>{t(`sim.category.${msg.category}`, lang)}</span>}
                                 {hasDebate && <span style={{ fontSize: 9, padding: "3px 8px", borderRadius: 8, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "var(--warning)", letterSpacing: "0.05em" }}>DEBATE</span>}
                               </div>
                               <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{msg.content}</div>
@@ -759,32 +788,10 @@ export default function Home() {
 
         <div style={{ height: 1, background: "var(--border-light)", marginBottom: 12 }} />
 
-        {/* Agent selector (chat mode) */}
-        {mode === "chat" && (
-          <>
-            <div style={{ fontSize: 11, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 10, padding: "0 8px" }}>{t("sidebar.agents", lang)}</div>
-            <div style={{ flex: 1, overflowY: "auto" }}>
-              {AGENTS.map(a => (
-                <div key={a.id} onClick={() => { setAgent(a.id); setSidebarOpen(false); }}
-                  style={{ padding: "10px 12px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, transition: "all 0.15s", marginBottom: 2,
-                    background: agent === a.id ? "var(--sidebar-active)" : "transparent",
-                    borderLeft: agent === a.id ? "2px solid var(--accent)" : "2px solid transparent" }}
-                  className="sidebar-agent-item">
-                  <div style={{ color: agent === a.id ? "var(--accent)" : "var(--text-tertiary)", display: "flex" }}><AgentIcon id={a.id} size={18} /></div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, color: agent === a.id ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: agent === a.id ? 500 : 400 }}>{t(a.labelKey, lang)}</div>
-                    <div style={{ fontSize: 10, color: "var(--text-tertiary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(a.descKey, lang)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
         {/* Pipeline (simulate mode) */}
-        {mode === "simulate" && (
+        {mode === "simulate" ? (
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 10, padding: "0 8px" }}>{t("sidebar.pipeline", lang)}</div>
+            <div style={{ fontSize: 11, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 10, padding: "0 8px" }}>Pipeline</div>
             {SIM_STAGE_KEYS.map((key, i) => (
               <div key={key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", color: "var(--text-tertiary)" }}>
                 <StageIcon index={i} size={14} />
@@ -792,7 +799,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-        )}
+        ) : <div style={{ flex: 1 }} />}
 
         {/* History placeholders */}
         {mode === "chat" && (
@@ -837,13 +844,6 @@ export default function Home() {
         <div className="mobile-header" style={{ display: "none", padding: "12px 16px", borderBottom: "1px solid var(--border-light)", alignItems: "center", gap: 8 }}>
           <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", padding: 4, display: "flex" }}><IconMenu size={18} /></button>
           <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>SIGNUX</span>
-          {mode === "chat" && (
-            <>
-              <span style={{ fontSize: 10, color: "var(--border)" }}>/</span>
-              <div style={{ color: "var(--text-secondary)", display: "flex" }}><AgentIcon id={agent} size={14} /></div>
-              <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 500 }}>{t(activeAgent.labelKey, lang)}</span>
-            </>
-          )}
         </div>
 
         {mode === "simulate" ? renderSimulation() : (
@@ -878,11 +878,11 @@ export default function Home() {
                           ...(m.role === "user"
                             ? { background: "var(--bg-tertiary)", fontSize: 11, fontWeight: 600, color: "var(--text-secondary)" }
                             : { background: "var(--accent-light)", color: "var(--accent)" }) }}>
-                          {m.role === "user" ? userInitials : <AgentIcon id={agent} size={16} />}
+                          {m.role === "user" ? userInitials : <IconZap size={16} />}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "var(--font-sans)", color: "var(--text-primary)", marginBottom: 6 }}>
-                            {m.role === "user" ? "You" : t(activeAgent.labelKey, lang)}
+                            {m.role === "user" ? "You" : "Signux"}
                           </div>
                           <div style={{ fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", wordBreak: "break-word" as const }}>
                             {m.role === "user" ? <span style={{ whiteSpace: "pre-wrap" }}>{m.content}</span> : (
@@ -927,9 +927,9 @@ export default function Home() {
                   {loading && messages[messages.length - 1]?.content === "" && (
                     <div style={{ padding: "24px 0", borderBottom: "1px solid var(--border-light)" }}>
                       <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px", display: "flex", gap: 14, alignItems: "flex-start" }}>
-                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--accent-light)", color: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}><AgentIcon id={agent} size={16} /></div>
+                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--accent-light)", color: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}><IconZap size={16} /></div>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "var(--font-sans)", color: "var(--text-primary)", marginBottom: 8 }}>{t(activeAgent.labelKey, lang)}</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "var(--font-sans)", color: "var(--text-primary)", marginBottom: 8 }}>Signux</div>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-tertiary)" }}>
                             <span className="loading-dots"><span /><span /><span /></span>
                           </div>
@@ -968,7 +968,6 @@ export default function Home() {
       </main>
 
       <style>{`
-        .sidebar-agent-item:hover { background: var(--sidebar-hover) !important; }
         .sidebar-new-btn:hover { border-color: var(--border) !important; color: var(--text-secondary) !important; }
         textarea::placeholder { color: var(--text-tertiary); }
         .card-hover:hover { border-color: var(--border) !important; background: var(--bg-secondary) !important; }
