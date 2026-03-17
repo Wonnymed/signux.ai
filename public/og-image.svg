@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#FFFFFF"/>
+  <text x="600" y="280" text-anchor="middle" font-family="system-ui, -apple-system, Helvetica Neue, Arial, sans-serif" font-size="72" font-weight="600" letter-spacing="12" fill="#0A0A0A">SIGNUX</text>
+  <line x1="500" y1="310" x2="700" y2="310" stroke="#C9A84C" stroke-width="2"/>
+  <text x="600" y="355" text-anchor="middle" font-family="system-ui, -apple-system, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="400" fill="#666666">The AI that knows global business</text>
+</svg>

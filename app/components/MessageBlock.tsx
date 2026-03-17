@@ -56,9 +56,20 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
         style={{ padding: "20px 0" }}
       >
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 24px" }}>
-          {/* Sender label */}
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-tertiary)", marginBottom: 6, letterSpacing: "0.02em" }}>
-            {isUser ? t("common.you") : "Signux"}
+          {/* Sender label + timestamp on hover */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.02em" }}>
+              {isUser ? t("common.you") : "Signux"}
+            </span>
+            {message.timestamp && (
+              <span style={{
+                fontSize: 11, color: "var(--text-tertiary)",
+                opacity: hovered ? 1 : 0, transition: "opacity 0.15s",
+                fontFamily: "var(--font-mono)",
+              }}>
+                {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
           </div>
 
           {/* Attachment display */}
@@ -146,21 +157,24 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
                 onClick={handleCopy}
                 active={copied}
                 activeColor="var(--success)"
+                label="Copy message"
               />
               {isLast && onRetry && (
-                <ActionBtn icon={<RotateCcw size={14} />} onClick={onRetry} />
+                <ActionBtn icon={<RotateCcw size={14} />} onClick={onRetry} label="Retry" />
               )}
               <ActionBtn
                 icon={<ThumbsUp size={14} />}
                 onClick={() => setFeedback(f => f === "up" ? null : "up")}
                 active={feedback === "up"}
                 activeColor="var(--success)"
+                label="Good response"
               />
               <ActionBtn
                 icon={<ThumbsDown size={14} />}
                 onClick={() => setFeedback(f => f === "down" ? null : "down")}
                 active={feedback === "down"}
                 activeColor="var(--error)"
+                label="Bad response"
               />
             </div>
           )}
@@ -204,12 +218,13 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   );
 }
 
-function ActionBtn({ icon, onClick, active, activeColor }: {
-  icon: React.ReactNode; onClick: () => void; active?: boolean; activeColor?: string;
+function ActionBtn({ icon, onClick, active, activeColor, label }: {
+  icon: React.ReactNode; onClick: () => void; active?: boolean; activeColor?: string; label?: string;
 }) {
   return (
     <button
       onClick={onClick}
+      aria-label={label}
       style={{
         background: "none", border: "none", cursor: "pointer",
         padding: "4px 6px", borderRadius: 6, display: "flex",

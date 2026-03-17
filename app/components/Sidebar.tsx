@@ -47,6 +47,7 @@ export default function Sidebar({ mode, setMode, profileName, lang, rates, onNew
           onClick={onNewConversation}
           className="sidebar-icon-btn"
           style={{ justifyContent: "center" }}
+          aria-label="New conversation"
         >
           <PenSquare size={18} style={{ flexShrink: 0 }} />
           <span className="sidebar-label" style={{ fontSize: 13 }}>
@@ -134,6 +135,7 @@ export default function Sidebar({ mode, setMode, profileName, lang, rates, onNew
         <button
           onClick={onOpenSettings}
           className="sidebar-icon-btn"
+          aria-label="Settings"
         >
           <Settings size={18} style={{ flexShrink: 0 }} />
           <span className="sidebar-label">{t("sidebar.settings")}</span>

@@ -445,3 +445,20 @@ textarea, input, button {
 .hover-border:hover {
   border-color: var(--text-tertiary) !important;
 }
+
+/* ═══ Print ═══ */
+@media print {
+  .sidebar-rail,
+  [data-tour],
+  .toast,
+  .toast-container {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  main {
+    margin-left: 0 !important;
+  }
+}

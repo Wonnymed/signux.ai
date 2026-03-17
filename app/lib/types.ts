@@ -9,6 +9,7 @@ export type Message = {
   role: "user" | "assistant";
   content: string;
   attachments?: Attachment[];
+  timestamp?: number;
 };
 
 export type Toast = {

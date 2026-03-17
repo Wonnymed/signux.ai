@@ -180,6 +180,17 @@ export default function ChatPage() {
     }
   }, [router, addToast]);
 
+  /* ═══ Dynamic Page Title ═══ */
+  useEffect(() => {
+    const firstUserMsg = messages.find(m => m.role === "user");
+    if (firstUserMsg && firstUserMsg.content) {
+      const preview = firstUserMsg.content.slice(0, 50).trim();
+      document.title = `${preview}${firstUserMsg.content.length > 50 ? "…" : ""} — Signux`;
+    } else {
+      document.title = "Signux AI";
+    }
+  }, [messages]);
+
   /* ═══ Keyboard Shortcuts Effect ═══ */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -234,9 +245,11 @@ export default function ChatPage() {
       size: a.file.size,
     }));
 
+    const now = Date.now();
     const userMsg: Message = {
       role: "user",
       content: msg,
+      timestamp: now,
       ...(displayAttachments.length > 0 ? { attachments: displayAttachments } : {}),
     };
 
@@ -329,6 +342,15 @@ export default function ChatPage() {
         return u;
       });
     }
+    // Stamp assistant message with completion timestamp
+    setMessages(prev => {
+      const u = [...prev];
+      const last = u[u.length - 1];
+      if (last && last.role === "assistant") {
+        u[u.length - 1] = { ...last, timestamp: Date.now() };
+      }
+      return u;
+    });
     setLoading(false);
     setSearching(false);
     inputRef.current?.focus();
