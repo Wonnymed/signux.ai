@@ -1,7 +1,33 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { getProfile, updateProfile } from "./lib/profile";
+
+/* ═══ Toast System ═══ */
+type Toast = { id: number; message: string; type: "success" | "error" | "info"; dismissing?: boolean };
+let toastId = 0;
+
+function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: number) => void }) {
+  return (
+    <div className="toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast toast-${t.type}${t.dismissing ? " dismissing" : ""}`} onClick={() => onDismiss(t.id)}>
+          <span>{t.type === "success" ? "✓" : t.type === "error" ? "⚠" : "ℹ"}</span>
+          <span>{t.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══ Keyboard Shortcuts Modal ═══ */
+const SHORTCUTS = [
+  { keys: ["⌘", "K"], desc: "Focar no input" },
+  { keys: ["⌘", "⇧", "S"], desc: "Alternar Chat / Simulate" },
+  { keys: ["⌘", "N"], desc: "Nova conversa" },
+  { keys: ["Esc"], desc: "Fechar sidebar / modal" },
+  { keys: ["?"], desc: "Mostrar atalhos" },
+];
 
 const GOLD = "#C9A84C";
 const SERIF = "'Cormorant Garamond', serif";
@@ -97,8 +123,24 @@ export default function Home() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Record<number, string>>({});
   const [hoveredMsg, setHoveredMsg] = useState<number | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const addToast = useCallback((message: string, type: Toast["type"] = "success") => {
+    const id = ++toastId;
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, dismissing: true } : t));
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 300);
+    }, 3000);
+  }, []);
+
+  const dismissToast = useCallback((id: number) => {
+    setToasts(prev => prev.map(t => t.id === id ? { ...t, dismissing: true } : t));
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 300);
+  }, []);
 
   useEffect(() => {
     const profile = getProfile();
@@ -110,6 +152,33 @@ export default function Home() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+
+      if (meta && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      } else if (meta && e.shiftKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setMode(prev => prev === "chat" ? "simulate" : "chat");
+      } else if (meta && e.key === "n") {
+        e.preventDefault();
+        if (mode === "chat") { setMessages([]); } else { setSimResult(null); setSimScenario(""); setSimulating(false); }
+        addToast(mode === "chat" ? "Nova conversa" : "Nova simulação", "info");
+      } else if (e.key === "Escape") {
+        setSidebarOpen(false);
+        setShowShortcuts(false);
+      } else if (e.key === "?" && !e.metaKey && !e.ctrlKey && document.activeElement?.tagName !== "TEXTAREA" && document.activeElement?.tagName !== "INPUT") {
+        e.preventDefault();
+        setShowShortcuts(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [mode, addToast]);
 
   const send = async (text?: string) => {
     const msg = text || input.trim();
@@ -677,6 +746,10 @@ export default function Home() {
                 style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "rgba(255,255,255,0.15)", padding: 4, transition: "color 0.2s" }}
                 onMouseEnter={e => (e.currentTarget.style.color = GOLD)} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.15)")} title="Salvar conversa">↓</button>
             )}
+            <button onClick={() => setShowShortcuts(true)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: "2px 6px", cursor: "pointer", fontSize: 11, color: "rgba(255,255,255,0.15)", fontFamily: "'JetBrains Mono', monospace", transition: "all 0.2s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.15)"; e.currentTarget.style.color = GOLD; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.15)"; }}
+              title="Atalhos de teclado">?</button>
             <span style={{ fontSize: 9, padding: "3px 10px", borderRadius: 12, background: "rgba(201,168,76,0.08)", color: GOLD, letterSpacing: "0.08em", textTransform: "uppercase" }}>Beta</span>
           </div>
         </header>
@@ -687,8 +760,8 @@ export default function Home() {
             <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column" }} className="messages-area">
               {messages.length === 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, textAlign: "center", maxWidth: 600, margin: "0 auto", width: "100%" }}>
-                  <div className="welcome-title" style={{ fontSize: 28, fontFamily: SERIF, fontWeight: 300, color: "white", marginBottom: 4 }}>Olá, {profileName || "Operador"}.</div>
-                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.2)", marginBottom: 48 }}>O que quer resolver hoje?</div>
+                  <div className="welcome-title" style={{ fontSize: 28, fontFamily: SERIF, fontWeight: 300, color: "white", marginBottom: 4, animation: "fadeInUp 0.5s ease-out" }}>Olá, {profileName || "Operador"}.</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.2)", marginBottom: 48, animation: "fadeInUp 0.6s ease-out" }}>O que quer resolver hoje?</div>
                   <div className="suggestions-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%" }}>
                     {SUGGESTIONS.map(s => (
                       <div key={s} onClick={() => send(s)}
@@ -707,6 +780,7 @@ export default function Home() {
                       onMouseEnter={() => m.role === "assistant" && setHoveredMsg(i)}
                       onMouseLeave={() => setHoveredMsg(null)}
                       style={{
+                        animation: "fadeInUp 0.3s ease-out",
                         alignSelf: m.role === "user" ? "flex-end" : "flex-start",
                         maxWidth: m.role === "user" ? "70%" : "80%",
                         padding: m.role === "user" ? "14px 20px" : "20px 24px",
@@ -726,7 +800,7 @@ export default function Home() {
                           )}
                           {!(loading && i === messages.length - 1) && m.content && (
                             <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.03)", opacity: hoveredMsg === i || feedback[i] ? 1 : 0, transition: "opacity 0.2s" }}>
-                              <button onClick={() => { navigator.clipboard.writeText(m.content); setCopiedIndex(i); setTimeout(() => setCopiedIndex(null), 2000); }}
+                              <button onClick={() => { navigator.clipboard.writeText(m.content); setCopiedIndex(i); addToast("Copiado!", "success"); setTimeout(() => setCopiedIndex(null), 2000); }}
                                 style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", borderRadius: 6, display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: copiedIndex === i ? GOLD : "rgba(255,255,255,0.2)", transition: "all 0.2s" }} title="Copiar">
                                 <span>{copiedIndex === i ? "✓" : "📋"}</span>
                                 <span>{copiedIndex === i ? "Copiado" : "Copiar"}</span>
@@ -821,6 +895,30 @@ export default function Home() {
           .sim-meta-cards { display: grid !important; grid-template-columns: 1fr 1fr !important; }
         }
       `}</style>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Keyboard shortcuts modal */}
+      {showShortcuts && (
+        <>
+          <div onClick={() => setShowShortcuts(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, animation: "fadeIn 0.2s ease" }} />
+          <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 101, width: 360, padding: 28, borderRadius: 16, background: "#111", border: "1px solid rgba(255,255,255,0.08)", animation: "scaleIn 0.2s ease-out" }}>
+            <div style={{ fontSize: 15, fontFamily: SERIF, color: GOLD, marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Atalhos de teclado</span>
+              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+            </div>
+            {SHORTCUTS.map((s, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i < SHORTCUTS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{s.desc}</span>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {s.keys.map((k, j) => <span key={j} className="kbd">{k}</span>)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
