@@ -44,19 +44,50 @@ export default function ChatInput({ value, onChange, onSend, loading, placeholde
   const canSend = value.trim() && !loading;
 
   return (
-    <div style={{ width: "100%", maxWidth: 680, margin: "0 auto" }} data-tour="chat-input">
-      {/* Input container */}
+    <div style={{ width: "100%", maxWidth: 600, margin: "0 auto" }} data-tour="chat-input">
+      {/* Pill container */}
       <div
         style={{
           border: "1px solid var(--border-primary)",
-          borderRadius: "var(--radius-lg)",
+          borderRadius: "var(--radius-pill)",
           background: "var(--bg-input)",
           overflow: "hidden",
           transition: "border-color 0.15s",
         }}
       >
-        {/* Textarea */}
-        <div style={{ position: "relative" }}>
+        {/* Textarea row */}
+        <div style={{ display: "flex", alignItems: "flex-end" }}>
+          {/* Left toolbar icons */}
+          <div style={{ display: "flex", alignItems: "center", gap: 0, paddingLeft: 12, paddingBottom: 8, paddingTop: 8 }}>
+            <button
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                padding: 6, borderRadius: 6, display: "flex",
+                color: "var(--text-tertiary)", transition: "color 0.15s",
+              }}
+              aria-label="Attach file"
+            >
+              <Paperclip size={16} />
+            </button>
+            {onToggleSearch && (
+              <button
+                onClick={onToggleSearch}
+                style={{
+                  background: searchActive ? "var(--accent-bg)" : "none",
+                  border: searchActive ? "1px solid var(--accent)" : "none",
+                  cursor: "pointer",
+                  padding: 6, borderRadius: 6, display: "flex",
+                  color: searchActive ? "var(--accent)" : "var(--text-tertiary)",
+                  transition: "all 0.15s",
+                }}
+                aria-label="Web search"
+              >
+                <Search size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Textarea */}
           <textarea
             ref={ref}
             value={value}
@@ -65,9 +96,9 @@ export default function ChatInput({ value, onChange, onSend, loading, placeholde
             placeholder={placeholder || t("chat.placeholder")}
             rows={1}
             style={{
-              width: "100%",
+              flex: 1,
               resize: "none",
-              padding: "14px 48px 14px 16px",
+              padding: "12px 8px 12px 8px",
               background: "transparent",
               border: "none",
               color: "var(--text-primary)",
@@ -76,62 +107,29 @@ export default function ChatInput({ value, onChange, onSend, loading, placeholde
               lineHeight: 1.5,
             }}
           />
-          {/* Send button */}
-          <button
-            onClick={onSend}
-            disabled={!canSend}
-            style={{
-              position: "absolute",
-              right: 8,
-              bottom: 8,
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: canSend ? "var(--text-primary)" : "var(--bg-tertiary)",
-              border: "none",
-              cursor: canSend ? "pointer" : "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.15s",
-              color: canSend ? "var(--text-inverse)" : "var(--text-tertiary)",
-            }}
-          >
-            <ArrowUp size={16} />
-          </button>
-        </div>
 
-        {/* Action buttons row */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 2,
-          padding: "4px 8px 8px",
-        }}>
-          <button
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              padding: "6px 8px", borderRadius: 6, display: "flex",
-              color: "var(--text-tertiary)", transition: "color 0.15s",
-            }}
-            aria-label="Attach file"
-          >
-            <Paperclip size={18} />
-          </button>
-          {onToggleSearch && (
+          {/* Send button */}
+          <div style={{ paddingRight: 8, paddingBottom: 8, paddingTop: 8 }}>
             <button
-              onClick={onToggleSearch}
+              onClick={onSend}
+              disabled={!canSend}
               style={{
-                background: searchActive ? "var(--accent-bg)" : "none",
-                border: searchActive ? "1px solid var(--accent)" : "none",
-                cursor: "pointer",
-                padding: "6px 8px", borderRadius: 6, display: "flex",
-                color: searchActive ? "var(--accent)" : "var(--text-tertiary)",
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: canSend ? "var(--text-primary)" : "var(--bg-tertiary)",
+                border: "none",
+                cursor: canSend ? "pointer" : "not-allowed",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 transition: "all 0.15s",
+                color: canSend ? "var(--text-inverse)" : "var(--text-tertiary)",
               }}
-              aria-label="Web search"
             >
-              <Search size={18} />
+              <ArrowUp size={16} />
             </button>
-          )}
+          </div>
         </div>
       </div>
 

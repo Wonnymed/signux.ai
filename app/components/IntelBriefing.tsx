@@ -28,17 +28,18 @@ export default function IntelBriefing({ intelContent, intelLoading, intelTimesta
         padding: "40px 24px",
       }}>
         <div style={{ maxWidth: 520, width: "100%", textAlign: "center" }}>
-          {/* Title */}
+          {/* Branded header */}
           <div style={{
-            fontSize: 24, fontWeight: 500, color: "var(--text-primary)",
-            marginBottom: 8, animation: "fadeIn 0.4s ease-out",
+            fontSize: 36, fontWeight: 300, letterSpacing: "0.15em",
+            color: "var(--text-primary)", marginBottom: 8,
+            animation: "fadeIn 0.4s ease-out",
           }}>
-            {t("intel.title")}
+            INTEL
           </div>
 
           {/* Subtitle */}
           <div style={{
-            fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6,
+            fontSize: 14, color: "var(--text-tertiary)", lineHeight: 1.6,
             marginBottom: 40,
           }}>
             {t("intel.subtitle")}

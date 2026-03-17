@@ -12,30 +12,32 @@ type WelcomeScreenProps = {
   loading: boolean;
 };
 
-function getGreetingKey(): string {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "chat.greeting_morning";
-  if (hour >= 12 && hour < 18) return "chat.greeting_afternoon";
-  return "chat.greeting_evening";
-}
-
 export default function WelcomeScreen({ profileName, input, setInput, onSend, loading }: WelcomeScreenProps) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", flex: 1,
-      maxWidth: 680, margin: "0 auto", width: "100%", padding: "24px 24px 32px",
+      maxWidth: 640, margin: "0 auto", width: "100%", padding: "24px 24px 32px",
     }}>
-      {/* Time-based greeting — and nothing else */}
+      {/* Brand name — large, centered */}
       <div style={{
-        fontSize: 28, fontWeight: 400, color: "var(--text-primary)",
-        marginBottom: 40, animation: "fadeIn 0.4s ease-out",
+        fontSize: 44, fontWeight: 300, letterSpacing: "0.12em",
+        color: "var(--text-primary)", marginBottom: 8,
+        animation: "fadeIn 0.4s ease-out",
       }}>
-        {t(getGreetingKey(), { name: profileName })}
+        SIGNUX
       </div>
 
-      {/* Input */}
-      <div style={{ width: "100%", marginBottom: 16 }}>
+      {/* Subtitle */}
+      <div style={{
+        fontSize: 15, color: "var(--text-tertiary)", marginBottom: 48,
+        animation: "fadeIn 0.5s ease-out",
+      }}>
+        {t("chat.welcome_subtitle")}
+      </div>
+
+      {/* Input — compact pill */}
+      <div style={{ width: "100%", maxWidth: 600, marginBottom: 16 }}>
         <ChatInput
           value={input}
           onChange={setInput}
@@ -45,12 +47,12 @@ export default function WelcomeScreen({ profileName, input, setInput, onSend, lo
         />
       </div>
 
-      {/* Suggestion chips — horizontal row below input */}
+      {/* Suggestion chips */}
       <div
         style={{
           display: "flex", flexWrap: "wrap", gap: 8,
           justifyContent: "center", width: "100%",
-          animation: "fadeIn 0.5s ease-out",
+          animation: "fadeIn 0.6s ease-out",
         }}
       >
         {SUGGESTION_KEYS.map(key => (
@@ -58,7 +60,7 @@ export default function WelcomeScreen({ profileName, input, setInput, onSend, lo
             key={key}
             onClick={() => onSend(t(key))}
             style={{
-              padding: "8px 16px", borderRadius: "var(--radius-xl)",
+              padding: "8px 16px", borderRadius: "var(--radius-pill)",
               background: "transparent", border: "1px solid var(--border-secondary)",
               fontSize: 13, color: "var(--text-secondary)",
               cursor: "pointer", transition: "all 0.15s",

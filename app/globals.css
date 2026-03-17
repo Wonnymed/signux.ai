@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════════════════
-   SIGNUX AI — Design System
-   Claude.ai-level quality. Clean, minimal, professional.
+   SIGNUX AI — Design System (Grok × Okara Hybrid)
    ═══════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ═══ Light Mode (Default) ═══ */
 :root {
@@ -13,11 +12,11 @@
   --bg-message-user: #F5F5F5;
   --bg-message-ai: #FFFFFF;
   --bg-sidebar: #F9F9F9;
-  --bg-input: #FFFFFF;
+  --bg-input: #F5F5F5;
   --bg-hover: #F0F0F0;
   --bg-active: #E8E8E8;
 
-  --text-primary: #0D0D0D;
+  --text-primary: #0A0A0A;
   --text-secondary: #666666;
   --text-tertiary: #999999;
   --text-inverse: #FFFFFF;
@@ -38,38 +37,42 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+  --radius-pill: 9999px;
 
-  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
 
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
   --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+
+  --sidebar-collapsed: 52px;
+  --sidebar-expanded: 260px;
 }
 
 /* ═══ Dark Mode ═══ */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #1A1A1A;
-    --bg-secondary: #2A2A2A;
-    --bg-tertiary: #333333;
-    --bg-message-user: #2A2A2A;
-    --bg-message-ai: #1A1A1A;
-    --bg-sidebar: #171717;
-    --bg-input: #2A2A2A;
-    --bg-hover: #333333;
-    --bg-active: #404040;
+    --bg-primary: #0A0A0A;
+    --bg-secondary: #161616;
+    --bg-tertiary: #222222;
+    --bg-message-user: #161616;
+    --bg-message-ai: #0A0A0A;
+    --bg-sidebar: #0F0F0F;
+    --bg-input: #161616;
+    --bg-hover: #1A1A1A;
+    --bg-active: #2A2A2A;
 
-    --text-primary: #ECECEC;
+    --text-primary: #FFFFFF;
     --text-secondary: #A0A0A0;
     --text-tertiary: #666666;
 
-    --border-primary: #333333;
-    --border-secondary: #2A2A2A;
+    --border-primary: #222222;
+    --border-secondary: #1A1A1A;
 
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
-    --shadow-md: 0 2px 8px rgba(0,0,0,0.3);
-    --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.4);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.5);
   }
 }
 
@@ -81,10 +84,10 @@
   --bg-message-user: #F5F5F5;
   --bg-message-ai: #FFFFFF;
   --bg-sidebar: #F9F9F9;
-  --bg-input: #FFFFFF;
+  --bg-input: #F5F5F5;
   --bg-hover: #F0F0F0;
   --bg-active: #E8E8E8;
-  --text-primary: #0D0D0D;
+  --text-primary: #0A0A0A;
   --text-secondary: #666666;
   --text-tertiary: #999999;
   --text-inverse: #FFFFFF;
@@ -97,24 +100,24 @@
 
 /* ═══ Forced Dark Mode ═══ */
 [data-theme="dark"] {
-  --bg-primary: #1A1A1A;
-  --bg-secondary: #2A2A2A;
-  --bg-tertiary: #333333;
-  --bg-message-user: #2A2A2A;
-  --bg-message-ai: #1A1A1A;
-  --bg-sidebar: #171717;
-  --bg-input: #2A2A2A;
-  --bg-hover: #333333;
-  --bg-active: #404040;
-  --text-primary: #ECECEC;
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #161616;
+  --bg-tertiary: #222222;
+  --bg-message-user: #161616;
+  --bg-message-ai: #0A0A0A;
+  --bg-sidebar: #0F0F0F;
+  --bg-input: #161616;
+  --bg-hover: #1A1A1A;
+  --bg-active: #2A2A2A;
+  --text-primary: #FFFFFF;
   --text-secondary: #A0A0A0;
   --text-tertiary: #666666;
   --text-inverse: #FFFFFF;
-  --border-primary: #333333;
-  --border-secondary: #2A2A2A;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+  --border-primary: #222222;
+  --border-secondary: #1A1A1A;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.5);
 }
 
 /* ═══ Base ═══ */
@@ -340,21 +343,74 @@ textarea, input, button {
 .prose a:hover { text-decoration: underline; }
 .prose hr { border: none; border-top: 1px solid var(--border-secondary); margin: 16px 0; }
 
-/* ═══ Sidebar ═══ */
-.sidebar {
+/* ═══ Sidebar — Always visible, collapsed by default ═══ */
+.sidebar-rail {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 260px;
+  width: var(--sidebar-collapsed);
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-secondary);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   z-index: 50;
   overflow: hidden;
-  animation: slideInLeft 0.2s ease-out;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-rail:hover,
+.sidebar-rail.sidebar-expanded {
+  width: var(--sidebar-expanded);
+}
+
+.sidebar-rail .sidebar-label {
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+  overflow: hidden;
+}
+
+.sidebar-rail:hover .sidebar-label,
+.sidebar-rail.sidebar-expanded .sidebar-label {
+  opacity: 1;
+}
+
+.sidebar-rail .sidebar-logo-text {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-rail:hover .sidebar-logo-text,
+.sidebar-rail.sidebar-expanded .sidebar-logo-text {
+  opacity: 1;
+}
+
+.sidebar-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  transition: all 0.15s;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+}
+
+.sidebar-icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-icon-btn.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .sidebar-history-item:hover {
@@ -367,7 +423,12 @@ textarea, input, button {
 
 /* ═══ Mobile ═══ */
 @media (max-width: 768px) {
-  .sidebar {
+  .sidebar-rail {
+    width: 0;
+    border-right: none;
+  }
+  .sidebar-rail:hover,
+  .sidebar-rail.sidebar-expanded {
     width: 280px;
     box-shadow: var(--shadow-lg);
   }

@@ -131,6 +131,7 @@ const no: Record<string, string> = {
   "settings.cancel": "Avbryt",
   "settings.delete": "Slett",
   "settings.saved": "Innstillinger lagret",
+  "settings.replay_tutorial": "Spill av veiledning på nytt",
 
   // SIMULATION (additional)
   "sim.complete": "Simulering fullført",
@@ -159,6 +160,23 @@ const no: Record<string, string> = {
   "intel.risk.medium": "Middels Risiko",
   "intel.risk.high": "H\u00f8y Risiko",
   "intel.risk.critical": "Kritisk",
+  // TOUR
+  "tour.step1.title": "Sp\u00f8r om hva som helst",
+  "tour.step1.desc": "Signux kombinerer ekspertise innen offshore-strukturering, Kina-operasjoner, krypto-sikkerhet, geopolitikk og over 20 andre omr\u00e5der. Bare skriv sp\u00f8rsm\u00e5let ditt.",
+  "tour.step2.title": "Ditt arbeidsomr\u00e5de",
+  "tour.step2.desc": "F\u00e5 tilgang til samtalehistorikken din, bytt modus og administrer profilen din her.",
+  "tour.step3.title": "\u00d8kosystem-simulering",
+  "tour.step3.desc": "Beskriv et forretningsscenario, og Signux setter inn over 15 spesialiserte agenter for \u00e5 simulere hele operasjonen din og levere en GO/NO-GO vurdering.",
+  "tour.step3.recommended": "Anbefalt",
+  "tour.step4.title": "Etterretningsbriefing",
+  "tour.step4.desc": "F\u00e5 en sanntidsbriefing om globale hendelser som p\u00e5virker operasjonene dine \u2014 reguleringsendringer, markedsbevegelser og geopolitiske skifter.",
+  "tour.step5.title": "Tilpass opplevelsen din",
+  "tour.step5.desc": "Sett spr\u00e5ket ditt, fortell Signux om virksomheten din og tilpass hvordan det svarer.",
+  "tour.skip": "Hopp over",
+  "tour.next": "Neste",
+  "tour.finish": "Kom i gang",
+  "tour.step_of": "{current} av {total}",
+
   "intel.focus.geopolitics": "Geopolitikk",
   "intel.focus.regulations": "Reguleringer",
   "intel.focus.markets": "Markeder",

@@ -138,6 +138,7 @@ const tr: Record<string, string> = {
   "settings.cancel": "İptal",
   "settings.delete": "Sil",
   "settings.saved": "Ayarlar kaydedildi",
+  "settings.replay_tutorial": "Rehberi tekrar oynat",
 
   // SIMULATION (additional)
   "sim.complete": "Simülasyon Tamamlandı",
@@ -167,6 +168,23 @@ const tr: Record<string, string> = {
   "intel.risk.medium": "Orta Risk",
   "intel.risk.high": "Y\u00fcksek Risk",
   "intel.risk.critical": "Kritik",
+  // TOUR
+  "tour.step1.title": "Her \u015feyi sorun",
+  "tour.step1.desc": "Signux, offshore yap\u0131land\u0131rma, \u00c7in operasyonlar\u0131, kripto g\u00fcvenli\u011fi, jeopolitik ve 20'den fazla alanda uzmanl\u0131\u011f\u0131 bir araya getirir. Sadece sorunuzu yaz\u0131n.",
+  "tour.step2.title": "\u00c7al\u0131\u015fma alan\u0131n\u0131z",
+  "tour.step2.desc": "Sohbet ge\u00e7mi\u015finize eri\u015fin, modlar\u0131 de\u011fi\u015ftirin ve profilinizi buradan y\u00f6netin.",
+  "tour.step3.title": "Ekosistem Sim\u00fclasyonu",
+  "tour.step3.desc": "Bir i\u015f senaryosu tan\u0131mlay\u0131n ve Signux t\u00fcm operasyonunuzu sim\u00fcle etmek i\u00e7in 15'ten fazla uzman ajan\u0131 devreye sokarak GO/NO-GO karar\u0131 verir.",
+  "tour.step3.recommended": "\u00d6nerilen",
+  "tour.step4.title": "\u0130stihbarat Brifing",
+  "tour.step4.desc": "Operasyonlar\u0131n\u0131z\u0131 etkileyen k\u00fcresel olaylar hakk\u0131nda ger\u00e7ek zamanl\u0131 brifing al\u0131n \u2014 d\u00fczenleyici de\u011fi\u015fiklikler, piyasa hareketleri ve jeopolitik kayma.",
+  "tour.step5.title": "Deneyiminizi ki\u015fiselle\u015ftirin",
+  "tour.step5.desc": "Dilinizi ayarlay\u0131n, Signux'a i\u015finiz hakk\u0131nda bilgi verin ve yan\u0131t tarz\u0131n\u0131 \u00f6zelle\u015ftirin.",
+  "tour.skip": "Atla",
+  "tour.next": "Sonraki",
+  "tour.finish": "Ba\u015fla",
+  "tour.step_of": "{current} / {total}",
+
   "intel.focus.geopolitics": "Jeopolitik",
   "intel.focus.regulations": "D\u00fczenlemeler",
   "intel.focus.markets": "Piyasalar",

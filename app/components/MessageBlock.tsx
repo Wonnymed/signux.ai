@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ClipboardCopy, Check, RotateCcw, ThumbsUp, ThumbsDown, Sparkles, Search } from "lucide-react";
+import { ClipboardCopy, Check, RotateCcw, ThumbsUp, ThumbsDown, Search } from "lucide-react";
 import { t } from "../lib/i18n";
 import MarkdownRenderer from "./MarkdownRenderer";
 
@@ -34,97 +34,84 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ padding: "24px 0" }}
+      style={{ padding: "20px 0" }}
     >
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px", display: "flex", gap: 14, alignItems: "flex-start" }}>
-        {/* Avatar */}
-        <div style={{
-          width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 2,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          ...(isUser
-            ? { background: "var(--accent-bg)", fontSize: 10, fontWeight: 600, color: "var(--accent)" }
-            : { background: "var(--bg-secondary)", color: "var(--text-secondary)", border: "1px solid var(--border-secondary)" }),
-        }}>
-          {isUser ? userInitials : <Sparkles size={14} />}
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 24px" }}>
+        {/* Sender label */}
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-tertiary)", marginBottom: 6, letterSpacing: "0.02em" }}>
+          {isUser ? t("common.you") : "Signux"}
         </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>
-            {isUser ? t("common.you") : "Signux"}
+        {/* Loading state */}
+        {!isUser && isEmpty && isStreaming && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-tertiary)", marginTop: 4 }}>
+            {searching ? (
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                <Search size={14} className="spinner" />
+                {t("chat.searching")}
+              </span>
+            ) : (
+              <span className="loading-dots"><span /><span /><span /></span>
+            )}
           </div>
+        )}
 
-          {/* Loading state */}
-          {!isUser && isEmpty && isStreaming && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-tertiary)", marginTop: 4 }}>
-              {searching ? (
-                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
-                  <Search size={14} className="spinner" />
-                  {t("chat.searching")}
-                </span>
-              ) : (
-                <span className="loading-dots"><span /><span /><span /></span>
-              )}
-            </div>
-          )}
+        {/* Message content */}
+        {message.content && (
+          <div style={{ fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", wordBreak: "break-word" }}>
+            {isUser ? (
+              <span style={{ whiteSpace: "pre-wrap" }}>{message.content}</span>
+            ) : (
+              <>
+                {searching && isStreaming && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-tertiary)", marginBottom: 8 }}>
+                    <Search size={14} className="spinner" />
+                    {t("chat.searching")}
+                  </div>
+                )}
+                <MarkdownRenderer content={message.content} />
+                {isStreaming && (
+                  <span style={{
+                    display: "inline-block", width: 2, height: 16,
+                    background: "var(--text-primary)", marginLeft: 2,
+                    animation: "blink 1s infinite", verticalAlign: "text-bottom",
+                  }} />
+                )}
+              </>
+            )}
+          </div>
+        )}
 
-          {/* Message content */}
-          {message.content && (
-            <div style={{ fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", wordBreak: "break-word" }}>
-              {isUser ? (
-                <span style={{ whiteSpace: "pre-wrap" }}>{message.content}</span>
-              ) : (
-                <>
-                  {searching && isStreaming && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-tertiary)", marginBottom: 8 }}>
-                      <Search size={14} className="spinner" />
-                      {t("chat.searching")}
-                    </div>
-                  )}
-                  <MarkdownRenderer content={message.content} />
-                  {isStreaming && (
-                    <span style={{
-                      display: "inline-block", width: 2, height: 16,
-                      background: "var(--text-primary)", marginLeft: 2,
-                      animation: "blink 1s infinite", verticalAlign: "text-bottom",
-                    }} />
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Actions — icons only, on hover */}
-          {!isUser && !isStreaming && message.content && (
-            <div style={{
-              display: "flex", gap: 2, marginTop: 8,
-              opacity: hovered || feedback ? 1 : 0,
-              transition: "opacity 0.15s",
-            }}>
-              <ActionBtn
-                icon={copied ? <Check size={16} /> : <ClipboardCopy size={16} />}
-                onClick={handleCopy}
-                active={copied}
-                activeColor="var(--success)"
-              />
-              {isLast && onRetry && (
-                <ActionBtn icon={<RotateCcw size={16} />} onClick={onRetry} />
-              )}
-              <ActionBtn
-                icon={<ThumbsUp size={16} />}
-                onClick={() => setFeedback(f => f === "up" ? null : "up")}
-                active={feedback === "up"}
-                activeColor="var(--success)"
-              />
-              <ActionBtn
-                icon={<ThumbsDown size={16} />}
-                onClick={() => setFeedback(f => f === "down" ? null : "down")}
-                active={feedback === "down"}
-                activeColor="var(--error)"
-              />
-            </div>
-          )}
-        </div>
+        {/* Actions — on hover, no avatars */}
+        {!isUser && !isStreaming && message.content && (
+          <div style={{
+            display: "flex", gap: 2, marginTop: 8,
+            opacity: hovered || feedback ? 1 : 0,
+            transition: "opacity 0.15s",
+          }}>
+            <ActionBtn
+              icon={copied ? <Check size={14} /> : <ClipboardCopy size={14} />}
+              onClick={handleCopy}
+              active={copied}
+              activeColor="var(--success)"
+            />
+            {isLast && onRetry && (
+              <ActionBtn icon={<RotateCcw size={14} />} onClick={onRetry} />
+            )}
+            <ActionBtn
+              icon={<ThumbsUp size={14} />}
+              onClick={() => setFeedback(f => f === "up" ? null : "up")}
+              active={feedback === "up"}
+              activeColor="var(--success)"
+            />
+            <ActionBtn
+              icon={<ThumbsDown size={14} />}
+              onClick={() => setFeedback(f => f === "down" ? null : "down")}
+              active={feedback === "down"}
+              activeColor="var(--error)"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

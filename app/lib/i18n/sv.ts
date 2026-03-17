@@ -131,6 +131,7 @@ const sv: Record<string, string> = {
   "settings.cancel": "Avbryt",
   "settings.delete": "Radera",
   "settings.saved": "Inställningar sparade",
+  "settings.replay_tutorial": "Spela upp guiden igen",
 
   // SIMULATION (additional)
   "sim.complete": "Simulering slutförd",
@@ -159,6 +160,23 @@ const sv: Record<string, string> = {
   "intel.risk.medium": "Medel Risk",
   "intel.risk.high": "H\u00f6g Risk",
   "intel.risk.critical": "Kritisk",
+  // TOUR
+  "tour.step1.title": "Fr\u00e5ga vad som helst",
+  "tour.step1.desc": "Signux kombinerar expertis inom offshore-strukturering, Kina-verksamhet, krypto-s\u00e4kerhet, geopolitik och \u00f6ver 20 andra omr\u00e5den. Skriv bara din fr\u00e5ga.",
+  "tour.step2.title": "Din arbetsyta",
+  "tour.step2.desc": "F\u00e5 tillg\u00e5ng till din konversationshistorik, byt l\u00e4ge och hantera din profil h\u00e4r.",
+  "tour.step3.title": "Ekosystemsimulering",
+  "tour.step3.desc": "Beskriv ett aff\u00e4rsscenario och Signux anv\u00e4nder \u00f6ver 15 specialiserade agenter f\u00f6r att simulera hela din verksamhet och leverera ett GO/NO-GO-utl\u00e5tande.",
+  "tour.step3.recommended": "Rekommenderat",
+  "tour.step4.title": "Underr\u00e4ttelsebriefing",
+  "tour.step4.desc": "F\u00e5 en realtidsbriefing om globala h\u00e4ndelser som p\u00e5verkar din verksamhet \u2014 regulatoriska f\u00f6r\u00e4ndringar, marknadsrr\u00f6relser och geopolitiska skiften.",
+  "tour.step5.title": "Anpassa din upplevelse",
+  "tour.step5.desc": "St\u00e4ll in ditt spr\u00e5k, ber\u00e4tta f\u00f6r Signux om ditt f\u00f6retag och anpassa hur det svarar.",
+  "tour.skip": "Hoppa \u00f6ver",
+  "tour.next": "N\u00e4sta",
+  "tour.finish": "Kom ig\u00e5ng",
+  "tour.step_of": "{current} av {total}",
+
   "intel.focus.geopolitics": "Geopolitik",
   "intel.focus.regulations": "Regleringar",
   "intel.focus.markets": "Marknader",

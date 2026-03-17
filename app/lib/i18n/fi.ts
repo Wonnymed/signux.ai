@@ -131,6 +131,7 @@ const fi: Record<string, string> = {
   "settings.cancel": "Peruuta",
   "settings.delete": "Poista",
   "settings.saved": "Asetukset tallennettu",
+  "settings.replay_tutorial": "Toista opastus uudelleen",
 
   // SIMULATION (additional)
   "sim.complete": "Simulaatio valmis",
@@ -159,6 +160,23 @@ const fi: Record<string, string> = {
   "intel.risk.medium": "Keskitason Riski",
   "intel.risk.high": "Korkea Riski",
   "intel.risk.critical": "Kriittinen",
+  // TOUR
+  "tour.step1.title": "Kysy mit\u00e4 tahansa",
+  "tour.step1.desc": "Signux yhdist\u00e4\u00e4 asiantuntemuksen offshore-rakenteissa, Kiinan toiminnoissa, krypto-turvallisuudessa, geopolitiikassa ja yli 20 muussa aihepiiriss\u00e4. Kirjoita vain kysymyksesi.",
+  "tour.step2.title": "Ty\u00f6tilasi",
+  "tour.step2.desc": "P\u00e4\u00e4se keskusteluhistoriaasi, vaihda tilaa ja hallitse profiiliasi t\u00e4\u00e4lt\u00e4.",
+  "tour.step3.title": "Ekosysteemisimulaatio",
+  "tour.step3.desc": "Kuvaile liiketoimintaskenaario ja Signux ottaa k\u00e4ytt\u00f6\u00f6n yli 15 erikoistunutta agenttia simuloidakseen koko toimintaasi ja antaakseen GO/NO-GO-tuomion.",
+  "tour.step3.recommended": "Suositeltu",
+  "tour.step4.title": "Tiedustelubrief",
+  "tour.step4.desc": "Saat reaaliaikaisen briefin globaaleista tapahtumista, jotka vaikuttavat toimintaasi \u2014 s\u00e4\u00e4ntelymuutokset, markkinaliikkeet ja geopoliittiset muutokset.",
+  "tour.step5.title": "Mukauta kokemustasi",
+  "tour.step5.desc": "Aseta kielesi, kerro Signuxille liiketoiminnastasi ja mukauta vastaamistapaa.",
+  "tour.skip": "Ohita",
+  "tour.next": "Seuraava",
+  "tour.finish": "Aloita",
+  "tour.step_of": "{current} / {total}",
+
   "intel.focus.geopolitics": "Geopolitiikka",
   "intel.focus.regulations": "S\u00e4\u00e4ntely",
   "intel.focus.markets": "Markkinat",

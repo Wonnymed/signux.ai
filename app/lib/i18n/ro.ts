@@ -131,6 +131,7 @@ const ro: Record<string, string> = {
   "settings.cancel": "Anulare",
   "settings.delete": "Șterge",
   "settings.saved": "Setări salvate",
+  "settings.replay_tutorial": "Redă tutorialul din nou",
 
   // SIMULATION (additional)
   "sim.complete": "Simulare finalizată",

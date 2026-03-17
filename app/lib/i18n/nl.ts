@@ -146,6 +146,7 @@ const nl: Record<string, string> = {
   "settings.cancel": "Annuleren",
   "settings.delete": "Verwijderen",
   "settings.saved": "Instellingen opgeslagen",
+  "settings.replay_tutorial": "Tutorial opnieuw afspelen",
 
   // SIMULATION (additional)
   "sim.complete": "Simulatie voltooid",
@@ -177,6 +178,23 @@ const nl: Record<string, string> = {
   "intel.risk.medium": "Gemiddeld risico",
   "intel.risk.high": "Hoog risico",
   "intel.risk.critical": "Kritiek",
+  // TOUR
+  "tour.step1.title": "Vraag wat je wilt",
+  "tour.step1.desc": "Signux combineert expertise in offshore-structurering, China-operaties, crypto-beveiliging, geopolitiek en meer dan 20 andere domeinen. Typ gewoon je vraag.",
+  "tour.step2.title": "Jouw werkruimte",
+  "tour.step2.desc": "Toegang tot je gespreksgeschiedenis, wissel van modus en beheer je profiel hier.",
+  "tour.step3.title": "Ecosysteem Simulatie",
+  "tour.step3.desc": "Beschrijf een bedrijfsscenario en Signux zet meer dan 15 specialistische agenten in om je hele operatie te simuleren en een GO/NO-GO oordeel te geven.",
+  "tour.step3.recommended": "Aanbevolen",
+  "tour.step4.title": "Intelligence Briefing",
+  "tour.step4.desc": "Ontvang een realtime briefing over wereldwijde gebeurtenissen die je operaties be\u00efnvloeden \u2014 regelgevingswijzigingen, marktbewegingen en geopolitieke verschuivingen.",
+  "tour.step5.title": "Personaliseer je ervaring",
+  "tour.step5.desc": "Stel je taal in, vertel Signux over je bedrijf en pas de manier van reageren aan.",
+  "tour.skip": "Overslaan",
+  "tour.next": "Volgende",
+  "tour.finish": "Aan de slag",
+  "tour.step_of": "{current} van {total}",
+
   "intel.focus.geopolitics": "Geopolitiek",
   "intel.focus.regulations": "Regelgeving",
   "intel.focus.markets": "Markten",

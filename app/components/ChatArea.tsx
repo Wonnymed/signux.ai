@@ -37,7 +37,7 @@ export default function ChatArea({ messages, loading, searching, input, setInput
     return () => area.removeEventListener("scroll", onScroll);
   }, [messages.length]);
 
-  /* Welcome state — centered input, no fixed bottom bar */
+  /* Welcome state */
   if (messages.length === 0) {
     return (
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
@@ -52,7 +52,7 @@ export default function ChatArea({ messages, loading, searching, input, setInput
     );
   }
 
-  /* Chat state — messages + fixed input at bottom */
+  /* Chat state */
   return (
     <>
       <div ref={areaRef} style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", position: "relative" }}>
@@ -91,19 +91,15 @@ export default function ChatArea({ messages, loading, searching, input, setInput
         )}
       </div>
 
-      {/* Fixed input at bottom with gradient fade */}
+      {/* Fixed input at bottom */}
       <div style={{
         flexShrink: 0,
         background: "var(--bg-primary)",
         position: "relative",
       }}>
-        {/* Gradient fade overlay */}
         <div style={{
           position: "absolute",
-          top: -32,
-          left: 0,
-          right: 0,
-          height: 32,
+          top: -32, left: 0, right: 0, height: 32,
           background: "linear-gradient(to bottom, transparent, var(--bg-primary))",
           pointerEvents: "none",
         }} />

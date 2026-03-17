@@ -171,35 +171,35 @@ export default function SettingsModal({ onClose, onLanguageChange, onNameChange 
           </button>
         </div>
 
-        {/* Body with sidebar tabs */}
-        <div style={{ display: "flex", flex: 1, minHeight: 0, padding: "16px 0 0" }}>
-          {/* Tab sidebar */}
-          <div style={{
-            width: 160, flexShrink: 0, padding: "0 12px",
-            display: "flex", flexDirection: "column", gap: 2,
-          }}>
-            {tabs.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                style={{
-                  padding: "8px 12px", borderRadius: "var(--radius-sm)",
-                  border: "none", cursor: "pointer", fontSize: 13,
-                  textAlign: "left", transition: "all 0.15s",
-                  background: tab === t.key ? "var(--bg-hover)" : "transparent",
-                  color: tab === t.key ? "var(--text-primary)" : "var(--text-secondary)",
-                  fontWeight: tab === t.key ? 500 : 400,
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+        {/* Horizontal tabs */}
+        <div style={{
+          display: "flex", gap: 0, padding: "12px 24px 0",
+          borderBottom: "1px solid var(--border-secondary)",
+        }}>
+          {tabs.map(tb => (
+            <button
+              key={tb.key}
+              onClick={() => setTab(tb.key)}
+              style={{
+                padding: "10px 20px", border: "none", cursor: "pointer",
+                fontSize: 13, transition: "all 0.15s", background: "none",
+                color: tab === tb.key ? "var(--text-primary)" : "var(--text-tertiary)",
+                fontWeight: tab === tb.key ? 500 : 400,
+                borderBottom: tab === tb.key ? "2px solid var(--text-primary)" : "2px solid transparent",
+                marginBottom: -1,
+              }}
+            >
+              {tb.label}
+            </button>
+          ))}
+        </div>
 
+        {/* Body */}
+        <div style={{ flex: 1, minHeight: 0 }}>
           {/* Content */}
           <div style={{
-            flex: 1, overflowY: "auto", padding: "0 24px 24px 12px",
-            minHeight: 0,
+            overflowY: "auto", padding: "20px 24px 24px",
+            minHeight: 0, maxHeight: "calc(80vh - 120px)",
           }}>
             {/* GENERAL TAB */}
             {tab === "general" && (

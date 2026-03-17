@@ -131,6 +131,7 @@ const hu: Record<string, string> = {
   "settings.cancel": "Mégse",
   "settings.delete": "Törlés",
   "settings.saved": "Beállítások mentve",
+  "settings.replay_tutorial": "Bemutató újrajátszása",
 
   // SIMULATION (additional)
   "sim.complete": "Szimuláció befejezve",
@@ -159,6 +160,23 @@ const hu: Record<string, string> = {
   "intel.risk.medium": "K\u00f6zepes Kock\u00e1zat",
   "intel.risk.high": "Magas Kock\u00e1zat",
   "intel.risk.critical": "Kritikus",
+  // TOUR
+  "tour.step1.title": "K\u00e9rdezzen b\u00e1rmit",
+  "tour.step1.desc": "A Signux \u00f6tv\u00f6zi a szakértelmet offshore strukturálásban, kínai műveletekben, kriptobiztonságban, geopolitikában és több mint 20 más területen. Csak írja be kérdését.",
+  "tour.step2.title": "Munkaterülete",
+  "tour.step2.desc": "Hozzáférés a besz\u00e9lget\u00e9si el\u0151zm\u00e9nyekhez, m\u00f3dváltás és profilkezel\u00e9s itt.",
+  "tour.step3.title": "\u00d6kosziszt\u00e9ma szimul\u00e1ci\u00f3",
+  "tour.step3.desc": "\u00cdrjon le egy \u00fczleti forgatókönyvet, és a Signux több mint 15 szakértő ágenst vet be a teljes művelet szimulálására, GO/NO-GO ítélettel.",
+  "tour.step3.recommended": "Ajánlott",
+  "tour.step4.title": "H\u00edrszerz\u00e9si T\u00e1j\u00e9koztat\u00f3",
+  "tour.step4.desc": "Kapjon val\u00f3s idejű tájékoztatót a műveleteit érintő globális eseményekről — szabályozási változások, piaci mozgások és geopolitikai elmozdulások.",
+  "tour.step5.title": "Szem\u00e9lyre szabás",
+  "tour.step5.desc": "Állítsa be a nyelvét, meséljen a Signuxnak vállalkozásáról és szabja testre a válaszok stílusát.",
+  "tour.skip": "Kihagyás",
+  "tour.next": "Következő",
+  "tour.finish": "Kezdés",
+  "tour.step_of": "{current} / {total}",
+
   "intel.focus.geopolitics": "Geopolitika",
   "intel.focus.regulations": "Szab\u00e1lyoz\u00e1sok",
   "intel.focus.markets": "Piacok",

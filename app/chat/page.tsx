@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { getProfile } from "../lib/profile";
 import { t, Language, setLanguage } from "../lib/i18n";
 import type { Message, Toast, SimAgent, SimResult, Mode } from "../lib/types";
-import { Check, AlertTriangle, Info, PanelLeft } from "lucide-react";
+import { Check, AlertTriangle, Info } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
 import SimulationEngine from "../components/SimulationEngine";
@@ -42,7 +42,6 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [lang, setLang] = useState<Language>("en");
   const [rates, setRates] = useState<any>(null);
@@ -137,7 +136,6 @@ export default function ChatPage() {
         }
         addToast(mode === "chat" ? t("sidebar.new_chat") : t("sidebar.new_simulation"), "info");
       } else if (e.key === "Escape") {
-        setSidebarOpen(false);
         setShowSettings(false);
       } else if (e.key === "?" && !e.metaKey && !e.ctrlKey && document.activeElement?.tagName !== "TEXTAREA" && document.activeElement?.tagName !== "INPUT") {
         e.preventDefault();
@@ -376,51 +374,23 @@ export default function ChatPage() {
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      {/* Overlay when sidebar is open */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)",
-            zIndex: 40, animation: "fadeIn 0.15s ease",
-          }}
-        />
-      )}
+      {/* Sidebar — always visible */}
+      <Sidebar
+        mode={mode}
+        setMode={setMode}
+        profileName={profileName}
+        lang={lang}
+        rates={rates}
+        onNewConversation={onNewConversation}
+        onOpenSettings={() => setShowSettings(true)}
+      />
 
-      {/* Sidebar — hidden by default, shown when open */}
-      {sidebarOpen && (
-        <Sidebar
-          mode={mode}
-          setMode={setMode}
-          profileName={profileName}
-          lang={lang}
-          rates={rates}
-          onNewConversation={onNewConversation}
-          onOpenSettings={() => setShowSettings(true)}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", background: "var(--bg-primary)", minWidth: 0 }}>
-        {/* Hamburger menu — top-left when sidebar is closed */}
-        {!sidebarOpen && (
-          <div style={{
-            position: "absolute", top: 12, left: 12, zIndex: 10,
-          }}>
-            <button
-              onClick={() => setSidebarOpen(true)}
-              data-tour="sidebar-toggle"
-              style={{
-                background: "none", border: "none", color: "var(--text-tertiary)",
-                cursor: "pointer", display: "flex", padding: 6, borderRadius: 6,
-              }}
-            >
-              <PanelLeft size={20} />
-            </button>
-          </div>
-        )}
-
+      <main style={{
+        flex: 1, display: "flex", flexDirection: "column",
+        background: "var(--bg-primary)", minWidth: 0,
+        marginLeft: "var(--sidebar-collapsed)",
+        transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+      }}>
         {mode === "intel" ? (
           <IntelBriefing
             intelContent={intelContent}
@@ -470,8 +440,14 @@ export default function ChatPage() {
       {showTour && (
         <OnboardingTour
           onComplete={() => setShowTour(false)}
-          onOpenSidebar={() => setSidebarOpen(true)}
-          onCloseSidebar={() => setSidebarOpen(false)}
+          onOpenSidebar={() => {
+            const rail = document.querySelector('.sidebar-rail');
+            if (rail) rail.classList.add('sidebar-expanded');
+          }}
+          onCloseSidebar={() => {
+            const rail = document.querySelector('.sidebar-rail');
+            if (rail) rail.classList.remove('sidebar-expanded');
+          }}
         />
       )}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

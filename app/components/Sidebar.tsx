@@ -1,5 +1,5 @@
 "use client";
-import { PanelLeft, PenSquare, MessageSquare, Zap, Globe, Settings } from "lucide-react";
+import { PenSquare, MessageSquare, Zap, Globe, Settings } from "lucide-react";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
 
@@ -16,75 +16,83 @@ type SidebarProps = {
   rates: any;
   onNewConversation: () => void;
   onOpenSettings: () => void;
-  open: boolean;
-  onClose: () => void;
 };
 
-export default function Sidebar({ mode, setMode, profileName, lang, rates, onNewConversation, onOpenSettings, open, onClose }: SidebarProps) {
+export default function Sidebar({ mode, setMode, profileName, lang, rates, onNewConversation, onOpenSettings }: SidebarProps) {
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "OP";
 
   return (
-    <aside className="sidebar" style={{ padding: "12px 10px", display: "flex", flexDirection: "column" }}>
-      {/* Top row: close button + logo */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 6px", marginBottom: 12 }}>
-        <button
-          onClick={onClose}
-          style={{ background: "none", border: "none", color: "var(--text-tertiary)", cursor: "pointer", display: "flex", padding: 4, borderRadius: 6 }}
-        >
-          <PanelLeft size={18} />
-        </button>
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", color: "var(--text-secondary)" }}>Signux</span>
+    <aside className="sidebar-rail">
+      {/* Logo area */}
+      <div style={{ padding: "16px 14px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{
+          width: 24, height: 24, borderRadius: 6,
+          background: "var(--accent)", display: "flex",
+          alignItems: "center", justifyContent: "center",
+          fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0,
+        }}>
+          S
+        </div>
+        <span className="sidebar-logo-text" style={{
+          fontSize: 13, fontWeight: 600, letterSpacing: "0.1em",
+          color: "var(--text-secondary)",
+        }}>
+          SIGNUX
+        </span>
       </div>
 
       {/* New chat */}
-      <button
-        onClick={() => { onNewConversation(); onClose(); }}
-        className="hover-border"
-        style={{
-          width: "100%", fontSize: 13, color: "var(--text-secondary)", cursor: "pointer",
-          padding: "10px 12px", background: "none", border: "1px solid var(--border-secondary)",
-          borderRadius: "var(--radius-sm)", textAlign: "left", marginBottom: 14,
-          display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s",
-        }}
-      >
-        <PenSquare size={14} />
-        {mode === "chat" ? t("sidebar.new_chat") : t("sidebar.new_simulation")}
-      </button>
+      <div style={{ padding: "0 8px 8px" }}>
+        <button
+          onClick={onNewConversation}
+          className="sidebar-icon-btn"
+          style={{ justifyContent: "center" }}
+        >
+          <PenSquare size={18} style={{ flexShrink: 0 }} />
+          <span className="sidebar-label" style={{ fontSize: 13 }}>
+            {mode === "chat" ? t("sidebar.new_chat") : t("sidebar.new_simulation")}
+          </span>
+        </button>
+      </div>
 
-      <div style={{ height: 1, background: "var(--border-secondary)", marginBottom: 10 }} />
+      <div style={{ height: 1, background: "var(--border-secondary)", margin: "0 12px 8px" }} />
 
-      {/* History section */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 4px" }}>
-        <div style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 8, padding: "0 4px" }}>
+      {/* History — only visible when expanded */}
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "0 8px" }}>
+        <div className="sidebar-label" style={{
+          fontSize: 10, letterSpacing: "0.1em", color: "var(--text-tertiary)",
+          textTransform: "uppercase", marginBottom: 6, padding: "0 8px",
+        }}>
           {t("common.today")}
         </div>
-        {HISTORY_PLACEHOLDERS.slice(0, 2).map((key, i) => (
+        {HISTORY_PLACEHOLDERS.slice(0, 2).map(key => (
           <div
             key={key}
+            className="sidebar-label sidebar-history-item"
             style={{
-              padding: "8px 10px", borderRadius: 6, fontSize: 13,
+              padding: "7px 10px", borderRadius: 6, fontSize: 13,
               color: "var(--text-secondary)", cursor: "pointer",
-              transition: "background 0.1s", marginBottom: 2,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}
-            className="sidebar-history-item"
           >
             {t(key)}
           </div>
         ))}
-        <div style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--text-tertiary)", textTransform: "uppercase", marginTop: 16, marginBottom: 8, padding: "0 4px" }}>
+        <div className="sidebar-label" style={{
+          fontSize: 10, letterSpacing: "0.1em", color: "var(--text-tertiary)",
+          textTransform: "uppercase", marginTop: 14, marginBottom: 6, padding: "0 8px",
+        }}>
           {t("common.previous_7_days")}
         </div>
         {HISTORY_PLACEHOLDERS.slice(2).map(key => (
           <div
             key={key}
+            className="sidebar-label sidebar-history-item"
             style={{
-              padding: "8px 10px", borderRadius: 6, fontSize: 13,
+              padding: "7px 10px", borderRadius: 6, fontSize: 13,
               color: "var(--text-secondary)", cursor: "pointer",
-              transition: "background 0.1s", marginBottom: 2,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}
-            className="sidebar-history-item"
           >
             {t(key)}
           </div>
@@ -92,63 +100,62 @@ export default function Sidebar({ mode, setMode, profileName, lang, rates, onNew
       </div>
 
       {/* Bottom section */}
-      <div style={{ borderTop: "1px solid var(--border-secondary)", paddingTop: 8, marginTop: 8 }}>
-        {/* Rates */}
+      <div style={{ borderTop: "1px solid var(--border-secondary)", padding: "8px" }}>
+        {/* Rates — only when expanded */}
         {rates && (
-          <div style={{ padding: "4px 8px 8px", fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+          <div className="sidebar-label" style={{
+            padding: "4px 10px 8px", fontSize: 10,
+            color: "var(--text-tertiary)", fontFamily: "var(--font-mono)",
+          }}>
             USD/BRL {rates.USDBRL?.toFixed(2)} · USD/CNY {rates.USDCNY?.toFixed(2)}
           </div>
         )}
 
-        {/* Mode toggle as menu items */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 1, marginBottom: 8 }}>
-          {([
-            { key: "chat" as Mode, icon: MessageSquare, label: t("sidebar.mode_chat") },
-            { key: "simulate" as Mode, icon: Zap, label: t("sidebar.mode_simulate") },
-            { key: "intel" as Mode, icon: Globe, label: t("sidebar.mode_intel") },
-          ]).map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              onClick={() => { setMode(key); onClose(); }}
-              data-tour={key === "simulate" ? "simulate-mode" : key === "intel" ? "intel-mode" : undefined}
-              style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: "8px 10px", border: "none", borderRadius: 6,
-                cursor: "pointer", fontSize: 13, transition: "all 0.15s",
-                background: mode === key ? "var(--bg-hover)" : "transparent",
-                color: mode === key ? "var(--text-primary)" : "var(--text-tertiary)",
-                fontWeight: mode === key ? 500 : 400,
-              }}
-            >
-              <Icon size={16} />
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* Mode buttons */}
+        {([
+          { key: "chat" as Mode, icon: MessageSquare, label: t("sidebar.mode_chat") },
+          { key: "simulate" as Mode, icon: Zap, label: t("sidebar.mode_simulate") },
+          { key: "intel" as Mode, icon: Globe, label: t("sidebar.mode_intel") },
+        ]).map(({ key, icon: Icon, label }) => (
+          <button
+            key={key}
+            onClick={() => setMode(key)}
+            data-tour={key === "simulate" ? "simulate-mode" : key === "intel" ? "intel-mode" : undefined}
+            className={`sidebar-icon-btn${mode === key ? " active" : ""}`}
+          >
+            <Icon size={18} style={{ flexShrink: 0 }} />
+            <span className="sidebar-label">{label}</span>
+          </button>
+        ))}
 
-        <div style={{ height: 1, background: "var(--border-secondary)", marginBottom: 8 }} />
+        <div style={{ height: 1, background: "var(--border-secondary)", margin: "6px 4px" }} />
+
+        {/* Settings */}
+        <button
+          onClick={onOpenSettings}
+          className="sidebar-icon-btn"
+        >
+          <Settings size={18} style={{ flexShrink: 0 }} />
+          <span className="sidebar-label">{t("sidebar.settings")}</span>
+        </button>
 
         {/* Profile */}
         <button
           onClick={onOpenSettings}
           data-tour="profile-settings"
-          style={{
-            width: "100%", display: "flex", alignItems: "center", gap: 10,
-            padding: "8px 8px", background: "none", border: "none",
-            cursor: "pointer", borderRadius: 6, transition: "background 0.1s",
-          }}
-          className="sidebar-history-item"
+          className="sidebar-icon-btn"
+          style={{ marginTop: 2 }}
         >
           <div style={{
-            width: 32, height: 32, borderRadius: "50%", background: "var(--accent-bg)",
+            width: 24, height: 24, borderRadius: "50%", background: "var(--accent-bg)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 600, color: "var(--accent)", flexShrink: 0,
+            fontSize: 10, fontWeight: 600, color: "var(--accent)", flexShrink: 0,
           }}>
             {userInitials}
           </div>
-          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-            <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{profileName}</div>
-          </div>
+          <span className="sidebar-label" style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
+            {profileName}
+          </span>
         </button>
       </div>
     </aside>
