@@ -614,12 +614,9 @@ export default function ChatPage() {
   };
 
   /* ═══ Copy Handler ═══ */
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      addToast(t("chat.copied"), "success");
-    }).catch(() => {
-      addToast(t("common.copy_failed"), "error");
-    });
+  const handleCopy = (_text: string) => {
+    // Clipboard write already handled by MessageBlock; just show toast
+    addToast(t("chat.copied"), "success");
   };
 
   /* ═══ Retry Handler ═══ */

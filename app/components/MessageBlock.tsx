@@ -6,6 +6,7 @@ import { useIsMobile } from "../lib/useIsMobile";
 import type { Attachment, Message } from "../lib/types";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { SignuxIcon } from "./SignuxIcon";
+import { copyToClipboard } from "../lib/clipboard";
 
 const CODE_EXTENSIONS = [
   ".py", ".js", ".ts", ".tsx", ".jsx", ".html", ".css", ".json",
@@ -45,8 +46,9 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   const isStreaming = loading && isLast;
   const isEmpty = !message.content;
 
-  const handleCopy = () => {
-    onCopy(message.content);
+  const handleCopy = async () => {
+    const ok = await copyToClipboard(message.content);
+    if (ok) onCopy(message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -60,13 +62,25 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
       >
         <div style={{ maxWidth: 640, margin: "0 auto", padding: isMobile ? "0 16px" : "0 24px" }}>
           {/* Sender label + timestamp on hover */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 5 }}>
-              {isUser ? t("common.you") : (<><SignuxIcon size={14} color="var(--text-tertiary)" />Signux</>)}
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            {isUser ? (
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>
+                {t("common.you")}
+              </span>
+            ) : (
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <SignuxIcon size={20} color="#D4AF37" />
+                <span style={{
+                  fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 600,
+                  color: "var(--text-secondary)",
+                }}>
+                  Signux
+                </span>
+              </span>
+            )}
             {message.timestamp && (
               <span style={{
-                fontSize: 11, color: "var(--text-tertiary)",
+                fontSize: 12, color: "var(--text-tertiary)",
                 opacity: hovered ? 1 : 0, transition: "opacity 0.15s",
                 fontFamily: "var(--font-mono)",
               }}>
@@ -124,7 +138,7 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
 
           {/* Message content */}
           {message.content && (
-            <div style={{ fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", wordBreak: "break-word" }}>
+            <div style={{ fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", wordBreak: "break-word", userSelect: "text", WebkitUserSelect: "text" as any }}>
               {isUser ? (
                 <span style={{ whiteSpace: "pre-wrap" }}>{message.content}</span>
               ) : (

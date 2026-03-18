@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import { ClipboardCopy, Check, ExternalLink } from "lucide-react";
+import { copyToClipboard } from "../lib/clipboard";
 
 /* Format monetary values and percentages as bold */
 function formatNumbers(text: string): ReactNode[] {
@@ -33,11 +34,12 @@ function CodeBlock({ children, className }: { children: ReactNode; className?: s
   const [copied, setCopied] = useState(false);
   const code = String(children).replace(/\n$/, "");
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code).then(() => {
+  const handleCopy = async () => {
+    const ok = await copyToClipboard(code);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {});
+    }
   };
 
   return (
