@@ -251,7 +251,7 @@ export default function LandingPage() {
         </FadeSection>
       </section>
 
-      {/* ═══ SECTION 3 — Intel ═══ */}
+      {/* ═══ SECTION 3 — Research ═══ */}
       <section style={{ padding: "100px 24px", maxWidth: 720, margin: "0 auto" }}>
         <FadeSection>
           <h2 style={{ fontSize: 32, fontWeight: 600, margin: "0 0 16px", textAlign: "center" }}>

@@ -175,7 +175,7 @@ const zhHans: Record<string, string> = {
   // RESEARCH
   "research.title": "深度研究",
   "research.subtitle": "多源情报综合",
-  "research.placeholder": "分析拉丁美洲精品咖啡连锁市场...",
+  "research.placeholder": "比较适合中型团队的5大项目管理工具...",
   "research.templates_label": "研究模板",
   "research.cta": "开始研究",
   "research.disclaimer": "研究需要30-90秒，跨多个来源。结果包含引用。",

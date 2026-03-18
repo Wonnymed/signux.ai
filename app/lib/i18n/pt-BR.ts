@@ -175,7 +175,7 @@ const ptBR: Record<string, string> = {
   // RESEARCH
   "research.title": "Pesquisa Profunda",
   "research.subtitle": "Sintese de inteligencia multi-fonte",
-  "research.placeholder": "Analise o mercado de franquias de café especial na América Latina...",
+  "research.placeholder": "Compare as 5 melhores ferramentas de gestão de projetos para equipes médias...",
   "research.templates_label": "Modelos de pesquisa",
   "research.cta": "Iniciar pesquisa",
   "research.disclaimer": "A pesquisa leva 30-90s em multiplas fontes. Resultados incluem citacoes.",

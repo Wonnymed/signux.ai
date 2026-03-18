@@ -177,7 +177,7 @@ const en: Record<string, string> = {
   // RESEARCH
   "research.title": "Deep Research",
   "research.subtitle": "Multi-source intelligence synthesis",
-  "research.placeholder": "Analyze the market for specialty coffee franchises in Latin America...",
+  "research.placeholder": "Compare the top 5 project management tools for mid-size teams...",
   "research.templates_label": "Research templates",
   "research.cta": "Start research",
   "research.disclaimer": "Research takes 30-90s across multiple sources. Results include citations.",

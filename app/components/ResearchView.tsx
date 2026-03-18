@@ -67,25 +67,25 @@ export default function ResearchView({ lang, onContinueInChat }: ResearchViewPro
       icon: BarChart3, color: "#22c55e", bg: "rgba(34,197,94,0.1)",
       title: "Market analysis",
       desc: "Size, trends, opportunities, and entry barriers",
-      fill: "Market analysis for the specialty coffee franchise industry in Latin America: market size, growth trends, consumer behavior, competitive landscape, and entry barriers",
+      fill: "Market analysis for the meal prep delivery industry: market size, growth trends, consumer demographics, competitive landscape, unit economics, and entry barriers for a new player",
     },
     {
       icon: Shield, color: "#8b5cf6", bg: "rgba(139,92,246,0.1)",
       title: "Competitor deep dive",
       desc: "Pricing, positioning, strengths, and weaknesses",
-      fill: "Deep competitive analysis of the top 5 project management SaaS platforms: pricing tiers, feature comparison, market positioning, customer reviews, and strategic weaknesses",
+      fill: "Compare the top 5 project management tools (Asana, Monday, ClickUp, Notion, Linear): pricing tiers, feature comparison, market positioning, customer reviews, and strategic weaknesses",
     },
     {
       icon: Globe, color: "#f59e0b", bg: "rgba(245,158,11,0.1)",
       title: "Regulatory guide",
       desc: "Licenses, compliance, and legal requirements",
-      fill: "Complete regulatory guide for launching a fintech product in Brazil: required licenses, Central Bank regulations, compliance frameworks, data protection (LGPD), and timeline to approval",
+      fill: "Complete regulatory guide for launching a fintech app in Brazil: required licenses, Central Bank regulations, PIX integration, compliance frameworks, LGPD data protection, and timeline to approval",
     },
     {
       icon: Package, color: "#ef4444", bg: "rgba(239,68,68,0.1)",
       title: "Strategy frameworks",
       desc: "SWOT, Porter's, Blue Ocean, and business models",
-      fill: "Strategic analysis using Porter's Five Forces and Blue Ocean Strategy for an e-commerce company entering the sustainable fashion market in Europe",
+      fill: "Go-to-market strategy for a B2B SaaS product entering the European market: Porter's Five Forces analysis, Blue Ocean opportunities, pricing strategy, channel partnerships, and first-year milestones",
     },
   ];
 

@@ -175,7 +175,7 @@ const es: Record<string, string> = {
   // RESEARCH
   "research.title": "Investigacion Profunda",
   "research.subtitle": "Sintesis de inteligencia multi-fuente",
-  "research.placeholder": "Analiza el mercado de franquicias de café de especialidad en América Latina...",
+  "research.placeholder": "Compara las 5 mejores herramientas de gestión de proyectos para equipos medianos...",
   "research.templates_label": "Plantillas de investigacion",
   "research.cta": "Iniciar investigacion",
   "research.disclaimer": "La investigacion toma 30-90s en multiples fuentes. Los resultados incluyen citas.",
