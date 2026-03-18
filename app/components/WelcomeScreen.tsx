@@ -26,24 +26,33 @@ export default function WelcomeScreen({ input, setInput, onSend, loading, attach
       maxWidth: 640, margin: "0 auto", width: "100%",
       padding: isMobile ? "16px 16px 24px" : "24px 24px 32px",
     }}>
-      {/* Brand icon */}
-      <div style={{ animation: "fadeIn 0.3s ease-out", marginBottom: 8 }}>
-        <SignuxIcon color="var(--accent)" size={56} />
-      </div>
-
-      {/* Brand name */}
+      {/* Brand — horizontal layout */}
       <div style={{
-        display: "flex", alignItems: "baseline", gap: 6,
-        animation: "fadeIn 0.4s ease-out", marginBottom: 40,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 14,
+        marginBottom: 40,
+        animation: "fadeIn 0.3s ease-out",
       }}>
-        <span style={{
-          fontFamily: "var(--font-brand)", fontSize: 44,
-          fontWeight: 700, letterSpacing: 5, color: "var(--text-primary)",
-        }}>SIGNUX</span>
-        <span style={{
-          fontFamily: "var(--font-brand)", fontSize: 44,
-          fontWeight: 300, letterSpacing: 3, color: "var(--text-primary)", opacity: 0.4,
-        }}>AI</span>
+        <SignuxIcon color="var(--accent)" size={56} />
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{
+            fontFamily: "var(--font-brand)",
+            fontSize: 44,
+            fontWeight: 700,
+            letterSpacing: 5,
+            color: "var(--text-primary)",
+          }}>SIGNUX</span>
+          <span style={{
+            fontFamily: "var(--font-brand)",
+            fontSize: 44,
+            fontWeight: 300,
+            letterSpacing: 3,
+            color: "var(--text-primary)",
+            opacity: 0.4,
+          }}>AI</span>
+        </div>
       </div>
 
       {/* Input */}

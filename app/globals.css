@@ -602,28 +602,6 @@ textarea, input, button {
   margin: 10px auto 8px;
 }
 
-/* ═══ Sidebar Toggle ═══ */
-.sidebar-toggle-btn {
-  position: fixed;
-  top: 14px;
-  left: 16px;
-  z-index: 201;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.sidebar-toggle-btn:hover {
-  background: var(--bg-hover);
-}
-
 /* ═══ Input Glow ═══ */
 .input-glow {
   border: 1px solid var(--border-primary);
@@ -688,7 +666,6 @@ textarea, input, button {
 
 /* ═══ Print ═══ */
 @media print {
-  .sidebar-toggle-btn,
   .toast,
   .toast-container {
     display: none !important;

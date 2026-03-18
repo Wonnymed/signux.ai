@@ -5,11 +5,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getProfile } from "../lib/profile";
 import { t, Language, setLanguage } from "../lib/i18n";
 import type { Message, Toast, Attachment, SimAgent, SimResult, Mode } from "../lib/types";
-import { Check, AlertTriangle, Info, WifiOff, PanelLeftOpen, PanelLeftClose } from "lucide-react";
+import { Check, AlertTriangle, Info, WifiOff } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
-import { SignuxIcon } from "../components/SignuxIcon";
-import UserMenu from "../components/UserMenu";
 import { useAuth } from "../lib/auth";
 import { getUser, createUser, updateUser } from "../lib/database";
 
@@ -114,28 +112,6 @@ function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id
   );
 }
 
-/* ═══ Splash Screen ═══ */
-function SplashScreen({ onDone }: { onDone: () => void }) {
-  const [exiting, setExiting] = useState(false);
-  useEffect(() => {
-    const t1 = setTimeout(() => setExiting(true), 400);
-    const t2 = setTimeout(onDone, 700);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [onDone]);
-  return (
-    <div className={`splash-screen${exiting ? " splash-exit" : ""}`}>
-      <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <SignuxIcon color="#D4AF37" size={64} className="signux-loading" />
-        <div style={{ marginTop: 12, display: "flex", alignItems: "baseline" }}>
-          <span className="splash-logo">SIGNUX</span>
-          <span className="splash-logo-ai">AI</span>
-        </div>
-        <div className="splash-bar" />
-      </div>
-    </div>
-  );
-}
-
 /* ═══ Offline Banner ═══ */
 function OfflineBanner() {
   const [offline, setOffline] = useState(false);
@@ -192,13 +168,11 @@ export default function ChatPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showSettings, setShowSettings] = useState(false);
 
-  const [splashDone, setSplashDone] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const isMobile = useIsMobile();
 
   /* Refs */
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const toggleRef = useRef<HTMLButtonElement>(null);
 
   /* ═══ Toast Callbacks ═══ */
   const addToast = useCallback((message: string, type: Toast["type"] = "success") => {
@@ -579,58 +553,17 @@ export default function ChatPage() {
     setSimStartTime(null);
   };
 
-  const handleSplashDone = useCallback(() => setSplashDone(true), []);
+  /* Close sidebar on mobile */
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
 
   /* ═══ Render ═══ */
-  if (!ready) return <SplashScreen onDone={handleSplashDone} />;
-  if (!splashDone) return <SplashScreen onDone={handleSplashDone} />;
+  if (!ready) return null;
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <OfflineBanner />
-
-      {/* Sidebar toggle (always visible) */}
-      <button ref={toggleRef} className="sidebar-toggle-btn" onClick={() => setSidebarOpen(o => !o)} aria-label="Toggle menu">
-        {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
-      </button>
-
-      {/* Auth buttons (top-right, floating) */}
-      {!authUser ? (
-        <div style={{
-          position: "fixed", top: 14, right: 20,
-          display: "flex", gap: 12, zIndex: 100,
-        }}>
-          <button
-            onClick={() => { window.location.href = "/login"; }}
-            aria-label="Log in"
-            style={{
-              padding: isMobile ? "4px 12px" : "6px 16px",
-              background: "transparent", border: "none",
-              color: "var(--text-secondary)", fontSize: isMobile ? 12 : 13,
-              cursor: "pointer", transition: "color 0.15s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
-            onMouseLeave={e => e.currentTarget.style.color = "var(--text-secondary)"}
-          >
-            {t("auth.log_in")}
-          </button>
-          <button
-            onClick={() => { window.location.href = "/signup"; }}
-            aria-label="Sign up"
-            style={{
-              padding: isMobile ? "4px 12px" : "6px 16px",
-              borderRadius: "var(--radius-full)",
-              background: "var(--accent)", border: "none",
-              color: "#000", fontSize: isMobile ? 12 : 13, fontWeight: 500,
-              cursor: "pointer", transition: "opacity 0.15s",
-            }}
-          >
-            {t("auth.sign_up_free")}
-          </button>
-        </div>
-      ) : authUser ? (
-        <UserMenu user={authUser} onSignOut={authSignOut} />
-      ) : null}
 
       <Sidebar
         mode={mode}
@@ -641,10 +574,10 @@ export default function ChatPage() {
         onOpenSettings={() => setShowSettings(true)}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onOpen={() => setSidebarOpen(true)}
         isLoggedIn={isLoggedIn}
         onSignOut={authUser ? authSignOut : undefined}
-        toggleRef={toggleRef}
-        authUser={authUser}
+        isMobile={isMobile}
       />
 
       <main style={{
