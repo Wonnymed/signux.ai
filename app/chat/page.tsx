@@ -11,6 +11,18 @@ import ChatArea from "../components/ChatArea";
 import UserMenu from "../components/UserMenu";
 import { useAuth } from "../lib/auth";
 import { getUser, createUser, updateUser } from "../lib/database";
+import {
+  getInternalUserId,
+  getConversations as fetchConversations,
+  createConversation,
+  updateConversationTitle,
+  touchConversation,
+  deleteConversation as removeConversation,
+  getMessages as fetchMessages,
+  saveMessage,
+  generateTitle,
+} from "../lib/database-client";
+import type { Conversation } from "../lib/database-client";
 
 import { useIsMobile } from "../lib/useIsMobile";
 import type { FileAttachment } from "../components/ChatInput";
@@ -165,6 +177,12 @@ export default function ChatPage() {
   /* Auth */
   const { user: authUser, loading: authLoading, signOut: authSignOut } = useAuth();
 
+  /* Conversations */
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [internalUserId, setInternalUserId] = useState<string | null>(null);
+
   /* UI */
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -240,6 +258,48 @@ export default function ChatPage() {
     }).catch(() => {});
   }, [authUser]);
 
+  /* ═══ Load Conversations on Auth ═══ */
+  useEffect(() => {
+    if (!authUser) {
+      setConversations([]);
+      setConversationId(null);
+      setInternalUserId(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const uid = await getInternalUserId(authUser.id);
+      if (cancelled || !uid) return;
+      setInternalUserId(uid);
+      setLoadingHistory(true);
+      const convs = await fetchConversations(uid);
+      if (!cancelled) {
+        setConversations(convs);
+        setLoadingHistory(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authUser]);
+
+  /* ═══ Load Conversation Messages ═══ */
+  const loadConversation = useCallback(async (convId: string) => {
+    if (convId === conversationId) return;
+    setConversationId(convId);
+    setMessages([]);
+    setLoading(true);
+    try {
+      const dbMessages = await fetchMessages(convId);
+      setMessages(dbMessages.map(m => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+        timestamp: new Date(m.created_at).getTime(),
+      })));
+    } catch {
+      addToast(t("common.error"), "error");
+    }
+    setLoading(false);
+  }, [conversationId, addToast]);
+
   /* ═══ Dynamic Page Title ═══ */
   useEffect(() => {
     const firstUserMsg = messages.find(m => m.role === "user");
@@ -266,6 +326,7 @@ export default function ChatPage() {
         if (mode === "chat") {
           setMessages([]);
           setAttachments([]);
+          setConversationId(null);
         } else {
           setSimResult(null);
           setSimScenario("");
@@ -332,6 +393,24 @@ export default function ChatPage() {
     setLoading(true);
     setSearching(false);
     setMessages([...newDisplayMessages, { role: "assistant", content: "" }]);
+
+    // Create conversation on first message (non-blocking)
+    let activeConvId = conversationId;
+    if (!activeConvId && internalUserId) {
+      try {
+        const conv = await createConversation(internalUserId, mode);
+        if (conv) {
+          activeConvId = conv.id;
+          setConversationId(conv.id);
+          setConversations(prev => [conv, ...prev]);
+        }
+      } catch {}
+    }
+
+    // Save user message (non-blocking)
+    if (activeConvId) {
+      saveMessage(activeConvId, "user", msg).catch(() => {});
+    }
 
     try {
       const res = await fetch("/api/chat", {
@@ -411,6 +490,28 @@ export default function ChatPage() {
       }
       return u;
     });
+
+    // Persist assistant message + update title (non-blocking)
+    if (activeConvId) {
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last.content) {
+          saveMessage(activeConvId!, "assistant", last.content).catch(() => {});
+        }
+        return prev;
+      });
+      // Generate title from first user message if conversation is new
+      const isFirstMessage = newDisplayMessages.filter(m => m.role === "user").length === 1;
+      if (isFirstMessage) {
+        generateTitle(msg).then(title => {
+          updateConversationTitle(activeConvId!, title).catch(() => {});
+          setConversations(prev => prev.map(c => c.id === activeConvId ? { ...c, title } : c));
+        });
+      } else {
+        touchConversation(activeConvId).catch(() => {});
+      }
+    }
+
     setLoading(false);
     setSearching(false);
     inputRef.current?.focus();
@@ -535,6 +636,7 @@ export default function ChatPage() {
     if (mode === "chat") {
       setMessages([]);
       setAttachments([]);
+      setConversationId(null);
     } else {
       setSimResult(null);
       setSimScenario("");
@@ -553,6 +655,16 @@ export default function ChatPage() {
     setSimStage(0);
     setSimStartTime(null);
   };
+
+  /* ═══ Delete Conversation ═══ */
+  const handleDeleteConversation = useCallback(async (convId: string) => {
+    setConversations(prev => prev.filter(c => c.id !== convId));
+    if (conversationId === convId) {
+      setConversationId(null);
+      setMessages([]);
+    }
+    removeConversation(convId).catch(() => {});
+  }, [conversationId]);
 
   /* Close sidebar on mobile */
   useEffect(() => {
@@ -619,6 +731,11 @@ export default function ChatPage() {
         onSignOut={authUser ? authSignOut : undefined}
         isMobile={isMobile}
         authUser={authUser}
+        conversations={conversations}
+        loadingHistory={loadingHistory}
+        activeConversationId={conversationId}
+        onLoadConversation={loadConversation}
+        onDeleteConversation={handleDeleteConversation}
       />
 
       <main style={{

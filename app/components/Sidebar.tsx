@@ -1,10 +1,11 @@
 "use client";
-import { useRef, useEffect } from "react";
-import { SquarePen, MessageSquare, Zap, Globe, Settings, LogIn, LogOut } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { SquarePen, MessageSquare, Zap, Globe, Settings, LogIn, LogOut, Trash2 } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
 import type { AuthUser } from "../lib/auth";
+import type { Conversation } from "../lib/database-client";
 
 type SidebarProps = {
   mode: Mode;
@@ -20,6 +21,11 @@ type SidebarProps = {
   onSignOut?: () => void;
   isMobile: boolean;
   authUser?: AuthUser | null;
+  conversations?: Conversation[];
+  loadingHistory?: boolean;
+  activeConversationId?: string | null;
+  onLoadConversation?: (id: string) => void;
+  onDeleteConversation?: (id: string) => void;
 };
 
 const MODES = [
@@ -38,9 +44,62 @@ function SidebarToggleIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+/* ═══ Conversation History Item ═══ */
+function ConversationItem({ conv, isActive, onLoad, onDelete }: {
+  conv: Conversation;
+  isActive: boolean;
+  onLoad: () => void;
+  onDelete: () => void;
+}) {
+  const [hovering, setHovering] = useState(false);
+  const title = conv.title || "New conversation";
+
+  return (
+    <button
+      onClick={onLoad}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        width: "100%", padding: "8px 12px", border: "none",
+        borderRadius: "var(--radius-xs)", cursor: "pointer",
+        fontSize: 13, textAlign: "left", position: "relative",
+        background: isActive ? "var(--bg-hover)" : hovering ? "var(--bg-hover)" : "transparent",
+        color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+        fontWeight: isActive ? 500 : 400,
+        transition: "all 0.15s",
+      }}
+    >
+      <MessageSquare size={14} style={{ flexShrink: 0, opacity: 0.6 }} />
+      <span style={{
+        flex: 1, overflow: "hidden", textOverflow: "ellipsis",
+        whiteSpace: "nowrap", minWidth: 0,
+      }}>
+        {title}
+      </span>
+      {hovering && (
+        <span
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 22, height: 22, borderRadius: "var(--radius-xs)",
+            color: "var(--text-tertiary)", flexShrink: 0,
+            transition: "color 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--error, #e53e3e)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-tertiary)"; }}
+        >
+          <Trash2 size={13} />
+        </span>
+      )}
+    </button>
+  );
+}
+
 export default function Sidebar({
   mode, setMode, profileName, onNewConversation, onOpenSettings,
   open, onClose, onOpen, isLoggedIn, onSignOut, isMobile, authUser,
+  conversations = [], loadingHistory = false, activeConversationId, onLoadConversation, onDeleteConversation,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLElement>(null);
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : (authUser?.initials || "?");
@@ -154,11 +213,31 @@ export default function Sidebar({
         <div style={{ height: 1, background: "var(--border-secondary)", margin: "0 8px 8px" }} />
 
         {/* History area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 12px" }}>
-          {!isLoggedIn && (
-            <div style={{ padding: "12px 0", fontSize: 12, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 8px" }}>
+          {!isLoggedIn ? (
+            <div style={{ padding: "12px 4px", fontSize: 12, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
               <a href="/login" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>{t("auth.sign_in")}</a>{" "}
               <span>{t("sidebar.sign_in_to_save")}</span>
+            </div>
+          ) : loadingHistory ? (
+            <div style={{ padding: "16px 4px", fontSize: 12, color: "var(--text-tertiary)", textAlign: "center" }}>
+              <span className="loading-dots">...</span>
+            </div>
+          ) : conversations.length === 0 ? (
+            <div style={{ padding: "16px 4px", fontSize: 12, color: "var(--text-tertiary)", textAlign: "center" }}>
+              {t("sidebar.empty_history")}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {conversations.map(conv => (
+                <ConversationItem
+                  key={conv.id}
+                  conv={conv}
+                  isActive={conv.id === activeConversationId}
+                  onLoad={() => { onLoadConversation?.(conv.id); if (isMobile) onClose(); }}
+                  onDelete={() => onDeleteConversation?.(conv.id)}
+                />
+              ))}
             </div>
           )}
         </div>
