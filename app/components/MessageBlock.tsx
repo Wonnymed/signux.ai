@@ -165,6 +165,7 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
             wordBreak: "break-word",
             userSelect: "text",
             WebkitUserSelect: "text" as any,
+            transition: "all 0.3s ease",
           }}>
             {/* Loading state — empty AI message */}
             {isEmpty && isStreaming && (
@@ -189,12 +190,13 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
                     {t("chat.searching")}
                   </div>
                 )}
-                <MarkdownRenderer content={message.content} />
+                <MarkdownRenderer content={message.content} isStreaming={isStreaming} />
                 {isStreaming && (
                   <span style={{
-                    display: "inline-block", width: 2, height: 16,
-                    background: "var(--text-primary)", marginLeft: 2,
-                    animation: "blink 1s infinite", verticalAlign: "text-bottom",
+                    display: "inline-block", width: 2, height: 18,
+                    background: "var(--accent)", marginLeft: 3,
+                    animation: "smoothBlink 1.2s ease-in-out infinite",
+                    verticalAlign: "text-bottom", borderRadius: 1, opacity: 0.8,
                   }} />
                 )}
               </>

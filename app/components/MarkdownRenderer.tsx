@@ -115,9 +115,9 @@ function LinkCard({ href }: { href: string }) {
   );
 }
 
-export default function MarkdownRenderer({ content }: { content: string }) {
+export default function MarkdownRenderer({ content, isStreaming = false }: { content: string; isStreaming?: boolean }) {
   return (
-    <div className="prose">
+    <div className={`prose${isStreaming ? " prose-streaming" : ""}`}>
       <ReactMarkdown
         components={{
           pre({ children }) {

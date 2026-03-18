@@ -45,10 +45,14 @@ export default function ChatArea({
     setUserScrolledUp(distFromBottom > 200);
   }, []);
 
-  /* Smart auto-scroll: only if user hasn't scrolled up */
+  /* Smart auto-scroll: throttled with RAF for smooth streaming */
+  const scrollRaf = useRef(0);
   useEffect(() => {
     if (!isNearBottomRef.current) return;
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    cancelAnimationFrame(scrollRaf.current);
+    scrollRaf.current = requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
   }, [messages]);
 
   /* Scroll to bottom button handler */

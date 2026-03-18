@@ -200,6 +200,16 @@ textarea, input, button {
   50% { opacity: 0; }
 }
 
+@keyframes smoothBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes textFadeIn {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
@@ -470,26 +480,29 @@ textarea, input, button {
 }
 
 /* ═══ Markdown Prose ═══ */
-.prose h1 { font-size: 20px; font-weight: 600; margin: 20px 0 12px; color: var(--text-primary); }
-.prose h2 { font-size: 17px; font-weight: 600; margin: 16px 0 10px; color: var(--text-primary); }
-.prose h3 { font-size: 15px; font-weight: 600; margin: 14px 0 8px; color: var(--text-primary); }
-.prose p { margin-bottom: 12px; line-height: 1.7; }
-.prose ul, .prose ol { padding-left: 20px; margin-bottom: 12px; }
-.prose li { margin-bottom: 4px; line-height: 1.7; }
+.prose h1 { font-size: 19px; font-weight: 600; margin: 18px 0 10px; color: var(--text-primary); }
+.prose h2 { font-size: 16px; font-weight: 600; margin: 14px 0 8px; color: var(--text-primary); }
+.prose h3 { font-size: 15px; font-weight: 600; margin: 12px 0 6px; color: var(--text-primary); }
+.prose p { margin-bottom: 10px; line-height: 1.75; }
+.prose p:last-child { margin-bottom: 0; }
+.prose ul, .prose ol { padding-left: 18px; margin-bottom: 10px; }
+.prose ul:last-child, .prose ol:last-child { margin-bottom: 0; }
+.prose li { margin-bottom: 3px; line-height: 1.75; }
 .prose strong { color: var(--text-primary); font-weight: 600; }
 .prose blockquote {
-  border-left: 2px solid var(--border-primary);
-  padding-left: 16px;
-  margin: 12px 0;
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+  margin: 10px 0;
   color: var(--text-secondary);
+  font-style: italic;
 }
 .prose pre {
-  background: var(--bg-secondary);
-  padding: 16px;
+  background: var(--bg-tertiary);
+  padding: 14px 16px;
   border-radius: var(--radius-sm);
   overflow-x: auto;
-  margin: 12px 0;
-  border: 1px solid var(--border-secondary);
+  margin: 10px 0;
+  border: none;
 }
 .prose pre code {
   font-size: 13px;
@@ -500,36 +513,54 @@ textarea, input, button {
   border: none;
 }
 .prose code {
-  background: var(--bg-secondary);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: var(--bg-tertiary);
+  padding: 1px 5px;
+  border-radius: 3px;
   font-size: 13px;
   font-family: var(--font-mono);
   color: var(--text-primary);
-  border: 1px solid var(--border-secondary);
+  border: none;
 }
 .prose table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
-  margin: 12px 0;
+  margin: 10px 0;
 }
 .prose th {
   text-align: left;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary);
   font-weight: 500;
   font-size: 12px;
 }
 .prose td {
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--border-secondary);
   color: var(--text-secondary);
+  font-size: 13px;
 }
-.prose a { color: var(--accent); text-decoration: none; }
-.prose a:hover { text-decoration: underline; }
-.prose hr { border: none; border-top: 1px solid var(--border-secondary); margin: 16px 0; }
+.prose a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212,175,55,0.3);
+  transition: border-color 0.15s;
+}
+.prose a:hover { border-bottom-color: var(--accent); }
+.prose hr { border: none; border-top: 1px solid var(--border-secondary); margin: 14px 0; }
+
+/* ═══ Streaming Prose ═══ */
+.prose-streaming p:last-child {
+  animation: textFadeIn 0.15s ease-out;
+}
+.prose-streaming ul:last-child,
+.prose-streaming ol:last-child,
+.prose-streaming blockquote:last-child,
+.prose-streaming pre:last-child,
+.prose-streaming table:last-child {
+  animation: textFadeIn 0.2s ease-out;
+}
 
 /* ═══ Sidebar Drawer ═══ */
 
