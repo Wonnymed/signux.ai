@@ -52,6 +52,7 @@ const ptBR: Record<string, string> = {
   "chat.export": "Exportar conversa",
   "chat.connection_error": "Não foi possível conectar. Verifique sua internet e tente novamente.",
   "chat.enter_send": "Enter para enviar, Shift+Enter para nova linha",
+  "chat.explore_modes": "Explorar todos os modos",
   "chat.searching": "Buscando informações atuais...",
 
   // SUGGESTIONS (short chips, max 8 words)

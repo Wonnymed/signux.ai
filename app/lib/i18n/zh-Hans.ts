@@ -52,6 +52,7 @@ const zhHans: Record<string, string> = {
   "chat.export": "导出对话",
   "chat.connection_error": "无法连接。请检查网络后重试。",
   "chat.enter_send": "Enter 发送，Shift+Enter 换行",
+  "chat.explore_modes": "探索所有模式",
   "chat.searching": "正在搜索最新信息...",
 
   // SUGGESTIONS (short chips, max 8 words)

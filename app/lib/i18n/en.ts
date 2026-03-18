@@ -52,6 +52,7 @@ const en: Record<string, string> = {
   "chat.export": "Export conversation",
   "chat.connection_error": "Couldn't connect. Check your internet and try again.",
   "chat.enter_send": "Enter to send, Shift+Enter for new line",
+  "chat.explore_modes": "Explore all modes",
   "chat.searching": "Searching for current information...",
 
   // SUGGESTIONS (short chips — specific, real problems)
