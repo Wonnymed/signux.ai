@@ -104,8 +104,15 @@ export default function Sidebar({
   function renderExpandedContent() {
     return (
       <>
-        {/* Header: toggle + logo */}
-        <div style={{ padding: "14px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Header: S logo + SIGNUX AI + toggle right */}
+        <div style={{ padding: "12px 12px 12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <SignuxIcon color="var(--accent)" size={28} />
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span style={{ fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 700, letterSpacing: 3, color: "var(--text-primary)" }}>SIGNUX</span>
+              <span style={{ fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 300, letterSpacing: 2, color: "var(--text-primary)", opacity: 0.4 }}>AI</span>
+            </div>
+          </div>
           <button onClick={onClose} title="Close sidebar" style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 28, height: 28, border: "none", background: "none",
@@ -114,15 +121,8 @@ export default function Sidebar({
           }}
           onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
           onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}>
-            <SidebarToggleIcon size={20} />
+            <SidebarToggleIcon size={18} />
           </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <SignuxIcon color="var(--accent)" size={20} />
-            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span style={{ fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700, letterSpacing: 3, color: "var(--text-primary)" }}>SIGNUX</span>
-              <span style={{ fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 300, letterSpacing: 2, color: "var(--text-primary)", opacity: 0.4 }}>AI</span>
-            </div>
-          </div>
         </div>
 
         {/* New conversation */}
@@ -220,16 +220,16 @@ export default function Sidebar({
   // ═══ COLLAPSED (icons only) ═══
   function renderCollapsedContent() {
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", paddingTop: 10 }}>
-        {/* Toggle icon — click to expand */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", paddingTop: 12 }}>
+        {/* S logo — click to expand */}
         <button onClick={onOpen} title="Open sidebar" style={{
           width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center",
           border: "none", background: "none", cursor: "pointer", borderRadius: "var(--radius-sm)",
-          color: "var(--text-tertiary)", marginBottom: 8,
+          marginBottom: 8,
         }}
-          onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-tertiary)"; }}>
-          <SidebarToggleIcon size={20} />
+          onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+          <SignuxIcon color="var(--accent)" size={28} />
         </button>
 
         {/* New conversation */}
