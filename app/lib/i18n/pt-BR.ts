@@ -31,6 +31,9 @@ const ptBR: Record<string, string> = {
   "sidebar.mode_chat": "Chat",
   "sidebar.mode_simulate": "Simular",
   "sidebar.mode_research": "Pesquisa",
+  "sidebar.mode_launchpad": "Launchpad",
+  "sidebar.mode_globalops": "Ops Global",
+  "sidebar.mode_invest": "Investir",
 
   // CHAT
   "chat.greeting_morning": "Bom dia, {name}",

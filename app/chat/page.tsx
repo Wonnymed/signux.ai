@@ -37,6 +37,9 @@ import type { FileAttachment } from "../components/ChatInput";
 
 const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false });
 const ResearchView = dynamic(() => import("../components/ResearchView"), { ssr: false });
+const LaunchpadView = dynamic(() => import("../components/LaunchpadView"), { ssr: false });
+const GlobalOpsView = dynamic(() => import("../components/GlobalOpsView"), { ssr: false });
+const InvestView = dynamic(() => import("../components/InvestView"), { ssr: false });
 const SettingsModal = dynamic(() => import("../components/SettingsModal"), { ssr: false });
 
 /* ═══ File Helpers ═══ */
@@ -348,7 +351,11 @@ export default function ChatPage() {
         inputRef.current?.focus();
       } else if (meta && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        setMode(prev => prev === "chat" ? "simulate" : prev === "simulate" ? "research" : "chat");
+        setMode(prev => {
+          const cycle: Mode[] = ["chat", "simulate", "research", "launchpad", "globalops", "invest"];
+          const idx = cycle.indexOf(prev);
+          return cycle[(idx + 1) % cycle.length];
+        });
       } else if (meta && e.key === "n") {
         e.preventDefault();
         if (mode === "chat") {
@@ -786,6 +793,39 @@ export default function ChatPage() {
                 simStarting={simStarting}
                 simAgentMessages={simAgentMessages}
               />
+            </motion.div>
+          ) : mode === "launchpad" ? (
+            <motion.div
+              key="launchpad"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+            >
+              <LaunchpadView lang={lang} />
+            </motion.div>
+          ) : mode === "globalops" ? (
+            <motion.div
+              key="globalops"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+            >
+              <GlobalOpsView lang={lang} />
+            </motion.div>
+          ) : mode === "invest" ? (
+            <motion.div
+              key="invest"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+            >
+              <InvestView lang={lang} />
             </motion.div>
           ) : (
             <motion.div

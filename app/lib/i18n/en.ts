@@ -31,6 +31,9 @@ const en: Record<string, string> = {
   "sidebar.mode_chat": "Chat",
   "sidebar.mode_simulate": "Simulate",
   "sidebar.mode_research": "Research",
+  "sidebar.mode_launchpad": "Launchpad",
+  "sidebar.mode_globalops": "Global Ops",
+  "sidebar.mode_invest": "Invest",
 
   // CHAT
   "chat.greeting_morning": "Good morning, {name}",

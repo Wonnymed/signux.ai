@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
-import { SquarePen, MessageSquare, Zap, Search, Settings, LogIn, LogOut, Trash2 } from "lucide-react";
+import { SquarePen, MessageSquare, Zap, Search, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2 } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
@@ -28,10 +28,13 @@ type SidebarProps = {
   onDeleteConversation?: (id: string) => void;
 };
 
-const MODES = [
-  { key: "chat" as Mode, icon: MessageSquare, label: "sidebar.mode_chat" },
-  { key: "simulate" as Mode, icon: Zap, label: "sidebar.mode_simulate" },
-  { key: "research" as Mode, icon: Search, label: "sidebar.mode_research" },
+const MODES: { key: Mode; icon: any; label: string; color?: string; tier?: "max" }[] = [
+  { key: "chat", icon: MessageSquare, label: "sidebar.mode_chat" },
+  { key: "simulate", icon: Zap, label: "sidebar.mode_simulate", color: "#D4AF37" },
+  { key: "research", icon: Search, label: "sidebar.mode_research", color: "#6B8AFF" },
+  { key: "launchpad", icon: Rocket, label: "sidebar.mode_launchpad", color: "#14B8A6" },
+  { key: "globalops", icon: Globe, label: "sidebar.mode_globalops", color: "#22C55E", tier: "max" },
+  { key: "invest", icon: TrendingUp, label: "sidebar.mode_invest", color: "#A855F7", tier: "max" },
 ];
 
 /* Sidebar panel toggle icon — two rectangles like Okara */
@@ -220,17 +223,31 @@ export default function Sidebar({
 
         {/* Mode buttons */}
         <div style={{ padding: "0 8px 8px" }}>
-          {MODES.map(({ key, icon: Icon, label }) => (
-            <button key={key} onClick={() => handleMode(key)} style={{
-              display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none",
-              borderRadius: "var(--radius-xs)", cursor: "pointer", fontSize: 13, transition: "all 0.15s", textAlign: "left",
-              background: mode === key ? "var(--bg-hover)" : "none",
-              color: mode === key ? "var(--text-primary)" : "var(--text-secondary)",
-              fontWeight: mode === key ? 500 : 400,
-            }} onMouseEnter={e => { if (mode !== key) e.currentTarget.style.background = "var(--bg-hover)"; }}
-               onMouseLeave={e => { if (mode !== key) e.currentTarget.style.background = "transparent"; }}>
-              <Icon size={16} /> <span>{t(label)}</span>
-            </button>
+          {MODES.map(({ key, icon: Icon, label, color, tier }, idx) => (
+            <div key={key}>
+              <button onClick={() => handleMode(key)} style={{
+                display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none",
+                borderRadius: "var(--radius-xs)", cursor: "pointer", fontSize: 13, transition: "all 0.15s", textAlign: "left",
+                background: mode === key ? "var(--bg-hover)" : "none",
+                color: mode === key ? (color || "var(--text-primary)") : "var(--text-secondary)",
+                fontWeight: mode === key ? 500 : 400,
+              }} onMouseEnter={e => { if (mode !== key) e.currentTarget.style.background = "var(--bg-hover)"; }}
+                 onMouseLeave={e => { if (mode !== key) e.currentTarget.style.background = "transparent"; }}>
+                <Icon size={16} style={{ color: mode === key ? (color || "var(--accent)") : undefined }} />
+                <span style={{ flex: 1 }}>{t(label)}</span>
+                {tier === "max" && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700, letterSpacing: 0.5,
+                    color: color || "var(--text-tertiary)",
+                    opacity: 0.6, textTransform: "uppercase",
+                  }}>MAX</span>
+                )}
+              </button>
+              {/* Divider after launchpad (index 3) */}
+              {idx === 3 && (
+                <div style={{ height: 1, width: "calc(100% - 16px)", background: "var(--border-secondary)", margin: "4px 8px" }} />
+              )}
+            </div>
           ))}
         </div>
 
@@ -350,16 +367,24 @@ export default function Sidebar({
         <div style={{ height: 1, width: 24, background: "var(--border-secondary)", margin: "4px 0" }} />
 
         {/* Mode icons */}
-        {MODES.map(({ key, icon: Icon, label }) => (
-          <button key={key} onClick={() => handleMode(key)} title={t(label)} style={{
-            width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center",
-            border: "none", cursor: "pointer", borderRadius: "var(--radius-sm)", marginBottom: 2,
-            background: mode === key ? "var(--bg-hover)" : "none",
-            color: mode === key ? "var(--accent)" : "var(--text-tertiary)",
-          }} onMouseEnter={e => { if (mode !== key) e.currentTarget.style.background = "var(--bg-hover)"; }}
-             onMouseLeave={e => { if (mode !== key) e.currentTarget.style.background = "transparent"; }}>
-            <Icon size={iconSize} />
-          </button>
+        {MODES.map(({ key, icon: Icon, label, color, tier }, idx) => (
+          <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <button onClick={() => handleMode(key)} title={tier === "max" ? `${t(label)} (MAX)` : t(label)} style={{
+              width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center",
+              border: "none", cursor: "pointer", borderRadius: "var(--radius-sm)", marginBottom: 2,
+              background: mode === key ? "var(--bg-hover)" : "none",
+              color: mode === key ? (color || "var(--accent)") : "var(--text-tertiary)",
+              opacity: tier === "max" && mode !== key ? 0.5 : 1,
+              position: "relative",
+            }} onMouseEnter={e => { if (mode !== key) e.currentTarget.style.background = "var(--bg-hover)"; }}
+               onMouseLeave={e => { if (mode !== key) e.currentTarget.style.background = "transparent"; }}>
+              <Icon size={iconSize} />
+            </button>
+            {/* Divider after launchpad (index 3) */}
+            {idx === 3 && (
+              <div style={{ height: 1, width: 24, background: "var(--border-secondary)", margin: "4px auto" }} />
+            )}
+          </div>
         ))}
 
         {/* Spacer */}

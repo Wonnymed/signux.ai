@@ -28,9 +28,12 @@ const zhHans: Record<string, string> = {
   "sidebar.new_simulation": "新模拟",
   "sidebar.history": "历史记录",
   "sidebar.settings": "设置",
-  "sidebar.mode_chat": "对话",
+  "sidebar.mode_chat": "聊天",
   "sidebar.mode_simulate": "模拟",
   "sidebar.mode_research": "研究",
+  "sidebar.mode_launchpad": "启动台",
+  "sidebar.mode_globalops": "全球运营",
+  "sidebar.mode_invest": "投资",
 
   // CHAT
   "chat.greeting_morning": "早上好，{name}",
