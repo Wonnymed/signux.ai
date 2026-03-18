@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ClipboardCopy, Check, RotateCcw, ThumbsUp, ThumbsDown, Search, FileText, FileCode, X } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
-import type { Attachment } from "../lib/types";
+import type { Attachment, Message } from "../lib/types";
 import MarkdownRenderer from "./MarkdownRenderer";
 
 const CODE_EXTENSIONS = [
@@ -23,7 +23,7 @@ function isCodeFile(name: string): boolean {
 }
 
 type MessageBlockProps = {
-  message: { role: "user" | "assistant"; content: string; attachments?: Attachment[] };
+  message: Message;
   index: number;
   isLast: boolean;
   loading: boolean;
