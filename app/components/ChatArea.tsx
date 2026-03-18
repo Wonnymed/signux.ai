@@ -21,12 +21,13 @@ type ChatAreaProps = {
   onAttachmentsChange: (atts: FileAttachment[]) => void;
   onToast?: (msg: string, type: "success" | "error" | "info") => void;
   onSwitchToSimulate?: () => void;
+  onSwitchToResearch?: () => void;
 };
 
 export default function ChatArea({
   messages, loading, searching, input, setInput, onSend,
   profileName, onRetry, onCopy, attachments, onAttachmentsChange, onToast,
-  onSwitchToSimulate,
+  onSwitchToSimulate, onSwitchToResearch,
 }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const areaRef = useRef<HTMLDivElement>(null);
@@ -78,6 +79,7 @@ export default function ChatArea({
           onAttachmentsChange={onAttachmentsChange}
           onToast={onToast}
           onSwitchToSimulate={onSwitchToSimulate}
+          onSwitchToResearch={onSwitchToResearch}
         />
       </div>
     );

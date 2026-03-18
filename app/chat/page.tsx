@@ -810,6 +810,7 @@ export default function ChatPage() {
                 onAttachmentsChange={setAttachments}
                 onToast={addToast}
                 onSwitchToSimulate={() => setMode("simulate")}
+                onSwitchToResearch={() => setMode("research")}
               />
             </motion.div>
           )}
