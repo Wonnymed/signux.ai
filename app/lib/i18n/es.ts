@@ -236,6 +236,13 @@ const es: Record<string, string> = {
   "login.skip": "Continuar sin cuenta",
   "login.error": "Algo salió mal. Inténtalo de nuevo.",
 
+  // INVEST
+  "invest.subtitle": "Evaluación cuantitativa de inversiones",
+  "invest.input_label": "DESCRIBE EL NEGOCIO O INVERSIÓN",
+  "invest.placeholder": "Evaluando una inversión ángel de $500K en una fintech Serie A...",
+  "invest.cta": "EJECUTAR ANÁLISIS",
+  "invest.disclaimer": "No es asesoramiento financiero.",
+
   // GLOBAL OPS
   "globalops.subtitle": "Inteligencia operacional transfronteriza",
   "globalops.input_label": "DESCRIBE TU OPERACIÓN INTERNACIONAL",

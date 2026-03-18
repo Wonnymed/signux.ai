@@ -236,6 +236,13 @@ const zhHans: Record<string, string> = {
   "login.skip": "不登录继续使用",
   "login.error": "出了点问题，请重试。",
 
+  // INVEST
+  "invest.subtitle": "量化投资评估",
+  "invest.input_label": "描述交易或投资",
+  "invest.placeholder": "评估一笔50万美元的天使投资，投资对象是一家A轮金融科技公司...",
+  "invest.cta": "运行分析",
+  "invest.disclaimer": "非投资建议。",
+
   // GLOBAL OPS
   "globalops.subtitle": "跨境运营情报",
   "globalops.input_label": "描述你的跨境业务",

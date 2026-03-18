@@ -235,6 +235,13 @@ const en: Record<string, string> = {
   "login.skip": "Continue without account",
   "login.error": "Something went wrong. Please try again.",
 
+  // INVEST
+  "invest.subtitle": "Quantitative deal evaluation",
+  "invest.input_label": "DESCRIBE THE DEAL OR INVESTMENT",
+  "invest.placeholder": "Evaluating a $500K angel investment in a Series A fintech...",
+  "invest.cta": "RUN ANALYSIS",
+  "invest.disclaimer": "Not financial advice.",
+
   // GLOBAL OPS
   "globalops.subtitle": "Cross-border operational intelligence",
   "globalops.input_label": "DESCRIBE YOUR CROSS-BORDER OPERATION",

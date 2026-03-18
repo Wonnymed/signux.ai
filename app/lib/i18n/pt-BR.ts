@@ -236,6 +236,13 @@ const ptBR: Record<string, string> = {
   "login.skip": "Continuar sem conta",
   "login.error": "Algo deu errado. Tente novamente.",
 
+  // INVEST
+  "invest.subtitle": "Avaliação quantitativa de investimentos",
+  "invest.input_label": "DESCREVA O NEGÓCIO OU INVESTIMENTO",
+  "invest.placeholder": "Avaliando um investimento anjo de $500K em uma fintech Série A...",
+  "invest.cta": "EXECUTAR ANÁLISE",
+  "invest.disclaimer": "Não é aconselhamento financeiro.",
+
   // GLOBAL OPS
   "globalops.subtitle": "Inteligência operacional transfronteiriça",
   "globalops.input_label": "DESCREVA SUA OPERAÇÃO INTERNACIONAL",
