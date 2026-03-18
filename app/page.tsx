@@ -179,7 +179,7 @@ export default function LandingPage() {
             display: "flex", gap: 12, justifyContent: "center",
             marginTop: 40, flexWrap: "wrap",
           }}>
-            <Link href="/onboarding" style={{
+            <Link href="/chat" style={{
               display: "inline-flex", alignItems: "center",
               padding: "14px 32px", borderRadius: 100,
               background: "var(--text-primary)", color: "var(--text-inverse)",
@@ -280,7 +280,7 @@ export default function LandingPage() {
           <h2 style={{ fontSize: 28, fontWeight: 600, margin: "0 0 32px" }}>
             Ready to operate smarter?
           </h2>
-          <Link href="/onboarding" style={{
+          <Link href="/chat" style={{
             display: "inline-flex", alignItems: "center",
             padding: "14px 32px", borderRadius: 100,
             background: "var(--text-primary)", color: "var(--text-inverse)",

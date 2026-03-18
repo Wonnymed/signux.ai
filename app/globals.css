@@ -508,47 +508,25 @@ textarea, input, button {
 .prose a:hover { text-decoration: underline; }
 .prose hr { border: none; border-top: 1px solid var(--border-secondary); margin: 16px 0; }
 
-/* ═══ Sidebar — Always visible, collapsed by default ═══ */
-.sidebar-rail {
+/* ═══ Sidebar Drawer (Okara-style overlay) ═══ */
+.sidebar-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 100;
+}
+.sidebar-drawer {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
-  width: var(--sidebar-collapsed);
+  width: var(--sidebar-expanded);
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-secondary);
   display: flex;
   flex-direction: column;
-  z-index: 50;
+  z-index: 101;
   overflow: hidden;
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar-rail:hover,
-.sidebar-rail.sidebar-expanded {
-  width: var(--sidebar-expanded);
-}
-
-.sidebar-rail .sidebar-label {
-  opacity: 0;
-  white-space: nowrap;
-  transition: opacity 0.15s ease;
-  overflow: hidden;
-}
-
-.sidebar-rail:hover .sidebar-label,
-.sidebar-rail.sidebar-expanded .sidebar-label {
-  opacity: 1;
-}
-
-.sidebar-rail .sidebar-logo-text {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.sidebar-rail:hover .sidebar-logo-text,
-.sidebar-rail.sidebar-expanded .sidebar-logo-text {
-  opacity: 1;
 }
 
 .sidebar-icon-btn {
@@ -620,33 +598,31 @@ textarea, input, button {
   margin: 10px auto 8px;
 }
 
-/* ═══ Hamburger ═══ */
-.hamburger-btn {
+/* ═══ Sidebar Toggle ═══ */
+.sidebar-toggle-btn {
   position: fixed;
   top: var(--safe-top, 8px);
   left: 8px;
   z-index: 50;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: var(--bg-primary);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
+  transition: background 0.15s;
+}
+.sidebar-toggle-btn:hover {
+  background: var(--bg-hover);
 }
 
 /* ═══ Mobile ═══ */
 @media (max-width: 768px) {
-  .sidebar-rail {
-    display: none;
-  }
-  .hamburger-btn {
-    display: flex;
-  }
   .sim-grid-responsive { grid-template-columns: 1fr !important; }
   .sim-meta-responsive { grid-template-columns: 1fr 1fr !important; }
 
@@ -692,7 +668,9 @@ textarea, input, button {
 
 /* ═══ Print ═══ */
 @media print {
-  .sidebar-rail,
+  .sidebar-drawer,
+  .sidebar-drawer-backdrop,
+  .sidebar-toggle-btn,
   [data-tour],
   .toast,
   .toast-container {

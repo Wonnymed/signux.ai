@@ -1,12 +1,11 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { getProfile } from "../lib/profile";
 import { t, Language, setLanguage } from "../lib/i18n";
 import type { Message, Toast, Attachment, SimAgent, SimResult, Mode } from "../lib/types";
-import { Check, AlertTriangle, Info, WifiOff, Menu } from "lucide-react";
+import { Check, AlertTriangle, Info, WifiOff, PanelLeft } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
 import OnboardingTour, { isTourCompleted } from "../components/OnboardingTour";
@@ -151,8 +150,6 @@ function OfflineBanner() {
 
 /* ═══ Main Orchestrator ═══ */
 export default function ChatPage() {
-  const router = useRouter();
-
   /* ── State ── */
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -208,16 +205,15 @@ export default function ChatPage() {
   }, []);
 
   /* ═══ Profile Loading Effect ═══ */
+  const isLoggedIn = !!(profileName);
   useEffect(() => {
     const profile = getProfile();
-    if (!profile || !profile.name || !profile.email) {
-      router.replace("/onboarding");
-      return;
+    if (profile && profile.name) {
+      setProfileName(profile.name);
+      const userLang = (profile.language as Language) || "en";
+      setLang(userLang);
+      setLanguage(userLang);
     }
-    setProfileName(profile.name);
-    const userLang = (profile.language as Language) || "en";
-    setLang(userLang);
-    setLanguage(userLang);
     setReady(true);
     fetch("/api/rates").then(r => r.json()).then(setRates).catch(() => {});
     const toastData = sessionStorage.getItem("signux_welcome_toast");
@@ -231,7 +227,7 @@ export default function ChatPage() {
     if (!isTourCompleted()) {
       setTimeout(() => setShowTour(true), 500);
     }
-  }, [router, addToast]);
+  }, [addToast]);
 
   /* ═══ Dynamic Page Title ═══ */
   useEffect(() => {
@@ -557,11 +553,40 @@ export default function ChatPage() {
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <OfflineBanner />
 
-      {/* Mobile hamburger */}
-      {isMobile && (
-        <button className="hamburger-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-          <Menu size={22} />
-        </button>
+      {/* Sidebar toggle (always visible) */}
+      <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+        <PanelLeft size={18} />
+      </button>
+
+      {/* Auth buttons (top-right, floating) */}
+      {!isLoggedIn && (
+        <div style={{
+          position: "fixed", top: "var(--safe-top, 8px)", right: 8,
+          display: "flex", gap: 8, zIndex: 50,
+        }}>
+          <button
+            onClick={() => addToast(t("auth.coming_soon"), "info")}
+            style={{
+              padding: "8px 16px", borderRadius: "var(--radius-pill)",
+              background: "transparent", border: "1px solid var(--border-primary)",
+              color: "var(--text-secondary)", fontSize: 13, fontWeight: 500,
+              cursor: "pointer", transition: "all 0.15s",
+            }}
+          >
+            {t("auth.log_in")}
+          </button>
+          <button
+            onClick={() => addToast(t("auth.coming_soon"), "info")}
+            style={{
+              padding: "8px 16px", borderRadius: "var(--radius-pill)",
+              background: "var(--accent)", border: "none",
+              color: "#fff", fontSize: 13, fontWeight: 500,
+              cursor: "pointer", transition: "opacity 0.15s",
+            }}
+          >
+            {t("auth.sign_up_free")}
+          </button>
+        </div>
       )}
 
       <Sidebar
@@ -572,15 +597,14 @@ export default function ChatPage() {
         rates={rates}
         onNewConversation={onNewConversation}
         onOpenSettings={() => setShowSettings(true)}
-        mobileOpen={sidebarOpen}
-        onMobileClose={() => setSidebarOpen(false)}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        isLoggedIn={isLoggedIn}
       />
 
       <main style={{
         flex: 1, display: "flex", flexDirection: "column",
         background: "var(--bg-primary)", minWidth: 0,
-        marginLeft: isMobile ? 0 : "var(--sidebar-collapsed)",
-        transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
       }}>
         <AnimatePresence mode="wait">
           {mode === "intel" ? (
@@ -663,14 +687,8 @@ export default function ChatPage() {
       {showTour && (
         <OnboardingTour
           onComplete={() => setShowTour(false)}
-          onOpenSidebar={() => {
-            const rail = document.querySelector('.sidebar-rail');
-            if (rail) rail.classList.add('sidebar-expanded');
-          }}
-          onCloseSidebar={() => {
-            const rail = document.querySelector('.sidebar-rail');
-            if (rail) rail.classList.remove('sidebar-expanded');
-          }}
+          onOpenSidebar={() => setSidebarOpen(true)}
+          onCloseSidebar={() => setSidebarOpen(false)}
         />
       )}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

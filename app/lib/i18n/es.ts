@@ -211,6 +211,12 @@ const es: Record<string, string> = {
   "common.retry": "Intentar de nuevo",
   "common.error_generic": "Algo salió mal. Inténtalo de nuevo.",
   "sidebar.empty_history": "Tus conversaciones aparecerán aquí",
+  "sidebar.sign_in_to_save": "Inicia sesión para guardar tus conversaciones",
+
+  // AUTH
+  "auth.log_in": "Iniciar sesión",
+  "auth.sign_up_free": "Crear cuenta gratis",
+  "auth.coming_soon": "¡Próximamente! Estamos trabajando en las cuentas.",
 };
 
 export default es;

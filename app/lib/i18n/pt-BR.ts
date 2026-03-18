@@ -211,6 +211,12 @@ const ptBR: Record<string, string> = {
   "common.retry": "Tentar novamente",
   "common.error_generic": "Algo deu errado. Tente novamente.",
   "sidebar.empty_history": "Suas conversas aparecerão aqui",
+  "sidebar.sign_in_to_save": "Faça login para salvar suas conversas",
+
+  // AUTH
+  "auth.log_in": "Entrar",
+  "auth.sign_up_free": "Criar conta grátis",
+  "auth.coming_soon": "Em breve! Estamos trabalhando nas contas.",
 };
 
 export default ptBR;

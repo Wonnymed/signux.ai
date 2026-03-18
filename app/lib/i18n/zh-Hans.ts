@@ -211,6 +211,12 @@ const zhHans: Record<string, string> = {
   "common.retry": "重试",
   "common.error_generic": "出了点问题，请重试。",
   "sidebar.empty_history": "您的对话将显示在这里",
+  "sidebar.sign_in_to_save": "登录以保存您的对话",
+
+  // AUTH
+  "auth.log_in": "登录",
+  "auth.sign_up_free": "免费注册",
+  "auth.coming_soon": "即将上线！我们正在开发账户功能。",
 };
 
 export default zhHans;

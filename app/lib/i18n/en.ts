@@ -226,6 +226,12 @@ const en: Record<string, string> = {
   "common.retry": "Try again",
   "common.error_generic": "Something went wrong. Please try again.",
   "sidebar.empty_history": "Your conversations will appear here",
+  "sidebar.sign_in_to_save": "Sign in to save your conversations",
+
+  // AUTH
+  "auth.log_in": "Log in",
+  "auth.sign_up_free": "Sign up free",
+  "auth.coming_soon": "Coming soon! We're working on accounts.",
 };
 
 export default en;
