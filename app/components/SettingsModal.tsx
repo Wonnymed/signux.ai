@@ -294,9 +294,10 @@ export default function SettingsModal({ onClose, onLanguageChange, onNameChange 
               <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                 {/* About you */}
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-primary)", marginBottom: 8 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-primary)", marginBottom: 2 }}>
                     {t("settings.about_you")}
                   </label>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>{t("settings.about_you_subtitle")}</div>
                   <textarea
                     value={aboutYou}
                     onChange={e => setAboutYou(e.target.value)}
@@ -314,9 +315,10 @@ export default function SettingsModal({ onClose, onLanguageChange, onNameChange 
 
                 {/* Custom instructions */}
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-primary)", marginBottom: 8 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-primary)", marginBottom: 2 }}>
                     {t("settings.custom_instructions")}
                   </label>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>{t("settings.custom_instructions_subtitle")}</div>
                   <textarea
                     value={customInstructions}
                     onChange={e => setCustomInstructions(e.target.value)}
