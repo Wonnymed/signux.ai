@@ -1,4 +1,24 @@
 "use client";
+import { useState, useEffect } from "react";
+
+function useIsDark() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const theme = document.documentElement.getAttribute("data-theme");
+      if (theme === "dark") return setDark(true);
+      if (theme === "light") return setDark(false);
+      setDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
+    };
+    check();
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", check);
+    const obs = new MutationObserver(check);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => { mq.removeEventListener("change", check); obs.disconnect(); };
+  }, []);
+  return dark;
+}
 
 export function SignuxIcon({
   variant = "gold",
@@ -34,6 +54,81 @@ export function SignuxIcon({
         ...style,
       }}
     />
+  );
+}
+
+/**
+ * [S-icon]IGNUX AI wordmark — icon replaces the letter S.
+ * Automatically swaps to white icon + white text in dark mode.
+ */
+export function SignuxWordmark({
+  fontSize = 44,
+  iconSize,
+  className = "",
+  style,
+}: {
+  fontSize?: number;
+  iconSize?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const dark = useIsDark();
+  const iSize = iconSize ?? Math.round(fontSize * 1.18);
+  const variant = dark ? "white" : "gold";
+  const textColor = "var(--text-primary)";
+
+  return (
+    <div
+      className={className}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 0,
+        ...style,
+      }}
+    >
+      <img
+        src={
+          iSize <= 32
+            ? `/icons/signux-icon-${variant}-32.png`
+            : iSize <= 64
+              ? `/icons/signux-icon-${variant}-64.png`
+              : `/icons/signux-icon-${variant}.png`
+        }
+        alt=""
+        width={iSize}
+        height={iSize}
+        draggable={false}
+        style={{ objectFit: "contain", marginRight: -2 }}
+      />
+      <span
+        style={{
+          fontFamily: "var(--font-brand)",
+          fontSize,
+          fontWeight: 700,
+          letterSpacing: Math.max(3, Math.round(fontSize * 0.13)),
+          color: textColor,
+          lineHeight: 1,
+        }}
+      >
+        IGNUX
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-brand)",
+          fontSize,
+          fontWeight: 300,
+          letterSpacing: Math.max(2, Math.round(fontSize * 0.09)),
+          color: textColor,
+          opacity: 0.4,
+          lineHeight: 1,
+          marginLeft: Math.round(fontSize * 0.22),
+        }}
+      >
+        AI
+      </span>
+    </div>
   );
 }
 

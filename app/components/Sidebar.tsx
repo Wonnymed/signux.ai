@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
 import { SquarePen, MessageSquare, Zap, Globe, Settings, LogIn, LogOut, Trash2 } from "lucide-react";
-import { SignuxIcon } from "./SignuxIcon";
+import { SignuxIcon, SignuxWordmark } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
 import type { AuthUser } from "../lib/auth";
@@ -190,13 +190,7 @@ export default function Sidebar({
       <>
         {/* Header: S logo + SIGNUX AI + toggle right */}
         <div style={{ padding: "12px 12px 12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <SignuxIcon variant="gold" size={28} />
-            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span style={{ fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 700, letterSpacing: 3, color: "var(--text-primary)" }}>SIGNUX</span>
-              <span style={{ fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 300, letterSpacing: 2, color: "var(--text-primary)", opacity: 0.4 }}>AI</span>
-            </div>
-          </div>
+          <SignuxWordmark fontSize={16} />
           <button onClick={onClose} title="Close sidebar" style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 28, height: 28, border: "none", background: "none",

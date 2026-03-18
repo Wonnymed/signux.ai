@@ -3,7 +3,7 @@ import { Zap, ArrowRight } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
-import { SignuxIcon } from "./SignuxIcon";
+import { SignuxWordmark } from "./SignuxIcon";
 
 type WelcomeScreenProps = {
   profileName: string;
@@ -26,33 +26,9 @@ export default function WelcomeScreen({ input, setInput, onSend, loading, attach
       maxWidth: 800, margin: "0 auto", width: "100%",
       padding: isMobile ? "16px 16px 24px" : "24px 24px 32px",
     }}>
-      {/* Brand — horizontal layout */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 14,
-        marginBottom: 40,
-        animation: "fadeIn 0.3s ease-out",
-      }}>
-        <SignuxIcon variant="gold" size={56} />
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{
-            fontFamily: "var(--font-brand)",
-            fontSize: 44,
-            fontWeight: 700,
-            letterSpacing: 5,
-            color: "var(--text-primary)",
-          }}>SIGNUX</span>
-          <span style={{
-            fontFamily: "var(--font-brand)",
-            fontSize: 44,
-            fontWeight: 300,
-            letterSpacing: 3,
-            color: "var(--text-primary)",
-            opacity: 0.4,
-          }}>AI</span>
-        </div>
+      {/* Brand — [S-icon]IGNUX AI */}
+      <div style={{ marginBottom: 40, animation: "fadeIn 0.3s ease-out" }}>
+        <SignuxWordmark fontSize={44} />
       </div>
 
       {/* Input */}

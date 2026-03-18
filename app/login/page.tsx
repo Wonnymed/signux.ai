@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { SignuxIcon } from "../components/SignuxIcon";
+import { SignuxWordmark } from "../components/SignuxIcon";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
 import { t } from "../lib/i18n";
 
@@ -44,18 +44,8 @@ export default function LoginPage() {
     }}>
       <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
         {/* Brand */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 32 }}>
-          <SignuxIcon variant="gold" size={48} />
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{
-              fontFamily: "var(--font-brand)", fontSize: 28, fontWeight: 700,
-              letterSpacing: 5, color: "var(--text-primary)",
-            }}>SIGNUX</span>
-            <span style={{
-              fontFamily: "var(--font-brand)", fontSize: 28, fontWeight: 300,
-              letterSpacing: 3, color: "var(--text-primary)", opacity: 0.5,
-            }}>AI</span>
-          </div>
+        <div style={{ marginBottom: 32 }}>
+          <SignuxWordmark fontSize={28} />
         </div>
 
         {/* Google button */}
