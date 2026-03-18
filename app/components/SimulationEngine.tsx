@@ -85,17 +85,17 @@ export default function SimulationEngine(props: SimulationEngineProps) {
       {
         tag: "LAUNCH", dotColor: "#22c55e",
         title: "Open a franchise in 3 new cities",
-        fill: "I want to open a specialty coffee franchise in São Paulo, Mexico City, and Miami. $150K initial capital per unit. Need to evaluate real estate, supply chain, licensing, and break-even timeline.",
+        fill: "I want to launch a coffee franchise expanding from São Paulo to 3 new cities in Brazil. Budget $200K. Need to evaluate: locations, licensing, supply chain, staffing, and competitive landscape.",
       },
       {
         tag: "SCALE", dotColor: "#3b82f6",
         title: "Expand SaaS product into new market",
-        fill: "B2B SaaS platform with 2K customers in the US, $80K MRR. Want to expand to EU: pricing strategy, GDPR compliance, local payment methods, hiring first EU team, and go-to-market plan.",
+        fill: "My SaaS product has 5K users in the US. I want to expand to EU market. Need to evaluate: GDPR compliance, pricing localization, payment processing, legal entity structure, and go-to-market strategy.",
       },
       {
         tag: "OPTIMIZE", dotColor: "#f59e0b",
         title: "Restructure operations to cut 30% costs",
-        fill: "200-employee company spending $3.2M/year on operations. Need to identify cost reduction opportunities across SaaS tools, office space, vendor contracts, and staffing without impacting quality.",
+        fill: "My e-commerce company does $2M/year revenue but margins are thin at 8%. I want to restructure operations to cut costs by 30%. Evaluate: supply chain, fulfillment, automation, outsourcing, and renegotiation opportunities.",
       },
     ];
 
@@ -373,7 +373,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
                 </div>
               </div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
-                <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>15 specialist agents</span>
+                <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>15 specialist agents</span> will analyze your scenario
               </div>
             </div>
 
@@ -448,7 +448,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               fontSize: 11, color: "rgba(255,255,255,0.2)",
               marginTop: 16,
             }}>
-              Simulations take 60-120s.
+              Simulations take 60-120s. Always verify with qualified professionals.
             </div>
           </div>
 
