@@ -38,7 +38,8 @@ const ptBR: Record<string, string> = {
   "chat.greeting_evening": "Boa noite, {name}",
   "chat.welcome": "Olá, {name}.",
   "chat.welcome_subtitle": "O que precisa resolver hoje?",
-  "chat.placeholder": "Pergunte sobre estruturas, importações, crypto, mercados...",
+  "chat.tagline": "Pense em qualquer decisão de negócio antes de tomá-la",
+  "chat.placeholder": "O que você está construindo, lançando ou decidindo?",
   "chat.send": "Enviar",
   "chat.copy": "Copiar",
   "chat.copied": "Copiado",
@@ -171,7 +172,7 @@ const ptBR: Record<string, string> = {
   // RESEARCH
   "research.title": "Pesquisa Profunda",
   "research.subtitle": "Sintese de inteligencia multi-fonte",
-  "research.placeholder": "Compare as zonas francas DMCC vs ADGM vs DIFC para uma holding fintech com operacoes crypto...",
+  "research.placeholder": "Analise o mercado de franquias de café especial na América Latina...",
   "research.templates_label": "Modelos de pesquisa",
   "research.cta": "Iniciar pesquisa",
   "research.disclaimer": "A pesquisa leva 30-90s em multiplas fontes. Resultados incluem citacoes.",
@@ -216,8 +217,13 @@ const ptBR: Record<string, string> = {
   "auth.sign_in": "Entrar",
 
   // SIMULATE BANNER
-  "sim.banner_title": "Simulação de Ecossistema",
+  "sim.banner_title": "Simular",
   "sim.banner_subtitle": "Teste sua operação com 15+ especialistas de IA antes de investir",
+  "sim.banner_desc": "Teste qualquer decisão com 15+ especialistas de IA",
+
+  // RESEARCH BANNER
+  "research.banner_title": "Pesquisa Profunda",
+  "research.banner_desc": "Análise multi-fonte com citações",
 
   // LOGIN
   "login.google": "Continuar com Google",

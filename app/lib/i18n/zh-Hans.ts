@@ -38,7 +38,8 @@ const zhHans: Record<string, string> = {
   "chat.greeting_evening": "晚上好，{name}",
   "chat.welcome": "你好，{name}。",
   "chat.welcome_subtitle": "今天需要解决什么？",
-  "chat.placeholder": "关于架构、进口、加密资产、市场的任何问题...",
+  "chat.tagline": "在做出任何商业决策之前，先想清楚",
+  "chat.placeholder": "你在构建、启动还是决定什么？",
   "chat.send": "发送",
   "chat.copy": "复制",
   "chat.copied": "已复制",
@@ -171,7 +172,7 @@ const zhHans: Record<string, string> = {
   // RESEARCH
   "research.title": "深度研究",
   "research.subtitle": "多源情报综合",
-  "research.placeholder": "比较DMCC、ADGM和DIFC自贸区，用于拥有加密货币业务的金融科技控股公司...",
+  "research.placeholder": "分析拉丁美洲精品咖啡连锁市场...",
   "research.templates_label": "研究模板",
   "research.cta": "开始研究",
   "research.disclaimer": "研究需要30-90秒，跨多个来源。结果包含引用。",
@@ -216,8 +217,13 @@ const zhHans: Record<string, string> = {
   "auth.sign_in": "登录",
 
   // SIMULATE BANNER
-  "sim.banner_title": "生态系统模拟",
+  "sim.banner_title": "模拟",
   "sim.banner_subtitle": "在投资前用15+位AI专家测试你的运营方案",
+  "sim.banner_desc": "用15+位AI专家测试任何决策",
+
+  // RESEARCH BANNER
+  "research.banner_title": "深度研究",
+  "research.banner_desc": "多源分析，附带引用",
 
   // LOGIN
   "login.google": "使用 Google 继续",

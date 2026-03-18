@@ -83,19 +83,19 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   if (!simResult && !simulating) {
     const scenarios = [
       {
-        tag: "TRADE", dotColor: "#22c55e",
-        title: "HK \u2192 Shenzhen import to EU & Brazil",
-        fill: "Hong Kong trading company importing electronics from Shenzhen, selling B2B to EU distributors and Brazilian retailers, with multi-currency settlement and crypto treasury",
+        tag: "LAUNCH", dotColor: "#22c55e",
+        title: "Open a coffee franchise in 3 cities",
+        fill: "I want to open a specialty coffee franchise in São Paulo, Mexico City, and Miami. $150K initial capital per unit. Need to evaluate real estate, supply chain, licensing, and break-even timeline.",
       },
       {
-        tag: "STRUCTURE", dotColor: "#3b82f6",
-        title: "Dubai offshore holding for EU SaaS",
-        fill: "Dubai DMCC free zone holding company for a SaaS platform serving EU customers, with transfer pricing structure and IP holding in Singapore",
+        tag: "SCALE", dotColor: "#3b82f6",
+        title: "Expand my SaaS to the European market",
+        fill: "B2B SaaS platform with 2K customers in the US, $80K MRR. Want to expand to EU: pricing strategy, GDPR compliance, local payment methods, hiring first EU team, and go-to-market plan.",
       },
       {
-        tag: "CRYPTO", dotColor: "#f59e0b",
-        title: "Crypto treasury multi-jurisdiction ops",
-        fill: "Multi-jurisdiction crypto treasury management: BVI entity holding Bitcoin and ETH, with fiat off-ramps through Swiss and Singaporean EMIs, serving clients in LATAM",
+        tag: "OPTIMIZE", dotColor: "#f59e0b",
+        title: "Restructure costs for a 200-person company",
+        fill: "200-employee company spending $3.2M/year on operations. Need to identify cost reduction opportunities across SaaS tools, office space, vendor contracts, and staffing without impacting quality.",
       },
     ];
 

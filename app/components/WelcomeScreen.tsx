@@ -19,19 +19,17 @@ type WelcomeScreenProps = {
 };
 
 const PARTICLES = [
-  { top: "18%", left: "22%", size: 1.5, anim: "float1", dur: "8s", delay: "0s" },
-  { top: "35%", left: "75%", size: 1, anim: "float2", dur: "10s", delay: "1s" },
-  { top: "65%", left: "15%", size: 1.5, anim: "float1", dur: "12s", delay: "2s" },
-  { top: "50%", left: "85%", size: 1, anim: "float2", dur: "9s", delay: "3s" },
-  { top: "80%", left: "45%", size: 1, anim: "float1", dur: "11s", delay: "1.5s" },
+  { top: "15%", left: "20%", size: 1.5, anim: "float1", dur: "8s", delay: "0s" },
+  { top: "30%", left: "78%", size: 1, anim: "float2", dur: "10s", delay: "1s" },
+  { top: "60%", left: "12%", size: 1.5, anim: "float1", dur: "12s", delay: "2s" },
+  { top: "55%", left: "88%", size: 1, anim: "float2", dur: "9s", delay: "3s" },
+  { top: "82%", left: "42%", size: 1, anim: "float1", dur: "11s", delay: "1.5s" },
 ];
 
-const CAPABILITIES = [
-  "Offshore structures",
-  "China operations",
-  "Crypto compliance",
-  "Tax optimization",
-  "Trade logistics",
+const USE_CASES = [
+  "Startups", "Franchises", "E-commerce", "SaaS",
+  "Import/Export", "Real estate", "Investments", "Consulting",
+  "Manufacturing", "Retail", "Logistics", "Services",
 ];
 
 export default function WelcomeScreen({
@@ -63,10 +61,10 @@ export default function WelcomeScreen({
 
       {/* Radial glow */}
       <div style={{
-        position: "absolute", top: "30%", left: "50%",
+        position: "absolute", top: "28%", left: "50%",
         transform: "translate(-50%, -50%)",
-        width: 600, height: 600,
-        background: "radial-gradient(circle, rgba(212,175,55,0.015) 0%, transparent 70%)",
+        width: 700, height: 700,
+        background: "radial-gradient(circle, rgba(212,175,55,0.012) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
 
@@ -119,8 +117,9 @@ export default function WelcomeScreen({
             marginTop: 16, fontSize: 13,
             color: "rgba(255,255,255,0.3)",
             letterSpacing: 0.5,
+            textAlign: "center",
           }}>
-            Operational intelligence for global operators
+            {t("chat.tagline")}
           </div>
         </div>
 
@@ -138,13 +137,15 @@ export default function WelcomeScreen({
             attachments={attachments}
             onAttachmentsChange={onAttachmentsChange}
             onToast={onToast}
-            placeholder="Ask about structures, regulations, crypto, logistics, tax optimization..."
+            placeholder={t("chat.placeholder")}
           />
         </div>
 
         {/* ── BANNERS ── */}
         <div style={{
-          display: "flex", flexDirection: "column", gap: 8,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          gap: 10,
           width: "100%", maxWidth: 680,
           animation: "fadeIn 0.6s ease-out",
         }}>
@@ -153,10 +154,10 @@ export default function WelcomeScreen({
             <button
               onClick={onSwitchToSimulate}
               style={{
-                width: "100%", padding: "14px 18px",
+                flex: 1, padding: "14px 16px",
                 background: "linear-gradient(135deg, rgba(212,175,55,0.03), rgba(212,175,55,0.01))",
                 border: "1px solid rgba(212,175,55,0.08)",
-                borderRadius: 14, display: "flex", alignItems: "center", gap: 14,
+                borderRadius: 14, display: "flex", alignItems: "center", gap: 12,
                 cursor: "pointer", transition: "all 200ms", textAlign: "left",
               }}
               onMouseEnter={e => {
@@ -169,21 +170,21 @@ export default function WelcomeScreen({
               }}
             >
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
+                width: 34, height: 34, borderRadius: 10,
                 background: "rgba(212,175,55,0.08)", display: "flex",
                 alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}>
-                <Zap size={18} style={{ color: "#D4AF37" }} />
+                <Zap size={16} style={{ color: "#D4AF37" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
-                  Ecosystem Simulation
+                <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+                  {t("sim.banner_title")}
                 </div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.4 }}>
-                  Stress-test your operation with 15 specialist agents
+                  {t("sim.banner_desc")}
                 </div>
               </div>
-              <ChevronRight size={16} style={{ color: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+              <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
             </button>
           )}
 
@@ -192,10 +193,10 @@ export default function WelcomeScreen({
             <button
               onClick={onSwitchToResearch}
               style={{
-                width: "100%", padding: "14px 18px",
+                flex: 1, padding: "14px 16px",
                 background: "linear-gradient(135deg, rgba(107,138,255,0.03), rgba(107,138,255,0.01))",
                 border: "1px solid rgba(107,138,255,0.08)",
-                borderRadius: 14, display: "flex", alignItems: "center", gap: 14,
+                borderRadius: 14, display: "flex", alignItems: "center", gap: 12,
                 cursor: "pointer", transition: "all 200ms", textAlign: "left",
               }}
               onMouseEnter={e => {
@@ -208,34 +209,34 @@ export default function WelcomeScreen({
               }}
             >
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
+                width: 34, height: 34, borderRadius: 10,
                 background: "rgba(107,138,255,0.08)", display: "flex",
                 alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}>
-                <Search size={18} style={{ color: "#6B8AFF" }} />
+                <Search size={16} style={{ color: "#6B8AFF" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
-                  Deep Research
+                <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+                  {t("research.banner_title")}
                 </div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.4 }}>
-                  Multi-source intelligence synthesis with citations
+                  {t("research.banner_desc")}
                 </div>
               </div>
-              <ChevronRight size={16} style={{ color: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+              <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
             </button>
           )}
         </div>
 
-        {/* ── CAPABILITY TAGS ── */}
+        {/* ── USE CASE PILLS ── */}
         <div style={{
           display: "flex", flexWrap: "wrap", justifyContent: "center",
-          gap: isMobile ? 16 : 24,
+          gap: isMobile ? 12 : 16,
           marginTop: 32,
           animation: "fadeIn 0.7s ease-out",
         }}>
-          {CAPABILITIES.map(cap => (
-            <div key={cap} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {USE_CASES.map(uc => (
+            <div key={uc} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{
                 width: 3, height: 3, borderRadius: "50%",
                 background: "rgba(255,255,255,0.2)",
@@ -244,7 +245,7 @@ export default function WelcomeScreen({
                 fontSize: 11, color: "rgba(255,255,255,0.2)",
                 letterSpacing: 0.3,
               }}>
-                {cap}
+                {uc}
               </span>
             </div>
           ))}
@@ -253,7 +254,7 @@ export default function WelcomeScreen({
         {/* ── DISCLAIMER ── */}
         <div style={{
           textAlign: "center", marginTop: 20,
-          fontSize: 11, color: "rgba(255,255,255,0.12)",
+          fontSize: 11, color: "rgba(255,255,255,0.1)",
           animation: "fadeIn 0.8s ease-out",
         }}>
           {t("common.disclaimer")}

@@ -38,7 +38,8 @@ const en: Record<string, string> = {
   "chat.greeting_evening": "Good evening, {name}",
   "chat.welcome": "Hello, {name}.",
   "chat.welcome_subtitle": "What do you need to solve today?",
-  "chat.placeholder": "Ask about structures, imports, crypto, markets...",
+  "chat.tagline": "Think through any business decision before you make it",
+  "chat.placeholder": "What are you building, launching, or deciding?",
   "chat.send": "Send",
   "chat.copy": "Copy",
   "chat.copied": "Copied",
@@ -173,7 +174,7 @@ const en: Record<string, string> = {
   // RESEARCH
   "research.title": "Deep Research",
   "research.subtitle": "Multi-source intelligence synthesis",
-  "research.placeholder": "Compare DMCC vs ADGM vs DIFC free zones for a fintech holding company with crypto operations...",
+  "research.placeholder": "Analyze the market for specialty coffee franchises in Latin America...",
   "research.templates_label": "Research templates",
   "research.cta": "Start research",
   "research.disclaimer": "Research takes 30-90s across multiple sources. Results include citations.",
@@ -215,8 +216,13 @@ const en: Record<string, string> = {
   "auth.sign_in": "Sign in",
 
   // SIMULATE BANNER
-  "sim.banner_title": "Ecosystem Simulation",
+  "sim.banner_title": "Simulate",
   "sim.banner_subtitle": "Test your operation with 15+ AI specialists before investing",
+  "sim.banner_desc": "Test any decision with 15+ AI specialists",
+
+  // RESEARCH BANNER
+  "research.banner_title": "Deep Research",
+  "research.banner_desc": "Multi-source analysis with citations",
 
   // LOGIN
   "login.google": "Continue with Google",

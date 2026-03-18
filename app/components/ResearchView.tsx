@@ -64,28 +64,28 @@ export default function ResearchView({ lang, onContinueInChat }: ResearchViewPro
 
   const templates = [
     {
-      icon: Package, color: "#22c55e", bg: "rgba(34,197,94,0.1)",
-      title: "Jurisdiction comparison",
-      desc: "Side-by-side analysis of free zones, costs, timelines",
-      fill: "Compare DMCC vs ADGM vs DIFC free zones for a fintech holding company: setup costs, timelines, crypto licensing requirements, banking access, and tax implications",
+      icon: BarChart3, color: "#22c55e", bg: "rgba(34,197,94,0.1)",
+      title: "Market analysis",
+      desc: "Size, trends, opportunities, and entry barriers",
+      fill: "Market analysis for the specialty coffee franchise industry in Latin America: market size, growth trends, consumer behavior, competitive landscape, and entry barriers",
     },
     {
       icon: Shield, color: "#8b5cf6", bg: "rgba(139,92,246,0.1)",
-      title: "Regulatory landscape",
-      desc: "Current rules, licensing, enforcement by jurisdiction",
-      fill: "Current cryptocurrency regulatory landscape in Singapore and EU: MiCA implementation status, MAS licensing requirements, stablecoin rules, and enforcement trends",
+      title: "Competitor deep dive",
+      desc: "Pricing, positioning, strengths, and weaknesses",
+      fill: "Deep competitive analysis of the top 5 project management SaaS platforms: pricing tiers, feature comparison, market positioning, customer reviews, and strategic weaknesses",
     },
     {
-      icon: BarChart3, color: "#f59e0b", bg: "rgba(245,158,11,0.1)",
-      title: "Tax structure analysis",
-      desc: "Transfer pricing, CFC rules, treaty optimization",
-      fill: "Hong Kong holding company transfer pricing analysis: intercompany pricing for IP licensing, management fees, and trading margins with subsidiaries in Singapore and Ireland",
+      icon: Globe, color: "#f59e0b", bg: "rgba(245,158,11,0.1)",
+      title: "Regulatory guide",
+      desc: "Licenses, compliance, and legal requirements",
+      fill: "Complete regulatory guide for launching a fintech product in Brazil: required licenses, Central Bank regulations, compliance frameworks, data protection (LGPD), and timeline to approval",
     },
     {
-      icon: Globe, color: "#ef4444", bg: "rgba(239,68,68,0.1)",
-      title: "Geopolitical risk brief",
-      desc: "Sanctions, trade wars, supply chain exposure",
-      fill: "Geopolitical risk assessment for China-Brazil trade corridor: current sanctions landscape, trade tensions, supply chain vulnerabilities, and alternative routing strategies",
+      icon: Package, color: "#ef4444", bg: "rgba(239,68,68,0.1)",
+      title: "Strategy frameworks",
+      desc: "SWOT, Porter's, Blue Ocean, and business models",
+      fill: "Strategic analysis using Porter's Five Forces and Blue Ocean Strategy for an e-commerce company entering the sustainable fashion market in Europe",
     },
   ];
 
