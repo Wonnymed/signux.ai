@@ -13,16 +13,25 @@ import { useAuth } from "../lib/auth";
 import { getUser, createUser, updateUser } from "../lib/database";
 import {
   getInternalUserId,
-  getConversations as fetchConversations,
-  createConversation,
-  updateConversationTitle,
-  touchConversation,
-  deleteConversation as removeConversation,
-  getMessages as fetchMessages,
-  saveMessage,
+  getConversations as fetchConversationsDB,
+  createConversation as createConversationDB,
+  updateConversationTitle as updateTitleDB,
+  touchConversation as touchConvDB,
+  deleteConversation as removeConversationDB,
+  getMessages as fetchMessagesDB,
+  saveMessage as saveMessageDB,
   generateTitle,
 } from "../lib/database-client";
 import type { Conversation } from "../lib/database-client";
+import {
+  localGetConversations,
+  localCreateConversation,
+  localUpdateConversationTitle,
+  localTouchConversation,
+  localDeleteConversation,
+  localGetMessages,
+  localSaveMessage,
+} from "../lib/conversationStore";
 
 import { useIsMobile } from "../lib/useIsMobile";
 import type { FileAttachment } from "../components/ChatInput";
@@ -259,23 +268,28 @@ export default function ChatPage() {
     }).catch(() => {});
   }, [authUser]);
 
-  /* ═══ Load Conversations on Auth ═══ */
+  /* ═══ Load Conversations ═══ */
   useEffect(() => {
     if (!authUser) {
-      setConversations([]);
-      setConversationId(null);
+      // Not logged in — use localStorage
       setInternalUserId(null);
+      setConversations(localGetConversations() as any as Conversation[]);
+      setConversationId(null);
       return;
     }
     let cancelled = false;
     (async () => {
       const uid = await getInternalUserId(authUser.id);
-      if (cancelled || !uid) return;
+      if (cancelled || !uid) {
+        // Fallback to localStorage if DB user not found
+        if (!cancelled) setConversations(localGetConversations() as any as Conversation[]);
+        return;
+      }
       setInternalUserId(uid);
       setLoadingHistory(true);
-      const convs = await fetchConversations(uid);
+      const convs = await fetchConversationsDB(uid);
       if (!cancelled) {
-        setConversations(convs);
+        setConversations(convs.length > 0 ? convs : localGetConversations() as any as Conversation[]);
         setLoadingHistory(false);
       }
     })();
@@ -289,17 +303,37 @@ export default function ChatPage() {
     setMessages([]);
     setLoading(true);
     try {
-      const dbMessages = await fetchMessages(convId);
-      setMessages(dbMessages.map(m => ({
+      if (internalUserId) {
+        // Try Supabase first
+        const dbMessages = await fetchMessagesDB(convId);
+        if (dbMessages.length > 0) {
+          setMessages(dbMessages.map(m => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            timestamp: new Date(m.created_at).getTime(),
+          })));
+          setLoading(false);
+          return;
+        }
+      }
+      // Fallback to localStorage
+      const localMsgs = localGetMessages(convId);
+      setMessages(localMsgs.map(m => ({
         role: m.role as "user" | "assistant",
         content: m.content,
         timestamp: new Date(m.created_at).getTime(),
       })));
     } catch {
-      addToast(t("common.error"), "error");
+      // Last resort: try localStorage
+      const localMsgs = localGetMessages(convId);
+      setMessages(localMsgs.map(m => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+        timestamp: new Date(m.created_at).getTime(),
+      })));
     }
     setLoading(false);
-  }, [conversationId, addToast]);
+  }, [conversationId, internalUserId]);
 
   /* ═══ Retry Effect — sends after messages state is updated ═══ */
   useEffect(() => {
@@ -407,20 +441,33 @@ export default function ChatPage() {
 
     // Create conversation on first message (non-blocking)
     let activeConvId = conversationId;
-    if (!activeConvId && internalUserId) {
-      try {
-        const conv = await createConversation(internalUserId, mode);
-        if (conv) {
-          activeConvId = conv.id;
-          setConversationId(conv.id);
-          setConversations(prev => [conv, ...prev]);
-        }
-      } catch {}
+    if (!activeConvId) {
+      if (internalUserId) {
+        // Logged in → try Supabase
+        try {
+          const conv = await createConversationDB(internalUserId, mode);
+          if (conv) {
+            activeConvId = conv.id;
+            setConversationId(conv.id);
+            setConversations(prev => [conv, ...prev]);
+          }
+        } catch {}
+      }
+      // Fallback or not logged in → localStorage
+      if (!activeConvId) {
+        const localConv = localCreateConversation(mode);
+        activeConvId = localConv.id;
+        setConversationId(localConv.id);
+        setConversations(prev => [localConv as any as Conversation, ...prev]);
+      }
     }
 
     // Save user message (non-blocking)
     if (activeConvId) {
-      saveMessage(activeConvId, "user", msg).catch(() => {});
+      if (internalUserId) {
+        saveMessageDB(activeConvId, "user", msg).catch(() => {});
+      }
+      localSaveMessage(activeConvId, "user", msg);
     }
 
     try {
@@ -507,7 +554,8 @@ export default function ChatPage() {
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant" && last.content) {
-          saveMessage(activeConvId!, "assistant", last.content).catch(() => {});
+          if (internalUserId) saveMessageDB(activeConvId!, "assistant", last.content).catch(() => {});
+          localSaveMessage(activeConvId!, "assistant", last.content);
         }
         return prev;
       });
@@ -515,11 +563,13 @@ export default function ChatPage() {
       const isFirstMessage = newDisplayMessages.filter(m => m.role === "user").length === 1;
       if (isFirstMessage) {
         generateTitle(msg).then(title => {
-          updateConversationTitle(activeConvId!, title).catch(() => {});
+          if (internalUserId) updateTitleDB(activeConvId!, title).catch(() => {});
+          localUpdateConversationTitle(activeConvId!, title);
           setConversations(prev => prev.map(c => c.id === activeConvId ? { ...c, title } : c));
         });
       } else {
-        touchConversation(activeConvId).catch(() => {});
+        if (internalUserId) touchConvDB(activeConvId).catch(() => {});
+        localTouchConversation(activeConvId);
       }
     }
 
@@ -674,8 +724,9 @@ export default function ChatPage() {
       setConversationId(null);
       setMessages([]);
     }
-    removeConversation(convId).catch(() => {});
-  }, [conversationId]);
+    if (internalUserId) removeConversationDB(convId).catch(() => {});
+    localDeleteConversation(convId);
+  }, [conversationId, internalUserId]);
 
   /* Close sidebar on mobile */
   useEffect(() => {

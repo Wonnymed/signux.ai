@@ -44,6 +44,31 @@ function SidebarToggleIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+/* ═══ Date Grouping ═══ */
+function groupByDate(convs: Conversation[]) {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+  const weekStart = new Date(todayStart.getTime() - 7 * 86400000);
+
+  const groups: { label: string; items: Conversation[] }[] = [
+    { label: "Today", items: [] },
+    { label: "Yesterday", items: [] },
+    { label: "Previous 7 days", items: [] },
+    { label: "Older", items: [] },
+  ];
+
+  convs.forEach(c => {
+    const d = new Date(c.updated_at);
+    if (d >= todayStart) groups[0].items.push(c);
+    else if (d >= yesterdayStart) groups[1].items.push(c);
+    else if (d >= weekStart) groups[2].items.push(c);
+    else groups[3].items.push(c);
+  });
+
+  return groups.filter(g => g.items.length > 0);
+}
+
 /* ═══ Conversation History Item ═══ */
 function ConversationItem({ conv, isActive, onLoad, onDelete }: {
   conv: Conversation;
@@ -214,12 +239,7 @@ export default function Sidebar({
 
         {/* History area */}
         <div style={{ flex: 1, overflowY: "auto", padding: "0 8px" }}>
-          {!isLoggedIn ? (
-            <div style={{ padding: "12px 4px", fontSize: 12, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
-              <a href="/login" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>{t("auth.sign_in")}</a>{" "}
-              <span>{t("sidebar.sign_in_to_save")}</span>
-            </div>
-          ) : loadingHistory ? (
+          {loadingHistory ? (
             <div style={{ padding: "16px 4px", fontSize: 12, color: "var(--text-tertiary)", textAlign: "center" }}>
               <span className="loading-dots">...</span>
             </div>
@@ -228,15 +248,26 @@ export default function Sidebar({
               {t("sidebar.empty_history")}
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {conversations.map(conv => (
-                <ConversationItem
-                  key={conv.id}
-                  conv={conv}
-                  isActive={conv.id === activeConversationId}
-                  onLoad={() => { onLoadConversation?.(conv.id); if (isMobile) onClose(); }}
-                  onDelete={() => onDeleteConversation?.(conv.id)}
-                />
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {groupByDate(conversations).map(group => (
+                <div key={group.label}>
+                  <div style={{
+                    padding: "10px 12px 4px", fontSize: 11, fontWeight: 600,
+                    color: "var(--text-tertiary)", textTransform: "uppercase",
+                    letterSpacing: 0.8,
+                  }}>
+                    {group.label}
+                  </div>
+                  {group.items.map(conv => (
+                    <ConversationItem
+                      key={conv.id}
+                      conv={conv}
+                      isActive={conv.id === activeConversationId}
+                      onLoad={() => { onLoadConversation?.(conv.id); if (isMobile) onClose(); }}
+                      onDelete={() => onDeleteConversation?.(conv.id)}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           )}
