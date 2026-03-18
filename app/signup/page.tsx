@@ -5,7 +5,7 @@ import { SignuxIcon } from "../components/SignuxIcon";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
 import { t } from "../lib/i18n";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ export default function LoginPage() {
     }}>
       <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
         {/* Brand */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 32 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <SignuxIcon color="var(--accent)" size={48} />
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             <span style={{
@@ -57,6 +57,20 @@ export default function LoginPage() {
             }}>AI</span>
           </div>
         </div>
+
+        {/* Title */}
+        <h1 style={{
+          fontSize: 20, fontWeight: 600, color: "var(--text-primary)",
+          margin: "0 0 6px", fontFamily: "var(--font-sans)",
+        }}>
+          Create your account
+        </h1>
+        <p style={{
+          fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 28px",
+          lineHeight: 1.5,
+        }}>
+          Start with 10 free messages. No credit card required.
+        </p>
 
         {/* Google button */}
         <button
@@ -134,11 +148,11 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Sign up link */}
+        {/* Already have account */}
         <div style={{ marginTop: 32, fontSize: 13, color: "var(--text-tertiary)" }}>
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" style={{ color: "var(--accent)", textDecoration: "none" }}>
-            Sign up free
+          Already have an account?{" "}
+          <Link href="/login" style={{ color: "var(--accent)", textDecoration: "none" }}>
+            Sign in
           </Link>
         </div>
 

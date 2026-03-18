@@ -9,6 +9,7 @@ import { Check, AlertTriangle, Info, WifiOff, PanelLeftOpen, PanelLeftClose } fr
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
 import { SignuxIcon } from "../components/SignuxIcon";
+import UserMenu from "../components/UserMenu";
 import { useAuth } from "../lib/auth";
 import { getUser, createUser, updateUser } from "../lib/database";
 
@@ -243,6 +244,7 @@ export default function ChatPage() {
       setProfileName(getProfile()?.name || "");
       return;
     }
+    setProfileName(authUser.name);
     const profile = getProfile();
     getUser(authUser.id).then(dbUser => {
       if (dbUser) {
@@ -251,8 +253,8 @@ export default function ChatPage() {
       } else {
         createUser({
           auth_id: authUser.id,
-          email: authUser.email || "",
-          ...(profile?.name ? { name: profile.name } : {}),
+          email: authUser.email,
+          ...(profile?.name ? { name: profile.name } : { name: authUser.name }),
           ...(profile?.taxResidence ? { country: profile.taxResidence } : {}),
           ...(profile?.operations?.length ? { operations: profile.operations } : {}),
           ...(profile?.language ? { language: profile.language } : {}),
@@ -613,7 +615,7 @@ export default function ChatPage() {
             {t("auth.log_in")}
           </button>
           <button
-            onClick={() => { window.location.href = "/login"; }}
+            onClick={() => { window.location.href = "/signup"; }}
             aria-label="Sign up"
             style={{
               padding: isMobile ? "4px 12px" : "6px 16px",
@@ -626,20 +628,8 @@ export default function ChatPage() {
             {t("auth.sign_up_free")}
           </button>
         </div>
-      ) : authUser && profileName ? (
-        <div style={{
-          position: "fixed", top: 14, right: 20,
-          zIndex: 100,
-        }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: "rgba(212,175,55,0.1)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 13, fontWeight: 600, color: "var(--accent)",
-          }}>
-            {profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
-          </div>
-        </div>
+      ) : authUser ? (
+        <UserMenu user={authUser} onSignOut={authSignOut} />
       ) : null}
 
       <Sidebar
@@ -654,6 +644,7 @@ export default function ChatPage() {
         isLoggedIn={isLoggedIn}
         onSignOut={authUser ? authSignOut : undefined}
         toggleRef={toggleRef}
+        authUser={authUser}
       />
 
       <main style={{

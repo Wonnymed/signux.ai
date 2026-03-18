@@ -4,6 +4,7 @@ import { SquarePen, MessageSquare, Zap, Globe, Settings, X, LogIn, LogOut } from
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
+import type { AuthUser } from "../lib/auth";
 
 type SidebarProps = {
   mode: Mode;
@@ -17,12 +18,13 @@ type SidebarProps = {
   isLoggedIn: boolean;
   onSignOut?: () => void;
   toggleRef?: React.RefObject<HTMLButtonElement | null>;
+  authUser?: AuthUser | null;
 };
 
 export default function Sidebar({
   mode, setMode, profileName, lang,
   onNewConversation, onOpenSettings, open, onClose, isLoggedIn, onSignOut,
-  toggleRef,
+  toggleRef, authUser,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLElement>(null);
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "?";
@@ -67,6 +69,7 @@ export default function Sidebar({
         zIndex: 200,
         transform: open ? "translateX(0)" : "translateX(-100%)",
         transition: "transform 250ms ease",
+        pointerEvents: open ? "auto" : "none",
         background: "var(--bg-primary)",
         borderRight: "1px solid var(--border-secondary)",
         boxShadow: open ? "4px 0 12px rgba(0,0,0,0.08)" : "none",
@@ -216,13 +219,17 @@ export default function Sidebar({
               onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
-              <div style={{
-                width: 24, height: 24, borderRadius: "50%", background: "rgba(212,175,55,0.1)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 600, color: "var(--accent)", flexShrink: 0,
-              }}>
-                {userInitials}
-              </div>
+              {authUser?.avatar ? (
+                <img src={authUser.avatar} width={24} height={24} style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
+              ) : (
+                <div style={{
+                  width: 24, height: 24, borderRadius: "50%", background: "rgba(212,175,55,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 10, fontWeight: 600, color: "var(--accent)", flexShrink: 0,
+                }}>
+                  {userInitials}
+                </div>
+              )}
               <span style={{ fontWeight: 500 }}>{profileName}</span>
             </button>
             {onSignOut && (
