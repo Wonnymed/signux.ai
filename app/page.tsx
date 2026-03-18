@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProfile } from "./lib/profile";
-import { SignuxIcon, SignuxLogo } from "./components/SignuxIcon";
+import { SignuxIcon } from "./components/SignuxIcon";
 
 /* ═══ Fade-in on scroll (IntersectionObserver) ═══ */
 function useFadeIn() {
@@ -154,7 +154,7 @@ export default function LandingPage() {
       }}>
         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
           {/* Icon */}
-          <SignuxIcon color="#D4AF37" size={80} />
+          <SignuxIcon variant="gold" size={80} />
 
           {/* Logo text */}
           <h1 style={{ margin: "12px 0 0", display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -314,7 +314,7 @@ export default function LandingPage() {
         textAlign: "center",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-          <SignuxIcon color="var(--text-tertiary)" size={20} />
+          <SignuxIcon variant="gold" size={20} style={{ opacity: 0.4 }} />
           <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
             <span style={{
               fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700,

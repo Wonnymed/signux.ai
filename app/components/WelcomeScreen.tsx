@@ -35,7 +35,7 @@ export default function WelcomeScreen({ input, setInput, onSend, loading, attach
         marginBottom: 40,
         animation: "fadeIn 0.3s ease-out",
       }}>
-        <SignuxIcon color="var(--accent)" size={56} />
+        <SignuxIcon variant="gold" size={56} />
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           <span style={{
             fontFamily: "var(--font-brand)",

@@ -149,7 +149,7 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0, marginTop: 2,
         }}>
-          <SignuxIcon size={14} color="var(--accent)" />
+          <SignuxIcon variant="gold" size={14} />
         </div>
 
         {/* Message column */}

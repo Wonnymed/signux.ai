@@ -45,7 +45,7 @@ export default function LoginPage() {
       <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
         {/* Brand */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 32 }}>
-          <SignuxIcon color="var(--accent)" size={48} />
+          <SignuxIcon variant="gold" size={48} />
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             <span style={{
               fontFamily: "var(--font-brand)", fontSize: 28, fontWeight: 700,

@@ -191,7 +191,7 @@ export default function Sidebar({
         {/* Header: S logo + SIGNUX AI + toggle right */}
         <div style={{ padding: "12px 12px 12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <SignuxIcon color="var(--accent)" size={28} />
+            <SignuxIcon variant="gold" size={28} />
             <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
               <span style={{ fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 700, letterSpacing: 3, color: "var(--text-primary)" }}>SIGNUX</span>
               <span style={{ fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 300, letterSpacing: 2, color: "var(--text-primary)", opacity: 0.4 }}>AI</span>
@@ -339,7 +339,7 @@ export default function Sidebar({
         }}
           onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-          <SignuxIcon color="var(--accent)" size={28} />
+          <SignuxIcon variant="gold" size={28} />
         </button>
 
         {/* New conversation */}

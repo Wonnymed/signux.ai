@@ -9,7 +9,7 @@ export default function NotFound() {
       background: "var(--bg-primary)", color: "var(--text-primary)",
       fontFamily: "var(--font-sans)",
     }}>
-      <SignuxIcon color="var(--accent)" size={48} />
+      <SignuxIcon variant="gold" size={48} />
       <div style={{
         fontFamily: "var(--font-brand)", fontSize: 44, fontWeight: 300,
         letterSpacing: "0.12em", marginTop: 16, marginBottom: 24,
