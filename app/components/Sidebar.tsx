@@ -1,5 +1,5 @@
 "use client";
-import { PenSquare, MessageSquare, Zap, Globe, Settings, X, LogIn } from "lucide-react";
+import { PenSquare, MessageSquare, Zap, Globe, Settings, X, LogIn, LogOut } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import { t } from "../lib/i18n";
@@ -22,11 +22,12 @@ type SidebarProps = {
   open: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
+  onSignOut?: () => void;
 };
 
 export default function Sidebar({
   mode, setMode, profileName, lang, rates,
-  onNewConversation, onOpenSettings, open, onClose, isLoggedIn,
+  onNewConversation, onOpenSettings, open, onClose, isLoggedIn, onSignOut,
 }: SidebarProps) {
   const isMobile = useIsMobile();
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "?";
@@ -201,19 +202,36 @@ export default function Sidebar({
                 <span>{t("sidebar.settings")}</span>
               </button>
 
-              {/* Profile (only if logged in) */}
-              {isLoggedIn && profileName && (
-                <button onClick={handleSettings} className="sidebar-icon-btn" style={{ marginTop: 2 }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%", background: "var(--accent-bg)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 600, color: "var(--accent)", flexShrink: 0,
-                  }}>
-                    {userInitials}
-                  </div>
-                  <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
-                    {profileName}
-                  </span>
+              {/* Profile + Sign out (if logged in) */}
+              {isLoggedIn && profileName ? (
+                <>
+                  <button onClick={handleSettings} className="sidebar-icon-btn" style={{ marginTop: 2 }}>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: "50%", background: "var(--accent-bg)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 10, fontWeight: 600, color: "var(--accent)", flexShrink: 0,
+                    }}>
+                      {userInitials}
+                    </div>
+                    <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
+                      {profileName}
+                    </span>
+                  </button>
+                  {onSignOut && (
+                    <button onClick={() => { onSignOut(); onClose(); }} className="sidebar-icon-btn" style={{ marginTop: 2 }}>
+                      <LogOut size={18} style={{ flexShrink: 0 }} />
+                      <span>{t("auth.sign_out")}</span>
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={() => { window.location.href = "/login"; onClose(); }}
+                  className="sidebar-icon-btn"
+                  style={{ marginTop: 2 }}
+                >
+                  <LogIn size={18} style={{ flexShrink: 0 }} />
+                  <span>{t("auth.sign_in")}</span>
                 </button>
               )}
             </div>

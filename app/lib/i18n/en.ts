@@ -217,6 +217,16 @@ const en: Record<string, string> = {
   "auth.log_in": "Log in",
   "auth.sign_up_free": "Sign up free",
   "auth.coming_soon": "Coming soon! We're working on accounts.",
+  "auth.sign_out": "Sign out",
+  "auth.sign_in": "Sign in",
+
+  // LOGIN
+  "login.google": "Continue with Google",
+  "login.or": "or",
+  "login.magic_link": "Send magic link",
+  "login.check_email": "Check your email for the login link.",
+  "login.skip": "Continue without account",
+  "login.error": "Something went wrong. Please try again.",
 
   // ERRORS
   "intel.error": "Error generating briefing. Please try again.",

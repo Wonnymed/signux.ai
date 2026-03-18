@@ -9,6 +9,8 @@ import { Check, AlertTriangle, Info, WifiOff, PanelLeft } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
 import { SignuxIcon } from "../components/SignuxIcon";
+import { getCurrentUser, signOut, onAuthStateChange } from "../lib/auth";
+import { getUser, createUser, updateUser } from "../lib/database";
 
 import { useIsMobile } from "../lib/useIsMobile";
 import type { FileAttachment } from "../components/ChatInput";
@@ -183,6 +185,9 @@ export default function ChatPage() {
   const [simStarting, setSimStarting] = useState(false);
   const [simStartTime, setSimStartTime] = useState<number | null>(null);
 
+  /* Auth */
+  const [authUser, setAuthUser] = useState<any>(null);
+
   /* UI */
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -210,8 +215,9 @@ export default function ChatPage() {
   }, []);
 
   /* ═══ Profile Loading Effect ═══ */
-  const isLoggedIn = !!(profileName);
+  const isLoggedIn = !!(authUser) || !!(profileName);
   useEffect(() => {
+    // Load localStorage profile
     const profile = getProfile();
     if (profile && profile.name) {
       setProfileName(profile.name);
@@ -219,6 +225,37 @@ export default function ChatPage() {
       setLang(userLang);
       setLanguage(userLang);
     }
+
+    // Check Supabase auth
+    getCurrentUser().then(async (user) => {
+      if (user) {
+        setAuthUser(user);
+        // Sync profile from DB or migrate localStorage
+        const dbUser = await getUser(user.id);
+        if (dbUser) {
+          if (dbUser.name) setProfileName(dbUser.name);
+          if (dbUser.language) { setLang(dbUser.language as Language); setLanguage(dbUser.language as Language); }
+        } else {
+          // First login — create DB user, migrate localStorage profile if exists
+          const newUser = await createUser({
+            auth_id: user.id,
+            email: user.email || "",
+            ...(profile?.name ? { name: profile.name } : {}),
+            ...(profile?.taxResidence ? { country: profile.taxResidence } : {}),
+            ...(profile?.operations?.length ? { operations: profile.operations } : {}),
+            ...(profile?.language ? { language: profile.language } : {}),
+          });
+          if (newUser?.name) setProfileName(newUser.name);
+        }
+      }
+    }).catch(() => {});
+
+    // Listen for auth changes
+    const sub = onAuthStateChange((user) => {
+      setAuthUser(user);
+      if (!user) setProfileName(getProfile()?.name || "");
+    });
+
     setReady(true);
     fetch("/api/rates").then(r => r.json()).then(setRates).catch(() => {});
     const toastData = sessionStorage.getItem("signux_welcome_toast");
@@ -229,6 +266,8 @@ export default function ChatPage() {
         setTimeout(() => addToast(message, type), 300);
       } catch {}
     }
+
+    return () => { sub.unsubscribe(); };
   }, [addToast]);
 
   /* ═══ Dynamic Page Title ═══ */
@@ -561,13 +600,13 @@ export default function ChatPage() {
       </button>
 
       {/* Auth buttons (top-right, floating) */}
-      {!isLoggedIn && (
+      {!isLoggedIn ? (
         <div style={{
           position: "fixed", top: "var(--safe-top, 8px)", right: 8,
           display: "flex", gap: 8, zIndex: 50,
         }}>
           <button
-            onClick={() => addToast(t("auth.coming_soon"), "info")}
+            onClick={() => { window.location.href = "/login"; }}
             aria-label="Log in"
             style={{
               padding: "8px 16px", borderRadius: "var(--radius-pill)",
@@ -579,7 +618,7 @@ export default function ChatPage() {
             {t("auth.log_in")}
           </button>
           <button
-            onClick={() => addToast(t("auth.coming_soon"), "info")}
+            onClick={() => { window.location.href = "/login"; }}
             aria-label="Sign up"
             style={{
               padding: "8px 16px", borderRadius: "var(--radius-pill)",
@@ -591,7 +630,21 @@ export default function ChatPage() {
             {t("auth.sign_up_free")}
           </button>
         </div>
-      )}
+      ) : authUser && profileName ? (
+        <div style={{
+          position: "fixed", top: "var(--safe-top, 8px)", right: 8,
+          zIndex: 50,
+        }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", background: "var(--accent-bg)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, fontWeight: 600, color: "var(--accent)",
+            border: "1px solid var(--border-secondary)",
+          }}>
+            {profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+          </div>
+        </div>
+      ) : null}
 
       <Sidebar
         mode={mode}
@@ -604,6 +657,7 @@ export default function ChatPage() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         isLoggedIn={isLoggedIn}
+        onSignOut={authUser ? signOut : undefined}
       />
 
       <main style={{

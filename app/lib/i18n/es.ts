@@ -218,6 +218,16 @@ const es: Record<string, string> = {
   "auth.log_in": "Iniciar sesión",
   "auth.sign_up_free": "Crear cuenta gratis",
   "auth.coming_soon": "¡Próximamente! Estamos trabajando en las cuentas.",
+  "auth.sign_out": "Cerrar sesión",
+  "auth.sign_in": "Iniciar sesión",
+
+  // LOGIN
+  "login.google": "Continuar con Google",
+  "login.or": "o",
+  "login.magic_link": "Enviar enlace mágico",
+  "login.check_email": "Revisa tu correo para el enlace de inicio de sesión.",
+  "login.skip": "Continuar sin cuenta",
+  "login.error": "Algo salió mal. Inténtalo de nuevo.",
 
   // ERRORS
   "intel.error": "Error al generar briefing. Inténtalo de nuevo.",

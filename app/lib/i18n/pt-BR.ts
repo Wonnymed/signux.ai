@@ -218,6 +218,16 @@ const ptBR: Record<string, string> = {
   "auth.log_in": "Entrar",
   "auth.sign_up_free": "Criar conta grátis",
   "auth.coming_soon": "Em breve! Estamos trabalhando nas contas.",
+  "auth.sign_out": "Sair",
+  "auth.sign_in": "Entrar",
+
+  // LOGIN
+  "login.google": "Continuar com Google",
+  "login.or": "ou",
+  "login.magic_link": "Enviar link mágico",
+  "login.check_email": "Verifique seu e-mail para o link de login.",
+  "login.skip": "Continuar sem conta",
+  "login.error": "Algo deu errado. Tente novamente.",
 
   // ERRORS
   "intel.error": "Erro ao gerar briefing. Tente novamente.",

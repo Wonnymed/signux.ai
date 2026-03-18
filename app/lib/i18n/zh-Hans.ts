@@ -218,6 +218,16 @@ const zhHans: Record<string, string> = {
   "auth.log_in": "登录",
   "auth.sign_up_free": "免费注册",
   "auth.coming_soon": "即将上线！我们正在开发账户功能。",
+  "auth.sign_out": "退出登录",
+  "auth.sign_in": "登录",
+
+  // LOGIN
+  "login.google": "使用 Google 继续",
+  "login.or": "或",
+  "login.magic_link": "发送登录链接",
+  "login.check_email": "请查看您的邮箱获取登录链接。",
+  "login.skip": "不登录继续使用",
+  "login.error": "出了点问题，请重试。",
 
   // ERRORS
   "intel.error": "生成简报时出错。请重试。",
