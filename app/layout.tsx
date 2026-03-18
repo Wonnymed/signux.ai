@@ -6,20 +6,23 @@ export const metadata: Metadata = {
   description: "AI-powered analysis for structures, imports, crypto, and markets.",
   metadataBase: new URL("https://signux.ai"),
   icons: {
-    icon: "/favicon.svg",
-    apple: "/icon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "SIGNUX AI — Operational Intelligence",
     description: "AI-powered analysis for structures, imports, crypto, and markets.",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630 }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "SIGNUX AI — Operational Intelligence",
     description: "AI-powered analysis for structures, imports, crypto, and markets.",
-    images: ["/og-image.svg"],
+    images: ["/og-image.png"],
   },
 };
 
@@ -32,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="theme-color" content="#D4AF37" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
