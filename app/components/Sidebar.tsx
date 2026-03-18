@@ -1,5 +1,6 @@
 "use client";
-import { PenSquare, MessageSquare, Zap, Globe, Settings, MessageCircle, X, LogIn } from "lucide-react";
+import { PenSquare, MessageSquare, Zap, Globe, Settings, X, LogIn } from "lucide-react";
+import { SignuxIcon } from "./SignuxIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -62,20 +63,17 @@ export default function Sidebar({
               justifyContent: "space-between",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: 6,
-                  background: "var(--accent)", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0,
-                }}>
-                  S
+                <SignuxIcon color="var(--accent)" size={24} />
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                  <span style={{
+                    fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700,
+                    letterSpacing: 3, color: "var(--text-primary)",
+                  }}>SIGNUX</span>
+                  <span style={{
+                    fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 300,
+                    letterSpacing: 2, color: "var(--text-primary)", opacity: 0.5,
+                  }}>AI</span>
                 </div>
-                <span style={{
-                  fontSize: 13, fontWeight: 600, letterSpacing: "0.1em",
-                  color: "var(--text-secondary)",
-                }}>
-                  SIGNUX
-                </span>
               </div>
               <button
                 onClick={onClose}

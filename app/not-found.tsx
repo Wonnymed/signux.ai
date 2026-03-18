@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignuxIcon } from "./components/SignuxIcon";
 
 export default function NotFound() {
   return (
@@ -8,9 +9,10 @@ export default function NotFound() {
       background: "var(--bg-primary)", color: "var(--text-primary)",
       fontFamily: "var(--font-sans)",
     }}>
+      <SignuxIcon color="var(--accent)" size={48} />
       <div style={{
-        fontSize: 44, fontWeight: 300, letterSpacing: "0.12em",
-        marginBottom: 24,
+        fontFamily: "var(--font-brand)", fontSize: 44, fontWeight: 300,
+        letterSpacing: "0.12em", marginTop: 16, marginBottom: 24,
       }}>
         404
       </div>

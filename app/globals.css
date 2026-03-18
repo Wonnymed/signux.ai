@@ -24,9 +24,10 @@
   --border-primary: #E5E5E5;
   --border-secondary: #F0F0F0;
 
-  --accent: #C9A84C;
-  --accent-hover: #B89740;
-  --accent-bg: rgba(201,168,76,0.06);
+  --accent: #D4AF37;
+  --accent-hover: #A8891F;
+  --accent-light: #E8CC6E;
+  --accent-bg: rgba(212,175,55,0.06);
 
   --success: #10B981;
   --warning: #F59E0B;
@@ -40,6 +41,7 @@
   --radius-pill: 9999px;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-brand: 'Rajdhani', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
 
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
@@ -142,14 +144,15 @@ body {
 }
 
 ::selection {
-  background: rgba(201,168,76,0.12);
+  background: var(--accent);
+  color: #fff;
 }
 
 /* ═══ Scrollbar ═══ */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-primary); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
 /* ═══ Focus ═══ */
 :focus-visible {
@@ -320,16 +323,34 @@ textarea, input, button {
   animation: splashFadeOut 0.3s ease-out forwards;
 }
 .splash-logo {
+  font-family: var(--font-brand);
   font-size: 40px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: 5px;
   color: var(--text-primary);
+}
+.splash-logo-ai {
+  font-family: var(--font-brand);
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  opacity: 0.5;
+  margin-left: 8px;
 }
 .splash-bar {
   width: 36px;
   height: 2px;
   background: var(--accent);
   margin: 8px auto 0;
+}
+
+@keyframes signuxPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.signux-loading {
+  animation: signuxPulse 2s ease-in-out infinite;
 }
 
 /* ═══ Mode Transition ═══ */

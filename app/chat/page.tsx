@@ -8,6 +8,7 @@ import type { Message, Toast, Attachment, SimAgent, SimResult, Mode } from "../l
 import { Check, AlertTriangle, Info, WifiOff, PanelLeft } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
+import { SignuxIcon } from "../components/SignuxIcon";
 
 import { useIsMobile } from "../lib/useIsMobile";
 import type { FileAttachment } from "../components/ChatInput";
@@ -120,8 +121,12 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
   }, [onDone]);
   return (
     <div className={`splash-screen${exiting ? " splash-exit" : ""}`}>
-      <div style={{ textAlign: "center" }}>
-        <div className="splash-logo">SIGNUX</div>
+      <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <SignuxIcon color="#D4AF37" size={64} className="signux-loading" />
+        <div style={{ marginTop: 12, display: "flex", alignItems: "baseline" }}>
+          <span className="splash-logo">SIGNUX</span>
+          <span className="splash-logo-ai">AI</span>
+        </div>
         <div className="splash-bar" />
       </div>
     </div>

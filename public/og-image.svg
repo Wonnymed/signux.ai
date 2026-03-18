@@ -1,6 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
-  <rect width="1200" height="630" fill="#FFFFFF"/>
-  <text x="600" y="280" text-anchor="middle" font-family="system-ui, -apple-system, Helvetica Neue, Arial, sans-serif" font-size="72" font-weight="600" letter-spacing="12" fill="#0A0A0A">SIGNUX</text>
-  <line x1="500" y1="310" x2="700" y2="310" stroke="#C9A84C" stroke-width="2"/>
-  <text x="600" y="355" text-anchor="middle" font-family="system-ui, -apple-system, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="400" fill="#666666">The AI that knows global business</text>
+  <rect width="1200" height="630" fill="#08080a"/>
+  <!-- Icon centered -->
+  <g transform="translate(520, 140) scale(0.6)">
+    <path d="M30 105 L30 90 L60 30 L90 30 L170 85 L170 105 L130 105 L90 75 L70 105Z" fill="#D4AF37"/>
+    <path d="M170 95 L170 110 L140 170 L110 170 L30 115 L30 95 L70 95 L110 125 L130 95Z" fill="#D4AF37"/>
+    <circle cx="100" cy="100" r="5.5" fill="none" stroke="#D4AF37" stroke-width="2.5"/>
+    <line x1="100" y1="88" x2="100" y2="78" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="111" y1="92" x2="118" y2="85" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="89" y1="92" x2="82" y2="85" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="111" y1="108" x2="118" y2="115" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="89" y1="108" x2="82" y2="115" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <!-- Text -->
+  <text x="600" y="380" text-anchor="middle" font-family="Rajdhani, system-ui, sans-serif" font-size="64" font-weight="700" letter-spacing="8" fill="#ffffff">SIGNUX</text>
+  <text x="600" y="385" text-anchor="start" dx="170" font-family="Rajdhani, system-ui, sans-serif" font-size="64" font-weight="300" letter-spacing="4" fill="#ffffff" opacity="0.5">AI</text>
+  <line x1="530" y1="405" x2="670" y2="405" stroke="#D4AF37" stroke-width="2"/>
+  <text x="600" y="445" text-anchor="middle" font-family="Rajdhani, system-ui, sans-serif" font-size="22" font-weight="400" fill="#999999">The AI that knows global business</text>
 </svg>

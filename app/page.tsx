@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProfile } from "./lib/profile";
+import { SignuxIcon, SignuxLogo } from "./components/SignuxIcon";
 
 /* ═══ Fade-in on scroll (IntersectionObserver) ═══ */
 function useFadeIn() {
@@ -151,13 +152,20 @@ export default function LandingPage() {
         alignItems: "center", justifyContent: "center",
         position: "relative", padding: "0 24px",
       }}>
-        <div style={{ textAlign: "center" }}>
-          {/* Logo */}
-          <h1 style={{
-            fontSize: "clamp(36px, 8vw, 56px)", fontWeight: 800, letterSpacing: "-0.02em",
-            margin: 0, color: "var(--text-primary)",
-          }}>
-            SIGNUX
+        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {/* Icon */}
+          <SignuxIcon color="#D4AF37" size={80} />
+
+          {/* Logo text */}
+          <h1 style={{ margin: "12px 0 0", display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{
+              fontFamily: "var(--font-brand)", fontSize: "clamp(36px, 8vw, 56px)",
+              fontWeight: 700, letterSpacing: 5, color: "var(--text-primary)",
+            }}>SIGNUX</span>
+            <span style={{
+              fontFamily: "var(--font-brand)", fontSize: "clamp(36px, 8vw, 56px)",
+              fontWeight: 300, letterSpacing: 3, color: "var(--text-primary)", opacity: 0.5,
+            }}>AI</span>
           </h1>
 
           {/* Gold line */}
@@ -305,11 +313,18 @@ export default function LandingPage() {
         padding: "48px 24px", borderTop: "1px solid var(--border-secondary)",
         textAlign: "center",
       }}>
-        <div style={{
-          fontSize: 14, fontWeight: 700, letterSpacing: "0.06em",
-          color: "var(--text-tertiary)", marginBottom: 16,
-        }}>
-          SIGNUX
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
+          <SignuxIcon color="var(--text-tertiary)" size={20} />
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+            <span style={{
+              fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700,
+              letterSpacing: 3, color: "var(--text-tertiary)",
+            }}>SIGNUX</span>
+            <span style={{
+              fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 300,
+              letterSpacing: 2, color: "var(--text-tertiary)", opacity: 0.5,
+            }}>AI</span>
+          </div>
         </div>
         <div style={{
           display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap",

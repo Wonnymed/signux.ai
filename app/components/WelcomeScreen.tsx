@@ -2,6 +2,7 @@
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
+import { SignuxIcon } from "./SignuxIcon";
 
 const SUGGESTION_KEYS = ["suggestion.1", "suggestion.2", "suggestion.3", "suggestion.4"];
 
@@ -25,13 +26,24 @@ export default function WelcomeScreen({ profileName, input, setInput, onSend, lo
       maxWidth: 640, margin: "0 auto", width: "100%",
       padding: isMobile ? "16px 16px 24px" : "24px 24px 32px",
     }}>
+      {/* Brand icon */}
+      <div style={{ animation: "fadeIn 0.3s ease-out", marginBottom: 8 }}>
+        <SignuxIcon color="var(--accent)" size={isMobile ? 48 : 64} />
+      </div>
+
       {/* Brand name */}
       <div style={{
-        fontSize: isMobile ? 32 : 44, fontWeight: 300, letterSpacing: "0.12em",
-        color: "var(--text-primary)", marginBottom: 8,
-        animation: "fadeIn 0.4s ease-out",
+        display: "flex", alignItems: "baseline", gap: 6,
+        animation: "fadeIn 0.4s ease-out", marginBottom: 4,
       }}>
-        SIGNUX
+        <span style={{
+          fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36,
+          fontWeight: 700, letterSpacing: 5, color: "var(--text-primary)",
+        }}>SIGNUX</span>
+        <span style={{
+          fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36,
+          fontWeight: 300, letterSpacing: 3, color: "var(--text-primary)", opacity: 0.5,
+        }}>AI</span>
       </div>
 
       {/* Subtitle */}
