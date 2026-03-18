@@ -178,7 +178,7 @@ export default function LandingPage() {
             <Link href="/chat" style={{
               display: "inline-flex", alignItems: "center",
               padding: "14px 32px", borderRadius: 100,
-              background: "var(--text-primary)", color: "var(--text-inverse)",
+              background: "var(--text-primary)", color: "var(--bg-primary)",
               fontSize: 15, fontWeight: 500, textDecoration: "none",
               transition: "opacity 0.15s",
             }}

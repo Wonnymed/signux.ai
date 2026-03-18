@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   Check, AlertTriangle, Download, ChevronDown, ChevronRight,
   FileText, RotateCcw, MessageSquare, BarChart3, Network,
-  Globe, Users, Clock, Zap, Search, Shield, Activity,
+  Globe, Users, Clock, Zap, Search, Shield, Activity, Play,
 } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -81,95 +81,386 @@ export default function SimulationEngine(props: SimulationEngineProps) {
 
   /* ═══ WELCOME STATE ═══ */
   if (!simResult && !simulating) {
+    const scenarios = [
+      {
+        tag: "TRADE", dotColor: "#22c55e",
+        title: "HK \u2192 Shenzhen import to EU & Brazil",
+        fill: "Hong Kong trading company importing electronics from Shenzhen, selling B2B to EU distributors and Brazilian retailers, with multi-currency settlement and crypto treasury",
+      },
+      {
+        tag: "STRUCTURE", dotColor: "#3b82f6",
+        title: "Dubai offshore holding for EU SaaS",
+        fill: "Dubai DMCC free zone holding company for a SaaS platform serving EU customers, with transfer pricing structure and IP holding in Singapore",
+      },
+      {
+        tag: "CRYPTO", dotColor: "#f59e0b",
+        title: "Crypto treasury multi-jurisdiction ops",
+        fill: "Multi-jurisdiction crypto treasury management: BVI entity holding Bitcoin and ETH, with fiat off-ramps through Swiss and Singaporean EMIs, serving clients in LATAM",
+      },
+    ];
+
+    const capabilities = [
+      "Multi-agent analysis",
+      "Adversarial testing",
+      "Quantitative models",
+      "Risk scoring",
+    ];
+
+    const agentAvatars = [
+      { letter: "R", bg: "rgba(139,92,246,0.15)", color: "#8b5cf6" },
+      { letter: "F", bg: "rgba(59,130,246,0.15)", color: "#3b82f6" },
+      { letter: "A", bg: "rgba(239,68,68,0.15)", color: "#ef4444" },
+      { letter: "O", bg: "rgba(34,197,94,0.15)", color: "#22c55e" },
+      { letter: "M", bg: "rgba(245,158,11,0.15)", color: "#f59e0b" },
+    ];
+
     return (
       <div style={{
         flex: 1, display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: isMobile ? "16px 16px 24px" : "24px 24px 32px",
+        padding: isMobile ? "24px 16px 32px" : "32px 24px 40px",
+        position: "relative", overflow: "hidden",
+        backgroundImage: "linear-gradient(rgba(212,175,55,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.03) 1px, transparent 1px)",
+        backgroundSize: "40px 40px",
       }}>
-        <div style={{ maxWidth: 580, width: "100%", textAlign: "center" }}>
-          {/* Icon */}
-          <div style={{
-            width: 56, height: 56, borderRadius: "50%",
-            background: "rgba(212,175,55,0.08)", display: "flex",
-            alignItems: "center", justifyContent: "center",
-            margin: "0 auto 12px", animation: "fadeIn 0.3s ease-out",
-          }}>
-            <Zap size={28} style={{ color: "var(--accent)" }} />
+        {/* Scan line */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 1,
+          background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent)",
+          animation: "scanDown 4s ease-in-out infinite",
+          pointerEvents: "none",
+        }} />
+
+        {/* Ambient glow */}
+        <div style={{
+          position: "absolute", bottom: -100, left: "50%", transform: "translateX(-50%)",
+          width: 400, height: 200,
+          background: "radial-gradient(ellipse, rgba(212,175,55,0.04), transparent 70%)",
+          pointerEvents: "none",
+        }} />
+
+        <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
+
+          {/* ── HEADER ── */}
+          <div style={{ textAlign: "center", marginBottom: 48, animation: "fadeIn 0.4s ease-out" }}>
+            {/* Icon ring */}
+            <div style={{
+              width: 64, height: 64, borderRadius: "50%",
+              border: "1px solid rgba(212,175,55,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 20px", position: "relative",
+            }}>
+              {/* Outer ring */}
+              <div style={{
+                position: "absolute", inset: -4, borderRadius: "50%",
+                border: "1px solid rgba(212,175,55,0.08)",
+              }} />
+              <Zap size={28} style={{ color: "var(--accent)" }} />
+            </div>
+
+            {/* Title */}
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 0 }}>
+              <span style={{
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 700,
+                letterSpacing: 8, color: "#fff",
+              }}>
+                SIMULATE
+              </span>
+              <span style={{
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 300,
+                letterSpacing: 4, color: "#fff", opacity: 0.3, marginLeft: 8,
+              }}>
+                ENGINE
+              </span>
+            </div>
+
+            {/* Subtitle */}
+            <div style={{
+              fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 3,
+              textTransform: "uppercase" as const, color: "rgba(212,175,55,0.6)",
+              marginTop: 12,
+            }}>
+              Operational ecosystem simulation
+            </div>
+
+            {/* Divider */}
+            <div style={{
+              width: 48, height: 1,
+              background: "linear-gradient(90deg, transparent, var(--accent), transparent)",
+              margin: "20px auto 0",
+            }} />
           </div>
 
-          {/* Branded header */}
+          {/* ── CAPABILITY STRIP ── */}
           <div style={{
-            fontFamily: "var(--font-brand)", fontSize: 40, fontWeight: 700,
-            letterSpacing: 5, color: "var(--text-primary)",
-            marginBottom: 8, animation: "fadeIn 0.4s ease-out",
+            display: "flex", flexWrap: "wrap", justifyContent: "center",
+            gap: isMobile ? 16 : 32, marginBottom: 40,
+            animation: "fadeIn 0.5s ease-out",
           }}>
-            SIMULATE
+            {capabilities.map(cap => (
+              <div key={cap} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "var(--accent)", opacity: 0.6,
+                }} />
+                <span style={{
+                  fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5,
+                  textTransform: "uppercase" as const, color: "rgba(255,255,255,0.4)",
+                }}>
+                  {cap}
+                </span>
+              </div>
+            ))}
           </div>
 
-          {/* Gold line */}
-          <div style={{
-            width: 40, height: 2, background: "var(--accent)",
-            margin: "0 auto 32px", opacity: 0.4,
-          }} />
-
-          {/* Glow input */}
+          {/* ── INPUT CONTAINER ── */}
           <div
-            className={`input-glow${simScenario.trim() ? " focused" : ""}`}
-            style={{ padding: "12px 16px", marginBottom: 16 }}
+            style={{
+              border: simScenario.trim() ? "1px solid rgba(212,175,55,0.3)" : "1px solid rgba(212,175,55,0.12)",
+              borderRadius: 16,
+              background: simScenario.trim() ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.02)",
+              padding: isMobile ? 16 : 20,
+              transition: "all 300ms ease",
+              boxShadow: simScenario.trim()
+                ? "0 0 30px rgba(212,175,55,0.06), 0 0 60px rgba(212,175,55,0.03)"
+                : "none",
+              marginBottom: 24,
+              animation: "fadeIn 0.5s ease-out",
+            }}
+            onFocus={e => {
+              e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)";
+              e.currentTarget.style.boxShadow = "0 0 30px rgba(212,175,55,0.06), 0 0 60px rgba(212,175,55,0.03)";
+              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+            }}
+            onBlur={e => {
+              if (!simScenario.trim()) {
+                e.currentTarget.style.borderColor = "rgba(212,175,55,0.12)";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+              }
+            }}
           >
+            {/* Label */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              marginBottom: 10,
+            }}>
+              <div style={{
+                width: 4, height: 4, borderRadius: "50%",
+                background: "var(--accent)",
+                animation: "pulse 2s ease-in-out infinite",
+              }} />
+              <span style={{
+                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
+                textTransform: "uppercase" as const, color: "rgba(212,175,55,0.5)",
+              }}>
+                DESCRIBE YOUR OPERATION
+              </span>
+            </div>
+
             <textarea
               value={simScenario}
               onChange={e => setSimScenario(e.target.value)}
-              placeholder={t("sim.placeholder")}
+              placeholder="I want to set up a trading company in Hong Kong that imports electronics from Shenzhen, sells to Brazil and EU, with crypto treasury management..."
               style={{
-                width: "100%", minHeight: 80, padding: 0,
+                width: "100%", minHeight: 88, padding: 0,
                 background: "transparent", border: "none",
                 color: "var(--text-primary)", fontSize: 15, lineHeight: 1.6,
                 resize: "none", outline: "none",
+                fontFamily: "var(--font-sans)",
               }}
             />
           </div>
 
-          {/* Example chips */}
-          <div style={{
-            display: "flex", flexWrap: "wrap", gap: 8,
-            justifyContent: "center", marginBottom: 24,
-          }}>
-            {SIM_EXAMPLE_KEYS.map(key => (
-              <button
-                key={key}
-                onClick={() => setSimScenario(t(key))}
-                style={{
-                  padding: "8px 16px", borderRadius: "var(--radius-full, 9999px)",
-                  background: "transparent", border: "1px solid var(--border-secondary)",
-                  fontSize: 13, color: "var(--text-secondary)",
-                  cursor: "pointer", transition: "all 0.15s",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t(key)}
-              </button>
-            ))}
+          {/* ── SCENARIO CARDS ── */}
+          <div style={{ marginBottom: 24, animation: "fadeIn 0.6s ease-out" }}>
+            <div style={{
+              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
+              textTransform: "uppercase" as const, color: "rgba(255,255,255,0.25)",
+              marginBottom: 12,
+            }}>
+              QUICK SCENARIOS
+            </div>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+              gap: 8,
+            }}>
+              {scenarios.map(sc => (
+                <button
+                  key={sc.tag}
+                  onClick={() => setSimScenario(sc.fill)}
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 10, padding: "14px 16px",
+                    cursor: "pointer", transition: "all 200ms",
+                    textAlign: "left", position: "relative",
+                    borderLeft: "2px solid transparent",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)";
+                    e.currentTarget.style.borderLeftColor = "var(--accent)";
+                    e.currentTarget.style.background = "rgba(212,175,55,0.03)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                    e.currentTarget.style.borderLeftColor = "transparent";
+                    e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <div style={{
+                      width: 4, height: 4, borderRadius: "50%",
+                      background: sc.dotColor,
+                    }} />
+                    <span style={{
+                      fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1,
+                      textTransform: "uppercase" as const, color: "rgba(255,255,255,0.4)",
+                    }}>
+                      {sc.tag}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: 13, color: "rgba(255,255,255,0.7)",
+                    lineHeight: 1.4,
+                  }}>
+                    {sc.title}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Start button */}
-          <button
-            onClick={onSimulate}
-            disabled={!simScenario.trim() || simStarting}
-            style={{
-              width: "100%", padding: 14, borderRadius: "var(--radius-md)",
-              background: simScenario.trim() && !simStarting ? "var(--accent)" : "var(--border-primary)",
-              color: simScenario.trim() && !simStarting ? "#fff" : "var(--text-tertiary)",
-              fontSize: 15, fontWeight: 600, border: "none",
-              cursor: simScenario.trim() && !simStarting ? "pointer" : "not-allowed",
-              transition: "all 0.2s",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            }}
-          >
-            {simStarting && <span className="spinner spinner-white" />}
-            {simStarting ? t("sim.starting") : t("sim.start")}
-          </button>
+          {/* ── AGENT PREVIEW STRIP ── */}
+          <div style={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "flex-start" : "center",
+            justifyContent: "space-between",
+            padding: "16px 20px",
+            border: "1px solid rgba(255,255,255,0.04)",
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.015)",
+            marginBottom: 32,
+            gap: isMobile ? 16 : 12,
+            animation: "fadeIn 0.7s ease-out",
+          }}>
+            {/* Left: avatars + text */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                {agentAvatars.map((av, i) => (
+                  <div key={av.letter} style={{
+                    width: 28, height: 28, borderRadius: "50%",
+                    background: av.bg, display: "flex",
+                    alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 600, color: av.color,
+                    border: "2px solid var(--bg-primary)",
+                    marginLeft: i > 0 ? -6 : 0,
+                    zIndex: 5 - i,
+                  }}>
+                    {av.letter}
+                  </div>
+                ))}
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.06)", display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  fontSize: 9, fontWeight: 500, color: "rgba(255,255,255,0.4)",
+                  border: "2px solid var(--bg-primary)",
+                  marginLeft: -6,
+                }}>
+                  +10
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
+                  <span style={{ fontWeight: 500, color: "rgba(255,255,255,0.7)" }}>15 specialist agents</span> will analyze your operation
+                </div>
+                <div style={{
+                  fontSize: 10, color: "rgba(255,255,255,0.25)",
+                  fontFamily: "var(--font-mono)", marginTop: 2,
+                }}>
+                  Regulatory, financial, adversarial, operational, market
+                </div>
+              </div>
+            </div>
+
+            {/* Right: stats */}
+            <div style={{ display: "flex", gap: 20, flexShrink: 0 }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{
+                  fontFamily: "var(--font-brand)", fontSize: 20, fontWeight: 600,
+                  color: "rgba(212,175,55,0.7)",
+                }}>
+                  3
+                </div>
+                <div style={{
+                  fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1,
+                  textTransform: "uppercase" as const, color: "rgba(255,255,255,0.25)",
+                }}>
+                  ROUNDS
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{
+                  fontFamily: "var(--font-brand)", fontSize: 20, fontWeight: 600,
+                  color: "rgba(212,175,55,0.7)",
+                }}>
+                  5
+                </div>
+                <div style={{
+                  fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1,
+                  textTransform: "uppercase" as const, color: "rgba(255,255,255,0.25)",
+                }}>
+                  RISK AXES
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── CTA BUTTON ── */}
+          <div style={{ textAlign: "center", animation: "fadeIn 0.8s ease-out" }}>
+            <button
+              onClick={onSimulate}
+              disabled={!simScenario.trim() || simStarting}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 10,
+                background: simScenario.trim() && !simStarting ? "var(--accent)" : "rgba(212,175,55,0.3)",
+                color: "#000", border: "none", borderRadius: 50,
+                padding: "14px 36px",
+                fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 14,
+                letterSpacing: 2, textTransform: "uppercase" as const,
+                cursor: simScenario.trim() && !simStarting ? "pointer" : "not-allowed",
+                transition: "all 200ms",
+                opacity: simScenario.trim() && !simStarting ? 1 : 0.5,
+              }}
+              onMouseEnter={e => {
+                if (simScenario.trim() && !simStarting) {
+                  e.currentTarget.style.filter = "brightness(1.1)";
+                  e.currentTarget.style.boxShadow = "0 0 30px rgba(212,175,55,0.2)";
+                }
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.filter = "none";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              {simStarting ? (
+                <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2, borderColor: "rgba(0,0,0,0.2)", borderTopColor: "#000" }} />
+              ) : (
+                <Play size={16} />
+              )}
+              {simStarting ? "INITIALIZING..." : "RUN SIMULATION"}
+            </button>
+            <div style={{
+              fontSize: 11, color: "rgba(255,255,255,0.2)",
+              marginTop: 16,
+            }}>
+              Simulations take 60-120s. Always verify with qualified professionals.
+            </div>
+          </div>
+
         </div>
       </div>
     );

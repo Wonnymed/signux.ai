@@ -28,7 +28,7 @@ export default function WelcomeScreen({ input, setInput, onSend, loading, attach
     }}>
       {/* Brand — [S-icon]IGNUX AI */}
       <div style={{ marginBottom: 40, animation: "fadeIn 0.3s ease-out" }}>
-        <SignuxWordmark fontSize={40} />
+        <SignuxWordmark fontSize={48} />
       </div>
 
       {/* Input */}

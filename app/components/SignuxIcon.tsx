@@ -73,7 +73,7 @@ export function SignuxWordmark({
   style?: React.CSSProperties;
 }) {
   const dark = useIsDark();
-  const iSize = iconSize ?? fontSize;
+  const iSize = iconSize ?? Math.round(fontSize * 1.1);
   const variant = dark ? "white" : "gold";
   const textColor = "var(--text-primary)";
 
@@ -100,7 +100,7 @@ export function SignuxWordmark({
         width={iSize}
         height={iSize}
         draggable={false}
-        style={{ objectFit: "contain", marginRight: -2, marginBottom: -2 }}
+        style={{ objectFit: "contain", marginRight: Math.round(fontSize * -0.08), marginBottom: Math.round(fontSize * -0.08) }}
       />
       <span
         style={{
