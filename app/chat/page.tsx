@@ -36,7 +36,7 @@ import { useIsMobile } from "../lib/useIsMobile";
 import type { FileAttachment } from "../components/ChatInput";
 
 const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false });
-const IntelBriefing = dynamic(() => import("../components/IntelBriefing"), { ssr: false });
+const ResearchView = dynamic(() => import("../components/ResearchView"), { ssr: false });
 const SettingsModal = dynamic(() => import("../components/SettingsModal"), { ssr: false });
 
 /* ═══ File Helpers ═══ */
@@ -165,12 +165,6 @@ export default function ChatPage() {
   const [mode, setMode] = useState<Mode>("chat");
   const [searching, setSearching] = useState(false);
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
-
-  /* Intel */
-  const [intelContent, setIntelContent] = useState("");
-  const [intelLoading, setIntelLoading] = useState(false);
-  const [intelTimestamp, setIntelTimestamp] = useState<string | null>(null);
-  const [intelFocus, setIntelFocus] = useState<string[]>([]);
 
   /* Simulation */
   const [simulating, setSimulating] = useState(false);
@@ -354,7 +348,7 @@ export default function ChatPage() {
         inputRef.current?.focus();
       } else if (meta && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        setMode(prev => prev === "chat" ? "simulate" : prev === "simulate" ? "intel" : "chat");
+        setMode(prev => prev === "chat" ? "simulate" : prev === "simulate" ? "research" : "chat");
       } else if (meta && e.key === "n") {
         e.preventDefault();
         if (mode === "chat") {
@@ -616,53 +610,11 @@ export default function ChatPage() {
     setSimulating(false);
   };
 
-  /* ═══ Intel Handler ═══ */
-  const generateIntel = async () => {
-    setIntelLoading(true);
-    setIntelContent("");
-    setIntelTimestamp(null);
-    try {
-      const res = await fetch("/api/intel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ focus_areas: intelFocus, language: lang }),
-      });
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-      let buffer = "";
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.type === "text") {
-                fullText += data.text;
-                setIntelContent(fullText);
-              } else if (data.type === "done") {
-                setIntelTimestamp(data.timestamp || new Date().toISOString());
-              }
-            } catch {}
-          }
-        }
-      }
-    } catch {
-      setIntelContent(t("intel.error"));
-    }
-    setIntelLoading(false);
-  };
-
-  /* ═══ Ask About Intel ═══ */
-  const askAboutIntel = (section: string) => {
+  /* ═══ Continue Research in Chat ═══ */
+  const continueResearchInChat = (researchReport: string) => {
     setMode("chat");
-    const question = section.slice(0, 300);
-    setTimeout(() => send(question), 200);
+    const context = `Based on this research report, I have a follow-up question:\n\n${researchReport.slice(0, 2000)}`;
+    setTimeout(() => send(context), 200);
   };
 
   /* ═══ Copy Handler ═══ */
@@ -797,23 +749,18 @@ export default function ChatPage() {
         background: "var(--bg-primary)", minWidth: 0,
       }}>
         <AnimatePresence mode="wait">
-          {mode === "intel" ? (
+          {mode === "research" ? (
             <motion.div
-              key="intel"
+              key="research"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.15 }}
               style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
             >
-              <IntelBriefing
-                intelContent={intelContent}
-                intelLoading={intelLoading}
-                intelTimestamp={intelTimestamp}
-                intelFocus={intelFocus}
-                setIntelFocus={setIntelFocus}
-                onGenerate={generateIntel}
-                onAskAbout={askAboutIntel}
+              <ResearchView
+                lang={lang}
+                onContinueInChat={continueResearchInChat}
               />
             </motion.div>
           ) : mode === "simulate" ? (

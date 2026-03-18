@@ -30,7 +30,7 @@ const ptBR: Record<string, string> = {
   "sidebar.settings": "Configurações",
   "sidebar.mode_chat": "Chat",
   "sidebar.mode_simulate": "Simular",
-  "sidebar.mode_intel": "Intel",
+  "sidebar.mode_research": "Pesquisa",
 
   // CHAT
   "chat.greeting_morning": "Bom dia, {name}",
@@ -168,26 +168,20 @@ const ptBR: Record<string, string> = {
   "common.version": "v0.1 Beta",
   "common.you": "Você",
 
-  // INTELLIGENCE
-  "intel.title": "Intel do Dia",
-  "intel.subtitle": "Análise em tempo real de eventos globais que afetam suas operações",
-  "intel.generate": "Receber briefing de hoje",
-  "intel.generating": "Analisando eventos globais...",
-  "intel.generated_at": "Gerado em",
-  "intel.update": "Atualizar briefing",
-  "intel.ask": "Perguntar sobre isso",
-  "intel.focus": "Áreas de foco",
-  "intel.risk.low": "Risco Baixo",
-  "intel.risk.medium": "Risco Médio",
-  "intel.risk.high": "Risco Alto",
-  "intel.risk.critical": "Crítico",
-
-
-  "intel.focus.geopolitics": "Geopolítica",
-  "intel.focus.regulations": "Regulações",
-  "intel.focus.markets": "Mercados",
-  "intel.focus.logistics": "Logística",
-  "intel.focus.crypto": "Crypto",
+  // RESEARCH
+  "research.title": "Pesquisa Profunda",
+  "research.subtitle": "Sintese de inteligencia multi-fonte",
+  "research.placeholder": "Compare as zonas francas DMCC vs ADGM vs DIFC para uma holding fintech com operacoes crypto...",
+  "research.templates_label": "Modelos de pesquisa",
+  "research.cta": "Iniciar pesquisa",
+  "research.disclaimer": "A pesquisa leva 30-90s em multiplas fontes. Resultados incluem citacoes.",
+  "research.planning": "Planejando consultas de busca...",
+  "research.searching": "Pesquisando...",
+  "research.synthesizing": "Sintetizando relatorio...",
+  "research.complete": "Pesquisa concluida",
+  "research.new": "Nova pesquisa",
+  "research.continue_chat": "Continuar no Chat",
+  "research.export": "Exportar",
 
   // STATES
   "common.offline": "Você está offline. Reconectando...",
@@ -234,7 +228,7 @@ const ptBR: Record<string, string> = {
   "login.error": "Algo deu errado. Tente novamente.",
 
   // ERRORS
-  "intel.error": "Erro ao gerar briefing. Tente novamente.",
+  "research.error": "Erro na pesquisa. Tente novamente.",
   "common.copy_failed": "Falha ao copiar",
 };
 

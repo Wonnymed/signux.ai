@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
-import { SquarePen, MessageSquare, Zap, Globe, Settings, LogIn, LogOut, Trash2 } from "lucide-react";
+import { SquarePen, MessageSquare, Zap, Search, Settings, LogIn, LogOut, Trash2 } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
@@ -31,7 +31,7 @@ type SidebarProps = {
 const MODES = [
   { key: "chat" as Mode, icon: MessageSquare, label: "sidebar.mode_chat" },
   { key: "simulate" as Mode, icon: Zap, label: "sidebar.mode_simulate" },
-  { key: "intel" as Mode, icon: Globe, label: "sidebar.mode_intel" },
+  { key: "research" as Mode, icon: Search, label: "sidebar.mode_research" },
 ];
 
 /* Sidebar panel toggle icon — two rectangles like Okara */

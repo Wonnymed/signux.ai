@@ -38,7 +38,7 @@ export type SimResult = {
   metadata?: { agents_count?: number; rounds?: number; total_interactions?: number };
 };
 
-export type Mode = "chat" | "simulate" | "intel";
+export type Mode = "chat" | "simulate" | "research";
 
 export const AGENT_CATEGORY_COLORS: Record<string, { bg: string; color: string; border: string }> = {
   supply: { bg: "rgba(59,130,246,0.08)", color: "#3B82F6", border: "rgba(59,130,246,0.25)" },

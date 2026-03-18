@@ -30,7 +30,7 @@ const zhHans: Record<string, string> = {
   "sidebar.settings": "设置",
   "sidebar.mode_chat": "对话",
   "sidebar.mode_simulate": "模拟",
-  "sidebar.mode_intel": "情报",
+  "sidebar.mode_research": "研究",
 
   // CHAT
   "chat.greeting_morning": "早上好，{name}",
@@ -168,26 +168,20 @@ const zhHans: Record<string, string> = {
   "common.version": "v0.1 测试版",
   "common.you": "你",
 
-  // INTELLIGENCE
-  "intel.title": "今日情报",
-  "intel.subtitle": "影响您运营的全球事件实时分析",
-  "intel.generate": "获取今日简报",
-  "intel.generating": "正在分析全球动态...",
-  "intel.generated_at": "生成于",
-  "intel.update": "更新简报",
-  "intel.ask": "询问此事",
-  "intel.focus": "关注领域",
-  "intel.risk.low": "低风险",
-  "intel.risk.medium": "中等风险",
-  "intel.risk.high": "高风险",
-  "intel.risk.critical": "严重",
-
-
-  "intel.focus.geopolitics": "地缘政治",
-  "intel.focus.regulations": "法规",
-  "intel.focus.markets": "市场",
-  "intel.focus.logistics": "物流",
-  "intel.focus.crypto": "加密货币",
+  // RESEARCH
+  "research.title": "深度研究",
+  "research.subtitle": "多源情报综合",
+  "research.placeholder": "比较DMCC、ADGM和DIFC自贸区，用于拥有加密货币业务的金融科技控股公司...",
+  "research.templates_label": "研究模板",
+  "research.cta": "开始研究",
+  "research.disclaimer": "研究需要30-90秒，跨多个来源。结果包含引用。",
+  "research.planning": "正在规划搜索查询...",
+  "research.searching": "搜索中...",
+  "research.synthesizing": "正在综合报告...",
+  "research.complete": "研究完成",
+  "research.new": "新研究",
+  "research.continue_chat": "在聊天中继续",
+  "research.export": "导出",
 
   // STATES
   "common.offline": "您已离线。正在重新连接...",
@@ -234,7 +228,7 @@ const zhHans: Record<string, string> = {
   "login.error": "出了点问题，请重试。",
 
   // ERRORS
-  "intel.error": "生成简报时出错。请重试。",
+  "research.error": "研究失败。请重试。",
   "common.copy_failed": "复制失败",
 };
 

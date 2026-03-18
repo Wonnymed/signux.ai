@@ -30,7 +30,7 @@ const es: Record<string, string> = {
   "sidebar.settings": "Configuración",
   "sidebar.mode_chat": "Chat",
   "sidebar.mode_simulate": "Simular",
-  "sidebar.mode_intel": "Intel",
+  "sidebar.mode_research": "Investigacion",
 
   // CHAT
   "chat.greeting_morning": "Buenos días, {name}",
@@ -168,26 +168,20 @@ const es: Record<string, string> = {
   "common.version": "v0.1 Beta",
   "common.you": "Tú",
 
-  // INTELLIGENCE
-  "intel.title": "Intel del día",
-  "intel.subtitle": "Análisis en tiempo real de eventos globales que afectan tus operaciones",
-  "intel.generate": "Obtener briefing de hoy",
-  "intel.generating": "Analizando eventos globales...",
-  "intel.generated_at": "Generado el",
-  "intel.update": "Actualizar briefing",
-  "intel.ask": "Preguntar sobre esto",
-  "intel.focus": "Áreas de enfoque",
-  "intel.risk.low": "Riesgo Bajo",
-  "intel.risk.medium": "Riesgo Medio",
-  "intel.risk.high": "Riesgo Alto",
-  "intel.risk.critical": "Crítico",
-
-
-  "intel.focus.geopolitics": "Geopolítica",
-  "intel.focus.regulations": "Regulaciones",
-  "intel.focus.markets": "Mercados",
-  "intel.focus.logistics": "Logística",
-  "intel.focus.crypto": "Cripto",
+  // RESEARCH
+  "research.title": "Investigacion Profunda",
+  "research.subtitle": "Sintesis de inteligencia multi-fuente",
+  "research.placeholder": "Compare las zonas francas DMCC vs ADGM vs DIFC para una holding fintech con operaciones crypto...",
+  "research.templates_label": "Plantillas de investigacion",
+  "research.cta": "Iniciar investigacion",
+  "research.disclaimer": "La investigacion toma 30-90s en multiples fuentes. Los resultados incluyen citas.",
+  "research.planning": "Planificando consultas de busqueda...",
+  "research.searching": "Buscando...",
+  "research.synthesizing": "Sintetizando informe...",
+  "research.complete": "Investigacion completa",
+  "research.new": "Nueva investigacion",
+  "research.continue_chat": "Continuar en Chat",
+  "research.export": "Exportar",
 
   // STATES
   "common.offline": "Estás sin conexión. Reconectando...",
@@ -234,7 +228,7 @@ const es: Record<string, string> = {
   "login.error": "Algo salió mal. Inténtalo de nuevo.",
 
   // ERRORS
-  "intel.error": "Error al generar briefing. Inténtalo de nuevo.",
+  "research.error": "Error en la investigacion. Intentalo de nuevo.",
   "common.copy_failed": "Error al copiar",
 };
 

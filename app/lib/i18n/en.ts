@@ -30,7 +30,7 @@ const en: Record<string, string> = {
   "sidebar.settings": "Settings",
   "sidebar.mode_chat": "Chat",
   "sidebar.mode_simulate": "Simulate",
-  "sidebar.mode_intel": "Intel",
+  "sidebar.mode_research": "Research",
 
   // CHAT
   "chat.greeting_morning": "Good morning, {name}",
@@ -170,21 +170,20 @@ const en: Record<string, string> = {
   "common.previous_30_days": "Previous 30 Days",
   "common.version": "v0.1 Beta",
 
-  // INTELLIGENCE
-  "intel.title": "Today's Intel",
-  "intel.subtitle": "Real-time analysis of global events affecting your operations",
-  "intel.generate": "Get today's briefing",
-  "intel.generating": "Analyzing global events...",
-  "intel.generated_at": "Generated at",
-  "intel.update": "Update briefing",
-  "intel.ask": "Ask about this",
-  "intel.focus": "Focus areas",
-  "intel.risk.low": "Low Risk",
-  "intel.risk.medium": "Medium Risk",
-  "intel.risk.high": "High Risk",
-  "intel.risk.critical": "Critical",
-
-
+  // RESEARCH
+  "research.title": "Deep Research",
+  "research.subtitle": "Multi-source intelligence synthesis",
+  "research.placeholder": "Compare DMCC vs ADGM vs DIFC free zones for a fintech holding company with crypto operations...",
+  "research.templates_label": "Research templates",
+  "research.cta": "Start research",
+  "research.disclaimer": "Research takes 30-90s across multiple sources. Results include citations.",
+  "research.planning": "Planning search queries...",
+  "research.searching": "Searching...",
+  "research.synthesizing": "Synthesizing report...",
+  "research.complete": "Research complete",
+  "research.new": "New research",
+  "research.continue_chat": "Continue in Chat",
+  "research.export": "Export",
 
   // FILE UPLOAD
   "file.too_large": "File too large. Maximum size is 10MB.",
@@ -198,11 +197,6 @@ const en: Record<string, string> = {
   "voice.listening": "Listening...",
   "voice.tooltip": "Voice input",
 
-  "intel.focus.geopolitics": "Geopolitics",
-  "intel.focus.regulations": "Regulations",
-  "intel.focus.markets": "Markets",
-  "intel.focus.logistics": "Logistics",
-  "intel.focus.crypto": "Crypto",
 
   // STATES
   "common.offline": "You're offline. Reconnecting...",
@@ -233,7 +227,7 @@ const en: Record<string, string> = {
   "login.error": "Something went wrong. Please try again.",
 
   // ERRORS
-  "intel.error": "Error generating briefing. Please try again.",
+  "research.error": "Research failed. Please try again.",
   "common.copy_failed": "Failed to copy",
 };
 
