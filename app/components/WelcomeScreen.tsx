@@ -1,5 +1,5 @@
 "use client";
-import { Zap, Shield, Rocket, Globe, TrendingUp, Scan, Swords, GitBranch, Map } from "lucide-react";
+import { Zap, Shield, Rocket, Globe, TrendingUp } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
@@ -151,37 +151,6 @@ export default function WelcomeScreen({
                   <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>{m.label}</div>
                   <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 1 }}>{m.desc}</div>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Intelligence tools */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)",
-          gap: 6, marginTop: 12, width: "100%",
-        }}>
-          {([
-            { onClick: () => onOpenThreatRadar?.(), icon: Shield, label: "Threat Radar", color: "#ef4444" },
-            { onClick: () => onOpenDealXRay?.(), icon: Scan, label: "Deal X-Ray", color: "#f59e0b" },
-            { onClick: () => onOpenWarGame?.(), icon: Swords, label: "War Game", color: "#D4AF37" },
-            { onClick: () => onOpenCausalMap?.(), icon: GitBranch, label: "Causal Map", color: "#6366F1" },
-            { onClick: () => onOpenScenarios?.(), icon: Map, label: "Scenarios", color: "#A855F7" },
-          ] as const).map(tool => {
-            const Icon = tool.icon;
-            return (
-              <button key={tool.label} onClick={tool.onClick} style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "10px 12px", borderRadius: 10,
-                border: `1px solid ${tool.color}18`, background: `${tool.color}06`,
-                cursor: "pointer", fontSize: 11, color: "var(--text-secondary)", transition: "all 200ms",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = `${tool.color}40`; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = `${tool.color}18`; }}
-              >
-                <Icon size={13} style={{ color: tool.color, flexShrink: 0 }} />
-                {tool.label}
               </button>
             );
           })}

@@ -220,7 +220,13 @@ function InvestPreview() {
 }
 
 /* ═══ Tools data ═══ */
-const TOOLS_ACTIVE = ["Pitch Deck Builder", "Financial Model", "Chat with PDF", "Business Plan Writer", "Pricing Calculator", "Contract Analyzer"];
+const TOOLS = [
+  { name: "Pitch Deck Builder", command: "/pitch", color: "#D4AF37" },
+  { name: "Financial Model", command: "/financial", color: "#22c55e" },
+  { name: "Business Plan Writer", command: "/plan", color: "#6B8AFF" },
+  { name: "Pricing Strategy", command: "/pricing", color: "#F97316" },
+  { name: "Contract Analyzer", command: "/contract", color: "#DC2626" },
+];
 const TOOLS_SOON = ["Brand Kit Generator", "Outreach Writer", "Market Sizing", "Ad Copy Agent"];
 
 /* ═══ MAIN LANDING PAGE ═══ */
@@ -345,9 +351,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ MODES SHOWCASE ═══ */}
+      {/* ═══ MODES SHOWCASE — Simulate + Intel first ═══ */}
       <div id="modes">
-        {MODE_SECTIONS.map((sec, idx) => {
+        {MODE_SECTIONS.slice(0, 2).map((sec, idx) => {
           const Icon = sec.icon;
           const Preview = sec.preview;
           const reverse = idx % 2 === 1;
@@ -360,7 +366,6 @@ export default function LandingPage() {
                     display: "flex", gap: isMobile ? 24 : 40, alignItems: "flex-start",
                     flexDirection: isMobile ? "column" : reverse ? "row-reverse" : "row",
                   }}>
-                    {/* Text */}
                     <div style={{ flex: 1 }}>
                       <div style={{
                         display: "inline-flex", alignItems: "center", gap: 6,
@@ -399,8 +404,6 @@ export default function LandingPage() {
                         <Icon size={14} /> Try {sec.name}
                       </Link>
                     </div>
-
-                    {/* Preview */}
                     {!isMobile && (
                       <div style={{
                         width: 280, flexShrink: 0, borderRadius: 14,
@@ -417,84 +420,6 @@ export default function LandingPage() {
           );
         })}
       </div>
-
-      {/* ═══ REALITY CHECK highlight ═══ */}
-      <Divider />
-      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
-        <FadeSection>
-          <div style={{
-            display: "flex", gap: isMobile ? 24 : 40, alignItems: "flex-start",
-            flexDirection: isMobile ? "column" : "row",
-          }}>
-            {/* Text */}
-            <div style={{ flex: 1 }}>
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6,
-                background: "rgba(239,68,68,0.08)", color: "#ef4444",
-                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16,
-              }}>
-                <CircleSlash size={12} /> Reality Check
-              </div>
-              <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 32, color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.2 }}>
-                Honest verdict in 10 seconds
-              </h2>
-              <p style={{ fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
-                &quot;Is dropshipping still viable?&quot; &quot;Should I buy this course?&quot; Get a data-backed GO, CAUTION, or STOP with real numbers.
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
-                {["Web search", "Real data", "10 seconds", "GO / CAUTION / STOP"].map(f => (
-                  <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
-                ))}
-              </div>
-              <Link href="/chat" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "10px 24px", borderRadius: 50,
-                background: "#ef4444", color: "#fff",
-                fontWeight: 600, fontSize: 13, textDecoration: "none",
-                fontFamily: "var(--font-brand)", letterSpacing: 1, textTransform: "uppercase",
-              }}>
-                <CircleSlash size={14} /> Try Reality Check
-              </Link>
-            </div>
-
-            {/* Preview */}
-            {!isMobile && (
-              <div style={{
-                width: 280, flexShrink: 0, borderRadius: 14,
-                border: "1px solid var(--card-border)", background: "var(--card-bg)",
-                padding: 20, overflow: "hidden",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <div style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 28, color: "#f59e0b" }}>CAUTION</div>
-                </div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>
-                  Worth learning but market is shifting
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                  <div style={{ padding: 8, borderRadius: 6, background: "var(--card-bg)", border: "1px solid var(--card-border)", textAlign: "center" }}>
-                    <div style={{ fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 16, color: "#f59e0b" }}>62%</div>
-                    <div style={{ fontSize: 8, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Relevant</div>
-                  </div>
-                  <div style={{ padding: 8, borderRadius: 6, background: "var(--card-bg)", border: "1px solid var(--card-border)", textAlign: "center" }}>
-                    <div style={{ fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 16, color: "#22c55e" }}>$89K</div>
-                    <div style={{ fontSize: 8, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Avg salary</div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "var(--text-secondary)" }}>
-                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(34,197,94,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, color: "#22c55e", flexShrink: 0 }}>+</span>
-                    High freelance demand
-                  </div>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "var(--text-secondary)" }}>
-                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, color: "#ef4444", flexShrink: 0 }}>-</span>
-                    AI reducing junior demand
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </FadeSection>
-      </section>
 
       {/* ═══ INTELLIGENCE TOOLS ═══ */}
       <Divider />
@@ -602,23 +527,160 @@ export default function LandingPage() {
         </FadeSection>
       </section>
 
-      {/* ═══ INNOVATION FEATURES ═══ */}
+      {/* ═══ MODES — Launchpad, Global Ops, Invest ═══ */}
+      {MODE_SECTIONS.slice(2).map((sec, idx) => {
+        const Icon = sec.icon;
+        const Preview = sec.preview;
+        const reverse = (idx + 2) % 2 === 1;
+        return (
+          <div key={sec.name}>
+            <Divider />
+            <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
+              <FadeSection>
+                <div style={{
+                  display: "flex", gap: isMobile ? 24 : 40, alignItems: "flex-start",
+                  flexDirection: isMobile ? "column" : reverse ? "row-reverse" : "row",
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      padding: "4px 10px", borderRadius: 6,
+                      background: hexA(sec.color, 0.08), color: sec.color,
+                      fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase",
+                      marginBottom: 16,
+                    }}>
+                      <Icon size={12} /> {sec.name}
+                    </div>
+                    <h2 style={{
+                      fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 32,
+                      color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.2,
+                    }}>{sec.title}</h2>
+                    <p style={{ fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
+                      {sec.desc}
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                      {sec.features.map(f => (
+                        <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
+                      ))}
+                    </div>
+                    <div style={{
+                      fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)",
+                      marginBottom: 24, opacity: 0.5, letterSpacing: 0.5,
+                    }}>
+                      Powered by: {sec.domains}
+                    </div>
+                    <Link href="/chat" style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      padding: "10px 24px", borderRadius: 50,
+                      background: sec.color, color: sec.textOnColor,
+                      fontWeight: 600, fontSize: 13, textDecoration: "none",
+                      fontFamily: "var(--font-brand)", letterSpacing: 1, textTransform: "uppercase",
+                    }}>
+                      <Icon size={14} /> Try {sec.name}
+                    </Link>
+                  </div>
+                  {!isMobile && (
+                    <div style={{
+                      width: 280, flexShrink: 0, borderRadius: 14,
+                      border: "1px solid var(--card-border)", background: "var(--card-bg)",
+                      padding: 20, overflow: "hidden",
+                    }}>
+                      <Preview />
+                    </div>
+                  )}
+                </div>
+              </FadeSection>
+            </section>
+          </div>
+        );
+      })}
+
+      {/* ═══ REALITY CHECK ═══ */}
       <Divider />
       <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
         <FadeSection>
-          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28, color: "var(--text-primary)", marginBottom: 8, textAlign: "center" }}>
-            Features no other AI has
+          <div style={{
+            display: "flex", gap: isMobile ? 24 : 40, alignItems: "flex-start",
+            flexDirection: isMobile ? "column" : "row",
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6,
+                background: "rgba(239,68,68,0.08)", color: "#ef4444",
+                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16,
+              }}>
+                <CircleSlash size={12} /> Reality Check
+              </div>
+              <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 32, color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.2 }}>
+                Honest verdict in 10 seconds
+              </h2>
+              <p style={{ fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
+                &quot;Is dropshipping still viable?&quot; &quot;Should I buy this course?&quot; Get a data-backed GO, CAUTION, or STOP with real numbers.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+                {["Web search", "Real data", "10 seconds", "GO / CAUTION / STOP"].map(f => (
+                  <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
+                ))}
+              </div>
+              <Link href="/chat" style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "10px 24px", borderRadius: 50,
+                background: "#ef4444", color: "#fff",
+                fontWeight: 600, fontSize: 13, textDecoration: "none",
+                fontFamily: "var(--font-brand)", letterSpacing: 1, textTransform: "uppercase",
+              }}>
+                <CircleSlash size={14} /> Try Reality Check
+              </Link>
+            </div>
+            {!isMobile && (
+              <div style={{
+                width: 280, flexShrink: 0, borderRadius: 14,
+                border: "1px solid var(--card-border)", background: "var(--card-bg)",
+                padding: 20, overflow: "hidden",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <div style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 28, color: "#f59e0b" }}>CAUTION</div>
+                </div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>
+                  Worth learning but market is shifting
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                  <div style={{ padding: 8, borderRadius: 6, background: "var(--card-bg)", border: "1px solid var(--card-border)", textAlign: "center" }}>
+                    <div style={{ fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 16, color: "#f59e0b" }}>62%</div>
+                    <div style={{ fontSize: 8, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Relevant</div>
+                  </div>
+                  <div style={{ padding: 8, borderRadius: 6, background: "var(--card-bg)", border: "1px solid var(--card-border)", textAlign: "center" }}>
+                    <div style={{ fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 16, color: "#22c55e" }}>$89K</div>
+                    <div style={{ fontSize: 8, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Avg salary</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "var(--text-secondary)" }}>
+                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(34,197,94,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, color: "#22c55e", flexShrink: 0 }}>+</span>
+                    High freelance demand
+                  </div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "var(--text-secondary)" }}>
+                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, color: "#ef4444", flexShrink: 0 }}>-</span>
+                    AI reducing junior demand
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </FadeSection>
+      </section>
+
+      {/* ═══ BUILT FOR BETTER CONVERSATIONS ═══ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
+        <FadeSection>
+          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28, color: "var(--text-primary)", marginBottom: 32, textAlign: "center" }}>
+            Built for better conversations
           </h2>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center", marginBottom: 40 }}>
-            Built for entrepreneurs who make real decisions with real money.
-          </p>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
             {[
               { title: "Enhance", desc: "AI improves your prompt before sending. Better input = better output.", color: "var(--accent)" },
-              { title: "Follow-up Engine", desc: "3 questions you didn't think to ask after every response.", color: "#6B8AFF" },
               { title: "Confidence Meter", desc: "See how sure the AI is about each answer. Green, yellow, or red.", color: "#22c55e" },
-              { title: "Reverse Engineer", desc: "Paste a business URL. Get a complete playbook to replicate it.", color: "#F97316" },
-              { title: "Negotiation Sim", desc: "Practice tough conversations before real meetings.", color: "#F97316" },
               { title: "Decision Journal", desc: "Auto-tracks your decisions. Follows up 30 days later.", color: "#A855F7" },
             ].map((f, i) => (
               <div key={i} style={{ padding: 20, borderRadius: 12, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
@@ -639,8 +701,16 @@ export default function LandingPage() {
             Specialized tools
           </h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-            {TOOLS_ACTIVE.map(tool => (
-              <span key={tool} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--card-border)", background: "var(--card-bg)", fontSize: 13, color: "var(--text-secondary)" }}>{tool}</span>
+            {TOOLS.map(tool => (
+              <span key={tool.name} style={{
+                padding: "8px 16px", borderRadius: 8,
+                border: `1px solid ${tool.color}20`, background: `${tool.color}06`,
+                fontSize: 13, color: "var(--text-secondary)",
+                display: "inline-flex", alignItems: "center", gap: 8,
+              }}>
+                {tool.name}
+                <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: tool.color, opacity: 0.7 }}>{tool.command}</span>
+              </span>
             ))}
             {TOOLS_SOON.map(tool => (
               <span key={tool} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--card-border)", background: "var(--card-bg)", fontSize: 13, color: "var(--text-tertiary)", opacity: 0.5 }}>
