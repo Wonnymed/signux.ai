@@ -232,7 +232,9 @@ export default function ChatPage() {
     }
 
     setReady(true);
-    if (!localStorage.getItem("signux_onboarded")) setShowOnboarding(true);
+    if (!localStorage.getItem("signux_onboarded")) {
+      setShowOnboarding(true);
+    }
     const toastData = sessionStorage.getItem("signux_welcome_toast");
     if (toastData) {
       sessionStorage.removeItem("signux_welcome_toast");
@@ -900,8 +902,8 @@ export default function ChatPage() {
             >
               {showOnboarding && messages.length === 0 ? (
                 <Onboarding
-                  onComplete={(m) => { setShowOnboarding(false); setMode(m); }}
-                  onSkip={() => setShowOnboarding(false)}
+                  onComplete={(m) => { localStorage.setItem("signux_onboarded", "true"); setShowOnboarding(false); setMode(m); }}
+                  onSkip={() => { localStorage.setItem("signux_onboarded", "true"); setShowOnboarding(false); }}
                 />
               ) : (
               <ChatArea

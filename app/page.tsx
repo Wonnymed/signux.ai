@@ -1,9 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Zap, Search, Rocket, Globe, TrendingUp, Wrench, CircleSlash, Copy, Users } from "lucide-react";
-import { getProfile } from "./lib/profile";
 import { SignuxIcon, SignuxWordmark } from "./components/SignuxIcon";
 import SignuxFooter from "./components/SignuxFooter";
 
@@ -222,22 +220,16 @@ const TOOLS_SOON = ["Brand Kit Generator", "Outreach Writer", "Market Sizing", "
 
 /* ═══ MAIN LANDING PAGE ═══ */
 export default function LandingPage() {
-  const router = useRouter();
   const [checked, setChecked] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const profile = getProfile();
-    if (profile && profile.name && profile.email) {
-      router.replace("/chat");
-      return;
-    }
     setChecked(true);
     setIsMobile(window.innerWidth < 768);
     const handler = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
-  }, [router]);
+  }, []);
 
   if (!checked) return <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }} />;
 
@@ -311,7 +303,7 @@ export default function LandingPage() {
         </div>
 
         <div style={{ position: "absolute", bottom: 32, left: 0, right: 0, textAlign: "center", fontSize: 12, color: "var(--text-tertiary)" }}>
-          Built for operators who think globally
+          Trusted by entrepreneurs, founders, and decision-makers worldwide
         </div>
       </section>
 

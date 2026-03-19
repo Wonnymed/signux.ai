@@ -1,8 +1,5 @@
 "use client";
 import { Zap, Search, Rocket, Globe, TrendingUp } from "lucide-react";
-import RealityCheck from "./RealityCheck";
-import ReverseEngineer from "./ReverseEngineer";
-import NegotiationSim from "./NegotiationSim";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
@@ -56,7 +53,7 @@ export default function WelcomeScreen({
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", flex: 1, minHeight: 0,
       padding: isMobile ? "24px 16px" : "40px 24px",
-      position: "relative", overflowY: "auto",
+      position: "relative", overflow: "hidden",
     }}>
       {/* Particles */}
       {PARTICLES.slice(0, particleCount).map((p, i) => (
@@ -124,21 +121,6 @@ export default function WelcomeScreen({
             onToast={onToast}
             placeholder={t("chat.placeholder")}
           />
-        </div>
-
-        {/* Reality Check — compact */}
-        <div style={{ width: "100%", marginTop: 16 }}>
-          <RealityCheck lang={lang || "en"} />
-        </div>
-
-        {/* Reverse Engineer */}
-        <div style={{ width: "100%", marginTop: 16 }}>
-          <ReverseEngineer lang={lang || "en"} />
-        </div>
-
-        {/* Negotiation Sim */}
-        <div style={{ width: "100%", marginTop: 16 }}>
-          <NegotiationSim lang={lang || "en"} />
         </div>
 
         {/* Mode banners — grid */}
