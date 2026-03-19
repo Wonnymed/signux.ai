@@ -237,10 +237,10 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
 
           {/* ── HEADER ── */}
-          <div style={{ textAlign: "center", marginBottom: 48, animation: "fadeIn 0.4s ease-out" }}>
+          <div style={{ textAlign: "center", marginBottom: 24, animation: "fadeIn 0.4s ease-out" }}>
             {/* Icon ring */}
             <div style={{
-              width: 64, height: 64, borderRadius: "50%",
+              width: 48, height: 48, borderRadius: "50%",
               border: "1px solid rgba(212,175,55,0.2)",
               display: "flex", alignItems: "center", justifyContent: "center",
               margin: "0 auto 20px", position: "relative",
@@ -249,19 +249,19 @@ export default function SimulationEngine(props: SimulationEngineProps) {
                 position: "absolute", inset: -4, borderRadius: "50%",
                 border: "1px solid rgba(212,175,55,0.08)",
               }} />
-              <Zap size={28} style={{ color: "var(--accent)" }} />
+              <Zap size={22} style={{ color: "var(--accent)" }} />
             </div>
 
             {/* Title */}
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 0 }}>
               <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 700,
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 700,
                 letterSpacing: 8, color: "var(--text-primary)",
               }}>
                 SIMULATE
               </span>
               <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 300,
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 300,
                 letterSpacing: 4, color: "var(--text-tertiary)", marginLeft: 8,
               }}>
                 ENGINE
@@ -288,7 +288,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           {/* ── CAPABILITY STRIP ── */}
           <div style={{
             display: "flex", flexWrap: "wrap", justifyContent: "center",
-            gap: isMobile ? 16 : 32, marginBottom: 40,
+            gap: isMobile ? 12 : 24, marginBottom: 20,
             animation: "fadeIn 0.5s ease-out",
           }}>
             {capabilities.map(cap => (
@@ -310,10 +310,10 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           {/* ── DEMO BANNER ── */}
           {!isLoggedIn && !demoUsed && (
             <div style={{
-              padding: 20, borderRadius: 14,
+              padding: 14, borderRadius: 14,
               border: "1px solid var(--mode-sim-border)",
               background: "var(--mode-sim-bg)",
-              marginBottom: 24, textAlign: "center",
+              marginBottom: 12, textAlign: "center",
               animation: "fadeIn 0.5s ease-out",
             }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
@@ -343,12 +343,12 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               border: simScenario.trim() ? "1px solid rgba(212,175,55,0.3)" : "1px solid rgba(212,175,55,0.12)",
               borderRadius: 16,
               background: simScenario.trim() ? "var(--card-bg)" : "var(--card-bg)",
-              padding: isMobile ? 16 : 20,
+              padding: isMobile ? 12 : 16,
               transition: "all 300ms ease",
               boxShadow: simScenario.trim()
                 ? "0 0 30px rgba(212,175,55,0.06), 0 0 60px rgba(212,175,55,0.03)"
                 : "none",
-              marginBottom: 24,
+              marginBottom: 12,
               animation: "fadeIn 0.5s ease-out",
             }}
             onFocus={e => {
@@ -394,7 +394,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               }}
               placeholder="I want to open a coffee franchise in 3 new cities with a $200K budget..."
               style={{
-                width: "100%", minHeight: 88, padding: 0,
+                width: "100%", minHeight: 64, padding: 0,
                 background: "transparent", border: "none",
                 color: "var(--text-primary)", fontSize: 15, lineHeight: 1.6,
                 resize: "none", outline: "none",
@@ -405,7 +405,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           </div>
 
           {/* ── SCENARIO CARDS ── */}
-          <div style={{ marginBottom: 24, animation: "fadeIn 0.6s ease-out" }}>
+          <div style={{ marginBottom: 12, animation: "fadeIn 0.6s ease-out" }}>
             <div style={{
               fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
               textTransform: "uppercase" as const, color: "var(--text-tertiary)",
@@ -425,7 +425,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
                   style={{
                     background: "var(--card-bg)",
                     border: "1px solid var(--card-border)",
-                    borderRadius: 10, padding: "14px 16px",
+                    borderRadius: 10, padding: "10px 12px",
                     cursor: "pointer", transition: "all 200ms",
                     textAlign: "left", position: "relative",
                     borderLeft: "2px solid transparent",
@@ -470,11 +470,11 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             flexDirection: isMobile ? "column" : "row",
             alignItems: isMobile ? "flex-start" : "center",
             justifyContent: "space-between",
-            padding: "16px 20px",
+            padding: "10px 14px",
             border: "1px solid var(--divider)",
             borderRadius: 12,
             background: "var(--card-bg)",
-            marginBottom: 32,
+            marginBottom: 16,
             gap: isMobile ? 16 : 12,
             animation: "fadeIn 0.7s ease-out",
           }}>

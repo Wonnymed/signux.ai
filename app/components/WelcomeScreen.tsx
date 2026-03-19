@@ -126,25 +126,25 @@ export default function WelcomeScreen({
         {/* Mode banners — grid */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr",
-          gap: 8, width: "100%", marginTop: 20,
+          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)",
+          gap: 6, width: "100%", marginTop: 20,
         }}>
           {MODE_BANNERS.map(m => {
             const Icon = m.icon;
             return (
               <button key={m.key} onClick={() => onSwitchMode?.(m.key)} style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "12px 14px", borderRadius: 12, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "10px 10px", borderRadius: 10, cursor: "pointer",
                 border: `1px solid ${m.border}`, background: m.bg,
                 transition: "all 200ms", textAlign: "left",
               }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = m.color; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = m.border; }}
               >
-                <Icon size={16} style={{ color: m.color, flexShrink: 0 }} />
+                <Icon size={14} style={{ color: m.color, flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>{m.label}</div>
-                  <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 1 }}>{m.desc}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>{m.label}</div>
+                  <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 1 }}>{m.desc}</div>
                 </div>
               </button>
             );

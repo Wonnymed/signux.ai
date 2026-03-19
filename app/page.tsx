@@ -273,6 +273,21 @@ export default function LandingPage() {
           width: 800, height: 800, background: "radial-gradient(circle, var(--glow-color) 0%, transparent 70%)",
           pointerEvents: "none",
         }} />
+        {/* Floating particles */}
+        {[
+          { top: "20%", left: "15%", dur: "8s", delay: "0s" },
+          { top: "35%", left: "82%", dur: "10s", delay: "1.5s" },
+          { top: "70%", left: "25%", dur: "12s", delay: "3s" },
+          { top: "60%", left: "78%", dur: "9s", delay: "0.5s" },
+        ].map((p, i) => (
+          <div key={`lp-${i}`} style={{
+            position: "absolute", top: p.top, left: p.left,
+            width: 1.5, height: 1.5, borderRadius: "50%",
+            background: "rgba(212,175,55,0.15)", pointerEvents: "none",
+            animation: `float1 ${p.dur} ease-in-out infinite`,
+            animationDelay: p.delay,
+          }} />
+        ))}
 
         <div style={{ position: "relative", zIndex: 1 }}>
           <SignuxWordmark fontSize={isMobile ? 40 : 56} />

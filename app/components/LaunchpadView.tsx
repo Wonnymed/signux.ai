@@ -409,24 +409,24 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
           ))}
 
           <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
-            <div style={{ textAlign: "center", marginBottom: 48, animation: "fadeIn 0.4s ease-out" }}>
+            <div style={{ textAlign: "center", marginBottom: 24, animation: "fadeIn 0.4s ease-out" }}>
               <div style={{
-                width: 64, height: 64, borderRadius: 14,
+                width: 48, height: 48, borderRadius: 12,
                 border: `1px solid ${tealAlpha(0.15)}`,
                 background: tealAlpha(0.04),
                 display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 20px",
+                margin: "0 auto 16px",
               }}>
-                <Rocket size={28} style={{ color: TEAL }} />
+                <Rocket size={22} style={{ color: TEAL }} />
               </div>
 
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center" }}>
                 <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 700,
+                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 700,
                   letterSpacing: 8, color: "var(--text-primary)",
                 }}>LAUNCH</span>
                 <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 300,
+                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 300,
                   letterSpacing: 4, color: "var(--text-tertiary)", marginLeft: 8,
                 }}>PAD</span>
               </div>
@@ -447,7 +447,7 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
 
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "center",
-              gap: 0, marginBottom: 40, animation: "fadeIn 0.5s ease-out",
+              gap: 0, marginBottom: 20, animation: "fadeIn 0.5s ease-out",
               overflowX: "auto", padding: "0 8px",
             }}>
               {JOURNEY_STEPS.map((step, i) => (

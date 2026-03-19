@@ -292,8 +292,9 @@ export default function Sidebar({
               <span className="loading-dots">...</span>
             </div>
           ) : conversations.length === 0 ? (
-            <div style={{ padding: "16px 4px", fontSize: 12, color: "var(--text-tertiary)", textAlign: "center" }}>
-              {t("sidebar.empty_history")}
+            <div style={{ padding: "24px 4px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", fontStyle: "italic", opacity: 0.4 }}>
+              <MessageSquare size={12} style={{ marginBottom: 4, display: "block", margin: "0 auto 6px" }} />
+              Start a conversation
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column" }}>

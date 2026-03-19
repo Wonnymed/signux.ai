@@ -782,7 +782,7 @@ export default function ChatPage() {
             onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
             onMouseLeave={e => e.currentTarget.style.opacity = "1"}
           >
-            Sign up free
+            Start free
           </button>
         </div>
       ) : (

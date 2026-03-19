@@ -210,10 +210,10 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
           <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
 
             {/* ── HEADER ── */}
-            <div style={{ textAlign: "center", marginBottom: 44, animation: "fadeIn 0.4s ease-out" }}>
+            <div style={{ textAlign: "center", marginBottom: 24, animation: "fadeIn 0.4s ease-out" }}>
               {/* Icon box */}
               <div style={{
-                width: 64, height: 64, borderRadius: 16,
+                width: 48, height: 48, borderRadius: 16,
                 border: "1px solid rgba(107,138,255,0.15)",
                 background: "rgba(107,138,255,0.05)",
                 display: "flex", alignItems: "center", justifyContent: "center",
@@ -223,19 +223,19 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
                   position: "absolute", inset: -6, borderRadius: 20,
                   border: "1px solid rgba(107,138,255,0.06)",
                 }} />
-                <SearchPlusIcon size={28} />
+                <SearchPlusIcon size={22} />
               </div>
 
               {/* Title */}
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center" }}>
                 <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 700,
+                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 700,
                   letterSpacing: 6, color: "var(--text-primary)",
                 }}>
                   DEEP
                 </span>
                 <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 32 : 42, fontWeight: 300,
+                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 300,
                   letterSpacing: 3, color: "var(--text-secondary)", marginLeft: 8,
                 }}>
                   RESEARCH
@@ -261,7 +261,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
             {/* ── PROCESS STRIP ── */}
             <div style={{
               display: "flex", flexWrap: "wrap", justifyContent: "center",
-              gap: isMobile ? 12 : 8, marginBottom: 40,
+              gap: isMobile ? 12 : 8, marginBottom: 16,
               animation: "fadeIn 0.5s ease-out",
             }}>
               {processSteps.map((step, i) => (
@@ -290,10 +290,10 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
             {/* ── DEMO BANNER ── */}
             {!isLoggedIn && !(typeof window !== "undefined" && localStorage.getItem("signux_research_demo_used")) && (
               <div style={{
-                padding: 20, borderRadius: 14,
+                padding: 14, borderRadius: 14,
                 border: "1px solid rgba(107,138,255,0.2)",
                 background: "rgba(107,138,255,0.05)",
-                marginBottom: 24, textAlign: "center",
+                marginBottom: 12, textAlign: "center",
                 animation: "fadeIn 0.5s ease-out",
               }}>
                 <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
@@ -328,10 +328,10 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
                 border: query.trim() ? "1px solid rgba(107,138,255,0.25)" : "1px solid rgba(107,138,255,0.1)",
                 borderRadius: 16,
                 background: query.trim() ? "rgba(107,138,255,0.03)" : "rgba(107,138,255,0.02)",
-                padding: isMobile ? 16 : 20,
+                padding: isMobile ? 12 : 16,
                 transition: "all 300ms ease",
                 boxShadow: query.trim() ? "0 0 30px rgba(107,138,255,0.05)" : "none",
-                marginBottom: 24,
+                marginBottom: 12,
                 animation: "fadeIn 0.5s ease-out",
               }}
               onFocus={e => {
@@ -378,7 +378,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
             </div>
 
             {/* ── RESEARCH TEMPLATES ── */}
-            <div style={{ marginBottom: 28, animation: "fadeIn 0.6s ease-out" }}>
+            <div style={{ marginBottom: 12, animation: "fadeIn 0.6s ease-out" }}>
               <div style={{
                 fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
                 textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 12,
@@ -399,7 +399,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
                       style={{
                         background: "var(--card-bg)",
                         border: "1px solid var(--card-border)",
-                        borderRadius: 10, padding: "14px 16px",
+                        borderRadius: 10, padding: "10px 12px",
                         cursor: "pointer", transition: "all 200ms",
                         textAlign: "left", display: "flex", gap: 12,
                         alignItems: "flex-start",
@@ -444,7 +444,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
               border: "1px solid var(--divider)",
               borderRadius: 12,
               background: "var(--card-bg)",
-              marginBottom: 32,
+              marginBottom: 12,
               animation: "fadeIn 0.7s ease-out",
             }}>
               {[

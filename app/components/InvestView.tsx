@@ -245,13 +245,13 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
           {/* BG: Candlestick silhouettes */}
           <CandlestickBG />
 
-          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 720, display: "flex", flexDirection: "column", alignItems: "center", gap: 32 }}>
+          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 720, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
 
             {/* Header */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               {/* Icon box */}
               <div style={{
-                width: 64, height: 64, borderRadius: 14,
+                width: 48, height: 48, borderRadius: 14,
                 border: `1px solid rgba(168,85,247,0.15)`,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
@@ -260,10 +260,10 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
 
               {/* Title */}
               <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 42, color: "var(--text-primary)", letterSpacing: 2 }}>
+                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 36, color: "var(--text-primary)", letterSpacing: 2 }}>
                   INVEST
                 </span>
-                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 300, fontSize: 42, color: "var(--text-primary)", opacity: 0.3, letterSpacing: 2 }}>
+                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 300, fontSize: 36, color: "var(--text-primary)", opacity: 0.3, letterSpacing: 2 }}>
                   ENGINE
                 </span>
               </div>
@@ -321,7 +321,7 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
                   placeholder={t("invest.placeholder")}
                   rows={3}
                   style={{
-                    width: "100%", padding: "14px 16px", border: "none", outline: "none",
+                    width: "100%", padding: "10px 14px", border: "none", outline: "none",
                     background: "transparent", color: "var(--text-primary)",
                     fontSize: 14, fontFamily: "var(--font-body)", resize: "none",
                     lineHeight: 1.6,
@@ -369,7 +369,7 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
             <div style={{
               display: "grid",
               gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-              gap: 12, width: "100%",
+              gap: 8, width: "100%",
             }}>
               {TEMPLATES.map(tpl => (
                 <button
@@ -377,7 +377,7 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
                   onClick={() => { setInput(tpl.fill); }}
                   style={{
                     background: "var(--bg-secondary)", border: "1px solid var(--border-primary)",
-                    borderRadius: 10, padding: "14px 16px",
+                    borderRadius: 10, padding: "10px 12px",
                     textAlign: "left", cursor: "pointer",
                     transition: "border-color 0.15s, background 0.15s",
                     display: "flex", flexDirection: "column", gap: 6,

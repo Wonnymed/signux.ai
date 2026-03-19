@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Signux AI — Think through any business decision",
   description: "AI-powered operational intelligence platform with 6 specialized modes: Chat, Simulate, Research, Launchpad, Global Ops, and Invest.",
-  metadataBase: new URL("https://signux.ai"),
+  metadataBase: new URL("https://signux-ai.vercel.app"),
   icons: {
     icon: [
       { url: "/icons/signux-icon-gold-32.png", type: "image/png", sizes: "32x32" },
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Signux AI",
     description: "Think through any business decision before you make it",
-    url: "https://signux.ai",
+    url: "https://signux-ai.vercel.app",
     siteName: "Signux AI",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
