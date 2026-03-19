@@ -846,6 +846,7 @@ export default function ChatPage() {
                 simStarting={simStarting}
                 simAgentMessages={simAgentMessages}
                 onSetMode={setMode}
+                lang={lang}
               />
             </motion.div>
           ) : mode === "launchpad" ? (

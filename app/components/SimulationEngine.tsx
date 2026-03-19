@@ -4,12 +4,13 @@ import {
   Check, AlertTriangle, Download, ChevronDown, ChevronRight,
   FileText, RotateCcw, MessageSquare, BarChart3, Network,
   Globe, Users, Clock, Zap, Search, Shield, Activity, Play,
-  Wand2, Loader2,
+  Wand2, Loader2, Eye, X,
 } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { useEnhance } from "../lib/useEnhance";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { signuxFetch } from "../lib/api-client";
 import type { SimAgent, SimResult, Mode } from "../lib/types";
 import { AGENT_CATEGORY_COLORS, DEFAULT_CATEGORY_COLOR, ENTITY_COLORS, DEFAULT_ENTITY_COLOR } from "../lib/types";
 
@@ -26,6 +27,20 @@ type AgentMessage = {
   round?: number;
 };
 
+type GodEyeResult = {
+  type: "recalc" | "impact";
+  agent?: string;
+  role?: string;
+  analysis?: string;
+  content?: string;
+};
+
+type InjectionEntry = {
+  variable: string;
+  impact: string;
+  timestamp: number;
+};
+
 type SimulationEngineProps = {
   simulating: boolean;
   simResult: SimResult | null;
@@ -40,6 +55,7 @@ type SimulationEngineProps = {
   simStarting: boolean;
   simAgentMessages: AgentMessage[];
   onSetMode?: (m: Mode) => void;
+  lang?: string;
 };
 
 function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { score: number; label: string; color: string } {
@@ -64,7 +80,7 @@ function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { sco
 }
 
 export default function SimulationEngine(props: SimulationEngineProps) {
-  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode } = props;
+  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang } = props;
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,6 +93,13 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [agentFilter, setAgentFilter] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+
+  // God's Eye state
+  const [godEyeOpen, setGodEyeOpen] = useState(false);
+  const [godEyeInput, setGodEyeInput] = useState("");
+  const [godEyeRunning, setGodEyeRunning] = useState(false);
+  const [godEyeResults, setGodEyeResults] = useState<GodEyeResult[]>([]);
+  const [injectionHistory, setInjectionHistory] = useState<InjectionEntry[]>([]);
   const isMobile = useIsMobile();
   const pad = isMobile ? "16px" : "24px";
   const { enhance, enhancing, wasEnhanced } = useEnhance("simulate");
@@ -89,6 +112,53 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   };
 
   const toggleSection = (key: string) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const runGodEye = async () => {
+    if (!godEyeInput.trim() || godEyeRunning || !simResult) return;
+    setGodEyeRunning(true);
+    setGodEyeResults([]);
+
+    try {
+      const res = await signuxFetch("/api/simulate/inject", {
+        method: "POST",
+        body: JSON.stringify({
+          variable: godEyeInput.trim(),
+          originalScenario: simScenario,
+          agents: simResult.stages?.agents || [],
+          previousReport: simResult.report || "",
+          lang: lang || "en",
+        }),
+      });
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader");
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "agent_recalc_done") {
+              setGodEyeResults(prev => [...prev, { type: "recalc", agent: data.agent, role: data.role, analysis: data.analysis }]);
+            } else if (data.type === "impact_report") {
+              setGodEyeResults(prev => [...prev, { type: "impact", content: data.content }]);
+              setInjectionHistory(prev => [...prev, { variable: godEyeInput, impact: data.content, timestamp: Date.now() }]);
+            }
+          } catch { /* skip parse errors */ }
+        }
+      }
+    } catch (e) {
+      console.error("God's Eye failed:", e);
+    }
+    setGodEyeRunning(false);
+  };
 
   /* ═══ WELCOME STATE ═══ */
   if (!simResult && !simulating) {
@@ -847,7 +917,17 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           <div style={{ fontSize: 20, fontWeight: 500, color: "var(--text-primary)" }}>
             {t("sim.complete")}
           </div>
-          <div style={{ display: "flex", gap: 8, position: "relative" }}>
+          <div style={{ display: "flex", gap: 8, position: "relative", flexWrap: "wrap" }}>
+            <button onClick={() => setGodEyeOpen(true)} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 18px", borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--mode-sim-border)",
+              background: "var(--mode-sim-bg)", color: "var(--mode-sim)",
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              fontFamily: "var(--font-brand)", letterSpacing: 1,
+            }}>
+              <Eye size={14} /> What if?
+            </button>
             <button onClick={onReset} style={{
               fontSize: 13, color: "var(--text-secondary)", background: "transparent",
               border: "1px solid var(--border-primary)", padding: "8px 16px",
@@ -1058,7 +1138,201 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             </>)}
           </div>
         )}
+
+        {/* Injection History */}
+        {injectionHistory.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8, marginBottom: 14,
+            }}>
+              <Eye size={14} style={{ color: "var(--mode-sim)" }} />
+              <span style={{
+                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
+                textTransform: "uppercase", color: "var(--mode-sim)",
+              }}>
+                God&apos;s Eye — Injection History
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {injectionHistory.map((entry, i) => (
+                <div key={i} style={{
+                  padding: 18, borderRadius: "var(--radius-md)",
+                  background: "var(--bg-secondary)", border: "1px solid var(--mode-sim-border)",
+                  borderLeft: "3px solid var(--mode-sim)",
+                }}>
+                  <div style={{
+                    fontSize: 13, fontWeight: 600, color: "var(--mode-sim)", marginBottom: 8,
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}>
+                    <Zap size={12} /> &quot;{entry.variable}&quot;
+                  </div>
+                  <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)" }}>
+                    <MarkdownRenderer content={entry.impact} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* God's Eye Modal */}
+      {godEyeOpen && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100,
+            animation: "fadeIn 0.15s ease-out",
+          }}
+          onClick={() => !godEyeRunning && setGodEyeOpen(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto",
+              borderRadius: 16,
+              border: "1px solid var(--mode-sim-border)",
+              background: "var(--bg-primary)", padding: 24,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              animation: "fadeInUp 0.2s ease-out",
+              margin: 16,
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Eye size={18} style={{ color: "var(--mode-sim)" }} />
+                <span style={{
+                  fontFamily: "var(--font-brand)", fontSize: 18, fontWeight: 700,
+                  letterSpacing: 2, color: "var(--text-primary)",
+                }}>
+                  GOD&apos;S EYE
+                </span>
+              </div>
+              <button
+                onClick={() => !godEyeRunning && setGodEyeOpen(false)}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "var(--text-tertiary)", padding: 4,
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16, lineHeight: 1.5 }}>
+              Inject a variable and watch the agents recalculate. What happens if...
+            </p>
+
+            {/* Presets */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+              {[
+                "Revenue drops 40%",
+                "Key employee leaves",
+                "New competitor with $10M funding",
+                "Regulation changes",
+                "Supply chain disruption",
+                "Interest rates rise 2%",
+              ].map(preset => (
+                <button
+                  key={preset}
+                  onClick={() => setGodEyeInput(preset)}
+                  style={{
+                    padding: "5px 12px", borderRadius: 20,
+                    border: godEyeInput === preset ? "1px solid var(--mode-sim)" : "1px solid var(--card-border)",
+                    background: godEyeInput === preset ? "var(--mode-sim-bg)" : "var(--card-bg)",
+                    fontSize: 11, color: godEyeInput === preset ? "var(--mode-sim)" : "var(--text-secondary)",
+                    cursor: "pointer", transition: "all 150ms",
+                  }}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+
+            {/* Input */}
+            <input
+              value={godEyeInput}
+              onChange={e => setGodEyeInput(e.target.value)}
+              placeholder="What if..."
+              disabled={godEyeRunning}
+              style={{
+                width: "100%", padding: "12px 16px", borderRadius: 10,
+                border: "1px solid var(--mode-sim-border)", background: "var(--card-bg)",
+                color: "var(--text-primary)", fontSize: 14, outline: "none",
+                marginBottom: 16, fontFamily: "var(--font-sans)",
+              }}
+              onKeyDown={e => { if (e.key === "Enter" && godEyeInput.trim() && !godEyeRunning) runGodEye(); }}
+            />
+
+            {/* Run button */}
+            <button
+              onClick={runGodEye}
+              disabled={!godEyeInput.trim() || godEyeRunning}
+              style={{
+                width: "100%", padding: "12px", borderRadius: 10,
+                background: godEyeInput.trim() && !godEyeRunning ? "var(--mode-sim)" : "var(--bg-tertiary)",
+                color: godEyeInput.trim() && !godEyeRunning ? "#000" : "var(--text-tertiary)",
+                fontWeight: 600, fontSize: 14, border: "none",
+                cursor: godEyeInput.trim() && !godEyeRunning ? "pointer" : "default",
+                fontFamily: "var(--font-brand)", letterSpacing: 1,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}
+            >
+              {godEyeRunning && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
+              {godEyeRunning ? "RECALCULATING..." : "INJECT VARIABLE"}
+            </button>
+
+            {/* Results */}
+            {godEyeResults.length > 0 && (
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                {godEyeResults.map((r, i) => {
+                  if (r.type === "recalc") {
+                    return (
+                      <div key={i} style={{
+                        padding: "12px 14px", borderRadius: 10,
+                        background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)",
+                      }}>
+                        <div style={{
+                          fontSize: 12, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4,
+                          display: "flex", alignItems: "center", gap: 6,
+                        }}>
+                          <Check size={12} style={{ color: "var(--success)" }} />
+                          {r.agent}
+                          <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontWeight: 400 }}>{r.role}</span>
+                        </div>
+                        <div style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                          {r.analysis}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (r.type === "impact") {
+                    return (
+                      <div key={i} style={{
+                        padding: 16, borderRadius: 10,
+                        background: "var(--mode-sim-bg)", border: "1px solid var(--mode-sim-border)",
+                      }}>
+                        <div style={{
+                          fontSize: 12, fontWeight: 600, color: "var(--mode-sim)", marginBottom: 8,
+                          display: "flex", alignItems: "center", gap: 6,
+                          fontFamily: "var(--font-mono)", letterSpacing: 1, textTransform: "uppercase",
+                        }}>
+                          <Zap size={12} /> Impact Report
+                        </div>
+                        <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)" }}>
+                          <MarkdownRenderer content={r.content || ""} />
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
