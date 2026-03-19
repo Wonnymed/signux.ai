@@ -1,5 +1,5 @@
 "use client";
-import { Zap, Search, Rocket, Globe, TrendingUp, Shield, Scan, Swords, GitBranch } from "lucide-react";
+import { Zap, Search, Rocket, Globe, TrendingUp, Shield, Scan, Swords, GitBranch, Map } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
@@ -22,6 +22,7 @@ type WelcomeScreenProps = {
   onOpenDealXRay?: () => void;
   onOpenWarGame?: () => void;
   onOpenCausalMap?: () => void;
+  onOpenScenarios?: () => void;
   lang?: string;
 };
 
@@ -47,7 +48,7 @@ const MODE_BANNERS: {
 
 export default function WelcomeScreen({
   input, setInput, onSend, loading, attachments, onAttachmentsChange,
-  onToast, onSwitchMode, onOpenThreatRadar, onOpenDealXRay, onOpenWarGame, onOpenCausalMap, lang,
+  onToast, onSwitchMode, onOpenThreatRadar, onOpenDealXRay, onOpenWarGame, onOpenCausalMap, onOpenScenarios, lang,
 }: WelcomeScreenProps) {
   const isMobile = useIsMobile();
   const particleCount = isMobile ? 3 : 5;
@@ -158,7 +159,7 @@ export default function WelcomeScreen({
         {/* Intelligence tools */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)",
           gap: 6, marginTop: 12, width: "100%",
         }}>
           {([
@@ -166,6 +167,7 @@ export default function WelcomeScreen({
             { onClick: () => onOpenDealXRay?.(), icon: Scan, label: "Deal X-Ray", color: "#f59e0b" },
             { onClick: () => onOpenWarGame?.(), icon: Swords, label: "War Game", color: "#D4AF37" },
             { onClick: () => onOpenCausalMap?.(), icon: GitBranch, label: "Causal Map", color: "#6366F1" },
+            { onClick: () => onOpenScenarios?.(), icon: Map, label: "Scenarios", color: "#A855F7" },
           ] as const).map(tool => {
             const Icon = tool.icon;
             return (

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Zap, Search, Rocket, Globe, TrendingUp, Wrench, CircleSlash, Copy, Users } from "lucide-react";
+import { Zap, Search, Rocket, Globe, TrendingUp, Wrench, CircleSlash, Copy, Users, Shield, Scan, Swords, GitBranch, Map, Target } from "lucide-react";
 import { SignuxIcon } from "./components/SignuxIcon";
 import SignuxFooter from "./components/SignuxFooter";
 
@@ -481,6 +481,43 @@ export default function LandingPage() {
                 </div>
               </div>
             )}
+          </div>
+        </FadeSection>
+      </section>
+
+      {/* ═══ INTELLIGENCE TOOLS ═══ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
+        <FadeSection>
+          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28, color: "var(--text-primary)", marginBottom: 8, textAlign: "center" }}>
+            Intelligence-grade tools
+          </h2>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center", marginBottom: 40 }}>
+            Specialized analysis tools that go beyond chat. Type a slash command or click to launch.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
+            {([
+              { icon: Shield, title: "Threat Radar", desc: "Scan 5 risk axes — market, regulatory, operational, cyber, geopolitical — with real-time web data.", color: "#ef4444", cmd: "/threats" },
+              { icon: Scan, title: "Deal X-Ray", desc: "Forensic analysis of any deal. Detects red flags, hidden incentives, and deception patterns.", color: "#f59e0b", cmd: "/xray" },
+              { icon: Swords, title: "War Game", desc: "5 AI agents simulate competitive moves over 3 rounds. Find your dominant strategy.", color: "#D4AF37", cmd: "/wargame" },
+              { icon: GitBranch, title: "Causal Map", desc: "Map cause-and-effect chains with confidence scores. Identify confounders and verify hypotheses.", color: "#6366F1", cmd: "/causal" },
+              { icon: Map, title: "Scenario Planner", desc: "4 alternative futures in a 2×2 matrix with timelines, early warnings, and hedging strategies.", color: "#A855F7", cmd: "/scenarios" },
+              { icon: Target, title: "Negotiation War Room", desc: "Intel → Strategy → Practice → Debrief. Full lifecycle negotiation preparation.", color: "#F97316", cmd: "/negotiate" },
+            ] as const).map((tool, i) => {
+              const Icon = tool.icon;
+              return (
+                <div key={i} style={{ padding: 20, borderRadius: 12, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: `${tool.color}10` }}>
+                      <Icon size={14} style={{ color: tool.color }} />
+                    </div>
+                    <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)", letterSpacing: 1 }}>{tool.cmd}</span>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>{tool.title}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{tool.desc}</div>
+                </div>
+              );
+            })}
           </div>
         </FadeSection>
       </section>

@@ -50,6 +50,7 @@ const ThreatRadar = dynamic(() => import("../components/ThreatRadar"), { ssr: fa
 const DealXRay = dynamic(() => import("../components/DealXRay"), { ssr: false });
 const WarGame = dynamic(() => import("../components/WarGame"), { ssr: false });
 const CausalMap = dynamic(() => import("../components/CausalMap"), { ssr: false });
+const ScenarioPlanner = dynamic(() => import("../components/ScenarioPlanner"), { ssr: false });
 const SettingsModal = dynamic(() => import("../components/SettingsModal"), { ssr: false });
 const Onboarding = dynamic(() => import("../components/Onboarding"), { ssr: false });
 
@@ -180,7 +181,7 @@ export default function ChatPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [searching, setSearching] = useState(false);
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
-  const [activeTool, setActiveTool] = useState<"threat-radar" | "deal-xray" | "wargame" | "causal-map" | null>(null);
+  const [activeTool, setActiveTool] = useState<"threat-radar" | "deal-xray" | "wargame" | "causal-map" | "scenarios" | null>(null);
 
   /* Simulation */
   const [simulating, setSimulating] = useState(false);
@@ -449,6 +450,7 @@ export default function ChatPage() {
     if (msg.toLowerCase() === "/xray") { setInput(""); setActiveTool("deal-xray"); setMode("chat"); return; }
     if (msg.toLowerCase() === "/wargame") { setInput(""); setActiveTool("wargame"); setMode("chat"); return; }
     if (msg.toLowerCase() === "/causal") { setInput(""); setActiveTool("causal-map"); setMode("chat"); return; }
+    if (msg.toLowerCase() === "/scenarios") { setInput(""); setActiveTool("scenarios"); setMode("chat"); return; }
 
     // Build the API content (string or array)
     let apiContent: string | any[];
@@ -1035,6 +1037,16 @@ export default function ChatPage() {
                 </div>
                 <CausalMap lang={lang} />
               </div>
+              ) : activeTool === "scenarios" ? (
+              <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 16px 0" }}>
+                  <button onClick={() => setActiveTool(null)} style={{
+                    fontSize: 11, color: "var(--text-tertiary)", background: "transparent",
+                    border: "1px solid var(--border-primary)", borderRadius: 6, padding: "4px 10px", cursor: "pointer",
+                  }}>← Back to chat</button>
+                </div>
+                <ScenarioPlanner lang={lang} />
+              </div>
               ) : (
               <>
               {tier === "free" && isLoggedIn && limits.chat_daily < Infinity && (
@@ -1071,6 +1083,7 @@ export default function ChatPage() {
                 onOpenDealXRay={() => setActiveTool("deal-xray")}
                 onOpenWarGame={() => setActiveTool("wargame")}
                 onOpenCausalMap={() => setActiveTool("causal-map")}
+                onOpenScenarios={() => setActiveTool("scenarios")}
                 onStop={() => abortRef.current?.abort()}
                 lang={lang}
                 mode={mode}
