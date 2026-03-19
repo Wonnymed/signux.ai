@@ -311,6 +311,50 @@ CRITICAL: Never say "I don't have access to current information." You HAVE web s
 DISCLAIMER: Always end investment analysis with a brief note that this is analytical modeling, not financial advice, and the user should consult qualified financial professionals before making investment decisions.`;
 }
 
+const RC_PATTERNS = [
+  /^\/check\b/i,
+  /\bis it (still )?(worth|viable|profitable)\b/i,
+  /\bshould i (buy|invest|quit|start|learn|take|pay|spend|sign up)\b/i,
+  /\bis .+ (dead|dying|saturated|over|worth it)\b/i,
+  /\bvale a pena\b/i,
+  /\bdevo (comprar|investir|largar|começar|aprender|pagar)\b/i,
+  /\breality check\b/i,
+];
+
+function isRealityCheckQuestion(text: string): boolean {
+  return RC_PATTERNS.some(p => p.test(text));
+}
+
+const RC_SYSTEM_INJECT = `
+
+REALITY CHECK MODE ACTIVATED:
+The user is asking a "Is it worth it?" type question. You MUST:
+1. Search the web for current data on this topic
+2. Respond with a structured verdict in this EXACT JSON format (wrapped in \`\`\`json code block):
+
+\`\`\`json
+{
+  "verdict": "GO" | "CAUTION" | "STOP",
+  "confidence": 0.0-1.0,
+  "one_liner": "One sentence verdict (max 15 words)",
+  "metrics": [
+    {"label": "metric name (3 words max)", "value": "number or short text", "trend": "up" | "down" | "stable", "color": "green" | "amber" | "red"}
+  ],
+  "pros": [
+    {"point": "specific pro with data (1 sentence)", "source": "where this data comes from"}
+  ],
+  "cons": [
+    {"point": "specific con with data (1 sentence)", "source": "where this data comes from"}
+  ],
+  "bottom_line": "2-3 sentence honest assessment. If the answer is no, SAY NO.",
+  "better_alternative": "If verdict is STOP or CAUTION, suggest what they should do instead. null if GO.",
+  "data_freshness": "how recent the data is (e.g., 'March 2026')"
+}
+\`\`\`
+
+RULES: exactly 4 metrics, 2-3 pros, 2-3 cons. Be brutally honest. Use real data from web search.
+`;
+
 export async function POST(req: NextRequest) {
   try {
     const { messages, profile, rates, mode } = await req.json();
@@ -348,7 +392,12 @@ export async function POST(req: NextRequest) {
     } else {
       baseSystemPrompt = buildSystemPrompt();
     }
-    const fullSystemPrompt = baseSystemPrompt + contextPrefix;
+    // Check if the latest user message is a reality check question
+    const lastUserMsg = messages.filter((m: any) => m.role === "user").pop();
+    const lastUserText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : "";
+    const isRC = mode === "chat" || !mode ? isRealityCheckQuestion(lastUserText) : false;
+
+    const fullSystemPrompt = baseSystemPrompt + contextPrefix + (isRC ? RC_SYSTEM_INJECT : "");
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream({

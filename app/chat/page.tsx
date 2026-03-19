@@ -886,6 +886,7 @@ export default function ChatPage() {
                 onSwitchToResearch={() => setMode("research")}
                 onSwitchMode={setMode}
                 onStop={() => abortRef.current?.abort()}
+                lang={lang}
               />
             </motion.div>
           )}

@@ -1,5 +1,6 @@
 "use client";
-import { Zap, Search, Rocket, Globe, TrendingUp, ChevronDown, Wrench } from "lucide-react";
+import { Zap, Search, Rocket, Globe, TrendingUp, ChevronDown, Wrench, CircleSlash } from "lucide-react";
+import RealityCheck from "./RealityCheck";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
@@ -18,6 +19,7 @@ type WelcomeScreenProps = {
   onSwitchToSimulate?: () => void;
   onSwitchToResearch?: () => void;
   onSwitchMode?: (mode: Mode) => void;
+  lang?: string;
 };
 
 /* ═══ Particles ═══ */
@@ -300,7 +302,7 @@ function NewBadge() {
 /* ═══ MAIN COMPONENT ═══ */
 export default function WelcomeScreen({
   input, setInput, onSend, loading, attachments, onAttachmentsChange,
-  onToast, onSwitchMode,
+  onToast, onSwitchMode, lang,
 }: WelcomeScreenProps) {
   const isMobile = useIsMobile();
   const particleCount = isMobile ? 3 : 5;
@@ -389,6 +391,12 @@ export default function WelcomeScreen({
             </div>
           )}
         </div>
+      </section>
+
+      {/* ════════════════ REALITY CHECK ════════════════ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "64px 24px", maxWidth: 880, margin: "0 auto" }}>
+        <RealityCheck lang={lang || "en"} />
       </section>
 
       {/* ════════════════ MODE SECTIONS ════════════════ */}
