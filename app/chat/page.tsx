@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getProfile } from "../lib/profile";
 import { t, Language, setLanguage } from "../lib/i18n";
 import type { Message, Toast, Attachment, SimAgent, SimResult, Mode } from "../lib/types";
-import { Check, AlertTriangle, Info, WifiOff, Square, Rocket } from "lucide-react";
+import { Check, AlertTriangle, Info, WifiOff, Square } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
 import UserMenu from "../components/UserMenu";
@@ -286,7 +286,7 @@ export default function ChatPage() {
           .from("launchpad_projects")
           .select("id, updated_at")
           .eq("user_id", authUser.id)
-          .in("status", ["tracking", "launch"])
+          .in("status", ["tracking", "launch", "blueprint"])
           .order("updated_at", { ascending: false })
           .limit(1)
           .single();
@@ -865,18 +865,22 @@ export default function ChatPage() {
             onClick={() => { setMode("launchpad"); setShowCheckinReminder(false); }}
             style={{
               display: "flex", alignItems: "center", gap: 10,
-              padding: "10px 16px", margin: "8px 16px 0",
-              borderRadius: 10, background: "rgba(20,184,166,0.06)",
-              border: "1px solid rgba(20,184,166,0.15)",
-              fontSize: 13, color: "#14B8A6",
-              cursor: "pointer", transition: "background 0.15s",
+              padding: "10px 16px", margin: "8px 16px",
+              borderRadius: 10, background: "var(--mode-lp-bg, rgba(20,184,166,0.06))",
+              border: "1px solid var(--mode-lp-border, rgba(20,184,166,0.15))",
+              fontSize: 13, color: "var(--mode-lp, #14B8A6)",
+              cursor: "pointer",
             }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(20,184,166,0.1)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(20,184,166,0.06)"}
           >
-            <Rocket size={14} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09Z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2Z"/></svg>
             <span style={{ flex: 1 }}>Your weekly check-in is due</span>
             <span style={{ fontSize: 11, opacity: 0.6 }}>Open Launchpad &rarr;</span>
+            <button onClick={(e) => { e.stopPropagation(); setShowCheckinReminder(false); }} style={{
+              background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 2,
+              fontSize: 14, lineHeight: 1,
+            }}>
+              &#x2715;
+            </button>
           </div>
         )}
         <AnimatePresence mode="wait">

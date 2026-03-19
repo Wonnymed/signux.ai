@@ -1,4 +1,6 @@
 export function updateStreak(): { streak: number; isNewDay: boolean } {
+  if (typeof window === "undefined") return { streak: 0, isNewDay: false };
+
   const today = new Date().toISOString().split("T")[0];
   const lastActive = localStorage.getItem("signux_last_active");
   let streak = parseInt(localStorage.getItem("signux_streak") || "0");

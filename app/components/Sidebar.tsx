@@ -298,17 +298,6 @@ export default function Sidebar({
                  onMouseLeave={e => { if (mode !== key) e.currentTarget.style.background = "transparent"; }}>
                 <Icon size={16} style={{ color: mode === key ? (color || "var(--accent)") : undefined }} />
                 <span style={{ flex: 1 }}>{t(label)}</span>
-                {key === "chat" && pendingDecisions > 0 && (
-                  <div style={{
-                    width: 18, height: 18, borderRadius: "50%",
-                    background: "#ef4444", color: "#fff",
-                    fontSize: 10, fontWeight: 600,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    lineHeight: 1,
-                  }}>
-                    {pendingDecisions}
-                  </div>
-                )}
                 {tier === "max" && (
                   <span style={{
                     fontSize: 9, fontWeight: 700, letterSpacing: 0.5,
@@ -323,17 +312,6 @@ export default function Sidebar({
               )}
             </div>
           ))}
-          {/* Streak counter */}
-          {streak >= 2 && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              fontSize: 11, color: "var(--text-tertiary)",
-              padding: "6px 12px", marginTop: 4,
-            }}>
-              <Flame size={12} style={{ color: streak >= 7 ? "#ef4444" : streak >= 3 ? "#f59e0b" : "var(--text-tertiary)" }} />
-              {streak} day streak
-            </div>
-          )}
         </div>
 
         <div style={{ height: 1, background: "var(--border-secondary)", margin: "0 8px 8px" }} />
@@ -377,6 +355,42 @@ export default function Sidebar({
 
         {/* Bottom */}
         <div style={{ borderTop: "1px solid var(--border-secondary)", padding: 8 }}>
+          {/* Streak counter */}
+          {streak >= 2 && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", margin: "4px 8px",
+              fontSize: 11, color: "var(--text-tertiary)",
+            }}>
+              <Flame size={12} style={{
+                color: streak >= 7 ? "#ef4444" : streak >= 3 ? "#f59e0b" : "var(--text-tertiary)",
+              }} />
+              <span>{streak}-day streak</span>
+            </div>
+          )}
+
+          {/* Decision follow-up badge */}
+          {pendingDecisions > 0 && (
+            <a href="/decisions" style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "8px 12px", margin: "4px 8px",
+              borderRadius: 8, background: "rgba(168,85,247,0.06)",
+              border: "1px solid rgba(168,85,247,0.12)",
+              fontSize: 12, color: "var(--mode-inv, #A855F7)",
+              textDecoration: "none", cursor: "pointer",
+            }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: "50%",
+                background: "#ef4444", color: "#fff",
+                fontSize: 10, fontWeight: 600,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {pendingDecisions}
+              </div>
+              <span>Decisions need follow-up</span>
+            </a>
+          )}
+
           {/* Settings */}
           <button onClick={handleSettings} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none", background: "none", borderRadius: "var(--radius-xs)", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left" }}
             onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
@@ -465,18 +479,6 @@ export default function Sidebar({
             }} onMouseEnter={e => { if (mode !== key) e.currentTarget.style.background = "var(--bg-hover)"; }}
                onMouseLeave={e => { if (mode !== key) e.currentTarget.style.background = "transparent"; }}>
               <Icon size={iconSize} />
-              {key === "chat" && pendingDecisions > 0 && (
-                <div style={{
-                  position: "absolute", top: 4, right: 4,
-                  width: 14, height: 14, borderRadius: "50%",
-                  background: "#ef4444", color: "#fff",
-                  fontSize: 8, fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  lineHeight: 1,
-                }}>
-                  {pendingDecisions}
-                </div>
-              )}
             </button>
             {/* Divider after launchpad (index 3) */}
             {idx === 3 && (
