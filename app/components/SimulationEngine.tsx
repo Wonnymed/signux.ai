@@ -941,6 +941,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   };
 
   const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   const shareResult = async () => {
     setSharing(true);
@@ -949,21 +950,24 @@ export default function SimulationEngine(props: SimulationEngineProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "simulation",
-          title: scenario || "Simulation",
+          type: "simulate",
+          title: scenario?.slice(0, 200),
           content: reportText,
-          metadata: { agents_count: meta.agents_count, rounds: meta.rounds, total_interactions: meta.total_interactions },
+          metadata: {
+            viability_score: meta.viability_score,
+            agents_count: meta.agents_count,
+            rounds: meta.rounds,
+          },
         }),
       });
-      const { id } = await res.json();
-      const url = `${window.location.origin}/share/${id}`;
-      await navigator.clipboard.writeText(url);
-      alert("Link copied to clipboard!");
-    } catch {
-      alert("Failed to create share link");
-    } finally {
-      setSharing(false);
-    }
+      const data = await res.json();
+      if (data.url) {
+        await navigator.clipboard.writeText(data.url);
+        setShareUrl(data.url);
+        setTimeout(() => setShareUrl(""), 3000);
+      }
+    } catch {}
+    setSharing(false);
   };
 
   const exportReport = () => {
@@ -1006,12 +1010,15 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               {t("sim.new_simulation")}
             </button>
             <button onClick={shareResult} disabled={sharing} style={{
-              fontSize: 13, color: "var(--text-primary)", background: "transparent",
-              border: "1px solid var(--border-primary)", padding: "8px 16px",
-              borderRadius: "var(--radius-sm)", cursor: sharing ? "wait" : "pointer",
-              display: "flex", alignItems: "center", gap: 6, opacity: sharing ? 0.6 : 1,
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 50,
+              border: "1px solid var(--border-secondary)",
+              background: shareUrl ? "var(--accent-soft, rgba(212,175,55,0.08))" : "transparent",
+              color: shareUrl ? "var(--accent)" : "var(--text-secondary)",
+              fontSize: 12, cursor: "pointer", transition: "all 200ms",
             }}>
-              <Share2 size={14} /> {sharing ? "Sharing..." : "Share"}
+              <Share2 size={14} />
+              {sharing ? "Sharing..." : shareUrl ? "Link copied!" : "Share"}
             </button>
             <div style={{ position: "relative" }}>
               <button onClick={() => setExportOpen(!exportOpen)} style={{

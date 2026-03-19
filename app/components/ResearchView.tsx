@@ -167,6 +167,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
   };
 
   const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   const shareResult = async () => {
     setSharing(true);
@@ -176,20 +177,19 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "research",
-          title: query || "Research Report",
+          title: query?.slice(0, 200),
           content: report,
-          metadata: { sources: searchResults.length },
+          metadata: { sources_count: searchResults.length },
         }),
       });
-      const { id } = await res.json();
-      const url = `${window.location.origin}/share/${id}`;
-      await navigator.clipboard.writeText(url);
-      alert("Link copied to clipboard!");
-    } catch {
-      alert("Failed to create share link");
-    } finally {
-      setSharing(false);
-    }
+      const data = await res.json();
+      if (data.url) {
+        await navigator.clipboard.writeText(data.url);
+        setShareUrl(data.url);
+        setTimeout(() => setShareUrl(""), 3000);
+      }
+    } catch {}
+    setSharing(false);
   };
 
   const reset = () => {
@@ -733,14 +733,15 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
             onClick={shareResult}
             disabled={sharing}
             style={{
-              fontSize: 13, color: "var(--text-secondary)",
-              background: "transparent", border: "1px solid var(--border-primary)",
-              padding: "8px 16px", borderRadius: "var(--radius-sm)",
-              cursor: sharing ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 6,
-              opacity: sharing ? 0.6 : 1,
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 50,
+              border: "1px solid var(--border-secondary)",
+              background: shareUrl ? "rgba(107,138,255,0.08)" : "transparent",
+              color: shareUrl ? "#6B8AFF" : "var(--text-secondary)",
+              fontSize: 12, cursor: "pointer", transition: "all 200ms",
             }}
           >
-            <Share2 size={14} /> {sharing ? "Sharing..." : "Share"}
+            <Share2 size={14} /> {sharing ? "Sharing..." : shareUrl ? "Link copied!" : "Share"}
           </button>
           {onContinueInChat && (
             <button

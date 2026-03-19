@@ -47,6 +47,7 @@ export default function RealityCheck({ lang }: { lang: string }) {
   const reset = () => { setResult(null); setQuery(""); setError(""); };
 
   const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   const shareResult = async () => {
     if (!result) return;
@@ -58,20 +59,19 @@ export default function RealityCheck({ lang }: { lang: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "reality_check",
-          title: query || "Reality Check",
+          title: query?.slice(0, 200) || "Reality Check",
           content,
           metadata: { verdict: result.verdict, confidence: result.confidence },
         }),
       });
-      const { id } = await res.json();
-      const url = `${window.location.origin}/share/${id}`;
-      await navigator.clipboard.writeText(url);
-      alert("Link copied to clipboard!");
-    } catch {
-      alert("Failed to create share link");
-    } finally {
-      setSharing(false);
-    }
+      const data = await res.json();
+      if (data.url) {
+        await navigator.clipboard.writeText(data.url);
+        setShareUrl(data.url);
+        setTimeout(() => setShareUrl(""), 3000);
+      }
+    } catch {}
+    setSharing(false);
   };
 
   const verdictColors = {
@@ -267,11 +267,12 @@ export default function RealityCheck({ lang }: { lang: string }) {
             <button onClick={shareResult} disabled={sharing} style={{
               display: "inline-flex", alignItems: "center", gap: 6,
               padding: "8px 16px", borderRadius: 50,
-              border: "1px solid var(--card-border)", background: "none",
-              color: "var(--text-secondary)", fontSize: 12,
-              cursor: sharing ? "wait" : "pointer", opacity: sharing ? 0.6 : 1,
+              border: "1px solid var(--card-border)",
+              background: shareUrl ? "rgba(34,197,94,0.08)" : "none",
+              color: shareUrl ? "#22c55e" : "var(--text-secondary)",
+              fontSize: 12, cursor: "pointer", transition: "all 200ms",
             }}>
-              <Share2 size={12} /> {sharing ? "Sharing..." : "Share"}
+              <Share2 size={12} /> {sharing ? "Sharing..." : shareUrl ? "Link copied!" : "Share"}
             </button>
           </div>
         </div>

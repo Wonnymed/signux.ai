@@ -1,185 +1,132 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Activity, Search, CircleSlash, Eye, ArrowRight } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
 
-type SharedResult = {
-  id: string;
-  type: "simulation" | "research" | "reality_check";
-  title: string;
-  content: string;
-  metadata: Record<string, unknown>;
-  views: number;
-  created_at: string;
-};
-
-const TYPE_CONFIG = {
-  simulation: { label: "Simulation", icon: Activity, color: "#D4AF37" },
-  research: { label: "Research Report", icon: Search, color: "#6B8AFF" },
-  reality_check: { label: "Reality Check", icon: CircleSlash, color: "#22c55e" },
-};
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function SharePage() {
-  const { id } = useParams();
-  const [data, setData] = useState<SharedResult | null>(null);
+  const params = useParams();
+  const id = params?.id as string;
+  const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/share?id=${id}`)
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
-      .then(setData)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+    const load = async () => {
+      const { data } = await supabase
+        .from("shared_results")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (data) {
+        setResult(data);
+        // Increment view count (fire and forget)
+        supabase
+          .from("shared_results")
+          .update({ view_count: (data.view_count || 0) + 1 })
+          .eq("id", id)
+          .then(() => {});
+      }
+      setLoading(false);
+    };
+    load();
   }, [id]);
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-        background: "var(--bg-primary)", color: "var(--text-primary)",
-      }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{
-            width: 40, height: 40, border: "2px solid var(--border-primary)",
-            borderTopColor: "#D4AF37", borderRadius: "50%",
-            animation: "spin 0.8s linear infinite", margin: "0 auto 16px",
-          }} />
-          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Loading shared result...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "var(--bg-primary)", color: "var(--text-tertiary)" }}>
+      Loading...
+    </div>
+  );
 
-  if (error || !data) {
-    return (
-      <div style={{
-        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-        background: "var(--bg-primary)", color: "var(--text-primary)",
-      }}>
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Result not found</p>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 24 }}>
-            This shared link may have expired or been removed.
-          </p>
-          <a href="/" style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "10px 24px", borderRadius: 8,
-            background: "#D4AF37", color: "#000", fontSize: 13, fontWeight: 600,
-            textDecoration: "none",
-          }}>
-            Go to Signux AI
-          </a>
-        </div>
-      </div>
-    );
-  }
+  if (!result) return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "var(--bg-primary)", gap: 16 }}>
+      <div style={{ fontSize: 16, color: "var(--text-primary)" }}>Report not found</div>
+      <a href="/chat" style={{ color: "var(--accent)", fontSize: 14, textDecoration: "none" }}>Go to Signux AI &rarr;</a>
+    </div>
+  );
 
-  const config = TYPE_CONFIG[data.type];
-  const Icon = config.icon;
+  const typeColors: Record<string, { bg: string; color: string; label: string }> = {
+    simulate: { bg: "var(--mode-sim-bg)", color: "var(--mode-sim)", label: "Simulation Report" },
+    research: { bg: "var(--mode-res-bg)", color: "var(--mode-res)", label: "Research Report" },
+    reality_check: { bg: "rgba(239,68,68,0.08)", color: "#ef4444", label: "Reality Check" },
+  };
+  const tc = typeColors[result.type] || typeColors.simulate;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: "var(--text-primary)" }}>
       {/* Nav */}
-      <div style={{
+      <nav style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "12px 24px", borderBottom: "1px solid var(--border-primary)",
+        padding: "14px 24px", borderBottom: "1px solid var(--border-secondary)",
       }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <img src="/icons/signux-icon-gold-32.png" alt="Signux" width={24} height={24} />
-          <span style={{
-            fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 600,
-            letterSpacing: 2, color: "var(--text-primary)",
-          }}>
-            SIGNUX
+        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "var(--text-primary)" }}>
+          <span style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 16, letterSpacing: 3 }}>
+            SIGNUX <span style={{ fontWeight: 300, opacity: 0.3 }}>AI</span>
           </span>
         </a>
         <a href="/chat" style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "8px 20px", borderRadius: 8,
-          background: "#D4AF37", color: "#000", fontSize: 12, fontWeight: 600,
-          textDecoration: "none", fontFamily: "var(--font-brand)", letterSpacing: 1,
+          padding: "8px 20px", borderRadius: 50, background: "var(--accent)",
+          color: "#000", fontWeight: 600, fontSize: 13, textDecoration: "none",
         }}>
-          Try it free <ArrowRight size={12} />
+          Try Signux AI
         </a>
-      </div>
+      </nav>
 
       {/* Content */}
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 80px" }}>
-        {/* Type badge */}
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "40px 24px" }}>
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "6px 14px", borderRadius: 50,
-          background: `${config.color}15`, border: `1px solid ${config.color}30`,
-          marginBottom: 16,
+          padding: "4px 10px", borderRadius: 6, marginBottom: 16,
+          background: tc.bg, color: tc.color,
+          fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase",
         }}>
-          <Icon size={14} style={{ color: config.color }} />
-          <span style={{ fontSize: 11, fontWeight: 600, color: config.color, letterSpacing: 1, fontFamily: "var(--font-brand)" }}>
-            {config.label.toUpperCase()}
-          </span>
+          {tc.label}
         </div>
 
-        {/* Title */}
-        <h1 style={{
-          fontSize: 28, fontWeight: 600, lineHeight: 1.3, marginBottom: 8,
-          color: "var(--text-primary)",
-        }}>
-          {data.title}
-        </h1>
+        {result.title && (
+          <h1 style={{ fontFamily: "var(--font-brand)", fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+            {result.title}
+          </h1>
+        )}
 
-        {/* Meta */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 16, marginBottom: 32,
-          fontSize: 12, color: "var(--text-secondary)",
-        }}>
-          <span>{new Date(data.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Eye size={12} /> {data.views} views
-          </span>
+        <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 24 }}>
+          Generated {new Date(result.created_at).toLocaleDateString()} &middot; {result.view_count || 1} views
         </div>
 
-        {/* Report content */}
         <div style={{
-          background: "var(--bg-secondary)", borderRadius: 12,
-          border: "1px solid var(--border-primary)", padding: 32,
+          padding: "24px 28px", borderRadius: 14,
+          border: "1px solid var(--card-border)", background: "var(--card-bg)",
+          marginBottom: 32, fontSize: 14, lineHeight: 1.7, color: "var(--text-primary)",
         }}>
-          <MarkdownRenderer content={data.content} />
+          <MarkdownRenderer content={result.content} />
         </div>
 
         {/* CTA */}
         <div style={{
-          textAlign: "center", marginTop: 48, padding: 32,
-          background: "var(--bg-secondary)", borderRadius: 12,
-          border: "1px solid var(--border-primary)",
+          padding: 24, borderRadius: 14, textAlign: "center",
+          background: "var(--mode-sim-bg)", border: "1px solid var(--mode-sim-border)",
         }}>
-          <p style={{
-            fontSize: 18, fontWeight: 600, marginBottom: 8,
-            color: "var(--text-primary)",
-          }}>
-            Want to run your own {data.type === "simulation" ? "simulation" : data.type === "research" ? "research" : "reality check"}?
-          </p>
-          <p style={{
-            fontSize: 13, color: "var(--text-secondary)", marginBottom: 20,
-          }}>
-            Signux AI helps you think through any business decision before you make it.
-          </p>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
+            Run your own analysis on Signux AI
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
+            6 specialized AI modes. Free to start.
+          </div>
           <a href="/chat" style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "12px 32px", borderRadius: 8,
-            background: "#D4AF37", color: "#000", fontSize: 14, fontWeight: 600,
-            textDecoration: "none", fontFamily: "var(--font-brand)", letterSpacing: 1,
+            display: "inline-flex", padding: "12px 32px", borderRadius: 50,
+            background: "var(--accent)", color: "#000", fontWeight: 600,
+            fontSize: 14, textDecoration: "none",
           }}>
-            Start free <ArrowRight size={14} />
+            Start free
           </a>
         </div>
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
