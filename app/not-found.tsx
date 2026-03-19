@@ -24,13 +24,12 @@ export default function NotFound() {
       <Link
         href="/chat"
         style={{
-          padding: "12px 28px", borderRadius: "var(--radius-pill)",
-          background: "var(--text-primary)", color: "var(--text-inverse)",
-          fontSize: 14, fontWeight: 500, textDecoration: "none",
-          transition: "opacity 0.15s",
+          padding: "12px 28px", borderRadius: 50,
+          background: "var(--accent)", color: "#000",
+          fontSize: 14, fontWeight: 600, textDecoration: "none",
         }}
       >
-        Go to Signux
+        Go to Signux AI
       </Link>
     </div>
   );

@@ -1,10 +1,10 @@
 {
   "name": "Signux AI",
   "short_name": "Signux",
-  "description": "The AI that knows global business",
+  "description": "Think through any business decision before you make it",
   "start_url": "/chat",
   "display": "standalone",
-  "background_color": "#0A0A0A",
+  "background_color": "#0a0a0a",
   "theme_color": "#D4AF37",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
