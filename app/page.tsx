@@ -349,7 +349,7 @@ export default function LandingPage() {
           return (
             <div key={sec.name}>
               <Divider />
-              <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto" }}>
+              <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
                 <FadeSection>
                   <div style={{
                     display: "flex", gap: isMobile ? 24 : 40, alignItems: "flex-start",
@@ -409,27 +409,85 @@ export default function LandingPage() {
 
       {/* ═══ REALITY CHECK highlight ═══ */}
       <Divider />
-      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
+      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
         <FadeSection>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6,
-            background: "rgba(239,68,68,0.08)", color: "#ef4444",
-            fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16,
+            display: "flex", gap: isMobile ? 24 : 40, alignItems: "flex-start",
+            flexDirection: isMobile ? "column" : "row",
           }}>
-            <CircleSlash size={12} /> Reality Check
+            {/* Text */}
+            <div style={{ flex: 1 }}>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6,
+                background: "rgba(239,68,68,0.08)", color: "#ef4444",
+                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16,
+              }}>
+                <CircleSlash size={12} /> Reality Check
+              </div>
+              <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 32, color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.2 }}>
+                Honest verdict in 10 seconds
+              </h2>
+              <p style={{ fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
+                &quot;Is dropshipping still viable?&quot; &quot;Should I buy this course?&quot; Get a data-backed GO, CAUTION, or STOP with real numbers.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+                {["Web search", "Real data", "10 seconds", "GO / CAUTION / STOP"].map(f => (
+                  <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
+                ))}
+              </div>
+              <Link href="/chat" style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "10px 24px", borderRadius: 50,
+                background: "#ef4444", color: "#fff",
+                fontWeight: 600, fontSize: 13, textDecoration: "none",
+                fontFamily: "var(--font-brand)", letterSpacing: 1, textTransform: "uppercase",
+              }}>
+                <CircleSlash size={14} /> Try Reality Check
+              </Link>
+            </div>
+
+            {/* Preview */}
+            {!isMobile && (
+              <div style={{
+                width: 280, flexShrink: 0, borderRadius: 14,
+                border: "1px solid var(--card-border)", background: "var(--card-bg)",
+                padding: 20, overflow: "hidden",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <div style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 28, color: "#f59e0b" }}>CAUTION</div>
+                </div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>
+                  Worth learning but market is shifting
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                  <div style={{ padding: 8, borderRadius: 6, background: "var(--card-bg)", border: "1px solid var(--card-border)", textAlign: "center" }}>
+                    <div style={{ fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 16, color: "#f59e0b" }}>62%</div>
+                    <div style={{ fontSize: 8, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Relevant</div>
+                  </div>
+                  <div style={{ padding: 8, borderRadius: 6, background: "var(--card-bg)", border: "1px solid var(--card-border)", textAlign: "center" }}>
+                    <div style={{ fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 16, color: "#22c55e" }}>$89K</div>
+                    <div style={{ fontSize: 8, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: 1 }}>Avg salary</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "var(--text-secondary)" }}>
+                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(34,197,94,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, color: "#22c55e", flexShrink: 0 }}>+</span>
+                    High freelance demand
+                  </div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: "var(--text-secondary)" }}>
+                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, color: "#ef4444", flexShrink: 0 }}>-</span>
+                    AI reducing junior demand
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 32, color: "var(--text-primary)", marginBottom: 12 }}>
-            Honest verdict in 10 seconds
-          </h2>
-          <p style={{ fontSize: 16, color: "var(--text-secondary)", maxWidth: 500, margin: "0 auto 32px", lineHeight: 1.7 }}>
-            &quot;Is dropshipping still viable?&quot; &quot;Should I buy this course?&quot; Get a data-backed GO, CAUTION, or STOP with real numbers.
-          </p>
         </FadeSection>
       </section>
 
       {/* ═══ INNOVATION FEATURES ═══ */}
       <Divider />
-      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto" }}>
+      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto" }}>
         <FadeSection>
           <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28, color: "var(--text-primary)", marginBottom: 8, textAlign: "center" }}>
             Features no other AI has
@@ -458,7 +516,7 @@ export default function LandingPage() {
 
       {/* ═══ TOOLS ═══ */}
       <Divider />
-      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
+      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
         <FadeSection>
           <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28, color: "var(--text-primary)", marginBottom: 32 }}>
             Specialized tools
@@ -478,7 +536,7 @@ export default function LandingPage() {
 
       {/* ═══ CTA FINAL ═══ */}
       <Divider />
-      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", textAlign: "center" }}>
+      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", textAlign: "center" }}>
         <FadeSection>
           <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 28 : 36, color: "var(--text-primary)", marginBottom: 16 }}>
             Ready to think smarter?

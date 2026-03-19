@@ -239,13 +239,13 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
 
           {/* ── HEADER ── */}
-          <div style={{ textAlign: "center", marginBottom: 24, animation: "fadeIn 0.4s ease-out" }}>
+          <div style={{ textAlign: "center", marginBottom: 16, animation: "fadeIn 0.4s ease-out" }}>
             {/* Icon ring */}
             <div style={{
               width: 48, height: 48, borderRadius: "50%",
               border: "1px solid rgba(212,175,55,0.2)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 20px", position: "relative",
+              margin: "0 auto 12px", position: "relative",
             }}>
               <div style={{
                 position: "absolute", inset: -4, borderRadius: "50%",
@@ -283,14 +283,14 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             <div style={{
               width: 48, height: 1,
               background: "linear-gradient(90deg, transparent, var(--accent), transparent)",
-              margin: "20px auto 0",
+              margin: "12px auto 0",
             }} />
           </div>
 
           {/* ── CAPABILITY STRIP ── */}
           <div style={{
             display: "flex", flexWrap: "wrap", justifyContent: "center",
-            gap: isMobile ? 12 : 24, marginBottom: 20,
+            gap: isMobile ? 12 : 24, marginBottom: 12,
             animation: "fadeIn 0.5s ease-out",
           }}>
             {capabilities.map(cap => (
@@ -312,29 +312,23 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           {/* ── DEMO BANNER ── */}
           {!isLoggedIn && !demoUsed && (
             <div style={{
-              padding: 14, borderRadius: 14,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 16px", borderRadius: 10,
               border: "1px solid var(--mode-sim-border)",
               background: "var(--mode-sim-bg)",
-              marginBottom: 12, textAlign: "center",
+              marginBottom: 12, maxWidth: 720, width: "100%",
               animation: "fadeIn 0.5s ease-out",
             }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
-                See Simulate in action
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 14 }}>
-                Watch 15 AI agents debate a real business scenario
-              </div>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                See Simulate in action — watch 15 AI agents debate
+              </span>
               <button onClick={runDemoSimulation} style={{
-                padding: "10px 28px", borderRadius: 50,
+                padding: "6px 16px", borderRadius: 50,
                 background: "var(--mode-sim)", color: "#000",
-                fontWeight: 600, fontSize: 13, border: "none", cursor: "pointer",
-                fontFamily: "var(--font-brand)", letterSpacing: 1,
-                transition: "all 200ms",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.1)"; }}
-                onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
-              >
-                Run demo simulation
+                fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+                whiteSpace: "nowrap" as const,
+              }}>
+                Run demo
               </button>
             </div>
           )}
@@ -407,18 +401,18 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           </div>
 
           {/* ── SCENARIO CARDS ── */}
-          <div style={{ marginBottom: 12, animation: "fadeIn 0.6s ease-out" }}>
+          <div style={{ marginBottom: 8, animation: "fadeIn 0.6s ease-out" }}>
             <div style={{
               fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
               textTransform: "uppercase" as const, color: "var(--text-tertiary)",
-              marginBottom: 12,
+              marginBottom: 8,
             }}>
               QUICK SCENARIOS
             </div>
             <div style={{
               display: "grid",
               gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-              gap: 8,
+              gap: 6,
             }}>
               {scenarios.map(sc => (
                 <button
@@ -427,7 +421,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
                   style={{
                     background: "var(--card-bg)",
                     border: "1px solid var(--card-border)",
-                    borderRadius: 10, padding: "10px 12px",
+                    borderRadius: 10, padding: "8px 12px",
                     cursor: "pointer", transition: "all 200ms",
                     textAlign: "left", position: "relative",
                     borderLeft: "2px solid transparent",
@@ -472,12 +466,12 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             flexDirection: isMobile ? "column" : "row",
             alignItems: isMobile ? "flex-start" : "center",
             justifyContent: "space-between",
-            padding: "10px 14px",
+            padding: "8px 12px",
             border: "1px solid var(--divider)",
             borderRadius: 12,
             background: "var(--card-bg)",
-            marginBottom: 16,
-            gap: isMobile ? 16 : 12,
+            marginBottom: 8,
+            gap: isMobile ? 12 : 10,
             animation: "fadeIn 0.7s ease-out",
           }}>
             {/* Left: avatars + text */}
@@ -507,22 +501,22 @@ export default function SimulationEngine(props: SimulationEngineProps) {
                   +10
                 </div>
               </div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>15 specialist agents</span> will analyze your scenario
+              <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>15 agents</span> will analyze your scenario
               </div>
             </div>
 
             {/* Right: stats */}
-            <div style={{ display: "flex", gap: 20, flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
               <div style={{ textAlign: "center" }}>
                 <div style={{
-                  fontFamily: "var(--font-brand)", fontSize: 20, fontWeight: 600,
+                  fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 600,
                   color: "rgba(212,175,55,0.7)",
                 }}>
                   3
                 </div>
                 <div style={{
-                  fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1,
+                  fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: 1,
                   textTransform: "uppercase" as const, color: "var(--text-tertiary)",
                 }}>
                   ROUNDS
@@ -530,13 +524,13 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               </div>
               <div style={{ textAlign: "center" }}>
                 <div style={{
-                  fontFamily: "var(--font-brand)", fontSize: 20, fontWeight: 600,
+                  fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 600,
                   color: "rgba(212,175,55,0.7)",
                 }}>
                   5
                 </div>
                 <div style={{
-                  fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1,
+                  fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: 1,
                   textTransform: "uppercase" as const, color: "var(--text-tertiary)",
                 }}>
                   RISK AXES
@@ -580,7 +574,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
                 display: "inline-flex", alignItems: "center", gap: 10,
                 background: simScenario.trim() && !simStarting ? "var(--accent)" : "rgba(212,175,55,0.3)",
                 color: "var(--bg-primary)", border: "none", borderRadius: 50,
-                padding: "14px 36px",
+                padding: "12px 32px",
                 fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 14,
                 letterSpacing: 2, textTransform: "uppercase" as const,
                 cursor: simScenario.trim() && !simStarting ? "pointer" : "not-allowed",

@@ -36,12 +36,14 @@ export default function InstallPrompt() {
 
   return (
     <div style={{
-      position: "fixed", bottom: 20, right: 20, zIndex: 1000,
+      position: "fixed", bottom: 12, left: "50%", transform: "translateX(-50%)",
+      zIndex: 50,
       display: "flex", alignItems: "center", gap: 10,
       padding: "12px 16px", borderRadius: 12,
       background: "var(--bg-secondary, #141414)", border: "1px solid var(--border-secondary)",
       boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
       fontSize: 13, color: "var(--text-secondary)",
+      maxWidth: 320,
     }}>
       <Download size={16} style={{ color: "var(--accent)" }} />
       <span>Install Signux AI</span>
