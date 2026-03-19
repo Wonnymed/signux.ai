@@ -279,6 +279,13 @@ export default function Sidebar({
             <span style={{ fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700, letterSpacing: 3, color: "var(--text-primary)" }}>
               SIGNUX <span style={{ fontWeight: 300, opacity: 0.4 }}>AI</span>
             </span>
+            <span style={{
+              fontSize: 9, fontFamily: "var(--font-mono)",
+              color: "var(--text-tertiary)", opacity: 0.4,
+              letterSpacing: 1,
+            }}>
+              100+
+            </span>
           </div>
           <button onClick={onClose} title="Close sidebar" style={{
             display: "flex", alignItems: "center", justifyContent: "center",

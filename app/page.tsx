@@ -56,6 +56,7 @@ const MODE_SECTIONS = [
     title: "Predict outcomes before you invest",
     desc: "15 AI specialist agents analyze your plan from every angle — regulatory, financial, adversarial, operational. Stress-test any decision with God's Eye variable injection and multi-round debate.",
     features: ["Multi-agent debate", "Adversarial testing", "Risk scoring", "God's Eye injection", "Agent conversation"],
+    domains: "game theory · mechanism design · scenario planning · risk modeling · causal reasoning + 12 more",
     preview: SimulatePreview,
   },
   {
@@ -63,6 +64,7 @@ const MODE_SECTIONS = [
     title: "Operational intelligence suite",
     desc: "7 specialized tools powered by proprietary knowledge across 27+ domains. Threat mapping, deception detection, competitive war gaming, causal analysis, negotiation preparation, scenario planning, and deep research.",
     features: ["Threat Radar", "Deal X-Ray", "War Game", "Causal Map", "Negotiation", "Scenarios", "Deep Research"],
+    domains: "deception detection · threat modeling · negotiation warfare · actor intelligence + 18 more",
     preview: IntelPreview,
   },
   {
@@ -70,6 +72,7 @@ const MODE_SECTIONS = [
     title: "From zero to business in 90 days",
     desc: "Tell Signux your skills and budget. We find the right business, validate it with our simulation engine, generate a blueprint, and track your progress week by week.",
     features: ["Skill-to-business matching", "Auto-validation", "90-day blueprint", "Weekly tracking", "Adaptive strategy"],
+    domains: "customer intel · GTM · pricing · operating systems · founder finance + 15 more",
     preview: LaunchpadPreview,
   },
   {
@@ -77,6 +80,7 @@ const MODE_SECTIONS = [
     title: "Cross-border operational intelligence",
     desc: "Specialized for international operations — offshore structures, import/export, crypto compliance, tax optimization. Proprietary knowledge across 100+ jurisdictions.",
     features: ["100+ jurisdictions", "Tax structures", "Crypto frameworks", "Trade routes", "Compliance mapping"],
+    domains: "geopolitics · jurisdictions · crypto opsec · trade routes · compliance + 20 more",
     preview: GlobalOpsPreview,
   },
   {
@@ -84,6 +88,7 @@ const MODE_SECTIONS = [
     title: "Quantitative deal evaluation",
     desc: "Evaluate any investment with the formulas hedge funds use — expected value, Kelly criterion, Bayesian updates, base rate analysis. Numbers, not opinions.",
     features: ["Expected value", "Kelly sizing", "Bayesian updates", "DCF / IRR", "Stress testing"],
+    domains: "pricing economics · risk intel · decision engines · base rates · founder finance + 10 more",
     preview: InvestPreview,
   },
 ];
@@ -319,7 +324,7 @@ export default function LandingPage() {
             Think through any business decision before you make it
           </h1>
           <p style={{ fontSize: isMobile ? 15 : 18, color: "var(--text-secondary)", maxWidth: 520, margin: "0 auto 40px", lineHeight: 1.6 }}>
-            6 specialized AI modes. Multi-agent simulation. Operational intelligence. Quantitative analysis. From idea to business in 90 days.
+            Powered by 100+ proprietary intelligence domains. Multi-agent simulation. Threat detection. War gaming. From idea to business in 90 days.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/chat" style={{
@@ -336,7 +341,7 @@ export default function LandingPage() {
         </div>
 
         <div style={{ position: "absolute", bottom: 32, left: 0, right: 0, textAlign: "center", fontSize: 12, color: "var(--text-tertiary)" }}>
-          Trusted by entrepreneurs, founders, and decision-makers worldwide
+          100+ intelligence domains. 7 analysis tools. 6 AI modes. Zero guesswork.
         </div>
       </section>
 
@@ -373,10 +378,16 @@ export default function LandingPage() {
                       <p style={{ fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
                         {sec.desc}
                       </p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
                         {sec.features.map(f => (
                           <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
                         ))}
+                      </div>
+                      <div style={{
+                        fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)",
+                        marginBottom: 24, opacity: 0.5, letterSpacing: 0.5,
+                      }}>
+                        Powered by: {sec.domains}
                       </div>
                       <Link href="/chat" style={{
                         display: "inline-flex", alignItems: "center", gap: 8,
@@ -518,6 +529,75 @@ export default function LandingPage() {
                 </div>
               );
             })}
+          </div>
+        </FadeSection>
+      </section>
+
+      {/* ═══ INTELLIGENCE BEHIND THE AI ═══ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
+        <FadeSection>
+          <div style={{
+            fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
+            textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 8,
+          }}>
+            Proprietary knowledge base
+          </div>
+          <h2 style={{
+            fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28,
+            color: "var(--text-primary)", marginBottom: 8,
+          }}>
+            The intelligence behind the AI
+          </h2>
+          <p style={{
+            fontSize: 14, color: "var(--text-secondary)", marginBottom: 32,
+            maxWidth: 540, margin: "0 auto 32px",
+          }}>
+            Every response is powered by proprietary intelligence across 100+ specialized domains.
+            No other AI has this — because no one else built it.
+          </p>
+          <div style={{
+            display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: 12,
+            maxWidth: 720, margin: "0 auto 24px",
+          }}>
+            {[
+              { name: "Intelligence & Security", count: 12, domains: "Deception detection, threat modeling, crypto opsec, cybersecurity, risk intel...", color: "#DC2626" },
+              { name: "Strategy & Competition", count: 15, domains: "Game theory, mechanism design, competitive intel, scenario planning, coalition dynamics...", color: "#8B5CF6" },
+              { name: "Money & Growth", count: 18, domains: "Founder finance, pricing, unit economics, sales conversion, customer intel, GTM...", color: "#D4AF37" },
+              { name: "Operations & Systems", count: 14, domains: "Operating systems, SOPs, workflow intelligence, delegation, QA, automation...", color: "#14B8A6" },
+              { name: "Global & Compliance", count: 16, domains: "Geopolitics, jurisdictions, tax structures, trade routes, regulatory, contracts...", color: "#22C55E" },
+              { name: "Decision Science", count: 10, domains: "Causal reasoning, decision engines, behavioral economics, forecasting, Bayesian...", color: "#06B6D4" },
+            ].map((cat, i) => (
+              <div key={i} style={{
+                padding: "16px 14px", borderRadius: 10,
+                border: "1px solid var(--card-border)", background: "var(--card-bg)",
+                textAlign: "left",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: cat.color, opacity: 0.6 }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{cat.name}</span>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: cat.color, fontFamily: "var(--font-brand)", marginBottom: 4 }}>
+                  {cat.count}+
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", lineHeight: 1.4 }}>
+                  {cat.domains}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "8px 16px", borderRadius: 50,
+            background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.15)",
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#D4AF37", animation: "pulse 2s ease-in-out infinite" }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              100+
+            </span>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              intelligence domains and growing weekly
+            </span>
           </div>
         </FadeSection>
       </section>

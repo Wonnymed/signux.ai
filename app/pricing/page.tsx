@@ -32,9 +32,10 @@ const PLANS = [
     name: "Pro",
     price: "$29",
     period: "/month",
-    description: "Full power for entrepreneurs",
+    description: "100+ intelligence domains. Full power.",
     features: [
       "Unlimited chat",
+      "100+ proprietary intelligence domains",
       "20 simulations/month",
       "Intel suite (7 tools)",
       "Launchpad project tracker",
@@ -59,6 +60,7 @@ const PLANS = [
     features: [
       "Everything in Pro",
       "Unlimited simulations",
+      "Priority access to new domains (added weekly)",
       "Global Ops intelligence",
       "Invest mode",
       "Founding member badge",
@@ -79,6 +81,7 @@ const PLANS = [
     features: [
       "Everything in Max",
       "Lifetime access — no recurring fees",
+      "Request custom domains for your industry",
       "Founding member badge",
       "Direct access to founding team",
       "Shape the product roadmap",
