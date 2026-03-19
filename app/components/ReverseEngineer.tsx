@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { Copy, Loader2, RotateCcw, ArrowRight } from "lucide-react";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { signuxFetch } from "../lib/api-client";
 
 type Stage = "idle" | "researching" | "generating" | "complete" | "error";
 
@@ -27,7 +28,7 @@ export default function ReverseEngineer({ lang }: { lang: string }) {
 
     try {
       abortRef.current = new AbortController();
-      const res = await fetch("/api/reverse-engineer", {
+      const res = await signuxFetch("/api/reverse-engineer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input: query.trim(), targetMarket: targetMarket.trim(), lang }),

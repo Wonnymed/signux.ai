@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { signuxFetch } from "../lib/api-client";
 
 export function useEnhance(mode: string = "chat") {
   const [enhancing, setEnhancing] = useState(false);
@@ -10,7 +11,7 @@ export function useEnhance(mode: string = "chat") {
     setEnhancing(true);
     setWasEnhanced(false);
     try {
-      const res = await fetch("/api/enhance", {
+      const res = await signuxFetch("/api/enhance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: text.trim(), mode }),

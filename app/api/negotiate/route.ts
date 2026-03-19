@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -8,11 +9,16 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   const { context, persona, messages, action, lang } = await req.json();
 
+  const tokenError = verifyClientToken(req);
+  if (tokenError) return tokenError;
+  const rateLimitError = applyRateLimit(req, 10, 60000);
+  if (rateLimitError) return rateLimitError;
+
   if (action === "setup") {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 500,
-      system: "Based on the negotiation context, create a realistic persona for the other party. Return ONLY valid JSON: { \"name\": \"...\", \"role\": \"...\", \"personality\": \"...\", \"goals\": [\"...\"], \"pushback_points\": [\"...\"], \"negotiation_style\": \"...\" }",
+      system: SECURITY_PREFIX + "Based on the negotiation context, create a realistic persona for the other party. Return ONLY valid JSON: { \"name\": \"...\", \"role\": \"...\", \"personality\": \"...\", \"goals\": [\"...\"], \"pushback_points\": [\"...\"], \"negotiation_style\": \"...\" }",
       messages: [{ role: "user", content: `Context: ${context}. Create the persona. Respond in ${lang || "en"}.` }],
     });
     const text = (response.content[0] as any).text || "{}";
@@ -26,7 +32,7 @@ export async function POST(req: NextRequest) {
     const stream = client.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: 500,
-      system: `You are ${persona.name}, ${persona.role}. Personality: ${persona.personality}. Your goals: ${persona.goals?.join(", ")}. Your pushback points: ${persona.pushback_points?.join(", ")}. Negotiation style: ${persona.negotiation_style}.
+      system: SECURITY_PREFIX + `You are ${persona.name}, ${persona.role}. Personality: ${persona.personality}. Your goals: ${persona.goals?.join(", ")}. Your pushback points: ${persona.pushback_points?.join(", ")}. Negotiation style: ${persona.negotiation_style}.
 
 CONTEXT: ${context}
 
@@ -61,7 +67,7 @@ You are IN CHARACTER. Respond as this person would in a real negotiation.
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1500,
-      system: `You are an expert negotiation coach. Analyze the practice negotiation and give SPECIFIC, ACTIONABLE feedback. Respond in ${lang || "en"}.`,
+      system: SECURITY_PREFIX + `You are an expert negotiation coach. Analyze the practice negotiation and give SPECIFIC, ACTIONABLE feedback. Respond in ${lang || "en"}.`,
       messages: [{
         role: "user",
         content: `CONTEXT: ${context}

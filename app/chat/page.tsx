@@ -35,6 +35,7 @@ import {
 import { useIsMobile } from "../lib/useIsMobile";
 import type { FileAttachment } from "../components/ChatInput";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
+import { signuxFetch } from "../lib/api-client";
 
 const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false });
 const ResearchView = dynamic(() => import("../components/ResearchView"), { ssr: false });
@@ -473,7 +474,7 @@ export default function ChatPage() {
 
     try {
       abortRef.current = new AbortController();
-      const res = await fetch("/api/chat", {
+      const res = await signuxFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: apiMessages, profile: getProfile() }),
@@ -612,7 +613,7 @@ export default function ChatPage() {
     setSimAgentMessages([]);
     setSimStartTime(Date.now());
     try {
-      const res = await fetch("/api/simulate", {
+      const res = await signuxFetch("/api/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scenario: simScenario, context: getProfile() }),

@@ -6,6 +6,7 @@ import { useIsMobile } from "../lib/useIsMobile";
 import { useEnhance } from "../lib/useEnhance";
 import type { Mode } from "../lib/types";
 import SignuxFooter from "./SignuxFooter";
+import { signuxFetch } from "../lib/api-client";
 
 /* ═══ Types ═══ */
 type BusinessIdea = {
@@ -195,7 +196,7 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
     setPhase("analyzing");
     setError("");
     try {
-      const res = await fetch("/api/launchpad/discover", {
+      const res = await signuxFetch("/api/launchpad/discover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ skills, timeAvailable, capital, riskTolerance, priorities, lang }),
@@ -219,7 +220,7 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
 
     try {
       abortRef.current = new AbortController();
-      const res = await fetch("/api/launchpad/validate", {
+      const res = await signuxFetch("/api/launchpad/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -276,7 +277,7 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
     setPhase("blueprint");
 
     try {
-      const res = await fetch("/api/launchpad/blueprint", {
+      const res = await signuxFetch("/api/launchpad/blueprint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -303,7 +304,7 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
     setCheckinResult(null);
 
     try {
-      const res = await fetch("/api/launchpad/checkin", {
+      const res = await signuxFetch("/api/launchpad/checkin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

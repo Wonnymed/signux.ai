@@ -9,6 +9,7 @@ import ChatInput, { type FileAttachment } from "./ChatInput";
 import type { Message, Mode } from "../lib/types";
 import SignuxFooter from "./SignuxFooter";
 import { useEnhance } from "../lib/useEnhance";
+import { signuxFetch } from "../lib/api-client";
 
 /* ═══ Constants ═══ */
 const GREEN = "#22C55E";
@@ -117,7 +118,7 @@ export default function GlobalOpsView({ lang, onSetMode }: { lang: string; onSet
     const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await signuxFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: apiMessages, profile: getProfile(), mode: "globalops" }),

@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
+  const tokenError = verifyClientToken(req);
+  if (tokenError) return tokenError;
+  const rateLimitError = applyRateLimit(req, 5, 60000);
+  if (rateLimitError) return rateLimitError;
+
   const { query, lang } = await req.json();
   const encoder = new TextEncoder();
 
@@ -21,7 +27,7 @@ export async function POST(req: NextRequest) {
         const planResponse = await client.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 500,
-          system: "Generate 6-8 specific web search queries to thoroughly research the user's topic. Return ONLY a JSON array of strings. No explanation.",
+          system: SECURITY_PREFIX + "Generate 6-8 specific web search queries to thoroughly research the user's topic. Return ONLY a JSON array of strings. No explanation.",
           messages: [{ role: "user", content: query }],
         });
         const planText = (planResponse.content[0] as any).text || "[]";
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
         const reportResponse = await client.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 4000,
-          system: `You are Signux ResearchAgent. Synthesize multiple search results into a comprehensive, well-structured research report. Use markdown formatting. Include: executive summary, key findings organized by theme, comparative analysis where relevant, risks and considerations, and actionable recommendations. Cite sources where possible. Respond in ${lang || "en"}.`,
+          system: SECURITY_PREFIX + `You are Signux ResearchAgent. Synthesize multiple search results into a comprehensive, well-structured research report. Use markdown formatting. Include: executive summary, key findings organized by theme, comparative analysis where relevant, risks and considerations, and actionable recommendations. Cite sources where possible. Respond in ${lang || "en"}.`,
           messages: [{
             role: "user",
             content: `RESEARCH TOPIC: ${query}\n\nSEARCH RESULTS:\n${results.map((r, i) => `--- Source ${i + 1}: ${r.query} ---\n${r.summary}`).join("\n\n")}\n\nSynthesize into a comprehensive report.`,

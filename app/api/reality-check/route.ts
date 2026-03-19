@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -8,12 +9,17 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   const { question, lang } = await req.json();
 
+  const tokenError = verifyClientToken(req);
+  if (tokenError) return tokenError;
+  const rateLimitError = applyRateLimit(req, 15, 60000);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1500,
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
-      system: `You are Signux Reality Check — a brutally honest verdict engine. The user asks "Is it still worth it to X?" and you give a data-backed answer in 10 seconds.
+      system: SECURITY_PREFIX + `You are Signux Reality Check — a brutally honest verdict engine. The user asks "Is it still worth it to X?" and you give a data-backed answer in 10 seconds.
 
 SEARCH THE WEB for current data before answering. Use real numbers.
 

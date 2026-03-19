@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Users, Loader2, RotateCcw, ArrowUp, MessageSquare } from "lucide-react";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { signuxFetch } from "../lib/api-client";
 
 type Persona = {
   name: string;
@@ -35,7 +36,7 @@ export default function NegotiationSim({ lang }: { lang: string }) {
     setContext(c);
     setLoading(true);
     try {
-      const res = await fetch("/api/negotiate", {
+      const res = await signuxFetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ context: c.trim(), action: "setup", lang }),
@@ -44,7 +45,7 @@ export default function NegotiationSim({ lang }: { lang: string }) {
       setPersona(p);
 
       // Get opening line from persona
-      const openRes = await fetch("/api/negotiate", {
+      const openRes = await signuxFetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -70,7 +71,7 @@ export default function NegotiationSim({ lang }: { lang: string }) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/negotiate", {
+      const res = await signuxFetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,7 +101,7 @@ export default function NegotiationSim({ lang }: { lang: string }) {
     setLoading(true);
     setStage("feedback");
     try {
-      const res = await fetch("/api/negotiate", {
+      const res = await signuxFetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ context, persona, messages, action: "feedback", lang }),

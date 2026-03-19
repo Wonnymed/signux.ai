@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
+import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -441,6 +442,11 @@ RULES: exactly 4 metrics, 2-3 pros, 2-3 cons. Be brutally honest. Use real data 
 
 export async function POST(req: NextRequest) {
   try {
+    const tokenError = verifyClientToken(req);
+    if (tokenError) return tokenError;
+    const rateLimitError = applyRateLimit(req, 30, 60000);
+    if (rateLimitError) return rateLimitError;
+
     const { messages, profile, rates, mode } = await req.json();
 
     let contextPrefix = "";
@@ -505,7 +511,7 @@ If it's an EMAIL/MESSAGE: Analyze tone, suggest improvements, flag issues.
 
 End with a section: "## What to do next" with numbered action items.` : "";
 
-    const fullSystemPrompt = baseSystemPrompt + contextPrefix + SMART_ATTACHMENT_INJECT + (isRC ? RC_SYSTEM_INJECT : "");
+    const fullSystemPrompt = SECURITY_PREFIX + baseSystemPrompt + contextPrefix + SMART_ATTACHMENT_INJECT + (isRC ? RC_SYSTEM_INJECT : "");
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream({

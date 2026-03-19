@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: NextRequest) {
   const { text, mode } = await req.json();
+
+  const tokenError = verifyClientToken(req);
+  if (tokenError) return tokenError;
+  const rateLimitError = applyRateLimit(req, 20, 60000);
+  if (rateLimitError) return rateLimitError;
 
   const modeInstructions: Record<string, string> = {
     chat: "Improve this message for a business AI assistant. Make it clearer, more specific, and likely to get a useful response. Add relevant details the user might have forgotten to mention (budget, timeline, market, constraints). Keep their intent.",
@@ -19,7 +25,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 500,
-      system: `You are a prompt enhancement engine. ${modeInstructions[mode] || modeInstructions.chat}
+      system: SECURITY_PREFIX + `You are a prompt enhancement engine. ${modeInstructions[mode] || modeInstructions.chat}
 
 RULES:
 - Return ONLY the improved text, nothing else

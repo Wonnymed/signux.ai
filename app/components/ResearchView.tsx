@@ -7,6 +7,7 @@ import { useIsMobile } from "../lib/useIsMobile";
 import MarkdownRenderer from "./MarkdownRenderer";
 import SignuxFooter from "./SignuxFooter";
 import { useEnhance } from "../lib/useEnhance";
+import { signuxFetch } from "../lib/api-client";
 
 type SearchResult = {
   query: string;
@@ -116,7 +117,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode }: Rese
     setReport("");
 
     try {
-      const res = await fetch("/api/research", {
+      const res = await signuxFetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, lang }),

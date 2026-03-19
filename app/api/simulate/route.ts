@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
+import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const BATCH_SIZE = 4;
@@ -48,7 +49,7 @@ async function buildGraph(scenario: string, worldContext: string) {
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 2000,
-    system: `You are a business scenario analyst. Extract ALL entities and relationships from the scenario. Return ONLY valid JSON:
+    system: SECURITY_PREFIX + `You are a business scenario analyst. Extract ALL entities and relationships from the scenario. Return ONLY valid JSON:
 {
   "entities": [
     { "name": "string", "type": "product|company|country|market|person|regulation|currency", "details": "string" }
@@ -70,7 +71,7 @@ async function setupAgents(graph: any, scenario: string, userLang: string, world
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 4000,
-    system: `You are a simulation architect. Generate 12-20 specialized business agent personas for this ecosystem simulation. Each agent represents a REAL person that would be involved in this business scenario.
+    system: SECURITY_PREFIX + `You are a simulation architect. Generate 12-20 specialized business agent personas for this ecosystem simulation. Each agent represents a REAL person that would be involved in this business scenario.
 
 Include agents from ALL relevant categories (adapt based on scenario):
 - SUPPLY: factory owners, raw material suppliers, quality managers, production supervisors
@@ -134,7 +135,7 @@ async function processAgent(
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 800,
-      system: `You are ${agent.name}, ${agent.role}. Category: ${agent.category}.
+      system: SECURITY_PREFIX + `You are ${agent.name}, ${agent.role}. Category: ${agent.category}.
 
 PERSONALITY: ${agent.personality}
 KNOWLEDGE: ${agent.knowledge}
@@ -176,7 +177,7 @@ async function generateReport(scenario: string, graph: any, agents: any[], simul
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 8192,
-    system: `You are Signux ReportAgent. Generate a comprehensive ecosystem simulation report.
+    system: SECURITY_PREFIX + `You are Signux ReportAgent. Generate a comprehensive ecosystem simulation report.
 
 You have data from ${agentCount} specialist agents across ${roundCount} rounds (${totalInteractions} total interactions). This is a MASSIVE simulation with diverse stakeholders.
 
@@ -254,6 +255,11 @@ If NO-GO: what would need to change for it to become viable`
 }
 
 export async function POST(req: NextRequest) {
+  const tokenError = verifyClientToken(req);
+  if (tokenError) return tokenError;
+  const rateLimitError = applyRateLimit(req, 5, 60000);
+  if (rateLimitError) return rateLimitError;
+
   const { scenario, context } = await req.json();
   const encoder = new TextEncoder();
   const langMap: Record<string, string> = {

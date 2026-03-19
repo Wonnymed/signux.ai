@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { CircleSlash, TrendingUp, TrendingDown, Minus, ArrowRight, Loader2, RotateCcw } from "lucide-react";
+import { signuxFetch } from "../lib/api-client";
 
 type RCResult = {
   verdict: "GO" | "CAUTION" | "STOP";
@@ -28,7 +29,7 @@ export default function RealityCheck({ lang }: { lang: string }) {
     setResult(null);
     setError("");
     try {
-      const res = await fetch("/api/reality-check", {
+      const res = await signuxFetch("/api/reality-check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: question.trim(), lang }),

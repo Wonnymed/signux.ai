@@ -1,10 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 let cachedRates: Record<string, unknown> | null = null;
 let cachedAt = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const clientToken = req.headers.get("x-signux-client");
+  if (clientToken !== process.env.NEXT_PUBLIC_CLIENT_TOKEN) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const now = Date.now();
   if (cachedRates && now - cachedAt < CACHE_TTL) {
     return NextResponse.json(cachedRates);
