@@ -501,6 +501,42 @@ export async function POST(req: NextRequest) {
           contextPrefix += `\n\nIMPORTANT: The user is working within the "${project.name}" project. Keep your responses relevant to this project context. Reference previous decisions and findings when applicable.\n`;
         }
       } catch {}
+
+      // RAG — search knowledge base for relevant chunks
+      try {
+        const lastUserMsg2 = messages.filter((m: any) => m.role === "user").pop();
+        const queryText = typeof lastUserMsg2?.content === "string"
+          ? lastUserMsg2.content
+          : Array.isArray(lastUserMsg2?.content)
+            ? lastUserMsg2.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
+            : "";
+
+        if (queryText) {
+          const stopwords = new Set(["this", "that", "with", "from", "what", "when", "where", "which", "about", "have", "been", "they", "their", "would", "could", "should", "there", "here", "como", "para", "mais", "esse", "essa", "este", "esta", "qual", "quais"]);
+          const keywords = queryText
+            .toLowerCase()
+            .replace(/[^\w\s]/g, " ")
+            .split(/\s+/)
+            .filter((w: string) => w.length > 3 && !stopwords.has(w))
+            .slice(0, 6);
+
+          if (keywords.length > 0) {
+            const { data: chunks } = await supabaseAdmin
+              .from("knowledge_chunks")
+              .select("content, source_name, chunk_index")
+              .eq("project_id", projectId)
+              .or(keywords.map((k: string) => `content.ilike.%${k}%`).join(","))
+              .order("chunk_index", { ascending: true })
+              .limit(5);
+
+            if (chunks && chunks.length > 0) {
+              contextPrefix += `\n\nRELEVANT KNOWLEDGE BASE DOCUMENTS:\n${chunks.map((c: any) =>
+                `[Source: ${c.source_name}, chunk ${c.chunk_index}]\n${c.content.slice(0, 800)}`
+              ).join("\n\n")}\n\nUse this information to give more accurate, specific answers. Cite the source document when using this information.\n`;
+            }
+          }
+        }
+      } catch {}
     }
 
     let baseSystemPrompt: string;

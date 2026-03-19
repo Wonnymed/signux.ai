@@ -39,6 +39,8 @@ import { createSupabaseBrowser } from "../lib/supabase-browser";
 import { signuxFetch } from "../lib/api-client";
 import { useProjects } from "../lib/useProjects";
 
+const ProjectKnowledge = dynamic(() => import("../components/ProjectKnowledge"), { ssr: false });
+
 const Paywall = dynamic(() => import("../components/Paywall"), { ssr: false });
 const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false });
 const ResearchView = dynamic(() => import("../components/ResearchView"), { ssr: false });
@@ -201,6 +203,7 @@ export default function ChatPage() {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showCheckinReminder, setShowCheckinReminder] = useState(false);
+  const [showKnowledge, setShowKnowledge] = useState(false);
   const isMobile = useIsMobile();
   const { tier, usage, limits, refresh: refreshUsage } = useUserTier(!!authUser);
   const {
@@ -875,6 +878,7 @@ export default function ChatPage() {
         activeProject={activeProject}
         onSelectProject={selectProject}
         onCreateProject={(name) => createProject(name)}
+        onOpenKnowledge={() => setShowKnowledge(true)}
       />
 
       <main style={{
@@ -1060,6 +1064,14 @@ export default function ChatPage() {
       )}
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      {showKnowledge && activeProjectId && authUser && (
+        <ProjectKnowledge
+          projectId={activeProjectId}
+          userId={authUser.id}
+          onClose={() => setShowKnowledge(false)}
+        />
+      )}
     </div>
   );
 }

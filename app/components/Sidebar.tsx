@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
-import { SquarePen, MessageSquare, Zap, Search, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2, Flame, FolderOpen, Plus, ChevronDown, X } from "lucide-react";
+import { SquarePen, MessageSquare, Zap, Search, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2, Flame, FolderOpen, Plus, ChevronDown, X, Upload } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
@@ -34,6 +34,7 @@ type SidebarProps = {
   activeProject?: Project | null;
   onSelectProject?: (id: string | null) => void;
   onCreateProject?: (name: string) => void;
+  onOpenKnowledge?: () => void;
 };
 
 const MODES: { key: Mode; icon: any; label: string; color?: string; tier?: "max" }[] = [
@@ -159,7 +160,7 @@ export default function Sidebar({
   mode, setMode, profileName, onNewConversation, onOpenSettings,
   open, onClose, onOpen, isLoggedIn, onSignOut, isMobile, authUser,
   conversations = [], loadingHistory = false, activeConversationId, onLoadConversation, onDeleteConversation,
-  projects = [], activeProject, onSelectProject, onCreateProject,
+  projects = [], activeProject, onSelectProject, onCreateProject, onOpenKnowledge,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLElement>(null);
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : (authUser?.initials || "?");
@@ -475,8 +476,25 @@ export default function Sidebar({
               padding: "6px 12px", fontSize: 10, fontWeight: 600,
               color: activeProject.color || "var(--accent)",
               textTransform: "uppercase", letterSpacing: 1, opacity: 0.7,
+              display: "flex", alignItems: "center", gap: 6,
             }}>
-              {activeProject.name}
+              <span style={{ flex: 1 }}>{activeProject.name}</span>
+              {onOpenKnowledge && (
+                <button
+                  onClick={onOpenKnowledge}
+                  title="Knowledge Base"
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: activeProject.color || "var(--accent)", padding: 2,
+                    opacity: 0.7, fontSize: 10, fontWeight: 500,
+                    transition: "opacity 150ms",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = "1"}
+                  onMouseLeave={e => e.currentTarget.style.opacity = "0.7"}
+                >
+                  <Upload size={11} />
+                </button>
+              )}
             </div>
           )}
           {loadingHistory ? (
