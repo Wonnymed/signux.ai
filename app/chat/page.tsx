@@ -834,7 +834,7 @@ export default function ChatPage() {
               transition={{ duration: 0.15 }}
               style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
             >
-              <LaunchpadView lang={lang} />
+              <LaunchpadView lang={lang} userId={authUser?.id} />
             </motion.div>
           ) : mode === "globalops" ? (
             <motion.div
