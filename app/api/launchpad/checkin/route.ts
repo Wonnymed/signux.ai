@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
+import { getTierFromRequest } from "../../../lib/usage";
+import { getModelsForTier } from "../../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(
@@ -30,9 +32,11 @@ export async function POST(req: NextRequest) {
     if (data) benchmarks = data;
   } catch {}
 
+  const models = getModelsForTier(await getTierFromRequest(req));
+
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: models.launchpad,
       max_tokens: 2000,
       system: SECURITY_PREFIX + `You are the Signux Weekly Advisor — an AI co-founder doing a weekly check-in. You have PERFECT MEMORY of everything this user has told you.
 

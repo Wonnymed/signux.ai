@@ -2,7 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
-import { getUserFromRequest, checkUsageLimit, incrementUsage } from "../../lib/usage";
+import { getUserFromRequest, checkUsageLimit, incrementUsage, getTierFromRequest } from "../../lib/usage";
+import { getModelsForTier } from "../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabaseAdmin = createClient(
@@ -459,6 +460,9 @@ export async function POST(req: NextRequest) {
     if (usageError) return usageError;
     if (userId) incrementUsage(userId, "chat_messages").catch(() => {});
 
+    const tier = await getTierFromRequest(req);
+    const models = getModelsForTier(tier);
+
     const { messages, profile, rates, mode, projectId } = await req.json();
 
     let contextPrefix = "";
@@ -588,8 +592,11 @@ End with a section: "## What to do next" with numbered action items.` : "";
           while (continueLoop) {
             continueLoop = false;
 
+            const chatModel = mode === "invest" ? models.invest
+              : mode === "globalops" ? models.globalops
+              : models.chat;
             const response = await client.messages.create({
-              model: "claude-sonnet-4-20250514",
+              model: chatModel,
               max_tokens: 4096,
               system: fullSystemPrompt,
               tools: [

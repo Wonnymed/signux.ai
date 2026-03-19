@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
+import { getTierFromRequest } from "../../lib/usage";
+import { getModelsForTier } from "../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -14,9 +16,11 @@ export async function POST(req: NextRequest) {
   const rateLimitError = applyRateLimit(req, 15, 60000);
   if (rateLimitError) return rateLimitError;
 
+  const models = getModelsForTier(await getTierFromRequest(req));
+
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: models.reality_check,
       max_tokens: 1500,
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
       system: SECURITY_PREFIX + `You are Signux Reality Check — a brutally honest verdict engine. The user asks "Is it still worth it to X?" and you give a data-backed answer in 10 seconds.

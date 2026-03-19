@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
-import { getUserFromRequest, checkUsageLimit, incrementUsage } from "../../lib/usage";
+import { getUserFromRequest, checkUsageLimit, incrementUsage, getTierFromRequest } from "../../lib/usage";
+import { getModelsForTier } from "../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
   if (usageError) return usageError;
   if (userId) incrementUsage(userId, "researches").catch(() => {});
 
+  const tier = await getTierFromRequest(req);
+  const models = getModelsForTier(tier);
+
   const { query, lang } = await req.json();
   const encoder = new TextEncoder();
 
@@ -32,7 +36,7 @@ export async function POST(req: NextRequest) {
         // Step 1: Plan search queries
         sendSSE({ type: "planning" });
         const planResponse = await client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: models.research_plan,
           max_tokens: 500,
           system: SECURITY_PREFIX + "Generate 6-8 specific web search queries to thoroughly research the user's topic. Return ONLY a JSON array of strings. No explanation.",
           messages: [{ role: "user", content: query }],
@@ -53,7 +57,7 @@ export async function POST(req: NextRequest) {
 
           try {
             const searchResponse = await client.messages.create({
-              model: "claude-sonnet-4-20250514",
+              model: models.research_plan,
               max_tokens: 1000,
               tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
               messages: [{ role: "user", content: `Search and summarize: ${queries[i]}` }],
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
         // Step 3: Synthesize report
         sendSSE({ type: "synthesizing" });
         const reportResponse = await client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: models.research_synthesis,
           max_tokens: 4000,
           system: SECURITY_PREFIX + `You are Signux ResearchAgent. Synthesize multiple search results into a comprehensive, well-structured research report. Use markdown formatting. Include: executive summary, key findings organized by theme, comparative analysis where relevant, risks and considerations, and actionable recommendations. Cite sources where possible. Respond in ${lang || "en"}.`,
           messages: [{

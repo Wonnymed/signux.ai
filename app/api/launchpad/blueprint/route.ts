@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
+import { getTierFromRequest } from "../../../lib/usage";
+import { getModelsForTier } from "../../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -14,9 +16,11 @@ export async function POST(req: NextRequest) {
   const rateLimitError = applyRateLimit(req, 10, 60000);
   if (rateLimitError) return rateLimitError;
 
+  const models = getModelsForTier(await getTierFromRequest(req));
+
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: models.launchpad,
       max_tokens: 4000,
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
       system: SECURITY_PREFIX + `You are the Signux Blueprint Generator. Create a SPECIFIC, ACTIONABLE 90-day plan.

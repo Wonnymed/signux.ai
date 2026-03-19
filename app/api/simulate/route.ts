@@ -3,7 +3,8 @@ export const maxDuration = 300;
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
-import { getUserFromRequest, checkUsageLimit, incrementUsage } from "../../lib/usage";
+import { getUserFromRequest, checkUsageLimit, incrementUsage, getTierFromRequest } from "../../lib/usage";
+import { getModelsForTier } from "../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const BATCH_SIZE = 4;
@@ -12,10 +13,10 @@ function sendSSE(controller: ReadableStreamDefaultController, encoder: TextEncod
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 }
 
-async function getWorldContext(scenario: string): Promise<string> {
+async function getWorldContext(scenario: string, model: string): Promise<string> {
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model,
       max_tokens: 2000,
       tools: [
         {
@@ -48,9 +49,9 @@ Provide a concise briefing (max 500 words) with specific numbers and dates. This
   }
 }
 
-async function buildGraph(scenario: string, worldContext: string) {
+async function buildGraph(scenario: string, worldContext: string, model: string) {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model,
     max_tokens: 2000,
     system: SECURITY_PREFIX + `You are a business scenario analyst. Extract ALL entities and relationships from the scenario. Return ONLY valid JSON:
 {
@@ -70,9 +71,9 @@ async function buildGraph(scenario: string, worldContext: string) {
   catch { return { entities: [], relationships: [], key_variables: [], critical_questions: [] }; }
 }
 
-async function setupAgents(graph: any, scenario: string, userLang: string, worldContext: string) {
+async function setupAgents(graph: any, scenario: string, userLang: string, worldContext: string, model: string) {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model,
     max_tokens: 4000,
     system: SECURITY_PREFIX + `You are a simulation architect. Generate 12 to 15 specialist agents to analyze this operation.
 
@@ -168,11 +169,11 @@ The Devil's Advocate has attacked the plan. Defend your position OR agree with t
 
 async function processAgent(
   agent: any, round: number, rounds: number, scenario: string,
-  graph: any, context: any, previousDiscussion: string, userLang: string, worldContext: string
+  graph: any, context: any, previousDiscussion: string, userLang: string, worldContext: string, model: string
 ): Promise<string> {
   try {
     const agentPromise = client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model,
       max_tokens: 800,
       system: getRoundPrompt(agent, round, rounds, userLang),
       messages: [{
@@ -190,7 +191,7 @@ async function processAgent(
   }
 }
 
-async function generateReport(scenario: string, graph: any, agents: any[], simulation: any[], params: any, userLang: string, worldContext: string) {
+async function generateReport(scenario: string, graph: any, agents: any[], simulation: any[], params: any, userLang: string, worldContext: string, model: string) {
   const simText = simulation.map(m =>
     `[${m.agentName} (${m.role}, ${m.category}) — Round ${m.round}]:\n${m.content}`
   ).join("\n\n---\n\n");
@@ -200,7 +201,7 @@ async function generateReport(scenario: string, graph: any, agents: any[], simul
   const roundCount = params.rounds || 3;
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model,
     max_tokens: 6000,
     system: SECURITY_PREFIX + `You are Signux ReportAgent. Generate a comprehensive simulation report.
 
@@ -274,6 +275,9 @@ export async function POST(req: NextRequest) {
   if (usageError) return usageError;
   if (userId) incrementUsage(userId, "simulations").catch(() => {});
 
+  const tier = await getTierFromRequest(req);
+  const models = getModelsForTier(tier);
+
   const { scenario, context } = await req.json();
   const encoder = new TextEncoder();
   const langMap: Record<string, string> = {
@@ -295,20 +299,20 @@ export async function POST(req: NextRequest) {
         // Stage -1: Gather real-time intelligence
         sendSSE(controller, encoder, { type: "status", message: "Gathering real-world intelligence..." });
         sendSSE(controller, encoder, { type: "stage", stage: -1 });
-        const worldContext = await getWorldContext(scenario);
+        const worldContext = await getWorldContext(scenario, models.simulate_agents);
         sendSSE(controller, encoder, { type: "stage_done", stage: -1 });
 
         // Stage 0: Graph
         sendSSE(controller, encoder, { type: "status", message: "Building entity graph..." });
         sendSSE(controller, encoder, { type: "stage", stage: 0 });
-        const graph = await buildGraph(scenario, worldContext);
+        const graph = await buildGraph(scenario, worldContext, models.simulate_agents);
         sendSSE(controller, encoder, { type: "stage_done", stage: 0, data: { graph } });
         sendSSE(controller, encoder, { type: "graph", data: graph });
 
         // Stage 1: Agents
         sendSSE(controller, encoder, { type: "status", message: "Setting up agents..." });
         sendSSE(controller, encoder, { type: "stage", stage: 1 });
-        const { agents, simulation_parameters } = await setupAgents(graph, scenario, userLang, worldContext);
+        const { agents, simulation_parameters } = await setupAgents(graph, scenario, userLang, worldContext, models.simulate_agents);
         sendSSE(controller, encoder, { type: "agents", agents });
         sendSSE(controller, encoder, { type: "stage_done", stage: 1, data: { agents, simulation_parameters }, totalAgents: agents.length });
 
@@ -336,7 +340,7 @@ export async function POST(req: NextRequest) {
               .join("\n\n");
 
             const batchResults = await Promise.all(
-              batch.map(agent => processAgent(agent, round, rounds, scenario, graph, context, previousDiscussion, userLang, worldContext))
+              batch.map(agent => processAgent(agent, round, rounds, scenario, graph, context, previousDiscussion, userLang, worldContext, models.simulate_agents))
             );
 
             for (let i = 0; i < batch.length; i++) {
@@ -354,7 +358,7 @@ export async function POST(req: NextRequest) {
         // Stage 4: Report
         sendSSE(controller, encoder, { type: "status", message: "Generating final report..." });
         sendSSE(controller, encoder, { type: "stage", stage: 4 });
-        const report = await generateReport(scenario, graph, agents, allMessages, simulation_parameters, userLang, worldContext);
+        const report = await generateReport(scenario, graph, agents, allMessages, simulation_parameters, userLang, worldContext, models.simulate_report);
         sendSSE(controller, encoder, { type: "report", content: report });
         sendSSE(controller, encoder, { type: "stage_done", stage: 4 });
 

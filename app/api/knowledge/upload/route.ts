@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       const mimeType = file.type || "application/octet-stream";
 
       const extractResponse = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 4000,
         messages: [{
           role: "user",

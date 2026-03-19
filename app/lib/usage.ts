@@ -122,6 +122,19 @@ export async function incrementUsage(userId: string, field: "chat_messages" | "s
 }
 
 /**
+ * Get tier directly from request (combines getUserFromRequest + getUserTier).
+ */
+export async function getTierFromRequest(req: NextRequest): Promise<Tier> {
+  try {
+    const userId = await getUserFromRequest(req);
+    if (!userId) return "free";
+    return getUserTier(userId);
+  } catch {
+    return "free";
+  }
+}
+
+/**
  * Check if user can perform action. Returns null if allowed, or error response if blocked.
  */
 export async function checkUsageLimit(

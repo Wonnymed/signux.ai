@@ -3,6 +3,8 @@ export const maxDuration = 120;
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
+import { getTierFromRequest } from "../../../lib/usage";
+import { getModelsForTier } from "../../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -11,6 +13,8 @@ export async function POST(req: NextRequest) {
   if (tokenError) return tokenError;
   const rateLimitError = applyRateLimit(req, 10, 60000);
   if (rateLimitError) return rateLimitError;
+
+  const models = getModelsForTier(await getTierFromRequest(req));
 
   const { variable, originalScenario, agents, previousReport, lang } = await req.json();
   const encoder = new TextEncoder();
@@ -35,7 +39,7 @@ export async function POST(req: NextRequest) {
 
           try {
             const agentPromise = client.messages.create({
-              model: "claude-sonnet-4-20250514",
+              model: models.gods_eye,
               max_tokens: 600,
               system: SECURITY_PREFIX + `You are ${agent.name}, ${agent.role}. Category: ${agent.category || "analyst"}.
 
@@ -75,7 +79,7 @@ Use specific numbers. Be concise (2-3 paragraphs max). Respond in ${lang || "Eng
         send({ type: "status", message: "Calculating impact..." });
 
         const impactResponse = await client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: models.gods_eye,
           max_tokens: 1500,
           system: SECURITY_PREFIX + `You are the Signux Impact Analyzer. Based on agent recalculations after a variable injection, produce a concise impact report. Respond in ${lang || "English"}.`,
           messages: [{

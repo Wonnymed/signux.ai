@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
+import { getTierFromRequest } from "../../../lib/usage";
+import { getModelsForTier } from "../../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -13,6 +15,8 @@ export async function POST(req: NextRequest) {
   if (tokenError) return tokenError;
   const rateLimitError = applyRateLimit(req, 10, 60000);
   if (rateLimitError) return rateLimitError;
+
+  const models = getModelsForTier(await getTierFromRequest(req));
 
   const encoder = new TextEncoder();
 
@@ -39,7 +43,7 @@ export async function POST(req: NextRequest) {
         const promises = agents.map(async (agent) => {
           try {
             const response = await client.messages.create({
-              model: "claude-sonnet-4-20250514",
+              model: models.launchpad,
               max_tokens: 500,
               tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
               system: SECURITY_PREFIX + `You are ${agent.name} in a Signux validation simulation. Be SPECIFIC, HONEST, and use NUMBERS. No motivational talk. Respond in ${lang || "en"}.`,
@@ -57,7 +61,7 @@ export async function POST(req: NextRequest) {
         sendSSE({ type: "stage", stage: "verdict", label: "Computing verdict..." });
 
         const verdictResponse = await client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: models.launchpad,
           max_tokens: 2000,
           system: SECURITY_PREFIX + `You are the Signux Validation Engine. Based on 6 specialist analyses, deliver an HONEST verdict.
 

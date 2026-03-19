@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
+import { getTierFromRequest } from "../../lib/usage";
+import { getModelsForTier } from "../../lib/models";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -13,6 +15,8 @@ export async function POST(req: NextRequest) {
   if (tokenError) return tokenError;
   const rateLimitError = applyRateLimit(req, 5, 60000);
   if (rateLimitError) return rateLimitError;
+
+  const models = getModelsForTier(await getTierFromRequest(req));
 
   const encoder = new TextEncoder();
 
@@ -27,7 +31,7 @@ export async function POST(req: NextRequest) {
         send({ type: "stage", label: "Researching the business model..." });
 
         const researchResponse = await client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: models.launchpad,
           max_tokens: 2000,
           tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
           system: SECURITY_PREFIX + `You are a business model analyst. Research this business thoroughly using web search. Find: revenue model, pricing, target customer, team size, funding, tech stack, marketing channels, growth metrics. Return a comprehensive analysis.`,
@@ -40,7 +44,7 @@ export async function POST(req: NextRequest) {
         send({ type: "stage", label: "Generating adaptation playbook..." });
 
         const playbookResponse = await client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: models.launchpad,
           max_tokens: 3000,
           system: SECURITY_PREFIX + `You are a business strategist. Based on the research of an existing business, create a detailed adaptation playbook for replicating it in a different market. Be SPECIFIC with numbers, timelines, and costs. Respond in ${lang || "en"}.`,
           messages: [{
