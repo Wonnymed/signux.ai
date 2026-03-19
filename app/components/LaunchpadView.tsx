@@ -148,6 +148,7 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
   });
   const [checkinResult, setCheckinResult] = useState<CheckinResult | null>(null);
   const [checkinLoading, setCheckinLoading] = useState(false);
+  const [benchmarkComparison, setBenchmarkComparison] = useState<Record<string, any> | null>(null);
 
   // UI
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
@@ -311,16 +312,17 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
             business_name: selectedIdea.name,
             skills,
             time_available: timeAvailable,
+            category: selectedIdea.category || "general",
           },
           checkin: currentCheckin,
           previousCheckins: checkins,
-          benchmarks: null,
           lang,
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setCheckinResult(data.analysis);
+      if (data.benchmarkComparison) setBenchmarkComparison(data.benchmarkComparison);
       setCheckins(prev => [...prev, { ...currentCheckin, ...data.analysis }]);
     } catch (e: any) {
       setError(e.message || "Check-in failed");
@@ -1806,11 +1808,54 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
                 </div>
               )}
 
+              {/* Benchmark comparison */}
+              {benchmarkComparison && Object.keys(benchmarkComparison).length > 0 && (
+                <div style={{
+                  padding: 16, borderRadius: 10, marginTop: 12,
+                  border: `1px solid ${tealAlpha(0.12)}`, background: tealAlpha(0.02),
+                }}>
+                  <div style={{ ...monoLabel, color: TEAL, marginBottom: 10 }}>
+                    How You Compare
+                  </div>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${Math.min(Object.keys(benchmarkComparison).length, 4)}, 1fr)`,
+                    gap: 12,
+                  }}>
+                    {Object.entries(benchmarkComparison).map(([key, val]: [string, any]) => {
+                      const isTop = val.percentile?.includes("top");
+                      const isBottom = val.percentile?.includes("bottom");
+                      return (
+                        <div key={key} style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 4, letterSpacing: 0.5 }}>
+                            {key}
+                          </div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>
+                            {val.yours}
+                          </div>
+                          <div style={{
+                            fontSize: 10, marginTop: 2,
+                            color: isTop ? "#22c55e" : isBottom ? "#ef4444" : "var(--text-tertiary)",
+                            fontWeight: isTop || isBottom ? 600 : 400,
+                          }}>
+                            {val.percentile || `avg: ${val.average}`}
+                          </div>
+                          <div style={{ fontSize: 9, color: "var(--text-tertiary)", opacity: 0.5, marginTop: 2 }}>
+                            avg: {val.average} · n={val.sampleSize}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* New check-in button */}
               <div style={{ marginTop: 16 }}>
                 <button
                   onClick={() => {
                     setCheckinResult(null);
+                    setBenchmarkComparison(null);
                     setCurrentCheckin({
                       week_number: weekNumber,
                       revenue: "", new_clients: "", leads_contacted: "",
