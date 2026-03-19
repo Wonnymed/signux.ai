@@ -187,6 +187,55 @@ export default function WelcomeScreen({
           })}
         </div>
 
+        {/* Domain-powered templates */}
+        <div style={{ width: "100%", marginTop: 12 }}>
+          <div style={{
+            fontSize: 10, fontFamily: "var(--font-mono)", letterSpacing: 1.5,
+            textTransform: "uppercase", color: "var(--text-tertiary)",
+            marginBottom: 8, opacity: 0.5,
+          }}>
+            Quick starts powered by intelligence
+          </div>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: 6,
+          }}>
+            {([
+              { q: "Is this deal legit? I need to evaluate a partnership offer", domains: "deception detection · risk intel", color: "#F59E0B" },
+              { q: "How will my competitors react if I launch this?", domains: "game theory · competitive intel", color: "#8B5CF6" },
+              { q: "What's the biggest threat to my business right now?", domains: "threat modeling · cybersecurity · geopolitics", color: "#DC2626" },
+              { q: "My revenue dropped — was it the price change or something else?", domains: "causal reasoning · pricing economics", color: "#06B6D4" },
+              { q: "I have a funding meeting tomorrow. Help me prepare.", domains: "negotiation warfare · BATNA · game theory", color: "#F97316" },
+              { q: "What could happen to my market in the next 12 months?", domains: "scenario planning · geopolitics · risk intel", color: "#22C55E" },
+            ] as const).map((tmpl, i) => (
+              <button
+                key={i}
+                onClick={() => onSend(tmpl.q)}
+                style={{
+                  display: "flex", flexDirection: "column", gap: 4,
+                  padding: "10px 12px", borderRadius: 8,
+                  border: "1px solid var(--card-border)", background: "var(--card-bg)",
+                  cursor: "pointer", textAlign: "left",
+                  transition: "border-color 200ms",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = `${tmpl.color}40`)}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--card-border)")}
+              >
+                <span style={{ fontSize: 12, color: "var(--text-primary)", lineHeight: 1.4 }}>
+                  {tmpl.q}
+                </span>
+                <span style={{
+                  fontSize: 9, color: tmpl.color, fontFamily: "var(--font-mono)",
+                  letterSpacing: 0.5, opacity: 0.7,
+                }}>
+                  {tmpl.domains}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Disclaimer */}
         <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 20, opacity: 0.5, textAlign: "center" }}>
           Always verify critical decisions with qualified professionals.

@@ -340,6 +340,46 @@ export default function ChatInput({
     }
   }, [isListening, startListening, stopListening]);
 
+  /* ═══ Smart Context Detector ═══ */
+  const [suggestion, setSuggestion] = useState<{tool: string; label: string; color: string; command: string} | null>(null);
+
+  const detectIntent = useCallback((text: string) => {
+    const lower = text.toLowerCase();
+    const patterns: Array<{keywords: string[]; tool: string; label: string; color: string; command: string}> = [
+      { keywords: ["deal", "pitch deck", "investing", "acquisition", "term sheet", "due diligence", "partnership offer", "evaluate this", "is this legit", "trust", "scam"],
+        tool: "Deal X-Ray", label: "Analyze with Deal X-Ray?", color: "#F59E0B", command: "/xray" },
+      { keywords: ["threat", "risk", "danger", "vulnerable", "security", "attack", "competitor threat", "what could go wrong"],
+        tool: "Threat Radar", label: "Run Threat Radar?", color: "#DC2626", command: "/threats" },
+      { keywords: ["competitor", "competition", "market share", "they launched", "competing", "how will they react", "competitive"],
+        tool: "War Game", label: "Simulate with War Game?", color: "#8B5CF6", command: "/wargame" },
+      { keywords: ["caused", "because of", "led to", "resulted in", "why did", "correlation", "impact of", "dropped after", "increased when"],
+        tool: "Causal Map", label: "Map with Causal Map?", color: "#06B6D4", command: "/causal" },
+      { keywords: ["negotiat", "meeting tomorrow", "pitch to", "asking for", "salary", "raise", "contract", "close the deal", "convince"],
+        tool: "Negotiation War Room", label: "Prepare with War Room?", color: "#F97316", command: "/negotiate" },
+      { keywords: ["what if", "next year", "future", "scenario", "12 months", "what could happen", "plan for", "prepare for"],
+        tool: "Scenario Planner", label: "Plan with Scenarios?", color: "#22C55E", command: "/scenarios" },
+      { keywords: ["simulate", "stress test", "what would happen", "test my idea", "agents", "debate"],
+        tool: "Simulate", label: "Run Simulation?", color: "#D4AF37", command: "" },
+      { keywords: ["start a business", "startup", "launch", "side project", "business idea", "validate", "mvp"],
+        tool: "Launchpad", label: "Start with Launchpad?", color: "#14B8A6", command: "" },
+    ];
+    for (const pattern of patterns) {
+      if (pattern.keywords.some(kw => lower.includes(kw))) {
+        setSuggestion({ tool: pattern.tool, label: pattern.label, color: pattern.color, command: pattern.command });
+        return;
+      }
+    }
+    setSuggestion(null);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (value.length >= 15) detectIntent(value);
+      else setSuggestion(null);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [value, detectIntent]);
+
   const isMobile = useIsMobile();
   const [focused, setFocused] = useState(false);
   const canSend = (value.trim() || attachments.length > 0) && !loading;
@@ -359,6 +399,33 @@ export default function ChatInput({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {/* Smart context suggestion */}
+      {suggestion && (
+        <div
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "6px 12px", borderRadius: 8,
+            background: `${suggestion.color}08`, border: `1px solid ${suggestion.color}15`,
+            marginBottom: 6, fontSize: 12, color: suggestion.color,
+            animation: "fadeIn 300ms ease",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            if (suggestion.command) {
+              onChange(`${suggestion.command} ${value}`);
+            }
+            setSuggestion(null);
+          }}
+        >
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: suggestion.color, flexShrink: 0 }} />
+          <span>{suggestion.label}</span>
+          <span style={{ fontSize: 10, opacity: 0.6, marginLeft: "auto", whiteSpace: "nowrap" }}>Click to activate</span>
+          <button onClick={(e) => { e.stopPropagation(); setSuggestion(null); }} style={{
+            background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 0, fontSize: 12, lineHeight: 1, flexShrink: 0,
+          }}>✕</button>
+        </div>
+      )}
+
       {/* Drop overlay */}
       {dragging && (
         <div style={{
