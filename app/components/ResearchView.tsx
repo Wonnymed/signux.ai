@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Search, Check, FileText, Download, Package, Shield, BarChart3, Globe, Play, RotateCcw, MessageSquare, Wand2, Loader2 } from "lucide-react";
+import { Search, Check, FileText, Download, Package, Shield, BarChart3, Globe, Play, RotateCcw, MessageSquare, Wand2, Loader2, Share2 } from "lucide-react";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -164,6 +164,32 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
       setPhase("complete");
     }
     setLoading(false);
+  };
+
+  const [sharing, setSharing] = useState(false);
+
+  const shareResult = async () => {
+    setSharing(true);
+    try {
+      const res = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "research",
+          title: query || "Research Report",
+          content: report,
+          metadata: { sources: searchResults.length },
+        }),
+      });
+      const { id } = await res.json();
+      const url = `${window.location.origin}/share/${id}`;
+      await navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
+    } catch {
+      alert("Failed to create share link");
+    } finally {
+      setSharing(false);
+    }
   };
 
   const reset = () => {
@@ -702,6 +728,19 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
             }}
           >
             <RotateCcw size={14} /> {t("research.new")}
+          </button>
+          <button
+            onClick={shareResult}
+            disabled={sharing}
+            style={{
+              fontSize: 13, color: "var(--text-secondary)",
+              background: "transparent", border: "1px solid var(--border-primary)",
+              padding: "8px 16px", borderRadius: "var(--radius-sm)",
+              cursor: sharing ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 6,
+              opacity: sharing ? 0.6 : 1,
+            }}
+          >
+            <Share2 size={14} /> {sharing ? "Sharing..." : "Share"}
           </button>
           {onContinueInChat && (
             <button

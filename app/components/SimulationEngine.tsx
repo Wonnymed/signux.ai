@@ -4,7 +4,7 @@ import {
   Check, AlertTriangle, Download, ChevronDown, ChevronRight,
   FileText, RotateCcw, MessageSquare, BarChart3, Network,
   Globe, Users, Clock, Zap, Search, Shield, Activity, Play,
-  Wand2, Loader2, Eye, X,
+  Wand2, Loader2, Eye, X, Share2,
 } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -940,6 +940,32 @@ export default function SimulationEngine(props: SimulationEngineProps) {
     return { border: "var(--success)", bg: "rgba(16,185,129,0.04)" };
   };
 
+  const [sharing, setSharing] = useState(false);
+
+  const shareResult = async () => {
+    setSharing(true);
+    try {
+      const res = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "simulation",
+          title: scenario || "Simulation",
+          content: reportText,
+          metadata: { agents_count: meta.agents_count, rounds: meta.rounds, total_interactions: meta.total_interactions },
+        }),
+      });
+      const { id } = await res.json();
+      const url = `${window.location.origin}/share/${id}`;
+      await navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
+    } catch {
+      alert("Failed to create share link");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const exportReport = () => {
     const agents = simAgents.map((a: any) => `${a.name} — ${a.role}`).join("\n");
     const sim = simulation.map((m: any) => `[${m.agentName} — Round ${m.round}]\n${m.content}`).join("\n\n---\n\n");
@@ -978,6 +1004,14 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               borderRadius: "var(--radius-sm)", cursor: "pointer",
             }}>
               {t("sim.new_simulation")}
+            </button>
+            <button onClick={shareResult} disabled={sharing} style={{
+              fontSize: 13, color: "var(--text-primary)", background: "transparent",
+              border: "1px solid var(--border-primary)", padding: "8px 16px",
+              borderRadius: "var(--radius-sm)", cursor: sharing ? "wait" : "pointer",
+              display: "flex", alignItems: "center", gap: 6, opacity: sharing ? 0.6 : 1,
+            }}>
+              <Share2 size={14} /> {sharing ? "Sharing..." : "Share"}
             </button>
             <div style={{ position: "relative" }}>
               <button onClick={() => setExportOpen(!exportOpen)} style={{

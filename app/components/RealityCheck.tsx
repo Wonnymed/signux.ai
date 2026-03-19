@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { CircleSlash, TrendingUp, TrendingDown, Minus, ArrowRight, Loader2, RotateCcw } from "lucide-react";
+import { CircleSlash, TrendingUp, TrendingDown, Minus, ArrowRight, Loader2, RotateCcw, Share2 } from "lucide-react";
 import { signuxFetch } from "../lib/api-client";
 
 type RCResult = {
@@ -45,6 +45,34 @@ export default function RealityCheck({ lang }: { lang: string }) {
   };
 
   const reset = () => { setResult(null); setQuery(""); setError(""); };
+
+  const [sharing, setSharing] = useState(false);
+
+  const shareResult = async () => {
+    if (!result) return;
+    setSharing(true);
+    try {
+      const content = `# Reality Check: ${query}\n\n**Verdict:** ${result.verdict} (${result.confidence}% confidence)\n\n${result.one_liner}\n\n## Metrics\n${result.metrics.map((m: any) => `- **${m.label}:** ${m.value}`).join("\n")}\n\n## Better Alternative\n${result.better_alternative}`;
+      const res = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "reality_check",
+          title: query || "Reality Check",
+          content,
+          metadata: { verdict: result.verdict, confidence: result.confidence },
+        }),
+      });
+      const { id } = await res.json();
+      const url = `${window.location.origin}/share/${id}`;
+      await navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
+    } catch {
+      alert("Failed to create share link");
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const verdictColors = {
     GO: { bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.2)", text: "#22c55e" },
@@ -226,8 +254,8 @@ export default function RealityCheck({ lang }: { lang: string }) {
             </div>
           )}
 
-          {/* Reset */}
-          <div style={{ textAlign: "center", marginTop: 16 }}>
+          {/* Actions */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
             <button onClick={reset} style={{
               display: "inline-flex", alignItems: "center", gap: 6,
               padding: "8px 16px", borderRadius: 50,
@@ -235,6 +263,15 @@ export default function RealityCheck({ lang }: { lang: string }) {
               color: "var(--text-secondary)", fontSize: 12, cursor: "pointer",
             }}>
               <RotateCcw size={12} /> New check
+            </button>
+            <button onClick={shareResult} disabled={sharing} style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 50,
+              border: "1px solid var(--card-border)", background: "none",
+              color: "var(--text-secondary)", fontSize: 12,
+              cursor: sharing ? "wait" : "pointer", opacity: sharing ? 0.6 : 1,
+            }}>
+              <Share2 size={12} /> {sharing ? "Sharing..." : "Share"}
             </button>
           </div>
         </div>
