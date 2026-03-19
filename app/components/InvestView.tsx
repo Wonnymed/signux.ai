@@ -7,7 +7,6 @@ import { getProfile } from "../lib/profile";
 import MessageBlock from "./MessageBlock";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import type { Message, Mode } from "../lib/types";
-import SignuxFooter from "./SignuxFooter";
 import { useEnhance } from "../lib/useEnhance";
 import { signuxFetch } from "../lib/api-client";
 
@@ -236,8 +235,6 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
   /* ═══ WELCOME STATE ═══ */
   if (messages.length === 0) {
     return (
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {/* HERO */}
         <section style={{
           minHeight: isMobile ? "75vh" : "85vh",
           display: "flex", flexDirection: "column",
@@ -429,53 +426,6 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
             </p>
           </div>
         </section>
-
-        {/* HOW IT WORKS */}
-        <section style={{ padding: isMobile ? "48px 16px" : "64px 24px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "rgba(168,85,247,0.7)", textTransform: "uppercase", marginBottom: 14 }}>
-            How Invest works
-          </div>
-          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 20 : 24, color: "var(--text-primary)", margin: 0, marginBottom: 24 }}>
-            Quantitative analysis for every investment decision
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
-            {[
-              { num: "01", title: "Describe", desc: "Tell us about the deal — terms, metrics, market, and your portfolio context" },
-              { num: "02", title: "Model", desc: "Quantitative models: DCF, expected value, Kelly criterion, and base rate analysis" },
-              { num: "03", title: "Stress test", desc: "Monte Carlo scenarios, sensitivity analysis, and tail risk assessment" },
-              { num: "04", title: "Verdict", desc: "Clear recommendation with confidence interval, position sizing, and kill conditions" },
-            ].map((step, i) => (
-              <div key={i} style={{ padding: 20, borderRadius: 12, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 28, color: "rgba(168,85,247,0.4)", marginBottom: 8 }}>{step.num}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>{step.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{step.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section style={{ padding: isMobile ? "0 16px 48px" : "0 24px 64px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 14 }}>
-            What makes this different
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-            {[
-              { title: "Expected value", desc: "Every deal gets an EV calculation. Know the mathematical edge before you commit." },
-              { title: "Kelly criterion", desc: "Optimal position sizing based on your edge and bankroll. Never over-allocate again." },
-              { title: "Base rate analysis", desc: "How do similar investments typically perform? Ground your optimism in historical data." },
-              { title: "Stress testing", desc: "What happens if rates rise 3%? If churn doubles? If the market drops 40%? We model it." },
-            ].map((item, i) => (
-              <div key={i} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <div style={{ height: 1, background: "var(--divider)", maxWidth: 600, margin: "0 auto" }} />
-        <SignuxFooter onSetMode={onSetMode} />
-      </div>
     );
   }
 

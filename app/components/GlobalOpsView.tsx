@@ -7,7 +7,6 @@ import { getProfile } from "../lib/profile";
 import MessageBlock from "./MessageBlock";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import type { Message, Mode } from "../lib/types";
-import SignuxFooter from "./SignuxFooter";
 import { useEnhance } from "../lib/useEnhance";
 import { signuxFetch } from "../lib/api-client";
 
@@ -215,8 +214,6 @@ export default function GlobalOpsView({ lang, onSetMode }: { lang: string; onSet
   /* ═══ WELCOME STATE ═══ */
   if (messages.length === 0) {
     return (
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {/* HERO */}
         <section style={{
           minHeight: isMobile ? "75vh" : "85vh",
           display: "flex", flexDirection: "column",
@@ -427,53 +424,6 @@ export default function GlobalOpsView({ lang, onSetMode }: { lang: string; onSet
             </p>
           </div>
         </section>
-
-        {/* HOW IT WORKS */}
-        <section style={{ padding: isMobile ? "48px 16px" : "64px 24px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "rgba(34,197,94,0.7)", textTransform: "uppercase", marginBottom: 14 }}>
-            How Global Ops works
-          </div>
-          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 20 : 24, color: "var(--text-primary)", margin: 0, marginBottom: 24 }}>
-            Navigate international business with AI intelligence
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
-            {[
-              { num: "01", title: "Describe", desc: "Tell us about your operation — products, markets, entities, and goals" },
-              { num: "02", title: "Jurisdictions", desc: "AI analyzes 100+ jurisdictions for tax, compliance, and regulatory fit" },
-              { num: "03", title: "Compliance", desc: "Full compliance map with licensing, reporting, and audit requirements" },
-              { num: "04", title: "Recommend", desc: "Optimal structure, trade routes, and entity setup with cost estimates" },
-            ].map((step, i) => (
-              <div key={i} style={{ padding: 20, borderRadius: 12, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 28, color: "rgba(34,197,94,0.4)", marginBottom: 8 }}>{step.num}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>{step.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{step.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section style={{ padding: isMobile ? "0 16px 48px" : "0 24px 64px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 14 }}>
-            What makes this different
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-            {[
-              { title: "100+ jurisdictions", desc: "From Delaware to Dubai, Singapore to Switzerland — real regulatory data, not generic advice." },
-              { title: "Real tax rates", desc: "Effective rates, not statutory. We calculate what you'll actually pay after treaties and incentives." },
-              { title: "Crypto frameworks", desc: "MiCA, CVM, VARA, MAS — navigate crypto regulations across every major jurisdiction." },
-              { title: "Trade route optimization", desc: "HS codes, duties, Incoterms, and logistics routes optimized for your specific supply chain." },
-            ].map((item, i) => (
-              <div key={i} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <div style={{ height: 1, background: "var(--divider)", maxWidth: 600, margin: "0 auto" }} />
-        <SignuxFooter onSetMode={onSetMode} />
-      </div>
     );
   }
 

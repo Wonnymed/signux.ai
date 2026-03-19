@@ -5,7 +5,6 @@ import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
 import { useIsMobile } from "../lib/useIsMobile";
 import MarkdownRenderer from "./MarkdownRenderer";
-import SignuxFooter from "./SignuxFooter";
 import { useEnhance } from "../lib/useEnhance";
 import { signuxFetch } from "../lib/api-client";
 
@@ -176,8 +175,6 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode }: Rese
   /* ═══ INPUT STATE ═══ */
   if (phase === "input") {
     return (
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {/* HERO */}
         <section style={{
           minHeight: isMobile ? "75vh" : "85vh",
           display: "flex", flexDirection: "column",
@@ -498,50 +495,6 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode }: Rese
 
           </div>
         </section>
-
-        {/* HOW IT WORKS */}
-        <section style={{ padding: isMobile ? "48px 16px" : "64px 24px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "rgba(107,138,255,0.7)", textTransform: "uppercase", marginBottom: 14 }}>
-            How Deep Research works
-          </div>
-          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 20 : 24, color: "var(--text-primary)", margin: 0, marginBottom: 24 }}>
-            8-12 sources searched, cross-referenced, compiled
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
-            {[
-              { num: "01", title: "Plan", desc: "AI generates 6-8 strategic search queries tailored to your question" },
-              { num: "02", title: "Search", desc: "Each query is executed across multiple sources with real-time results" },
-              { num: "03", title: "Cross-reference", desc: "Findings are compared and contradictions are flagged" },
-              { num: "04", title: "Report", desc: "Structured report with executive summary, findings, and recommendations" },
-            ].map((step, i) => (
-              <div key={i} style={{ padding: 20, borderRadius: 12, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 28, color: "rgba(107,138,255,0.4)", marginBottom: 8 }}>{step.num}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>{step.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{step.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* WHAT YOU GET */}
-        <section style={{ padding: isMobile ? "0 16px 48px" : "0 24px 64px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
-            {[
-              { title: "Cited sources", desc: "Every claim links back to its source. Verify anything instantly." },
-              { title: "PDF export", desc: "Download a branded report to share with partners or investors." },
-              { title: "Continue in Chat", desc: "Turn any research into a conversation. Ask follow-up questions." },
-            ].map((item, i) => (
-              <div key={i} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <div style={{ height: 1, background: "var(--divider)", maxWidth: 600, margin: "0 auto" }} />
-        <SignuxFooter onSetMode={onSetMode} />
-      </div>
     );
   }
 

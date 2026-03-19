@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Zap, Search, Rocket, Globe, TrendingUp, Wrench, CircleSlash, Copy, Users } from "lucide-react";
 import { getProfile } from "./lib/profile";
 import { SignuxIcon, SignuxWordmark } from "./components/SignuxIcon";
+import SignuxFooter from "./components/SignuxFooter";
 
-/* ═══ Fade-in on scroll (IntersectionObserver) ═══ */
+/* ═══ Fade-in on scroll ═══ */
 function useFadeIn() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -30,105 +32,199 @@ function useFadeIn() {
 function FadeSection({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   const ref = useFadeIn();
   return (
-    <div
-      ref={ref}
-      style={{
-        opacity: 0,
-        transform: "translateY(20px)",
-        transition: "opacity 0.5s ease, transform 0.5s ease",
-        ...style,
-      }}
-    >
+    <div ref={ref} style={{ opacity: 0, transform: "translateY(20px)", transition: "opacity 0.5s ease, transform 0.5s ease", ...style }}>
       {children}
     </div>
   );
 }
 
-/* ═══ Chat Mockup ═══ */
-function ChatMockup() {
+/* ═══ Hex to rgba ═══ */
+function hexA(hex: string, a: number) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* ═══ Section Divider ═══ */
+function Divider() {
+  return <div style={{ height: 1, maxWidth: 600, margin: "0 auto", background: "linear-gradient(90deg, transparent, var(--divider), transparent)" }} />;
+}
+
+/* ═══ Mode data ═══ */
+const MODE_SECTIONS = [
+  {
+    icon: Zap, color: "#D4AF37", name: "Simulate", textOnColor: "#000",
+    title: "Predict outcomes before you invest",
+    desc: "15 AI specialist agents analyze your plan from every angle — regulatory, financial, adversarial, operational. Stress-test any decision with God's Eye variable injection and multi-round debate.",
+    features: ["Multi-agent debate", "Adversarial testing", "Risk scoring", "God's Eye injection", "Agent conversation"],
+    preview: SimulatePreview,
+  },
+  {
+    icon: Search, color: "#6B8AFF", name: "Deep Research", textOnColor: "#fff",
+    title: "Multi-source intelligence synthesis",
+    desc: "Signux plans 6-8 strategic queries, searches across multiple sources, cross-references findings, and compiles a structured report with citations and export to PDF.",
+    features: ["Auto-planned queries", "8-12 sources", "Cross-referenced", "Cited report", "PDF export"],
+    preview: ResearchPreview,
+  },
+  {
+    icon: Rocket, color: "#14B8A6", name: "Launchpad", textOnColor: "#000",
+    title: "From zero to business in 90 days",
+    desc: "Tell Signux your skills and budget. We find the right business, validate it with our simulation engine, generate a blueprint, and track your progress week by week.",
+    features: ["Skill-to-business matching", "Auto-validation", "90-day blueprint", "Weekly tracking", "Adaptive strategy"],
+    preview: LaunchpadPreview,
+  },
+  {
+    icon: Globe, color: "#22C55E", name: "Global Ops", textOnColor: "#000",
+    title: "Cross-border operational intelligence",
+    desc: "Specialized for international operations — offshore structures, import/export, crypto compliance, tax optimization. Proprietary knowledge across 100+ jurisdictions.",
+    features: ["100+ jurisdictions", "Tax structures", "Crypto frameworks", "Trade routes", "Compliance mapping"],
+    preview: GlobalOpsPreview,
+  },
+  {
+    icon: TrendingUp, color: "#A855F7", name: "Invest", textOnColor: "#fff",
+    title: "Quantitative deal evaluation",
+    desc: "Evaluate any investment with the formulas hedge funds use — expected value, Kelly criterion, Bayesian updates, base rate analysis. Numbers, not opinions.",
+    features: ["Expected value", "Kelly sizing", "Bayesian updates", "DCF / IRR", "Stress testing"],
+    preview: InvestPreview,
+  },
+];
+
+/* ═══ Preview Components ═══ */
+function SimulatePreview() {
+  const bars = [
+    { label: "Regulatory", pct: 72, color: "#ef4444" },
+    { label: "Financial", pct: 45, color: "#f59e0b" },
+    { label: "Market", pct: 58, color: "#3b82f6" },
+  ];
   return (
-    <div style={{
-      maxWidth: 560, width: "100%", margin: "0 auto",
-      border: "1px solid var(--border-primary)",
-      borderRadius: "var(--radius-lg)",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-      overflow: "hidden", background: "var(--bg-primary)",
-    }}>
-      {/* User message */}
-      <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-secondary)" }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", marginBottom: 6, letterSpacing: "0.02em" }}>You</div>
-        <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-primary)" }}>
-          I want to import electronics from Shenzhen. Budget $20K. Best structure?
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {bars.map(b => (
+        <div key={b.label}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-tertiary)", marginBottom: 4 }}>
+            <span>{b.label}</span><span>{b.pct}%</span>
+          </div>
+          <div style={{ height: 4, borderRadius: 2, background: "var(--card-hover-bg)" }}>
+            <div style={{ height: "100%", width: `${b.pct}%`, borderRadius: 2, background: b.color, opacity: 0.7 }} />
+          </div>
         </div>
-      </div>
-      {/* AI response */}
-      <div style={{ padding: "20px 24px" }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", marginBottom: 6, letterSpacing: "0.02em" }}>Signux</div>
-        <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-primary)" }}>
-          For a <span style={{ fontWeight: 600 }}>$20K</span> electronics import from Shenzhen, I recommend a
-          three-layer structure: a Hong Kong trading company as your procurement vehicle (lowest
-          friction for China suppliers), routing through a free-trade zone for duty optimization, and
-          a local entity in your destination market. Here&apos;s why this works...
+      ))}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, paddingTop: 10, borderTop: "1px solid var(--card-hover-bg)" }}>
+        <div>
+          <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 1 }}>Viability</div>
+          <div style={{ fontSize: 22, fontFamily: "var(--font-brand)", fontWeight: 700, color: "#D4AF37" }}>7.3</div>
         </div>
-        <div style={{
-          display: "inline-block", width: 2, height: 14,
-          background: "var(--text-tertiary)", marginLeft: 2,
-          animation: "blink 1s infinite", verticalAlign: "text-bottom",
-          opacity: 0.5,
-        }} />
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 1 }}>Est. ROI</div>
+          <div style={{ fontSize: 22, fontFamily: "var(--font-brand)", fontWeight: 700, color: "#22c55e" }}>+23%</div>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ═══ Simulation Mockup ═══ */
-function SimMockup() {
+function ResearchPreview() {
+  const queries = [
+    { text: "Market size analysis", done: true },
+    { text: "Competitor pricing", done: true },
+    { text: "Regulatory landscape", loading: true },
+    { text: "Customer segments", pending: true },
+  ];
   return (
-    <div style={{
-      maxWidth: 560, width: "100%", margin: "0 auto",
-      border: "1px solid var(--border-primary)",
-      borderRadius: "var(--radius-lg)",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-      overflow: "hidden", background: "var(--bg-primary)",
-    }}>
-      {/* Metadata bar */}
-      <div style={{
-        padding: "14px 24px", borderBottom: "1px solid var(--border-secondary)",
-        display: "flex", gap: 20, fontSize: 12, color: "var(--text-tertiary)",
-        fontFamily: "var(--font-mono)",
-      }}>
-        <span>15 Agents</span>
-        <span>4 Rounds</span>
-        <span>60 Interactions</span>
-      </div>
-      {/* Report snippet */}
-      <div style={{ padding: "20px 24px" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.04em", marginBottom: 10 }}>
-          EXECUTIVE SUMMARY
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {queries.map((q, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 14, height: 14, borderRadius: "50%", flexShrink: 0, border: q.done ? "none" : "1.5px solid var(--card-hover-border)", background: q.done ? "rgba(107,138,255,0.3)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {q.done && <span style={{ fontSize: 8, color: "#6B8AFF" }}>&#10003;</span>}
+            {q.loading && <span style={{ fontSize: 7, color: "var(--text-tertiary)" }}>...</span>}
+          </div>
+          <span style={{ fontSize: 11, color: q.done ? "var(--text-secondary)" : "var(--text-tertiary)" }}>{q.text}</span>
         </div>
-        <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-primary)", marginBottom: 14 }}>
-          The proposed Shenzhen electronics import operation is viable with moderate risk.
-          Key factors: supplier verification through SGS reduces fraud risk by
-          <span style={{ fontWeight: 600 }}> 73%</span>, HK routing saves
-          <span style={{ fontWeight: 600 }}> $3,200</span> in duties vs direct import.
+      ))}
+      <div style={{ marginTop: 6 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--text-tertiary)", marginBottom: 4 }}>
+          <span>Progress</span><span>55%</span>
         </div>
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "4px 12px", borderRadius: 100,
-          background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)",
-        }}>
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>GO</span>
+        <div style={{ height: 3, borderRadius: 2, background: "var(--card-hover-bg)" }}>
+          <div style={{ height: "100%", width: "55%", borderRadius: 2, background: "#6B8AFF", opacity: 0.6 }} />
         </div>
       </div>
     </div>
   );
 }
 
-/* ═══ Main Landing Page ═══ */
+function LaunchpadPreview() {
+  const steps = [
+    { label: "Discovery", active: true },
+    { label: "Validation", active: false },
+    { label: "Blueprint", active: false },
+    { label: "Launch", active: false },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {steps.map((s, i) => (
+        <div key={s.label} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: s.active ? "#14B8A6" : "var(--card-border)", border: s.active ? "none" : "1.5px solid var(--border-primary)", boxShadow: s.active ? "0 0 8px rgba(20,184,166,0.3)" : "none" }} />
+            {i < steps.length - 1 && <div style={{ width: 1, height: 28, background: "var(--card-border)" }} />}
+          </div>
+          <div>
+            <span style={{ fontSize: 11, fontWeight: s.active ? 600 : 400, color: s.active ? "#14B8A6" : "var(--text-tertiary)" }}>{s.label}</span>
+            {s.active && <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2 }}>In progress</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GlobalOpsPreview() {
+  const jurisdictions = [
+    { name: "Hong Kong", pct: 92 },
+    { name: "Singapore", pct: 87 },
+    { name: "Dubai DMCC", pct: 74 },
+    { name: "BVI", pct: 68 },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {jurisdictions.map(j => (
+        <div key={j.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{j.name}</span>
+          <span style={{ fontSize: 12, fontFamily: "var(--font-brand)", fontWeight: 700, color: j.pct >= 80 ? "#22C55E" : j.pct >= 70 ? "#f59e0b" : "var(--text-tertiary)" }}>{j.pct}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InvestPreview() {
+  const metrics = [
+    { label: "EV", value: "+$1.2M", color: "#22c55e" },
+    { label: "Kelly", value: "12%", color: "#A855F7" },
+    { label: "Bayes", value: "0.67", color: "#6B8AFF" },
+    { label: "Base Rate", value: "34%", color: "#f59e0b" },
+  ];
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      {metrics.map(m => (
+        <div key={m.label} style={{ padding: "10px 8px", borderRadius: 8, background: "var(--card-bg)", border: "1px solid var(--card-border)", textAlign: "center" }}>
+          <div style={{ fontSize: 8, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{m.label}</div>
+          <div style={{ fontSize: 16, fontFamily: "var(--font-brand)", fontWeight: 700, color: m.color }}>{m.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══ Tools data ═══ */
+const TOOLS_ACTIVE = ["Pitch Deck Builder", "Financial Model", "Chat with PDF", "Business Plan Writer", "Pricing Calculator", "Contract Analyzer"];
+const TOOLS_SOON = ["Brand Kit Generator", "Outreach Writer", "Market Sizing", "Ad Copy Agent"];
+
+/* ═══ MAIN LANDING PAGE ═══ */
 export default function LandingPage() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const profile = getProfile();
@@ -137,190 +233,246 @@ export default function LandingPage() {
       return;
     }
     setChecked(true);
+    setIsMobile(window.innerWidth < 768);
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
   }, [router]);
 
-  if (!checked) {
-    return <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }} />;
-  }
+  if (!checked) return <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }} />;
 
   return (
-    <div style={{ background: "var(--bg-primary)", color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
+    <div style={{ background: "var(--bg-primary)", color: "var(--text-primary)", fontFamily: "var(--font-sans)", overflowX: "hidden" }}>
 
-      {/* ═══ HERO — Above the fold ═══ */}
+      {/* ═══ NAV BAR ═══ */}
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "14px 24px",
+        background: "rgba(var(--bg-primary-rgb, 10,10,10), 0.8)",
+        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+        borderBottom: "1px solid var(--border-secondary)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <SignuxIcon size={24} variant="gold" />
+          <span style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 16, letterSpacing: 3, color: "var(--text-primary)" }}>
+            SIGNUX <span style={{ fontWeight: 300, opacity: 0.3 }}>AI</span>
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <Link href="/login" style={{ fontSize: 13, color: "var(--text-secondary)", textDecoration: "none" }}>Log in</Link>
+          <Link href="/chat" style={{
+            fontSize: 13, fontWeight: 600, color: "#000", background: "var(--accent)",
+            padding: "8px 20px", borderRadius: 50, textDecoration: "none",
+          }}>Start free</Link>
+        </div>
+      </nav>
+
+      {/* ═══ HERO ═══ */}
       <section style={{
         minHeight: "100vh", display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        position: "relative", padding: "0 24px",
+        padding: isMobile ? "120px 20px 60px" : "120px 24px 80px",
+        textAlign: "center", position: "relative",
       }}>
-        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {/* Logo wordmark */}
-          <SignuxWordmark fontSize={52} />
+        {/* Ambient glow */}
+        <div style={{
+          position: "absolute", top: "40%", left: "50%", transform: "translate(-50%, -50%)",
+          width: 800, height: 800, background: "radial-gradient(circle, var(--glow-color) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
 
-          {/* Gold line */}
-          <div style={{
-            width: 48, height: 1.5, background: "var(--accent)",
-            margin: "8px auto 0",
-          }} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <SignuxWordmark fontSize={isMobile ? 40 : 56} />
+          <div style={{ width: 48, height: 1.5, background: "var(--accent)", margin: "8px auto 0" }} />
 
-          {/* Tagline */}
-          <p style={{
-            fontSize: 18, fontWeight: 400, color: "var(--text-secondary)",
-            maxWidth: 420, margin: "24px auto 0", lineHeight: 1.6,
+          <h1 style={{
+            fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 32 : 48,
+            letterSpacing: 2, color: "var(--text-primary)", maxWidth: 700,
+            lineHeight: 1.1, margin: "32px auto 16px",
           }}>
-            The AI that knows how global business actually works.
+            Think through any business decision before you make it
+          </h1>
+          <p style={{ fontSize: isMobile ? 15 : 18, color: "var(--text-secondary)", maxWidth: 520, margin: "0 auto 40px", lineHeight: 1.6 }}>
+            6 specialized AI modes. Multi-agent simulation. Deep research. Quantitative analysis. From idea to business in 90 days.
           </p>
-
-          {/* CTAs */}
-          <div style={{
-            display: "flex", gap: 12, justifyContent: "center",
-            marginTop: 40, flexWrap: "wrap",
-          }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/chat" style={{
-              display: "inline-flex", alignItems: "center",
-              padding: "14px 32px", borderRadius: 100,
-              background: "var(--text-primary)", color: "var(--bg-primary)",
-              fontSize: 15, fontWeight: 500, textDecoration: "none",
-              transition: "opacity 0.15s",
-            }}
-              onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            >
-              Start now — it&apos;s free
-            </Link>
-            <button
-              onClick={() => {
-                document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              style={{
-                display: "inline-flex", alignItems: "center",
-                padding: "14px 32px", borderRadius: 100,
-                background: "transparent", color: "var(--text-primary)",
-                border: "1px solid var(--border-primary)",
-                fontSize: 15, fontWeight: 500, cursor: "pointer",
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-            >
-              See what it can do
-            </button>
+              padding: "14px 32px", borderRadius: 50, background: "var(--accent)",
+              color: "#000", fontWeight: 600, fontSize: 15, textDecoration: "none",
+              fontFamily: "var(--font-brand)", letterSpacing: 1,
+            }}>Start free</Link>
+            <a href="#modes" style={{
+              padding: "14px 32px", borderRadius: 50,
+              border: "1px solid var(--border-primary)", color: "var(--text-secondary)",
+              fontSize: 15, textDecoration: "none",
+            }}>See all modes</a>
           </div>
         </div>
 
-        {/* Bottom tagline */}
-        <div style={{
-          position: "absolute", bottom: 32, left: 0, right: 0,
-          textAlign: "center", fontSize: 12, color: "var(--text-tertiary)",
-        }}>
+        <div style={{ position: "absolute", bottom: 32, left: 0, right: 0, textAlign: "center", fontSize: 12, color: "var(--text-tertiary)" }}>
           Built for operators who think globally
         </div>
       </section>
 
-      {/* ═══ SECTION 1 — What it is ═══ */}
-      <section id="features" style={{ padding: "100px 24px", maxWidth: 720, margin: "0 auto" }}>
+      {/* ═══ MODES SHOWCASE ═══ */}
+      <div id="modes">
+        {MODE_SECTIONS.map((sec, idx) => {
+          const Icon = sec.icon;
+          const Preview = sec.preview;
+          const reverse = idx % 2 === 1;
+          return (
+            <div key={sec.name}>
+              <Divider />
+              <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto" }}>
+                <FadeSection>
+                  <div style={{
+                    display: "flex", gap: isMobile ? 24 : 40, alignItems: "flex-start",
+                    flexDirection: isMobile ? "column" : reverse ? "row-reverse" : "row",
+                  }}>
+                    {/* Text */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "4px 10px", borderRadius: 6,
+                        background: hexA(sec.color, 0.08), color: sec.color,
+                        fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase",
+                        marginBottom: 16,
+                      }}>
+                        <Icon size={12} /> {sec.name}
+                      </div>
+                      <h2 style={{
+                        fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 32,
+                        color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.2,
+                      }}>{sec.title}</h2>
+                      <p style={{ fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
+                        {sec.desc}
+                      </p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+                        {sec.features.map(f => (
+                          <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
+                        ))}
+                      </div>
+                      <Link href="/chat" style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "10px 24px", borderRadius: 50,
+                        background: sec.color, color: sec.textOnColor,
+                        fontWeight: 600, fontSize: 13, textDecoration: "none",
+                        fontFamily: "var(--font-brand)", letterSpacing: 1, textTransform: "uppercase",
+                      }}>
+                        <Icon size={14} /> Try {sec.name}
+                      </Link>
+                    </div>
+
+                    {/* Preview */}
+                    {!isMobile && (
+                      <div style={{
+                        width: 280, flexShrink: 0, borderRadius: 14,
+                        border: "1px solid var(--card-border)", background: "var(--card-bg)",
+                        padding: 20, overflow: "hidden",
+                      }}>
+                        <Preview />
+                      </div>
+                    )}
+                  </div>
+                </FadeSection>
+              </section>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ═══ REALITY CHECK highlight ═══ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
         <FadeSection>
-          <h2 style={{ fontSize: 32, fontWeight: 600, margin: "0 0 16px", textAlign: "center" }}>
-            Ask anything about global business.
-          </h2>
-          <p style={{
-            fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7,
-            maxWidth: 560, margin: "0 auto 48px", textAlign: "center",
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6,
+            background: "rgba(239,68,68,0.08)", color: "#ef4444",
+            fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16,
           }}>
-            Offshore structures. China imports. Crypto security. Tax optimization.
-            Real-time geopolitics. One AI that actually understands all of it.
+            <CircleSlash size={12} /> Reality Check
+          </div>
+          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 32, color: "var(--text-primary)", marginBottom: 12 }}>
+            Honest verdict in 10 seconds
+          </h2>
+          <p style={{ fontSize: 16, color: "var(--text-secondary)", maxWidth: 500, margin: "0 auto 32px", lineHeight: 1.7 }}>
+            &quot;Is dropshipping still viable?&quot; &quot;Should I buy this course?&quot; Get a data-backed GO, CAUTION, or STOP with real numbers.
           </p>
-          <ChatMockup />
         </FadeSection>
       </section>
 
-      {/* ═══ SECTION 2 — Simulation ═══ */}
-      <section style={{ padding: "100px 24px", maxWidth: 720, margin: "0 auto" }}>
+      {/* ═══ INNOVATION FEATURES ═══ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto" }}>
         <FadeSection>
-          <h2 style={{ fontSize: 32, fontWeight: 600, margin: "0 0 16px", textAlign: "center" }}>
-            Don&apos;t guess. Simulate.
+          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28, color: "var(--text-primary)", marginBottom: 8, textAlign: "center" }}>
+            Features no other AI has
           </h2>
-          <p style={{
-            fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7,
-            maxWidth: 560, margin: "0 auto 48px", textAlign: "center",
-          }}>
-            Describe a scenario. Signux creates 15+ AI specialists — suppliers, lawyers,
-            customs officers, market analysts — and runs your entire operation before you
-            invest a single dollar.
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center", marginBottom: 40 }}>
+            Built for entrepreneurs who make real decisions with real money.
           </p>
-          <SimMockup />
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
+            {[
+              { title: "Enhance", desc: "AI improves your prompt before sending. Better input = better output.", color: "var(--accent)" },
+              { title: "Follow-up Engine", desc: "3 questions you didn't think to ask after every response.", color: "#6B8AFF" },
+              { title: "Confidence Meter", desc: "See how sure the AI is about each answer. Green, yellow, or red.", color: "#22c55e" },
+              { title: "Reverse Engineer", desc: "Paste a business URL. Get a complete playbook to replicate it.", color: "#F97316" },
+              { title: "Negotiation Sim", desc: "Practice tough conversations before real meetings.", color: "#F97316" },
+              { title: "Decision Journal", desc: "Auto-tracks your decisions. Follows up 30 days later.", color: "#A855F7" },
+            ].map((f, i) => (
+              <div key={i} style={{ padding: 20, borderRadius: 12, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.color, marginBottom: 12, opacity: 0.6 }} />
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>{f.title}</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
         </FadeSection>
       </section>
 
-      {/* ═══ SECTION 3 — Research ═══ */}
-      <section style={{ padding: "100px 24px", maxWidth: 720, margin: "0 auto" }}>
+      {/* ═══ TOOLS ═══ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
         <FadeSection>
-          <h2 style={{ fontSize: 32, fontWeight: 600, margin: "0 0 16px", textAlign: "center" }}>
-            Know before everyone else.
+          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28, color: "var(--text-primary)", marginBottom: 32 }}>
+            Specialized tools
           </h2>
-          <p style={{
-            fontSize: 16, color: "var(--text-secondary)", lineHeight: 1.7,
-            maxWidth: 560, margin: "0 auto", textAlign: "center",
-          }}>
-            Daily intelligence briefings. Regulatory changes. Market shifts.
-            Supply chain disruptions. All analyzed for operational impact.
-          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+            {TOOLS_ACTIVE.map(tool => (
+              <span key={tool} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--card-border)", background: "var(--card-bg)", fontSize: 13, color: "var(--text-secondary)" }}>{tool}</span>
+            ))}
+            {TOOLS_SOON.map(tool => (
+              <span key={tool} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--card-border)", background: "var(--card-bg)", fontSize: 13, color: "var(--text-tertiary)", opacity: 0.5 }}>
+                {tool} <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", letterSpacing: 1 }}>SOON</span>
+              </span>
+            ))}
+          </div>
         </FadeSection>
       </section>
 
-      {/* ═══ SECTION 4 — Final CTA ═══ */}
-      <section style={{
-        padding: "100px 24px", maxWidth: 720, margin: "0 auto",
-        textAlign: "center",
-      }}>
+      {/* ═══ CTA FINAL ═══ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "80px 24px", textAlign: "center" }}>
         <FadeSection>
-          <h2 style={{ fontSize: 28, fontWeight: 600, margin: "0 0 32px" }}>
-            Ready to operate smarter?
+          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 28 : 36, color: "var(--text-primary)", marginBottom: 16 }}>
+            Ready to think smarter?
           </h2>
+          <p style={{ fontSize: 16, color: "var(--text-secondary)", marginBottom: 32 }}>
+            Free to start. No credit card required.
+          </p>
           <Link href="/chat" style={{
-            display: "inline-flex", alignItems: "center",
-            padding: "14px 32px", borderRadius: 100,
-            background: "var(--text-primary)", color: "var(--text-inverse)",
-            fontSize: 15, fontWeight: 500, textDecoration: "none",
-            transition: "opacity 0.15s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-          >
-            Start now — it&apos;s free
-          </Link>
-          <p style={{
-            fontSize: 13, color: "var(--text-tertiary)", marginTop: 16,
-          }}>
-            No credit card required. Free plan includes 10 queries per month.
-          </p>
+            display: "inline-flex", padding: "16px 40px", borderRadius: 50,
+            background: "var(--accent)", color: "#000", fontWeight: 700,
+            fontSize: 16, textDecoration: "none", fontFamily: "var(--font-brand)",
+            letterSpacing: 1,
+          }}>Start free</Link>
         </FadeSection>
       </section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer style={{
-        padding: "48px 24px", borderTop: "1px solid var(--border-secondary)",
-        textAlign: "center",
-      }}>
-        <div style={{ marginBottom: 16, opacity: 0.5 }}>
-          <SignuxWordmark fontSize={14} />
-        </div>
-        <div style={{
-          display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap",
-          marginBottom: 20,
-        }}>
-          {["About", "Pricing", "Blog", "Contact", "Terms", "Privacy"].map(link => (
-            <span key={link} style={{
-              fontSize: 12, color: "var(--text-tertiary)", cursor: "pointer",
-              transition: "color 0.15s",
-            }}>
-              {link}
-            </span>
-          ))}
-        </div>
-        <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-          &copy; 2026 Signux AI. Part of the DuckDuck Club ecosystem.
-        </div>
-      </footer>
+      <Divider />
+      <SignuxFooter />
     </div>
   );
 }

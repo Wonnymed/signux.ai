@@ -5,7 +5,6 @@ import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { useEnhance } from "../lib/useEnhance";
 import type { Mode } from "../lib/types";
-import SignuxFooter from "./SignuxFooter";
 import { signuxFetch } from "../lib/api-client";
 
 /* ═══ Types ═══ */
@@ -392,8 +391,6 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
     ];
 
     return (
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {/* HERO */}
         <section style={{
           minHeight: isMobile ? "75vh" : "85vh",
           display: "flex", flexDirection: "column",
@@ -565,53 +562,6 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
             </div>
           </div>
         </section>
-
-        {/* HOW LAUNCHPAD WORKS */}
-        <section style={{ padding: isMobile ? "48px 16px" : "64px 24px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "rgba(20,184,166,0.7)", textTransform: "uppercase", marginBottom: 14 }}>
-            How Launchpad works
-          </div>
-          <h2 style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 20 : 24, color: "var(--text-primary)", margin: 0, marginBottom: 24 }}>
-            From idea to revenue in 90 days
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
-            {[
-              { num: "01", title: "Discovery", desc: "Answer 5 questions about your skills, time, and capital. AI finds ideas that match YOU." },
-              { num: "02", title: "Validation", desc: "6 specialist agents stress-test your idea: market, finance, risk, competition, customers." },
-              { num: "03", title: "Blueprint", desc: "Get a week-by-week 90-day plan with specific tasks, costs, and deliverables." },
-              { num: "04", title: "Track", desc: "Weekly check-ins with honest AI feedback. Pivot recommendations when numbers don't add up." },
-            ].map((step, i) => (
-              <div key={i} style={{ padding: 20, borderRadius: 12, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 28, color: "rgba(20,184,166,0.4)", marginBottom: 8 }}>{step.num}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>{step.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{step.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section style={{ padding: isMobile ? "0 16px 48px" : "0 24px 64px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 14 }}>
-            What makes this different
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-            {[
-              { title: "AI that says no", desc: "If your numbers don't work, Signux tells you. No motivational platitudes — just honest analysis." },
-              { title: "Weekly check-ins", desc: "Report your metrics every week. Get scored, get action items, and get pivoted if needed." },
-              { title: "Ready-made deliverables", desc: "Cold email templates, LinkedIn posts, elevator pitches, and pricing page copy — ready to use." },
-              { title: "Benchmark comparison", desc: "Your performance compared to similar businesses. Know if you're ahead or behind." },
-            ].map((item, i) => (
-              <div key={i} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--card-border)", background: "var(--card-bg)" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <div style={{ height: 1, background: "var(--divider)", maxWidth: 600, margin: "0 auto" }} />
-        <SignuxFooter onSetMode={onSetMode} />
-      </div>
     );
   }
 
