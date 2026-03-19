@@ -239,31 +239,31 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
 
           {/* ── HEADER ── */}
-          <div style={{ textAlign: "center", marginBottom: 16, animation: "fadeIn 0.4s ease-out" }}>
+          <div style={{ textAlign: "center", marginBottom: 10, animation: "fadeIn 0.4s ease-out" }}>
             {/* Icon ring */}
             <div style={{
-              width: 48, height: 48, borderRadius: "50%",
+              width: 40, height: 40, borderRadius: "50%",
               border: "1px solid rgba(212,175,55,0.2)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 12px", position: "relative",
+              margin: "0 auto 8px", position: "relative",
             }}>
               <div style={{
                 position: "absolute", inset: -4, borderRadius: "50%",
                 border: "1px solid rgba(212,175,55,0.08)",
               }} />
-              <Zap size={22} style={{ color: "var(--accent)" }} />
+              <Zap size={20} style={{ color: "var(--accent)" }} />
             </div>
 
             {/* Title */}
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 0 }}>
               <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 700,
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 24 : 30, fontWeight: 700,
                 letterSpacing: 8, color: "var(--text-primary)",
               }}>
                 SIMULATE
               </span>
               <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 300,
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 24 : 30, fontWeight: 300,
                 letterSpacing: 4, color: "var(--text-tertiary)", marginLeft: 8,
               }}>
                 ENGINE
@@ -272,9 +272,9 @@ export default function SimulationEngine(props: SimulationEngineProps) {
 
             {/* Subtitle */}
             <div style={{
-              fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 3,
+              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 3,
               textTransform: "uppercase" as const, color: "rgba(212,175,55,0.6)",
-              marginTop: 12,
+              marginTop: 6,
             }}>
               Predict outcomes before you invest
             </div>
@@ -283,24 +283,24 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             <div style={{
               width: 48, height: 1,
               background: "linear-gradient(90deg, transparent, var(--accent), transparent)",
-              margin: "12px auto 0",
+              margin: "8px auto 0",
             }} />
           </div>
 
           {/* ── CAPABILITY STRIP ── */}
           <div style={{
             display: "flex", flexWrap: "wrap", justifyContent: "center",
-            gap: isMobile ? 12 : 24, marginBottom: 12,
+            gap: isMobile ? 8 : 16, marginBottom: 8,
             animation: "fadeIn 0.5s ease-out",
           }}>
             {capabilities.map(cap => (
-              <div key={cap} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div key={cap} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{
-                  width: 6, height: 6, borderRadius: "50%",
+                  width: 5, height: 5, borderRadius: "50%",
                   background: "var(--accent)", opacity: 0.6,
                 }} />
                 <span style={{
-                  fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5,
+                  fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1.5,
                   textTransform: "uppercase" as const, color: "var(--text-secondary)",
                 }}>
                   {cap}
@@ -313,20 +313,20 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           {!isLoggedIn && !demoUsed && (
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 16px", borderRadius: 10,
+              padding: "8px 14px", borderRadius: 8,
               border: "1px solid var(--mode-sim-border)",
               background: "var(--mode-sim-bg)",
-              marginBottom: 12, maxWidth: 720, width: "100%",
+              marginBottom: 10, width: "100%",
               animation: "fadeIn 0.5s ease-out",
             }}>
-              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                See Simulate in action — watch 15 AI agents debate
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                See Simulate in action — 15 AI agents debate a real scenario
               </span>
               <button onClick={runDemoSimulation} style={{
-                padding: "6px 16px", borderRadius: 50,
+                padding: "5px 14px", borderRadius: 50,
                 background: "var(--mode-sim)", color: "#000",
-                fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
-                whiteSpace: "nowrap" as const,
+                fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                whiteSpace: "nowrap" as const, marginLeft: 12,
               }}>
                 Run demo
               </button>
@@ -390,9 +390,9 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               }}
               placeholder="I want to open a coffee franchise in 3 new cities with a $200K budget..."
               style={{
-                width: "100%", minHeight: 64, padding: 0,
+                width: "100%", minHeight: 56, padding: 0,
                 background: "transparent", border: "none",
-                color: "var(--text-primary)", fontSize: 15, lineHeight: 1.6,
+                color: "var(--text-primary)", fontSize: 14, lineHeight: 1.5,
                 resize: "none", outline: "none",
                 fontFamily: "var(--font-sans)",
                 opacity: enhancing ? 0.5 : 1, transition: "opacity 150ms ease",
@@ -460,84 +460,43 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             </div>
           </div>
 
-          {/* ── AGENT PREVIEW STRIP ── */}
-          <div style={{
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: isMobile ? "flex-start" : "center",
-            justifyContent: "space-between",
-            padding: "8px 12px",
-            border: "1px solid var(--divider)",
-            borderRadius: 12,
-            background: "var(--card-bg)",
-            marginBottom: 8,
-            gap: isMobile ? 12 : 10,
-            animation: "fadeIn 0.7s ease-out",
-          }}>
-            {/* Left: avatars + text */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* ── AGENT PREVIEW STRIP (compact) ── */}
+          {!isMobile && (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              gap: 8, padding: "6px 0", marginBottom: 4,
+              animation: "fadeIn 0.7s ease-out",
+            }}>
               <div style={{ display: "flex", alignItems: "center" }}>
                 {agentAvatars.map((av, i) => (
                   <div key={av.letter} style={{
-                    width: 28, height: 28, borderRadius: "50%",
+                    width: 22, height: 22, borderRadius: "50%",
                     background: av.bg, display: "flex",
                     alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 600, color: av.color,
+                    fontSize: 8, fontWeight: 600, color: av.color,
                     border: "2px solid var(--bg-primary)",
-                    marginLeft: i > 0 ? -6 : 0,
+                    marginLeft: i > 0 ? -5 : 0,
                     zIndex: 5 - i,
                   }}>
                     {av.letter}
                   </div>
                 ))}
                 <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
+                  width: 22, height: 22, borderRadius: "50%",
                   background: "var(--card-border)", display: "flex",
                   alignItems: "center", justifyContent: "center",
-                  fontSize: 9, fontWeight: 500, color: "var(--text-secondary)",
+                  fontSize: 8, fontWeight: 500, color: "var(--text-secondary)",
                   border: "2px solid var(--bg-primary)",
-                  marginLeft: -6,
+                  marginLeft: -5,
                 }}>
                   +10
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>15 agents</span> will analyze your scenario
-              </div>
+              <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
+                <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>15 agents</span> · 3 rounds · 5 risk axes
+              </span>
             </div>
-
-            {/* Right: stats */}
-            <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{
-                  fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 600,
-                  color: "rgba(212,175,55,0.7)",
-                }}>
-                  3
-                </div>
-                <div style={{
-                  fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: 1,
-                  textTransform: "uppercase" as const, color: "var(--text-tertiary)",
-                }}>
-                  ROUNDS
-                </div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{
-                  fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 600,
-                  color: "rgba(212,175,55,0.7)",
-                }}>
-                  5
-                </div>
-                <div style={{
-                  fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: 1,
-                  textTransform: "uppercase" as const, color: "var(--text-tertiary)",
-                }}>
-                  RISK AXES
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* ── CTA BUTTON ── */}
           <div style={{ textAlign: "center", animation: "fadeIn 0.8s ease-out" }}>

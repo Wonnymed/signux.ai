@@ -36,13 +36,13 @@ export default function InstallPrompt() {
 
   return (
     <div style={{
-      position: "fixed", bottom: 12, left: "50%", transform: "translateX(-50%)",
+      position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
       zIndex: 50,
-      display: "flex", alignItems: "center", gap: 10,
-      padding: "12px 16px", borderRadius: 12,
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "8px 14px", borderRadius: 50,
       background: "var(--bg-secondary, #141414)", border: "1px solid var(--border-secondary)",
       boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-      fontSize: 13, color: "var(--text-secondary)",
+      fontSize: 11, color: "var(--text-secondary)",
       maxWidth: 320,
     }}>
       <Download size={16} style={{ color: "var(--accent)" }} />
