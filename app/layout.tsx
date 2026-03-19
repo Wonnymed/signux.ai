@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
+import InstallPrompt from "./components/InstallPrompt";
 
 export const metadata: Metadata = {
   title: "Signux AI — Think through any business decision",
@@ -49,7 +51,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ServiceWorkerRegister />
+        <InstallPrompt />
+      </body>
     </html>
   );
 }
