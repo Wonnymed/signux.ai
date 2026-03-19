@@ -41,7 +41,6 @@ import { useProjects } from "../lib/useProjects";
 
 const ProjectKnowledge = dynamic(() => import("../components/ProjectKnowledge"), { ssr: false });
 
-const Paywall = dynamic(() => import("../components/Paywall"), { ssr: false });
 const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false });
 const ResearchView = dynamic(() => import("../components/ResearchView"), { ssr: false });
 const LaunchpadView = dynamic(() => import("../components/LaunchpadView"), { ssr: false });
@@ -784,24 +783,6 @@ export default function ChatPage() {
     localDeleteConversation(convId);
   }, [conversationId, authUser]);
 
-  /* ═══ Tier Access Check ═══ */
-  const MODE_TIER: Record<string, string[]> = {
-    chat: ["free", "pro", "max", "founding"],
-    simulate: ["pro", "max", "founding"],
-    research: ["pro", "max", "founding"],
-    launchpad: ["pro", "max", "founding"],
-    globalops: ["max", "founding"],
-    invest: ["max", "founding"],
-  };
-  const canAccessMode = (m: string) => {
-    const allowed = MODE_TIER[m] || ["free"];
-    return allowed.includes(tier);
-  };
-  const getRequiredTier = (m: string) => {
-    if (["globalops", "invest"].includes(m)) return "max";
-    return "pro";
-  };
-
   /* Close sidebar on mobile */
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
@@ -910,18 +891,7 @@ export default function ChatPage() {
           </div>
         )}
         <AnimatePresence mode="wait">
-          {mode !== "chat" && !canAccessMode(mode) ? (
-            <motion.div
-              key="paywall"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-              style={{ flex: 1, minHeight: 0 }}
-            >
-              <Paywall requiredTier={getRequiredTier(mode)} />
-            </motion.div>
-          ) : mode === "research" ? (
+          {mode === "research" ? (
             <motion.div
               key="research"
               initial={{ opacity: 0, y: 6 }}
@@ -935,6 +905,7 @@ export default function ChatPage() {
                 onContinueInChat={continueResearchInChat}
                 onSetMode={setMode}
                 isLoggedIn={isLoggedIn}
+                tier={tier}
               />
             </motion.div>
           ) : mode === "simulate" ? (
@@ -962,6 +933,7 @@ export default function ChatPage() {
                 onSetMode={setMode}
                 lang={lang}
                 isLoggedIn={isLoggedIn}
+                tier={tier}
               />
             </motion.div>
           ) : mode === "launchpad" ? (
@@ -973,7 +945,7 @@ export default function ChatPage() {
               transition={{ duration: 0.15 }}
               style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}
             >
-              <LaunchpadView lang={lang} userId={authUser?.id} onSetMode={setMode} />
+              <LaunchpadView lang={lang} userId={authUser?.id} onSetMode={setMode} isLoggedIn={isLoggedIn} tier={tier} />
             </motion.div>
           ) : mode === "globalops" ? (
             <motion.div
@@ -984,7 +956,7 @@ export default function ChatPage() {
               transition={{ duration: 0.15 }}
               style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}
             >
-              <GlobalOpsView lang={lang} onSetMode={setMode} />
+              <GlobalOpsView lang={lang} onSetMode={setMode} isLoggedIn={isLoggedIn} tier={tier} />
             </motion.div>
           ) : mode === "invest" ? (
             <motion.div
@@ -995,7 +967,7 @@ export default function ChatPage() {
               transition={{ duration: 0.15 }}
               style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}
             >
-              <InvestView lang={lang} onSetMode={setMode} />
+              <InvestView lang={lang} onSetMode={setMode} isLoggedIn={isLoggedIn} tier={tier} />
             </motion.div>
           ) : (
             <motion.div

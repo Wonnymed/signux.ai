@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Rocket, ChevronRight, ChevronLeft, Check, Shield, AlertTriangle, Target, TrendingUp, Brain, Zap, Copy, RotateCcw, FileText, Calendar, DollarSign, Users, ChevronDown, ChevronUp, X, Wand2, Loader2 } from "lucide-react";
+import { Rocket, ChevronRight, ChevronLeft, Check, Shield, AlertTriangle, Target, TrendingUp, Brain, Zap, Copy, RotateCcw, FileText, Calendar, DollarSign, Users, ChevronDown, ChevronUp, X, Wand2, Loader2, Lock } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { useEnhance } from "../lib/useEnhance";
@@ -106,11 +106,12 @@ const AGENT_ICONS: Record<string, any> = {
 const AGENT_NAMES = ["Market Analyst", "Financial Advisor", "Risk Assessor", "Customer Expert", "Competition Analyst", "Devil's Advocate"];
 
 /* ═══ Component ═══ */
-export default function LaunchpadView({ lang, userId, onSetMode }: { lang: string; userId?: string; onSetMode?: (m: Mode) => void }) {
+export default function LaunchpadView({ lang, userId, onSetMode, isLoggedIn, tier }: { lang: string; userId?: string; onSetMode?: (m: Mode) => void; isLoggedIn?: boolean; tier?: string }) {
   const isMobile = useIsMobile();
   const { enhance, enhancing, wasEnhanced } = useEnhance("launchpad");
   const [phase, setPhase] = useState<LaunchpadPhase>("welcome");
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Discovery answers
   const [skills, setSkills] = useState("");
@@ -193,6 +194,8 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
   };
 
   const runDiscovery = async () => {
+    if (!isLoggedIn) { window.location.href = "/signup"; return; }
+    if (tier === "free") { setShowPaywall(true); return; }
     setPhase("analyzing");
     setError("");
     try {
@@ -775,6 +778,7 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
             </button>
           </div>
         </div>
+        <LaunchpadPaywall show={showPaywall} onClose={() => setShowPaywall(false)} />
       </div>
     );
   }
@@ -1979,5 +1983,40 @@ export default function LaunchpadView({ lang, userId, onSetMode }: { lang: strin
     );
   }
 
-  return null;
+  return <LaunchpadPaywall show={showPaywall} onClose={() => setShowPaywall(false)} />;
+}
+
+function LaunchpadPaywall({ show, onClose }: { show: boolean; onClose: () => void }) {
+  if (!show) return null;
+  return (
+    <div style={{
+      position: "fixed", inset: 0, display: "flex",
+      alignItems: "center", justifyContent: "center",
+      background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+      zIndex: 100,
+    }}>
+      <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
+        <Lock size={32} style={{ color: "#14B8A6", marginBottom: 16 }} />
+        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
+          Upgrade to Pro
+        </div>
+        <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
+          Launch your business with AI-powered discovery, validation, and tracking
+        </div>
+        <a href="/pricing" style={{
+          display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+          background: "#14B8A6", color: "#fff", fontWeight: 600,
+          fontSize: 13, textDecoration: "none",
+        }}>
+          See plans
+        </a>
+        <button onClick={onClose} style={{
+          display: "block", margin: "12px auto 0", background: "none",
+          border: "none", color: "var(--text-tertiary)", fontSize: 12, cursor: "pointer",
+        }}>
+          Maybe later
+        </button>
+      </div>
+    </div>
+  );
 }

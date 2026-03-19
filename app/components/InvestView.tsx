@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { TrendingUp, ArrowDown, Wand2, Loader2 } from "lucide-react";
+import { TrendingUp, ArrowDown, Wand2, Loader2, Lock } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { getProfile } from "../lib/profile";
@@ -69,12 +69,13 @@ function CandlestickBG() {
 }
 
 /* ═══ Main Component ═══ */
-export default function InvestView({ lang, onSetMode }: { lang: string; onSetMode?: (m: Mode) => void }) {
+export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang: string; onSetMode?: (m: Mode) => void; isLoggedIn?: boolean; tier?: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
   const isMobile = useIsMobile();
   const { enhance, enhancing, wasEnhanced } = useEnhance("invest");
@@ -127,6 +128,8 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
   const send = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg || loading) return;
+    if (!isLoggedIn) { window.location.href = "/signup"; return; }
+    if (!["max", "founding"].includes(tier || "")) { setShowPaywall(true); return; }
 
     const userMsg: Message = { role: "user", content: msg, timestamp: Date.now() };
     const newMessages = [...messages, userMsg];
@@ -495,6 +498,37 @@ export default function InvestView({ lang, onSetMode }: { lang: string; onSetMod
           />
         </div>
       </div>
+      {showPaywall && (
+        <div style={{
+          position: "fixed", inset: 0, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+          zIndex: 100,
+        }}>
+          <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
+            <Lock size={32} style={{ color: "#A855F7", marginBottom: 16 }} />
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
+              Upgrade to Max
+            </div>
+            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
+              Access quantitative investment analysis with expected value, Kelly criterion, and DCF models
+            </div>
+            <a href="/pricing" style={{
+              display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+              background: "#A855F7", color: "#fff", fontWeight: 600,
+              fontSize: 13, textDecoration: "none",
+            }}>
+              See plans
+            </a>
+            <button onClick={() => setShowPaywall(false)} style={{
+              display: "block", margin: "12px auto 0", background: "none",
+              border: "none", color: "var(--text-tertiary)", fontSize: 12, cursor: "pointer",
+            }}>
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

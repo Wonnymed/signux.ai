@@ -4,7 +4,7 @@ import {
   Check, AlertTriangle, Download, ChevronDown, ChevronRight,
   FileText, RotateCcw, MessageSquare, BarChart3, Network,
   Globe, Users, Clock, Zap, Search, Shield, Activity, Play,
-  Wand2, Loader2, Eye, X, Share2,
+  Wand2, Loader2, Eye, X, Share2, Lock,
 } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -57,6 +57,7 @@ type SimulationEngineProps = {
   onSetMode?: (m: Mode) => void;
   lang?: string;
   isLoggedIn?: boolean;
+  tier?: string;
 };
 
 function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { score: number; label: string; color: string } {
@@ -81,7 +82,7 @@ function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { sco
 }
 
 export default function SimulationEngine(props: SimulationEngineProps) {
-  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang, isLoggedIn } = props;
+  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang, isLoggedIn, tier } = props;
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [agentFilter, setAgentFilter] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // God's Eye state
   const [godEyeOpen, setGodEyeOpen] = useState(false);
@@ -568,7 +570,11 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               </button>
             )}
             <button
-              onClick={onSimulate}
+              onClick={() => {
+                if (!isLoggedIn) { window.location.href = "/signup"; return; }
+                if (tier === "free") { setShowPaywall(true); return; }
+                onSimulate();
+              }}
               disabled={!simScenario.trim() || simStarting}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
@@ -981,7 +987,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   };
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: 32 }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: 32, position: "relative" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         {/* Header */}
         <div style={{
@@ -1443,6 +1449,38 @@ export default function SimulationEngine(props: SimulationEngineProps) {
                 })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showPaywall && (
+        <div style={{
+          position: "absolute", inset: 0, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+          zIndex: 50, borderRadius: 16,
+        }}>
+          <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
+            <Lock size={32} style={{ color: "var(--accent)", marginBottom: 16 }} />
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
+              Upgrade to Pro
+            </div>
+            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
+              Run unlimited simulations with 15 AI agents analyzing your scenario
+            </div>
+            <a href="/pricing" style={{
+              display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+              background: "var(--accent)", color: "#000", fontWeight: 600,
+              fontSize: 13, textDecoration: "none",
+            }}>
+              See plans
+            </a>
+            <button onClick={() => setShowPaywall(false)} style={{
+              display: "block", margin: "12px auto 0", background: "none",
+              border: "none", color: "var(--text-tertiary)", fontSize: 12, cursor: "pointer",
+            }}>
+              Maybe later
+            </button>
           </div>
         </div>
       )}

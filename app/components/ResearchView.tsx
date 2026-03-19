@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Search, Check, FileText, Download, Package, Shield, BarChart3, Globe, Play, RotateCcw, MessageSquare, Wand2, Loader2, Share2 } from "lucide-react";
+import { Search, Check, FileText, Download, Package, Shield, BarChart3, Globe, Play, RotateCcw, MessageSquare, Wand2, Loader2, Share2, Lock } from "lucide-react";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -18,6 +18,7 @@ type ResearchViewProps = {
   onContinueInChat?: (report: string) => void;
   onSetMode?: (m: Mode) => void;
   isLoggedIn?: boolean;
+  tier?: string;
 };
 
 /* Custom Search+ icon */
@@ -50,10 +51,11 @@ const CONSTELLATION_LINES = [
   { top: "70%", right: "10%", width: "22%", rotate: "8deg", delay: 1.6 },
 ];
 
-export default function ResearchView({ lang, onContinueInChat, onSetMode, isLoggedIn }: ResearchViewProps) {
+export default function ResearchView({ lang, onContinueInChat, onSetMode, isLoggedIn, tier }: ResearchViewProps) {
   const [phase, setPhase] = useState<"input" | "running" | "complete">("input");
   const [query, setQuery] = useState("");
   const [isDemo, setIsDemo] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [searchPlan, setSearchPlan] = useState<string[]>([]);
   const [currentSearchIndex, setCurrentSearchIndex] = useState(-1);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -108,9 +110,13 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
     "Synthesize report",
   ];
 
-  const startResearch = async (queryOverride?: string) => {
+  const startResearch = async (queryOverride?: string, skipPaywall?: boolean) => {
     const q = queryOverride || query;
     if (!q.trim() || loading) return;
+    if (!skipPaywall) {
+      if (!isLoggedIn) { window.location.href = "/signup"; return; }
+      if (tier === "free") { setShowPaywall(true); return; }
+    }
     if (queryOverride) setQuery(queryOverride);
     setLoading(true);
     setPhase("running");
@@ -332,7 +338,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
                   const demoQuery = "Market analysis for the meal prep delivery industry in the US: market size, growth trends, consumer demographics, competitive landscape, unit economics, and entry barriers for a new player in 2026";
                   setIsDemo(true);
                   if (typeof window !== "undefined") localStorage.setItem("signux_research_demo_used", "true");
-                  startResearch(demoQuery);
+                  startResearch(demoQuery, true);
                 }} style={{
                   padding: "10px 28px", borderRadius: 50,
                   background: "#6B8AFF", color: "#fff",
@@ -692,6 +698,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
     <div style={{
       flex: 1, overflowY: "auto",
       padding: isMobile ? "24px 16px" : "40px 32px",
+      position: "relative",
     }}>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         {/* Header */}
@@ -798,6 +805,38 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
           </div>
         )}
       </div>
+
+      {showPaywall && (
+        <div style={{
+          position: "absolute", inset: 0, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+          zIndex: 50, borderRadius: 16,
+        }}>
+          <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
+            <Lock size={32} style={{ color: "#6B8AFF", marginBottom: 16 }} />
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
+              Upgrade to Pro
+            </div>
+            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
+              Run unlimited deep research with AI-powered multi-source analysis
+            </div>
+            <a href="/pricing" style={{
+              display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+              background: "#6B8AFF", color: "#fff", fontWeight: 600,
+              fontSize: 13, textDecoration: "none",
+            }}>
+              See plans
+            </a>
+            <button onClick={() => setShowPaywall(false)} style={{
+              display: "block", margin: "12px auto 0", background: "none",
+              border: "none", color: "var(--text-tertiary)", fontSize: 12, cursor: "pointer",
+            }}>
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
