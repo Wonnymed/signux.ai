@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Zap, Search, Rocket, Globe, TrendingUp, Wrench, CircleSlash, Copy, Users } from "lucide-react";
-import { SignuxIcon, SignuxWordmark } from "./components/SignuxIcon";
+import { SignuxIcon } from "./components/SignuxIcon";
 import SignuxFooter from "./components/SignuxFooter";
 
 /* ═══ Fade-in on scroll ═══ */
@@ -290,7 +290,25 @@ export default function LandingPage() {
         ))}
 
         <div style={{ position: "relative", zIndex: 1 }}>
-          <SignuxWordmark fontSize={isMobile ? 40 : 56} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 0 }}>
+            <SignuxIcon size={isMobile ? 44 : 52} variant="gold" />
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span style={{
+                fontFamily: "var(--font-brand)", fontWeight: 700,
+                fontSize: isMobile ? 40 : 56, letterSpacing: 6,
+                color: "var(--text-primary)", lineHeight: 1,
+              }}>
+                SIGNUX
+              </span>
+              <span style={{
+                fontFamily: "var(--font-brand)", fontWeight: 300,
+                fontSize: isMobile ? 40 : 56, letterSpacing: 4,
+                color: "var(--text-primary)", opacity: 0.22, lineHeight: 1,
+              }}>
+                AI
+              </span>
+            </div>
+          </div>
           <div style={{ width: 48, height: 1.5, background: "var(--accent)", margin: "8px auto 0" }} />
 
           <h1 style={{
