@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
+import { getUserFromRequest, checkUsageLimit, incrementUsage } from "../../lib/usage";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -11,6 +12,12 @@ export async function POST(req: NextRequest) {
   if (tokenError) return tokenError;
   const rateLimitError = applyRateLimit(req, 5, 60000);
   if (rateLimitError) return rateLimitError;
+
+  // Usage check
+  const userId = await getUserFromRequest(req);
+  const usageError = await checkUsageLimit(userId, "research");
+  if (usageError) return usageError;
+  if (userId) incrementUsage(userId, "researches").catch(() => {});
 
   const { query, lang } = await req.json();
   const encoder = new TextEncoder();

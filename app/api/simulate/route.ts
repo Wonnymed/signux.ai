@@ -3,6 +3,7 @@ export const maxDuration = 300;
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
+import { getUserFromRequest, checkUsageLimit, incrementUsage } from "../../lib/usage";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const BATCH_SIZE = 4;
@@ -266,6 +267,12 @@ export async function POST(req: NextRequest) {
   if (tokenError) return tokenError;
   const rateLimitError = applyRateLimit(req, 5, 60000);
   if (rateLimitError) return rateLimitError;
+
+  // Usage check
+  const userId = await getUserFromRequest(req);
+  const usageError = await checkUsageLimit(userId, "simulate");
+  if (usageError) return usageError;
+  if (userId) incrementUsage(userId, "simulations").catch(() => {});
 
   const { scenario, context } = await req.json();
   const encoder = new TextEncoder();

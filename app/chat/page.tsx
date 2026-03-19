@@ -33,10 +33,12 @@ import {
 } from "../lib/conversationStore";
 
 import { useIsMobile } from "../lib/useIsMobile";
+import { useUserTier } from "../lib/useUserTier";
 import type { FileAttachment } from "../components/ChatInput";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
 import { signuxFetch } from "../lib/api-client";
 
+const Paywall = dynamic(() => import("../components/Paywall"), { ssr: false });
 const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false });
 const ResearchView = dynamic(() => import("../components/ResearchView"), { ssr: false });
 const LaunchpadView = dynamic(() => import("../components/LaunchpadView"), { ssr: false });
@@ -199,6 +201,7 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showCheckinReminder, setShowCheckinReminder] = useState(false);
   const isMobile = useIsMobile();
+  const { tier, usage, limits, refresh: refreshUsage } = useUserTier(!!authUser);
 
   /* Refs */
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -762,6 +765,24 @@ export default function ChatPage() {
     localDeleteConversation(convId);
   }, [conversationId, authUser]);
 
+  /* ═══ Tier Access Check ═══ */
+  const MODE_TIER: Record<string, string[]> = {
+    chat: ["free", "pro", "max", "founding"],
+    simulate: ["pro", "max", "founding"],
+    research: ["pro", "max", "founding"],
+    launchpad: ["pro", "max", "founding"],
+    globalops: ["max", "founding"],
+    invest: ["max", "founding"],
+  };
+  const canAccessMode = (m: string) => {
+    const allowed = MODE_TIER[m] || ["free"];
+    return allowed.includes(tier);
+  };
+  const getRequiredTier = (m: string) => {
+    if (["globalops", "invest"].includes(m)) return "max";
+    return "pro";
+  };
+
   /* Close sidebar on mobile */
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
@@ -859,7 +880,18 @@ export default function ChatPage() {
           </div>
         )}
         <AnimatePresence mode="wait">
-          {mode === "research" ? (
+          {mode !== "chat" && !canAccessMode(mode) ? (
+            <motion.div
+              key="paywall"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              style={{ flex: 1, minHeight: 0 }}
+            >
+              <Paywall requiredTier={getRequiredTier(mode)} />
+            </motion.div>
+          ) : mode === "research" ? (
             <motion.div
               key="research"
               initial={{ opacity: 0, y: 6 }}
@@ -950,6 +982,21 @@ export default function ChatPage() {
                   onSkip={() => { localStorage.setItem("signux_onboarded", "true"); setShowOnboarding(false); }}
                 />
               ) : (
+              <>
+              {tier === "free" && isLoggedIn && limits.chat_daily < Infinity && (
+                <div style={{
+                  fontSize: 11, color: "var(--text-tertiary)", textAlign: "center",
+                  padding: "6px 0 0",
+                }}>
+                  {usage.chat_today} of {limits.chat_daily} free messages today
+                  <span
+                    onClick={() => window.location.href = "/pricing"}
+                    style={{ color: "var(--accent)", cursor: "pointer", marginLeft: 8, fontWeight: 600 }}
+                  >
+                    Upgrade
+                  </span>
+                </div>
+              )}
               <ChatArea
                 messages={messages}
                 loading={loading}
@@ -971,6 +1018,7 @@ export default function ChatPage() {
                 mode={mode}
                 onDecisionDetected={handleDecisionDetected}
               />
+              </>
               )}
             </motion.div>
           )}
