@@ -1,6 +1,7 @@
 "use client";
 import { Zap, Search, Rocket, Globe, TrendingUp, ChevronDown, Wrench, CircleSlash } from "lucide-react";
 import RealityCheck from "./RealityCheck";
+import ReverseEngineer from "./ReverseEngineer";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
@@ -397,6 +398,12 @@ export default function WelcomeScreen({
       <Divider />
       <section style={{ padding: isMobile ? "48px 16px" : "64px 24px", maxWidth: 880, margin: "0 auto" }}>
         <RealityCheck lang={lang || "en"} />
+      </section>
+
+      {/* ════════════════ REVERSE ENGINEER ════════════════ */}
+      <Divider />
+      <section style={{ padding: isMobile ? "48px 16px" : "64px 24px", maxWidth: 880, margin: "0 auto" }}>
+        <ReverseEngineer lang={lang || "en"} />
       </section>
 
       {/* ════════════════ MODE SECTIONS ════════════════ */}

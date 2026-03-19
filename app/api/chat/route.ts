@@ -457,7 +457,31 @@ export async function POST(req: NextRequest) {
     const lastUserText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : "";
     const isRC = mode === "chat" || !mode ? isRealityCheckQuestion(lastUserText) : false;
 
-    const fullSystemPrompt = baseSystemPrompt + contextPrefix + (isRC ? RC_SYSTEM_INJECT : "");
+    // Detect if the last message contains file attachments
+    const lastMsgContent = lastUserMsg?.content;
+    const hasAttachment = Array.isArray(lastMsgContent) && lastMsgContent.some((c: any) => c.type === "image" || c.type === "document" || (c.type === "text" && c.text?.startsWith("[File:")));
+
+    const SMART_ATTACHMENT_INJECT = hasAttachment ? `
+
+IMPORTANT: The user uploaded a file. DO NOT just describe or summarize its contents.
+Instead, ANALYZE it like a senior business consultant would:
+
+1. KEY FINDINGS: What are the 3-5 most important things in this document/data?
+2. RED FLAGS: What's concerning, risky, or problematic? Be specific.
+3. MISSING ELEMENTS: What SHOULD be in this document but ISN'T?
+4. ACTIONABLE RECOMMENDATIONS: 3-5 specific actions to take based on this file.
+5. VERDICT: One sentence — is this good, average, or needs work?
+
+If it's a CONTRACT: Flag risky clauses, unfavorable terms, missing protections, unusual language. Compare to market standard.
+If it's FINANCIAL DATA: Identify trends, anomalies, projections. Calculate key ratios. Flag concerning patterns.
+If it's a PITCH DECK: Critique each slide as an investor. What convinces? What doesn't? What's missing?
+If it's a BUSINESS PLAN: Check assumptions against reality. Compare projections to base rates.
+If it's a SCREENSHOT of metrics: Analyze the dashboard, identify what needs attention, suggest optimizations.
+If it's an EMAIL/MESSAGE: Analyze tone, suggest improvements, flag issues.
+
+End with a section: "## What to do next" with numbered action items.` : "";
+
+    const fullSystemPrompt = baseSystemPrompt + contextPrefix + SMART_ATTACHMENT_INJECT + (isRC ? RC_SYSTEM_INJECT : "");
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream({

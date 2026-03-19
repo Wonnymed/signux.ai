@@ -459,6 +459,23 @@ export default function ChatInput({
           </div>
         )}
 
+        {/* Smart Analysis badge */}
+        {attachments.length > 0 && (
+          <div style={{
+            fontSize: 11,
+            color: "var(--accent)",
+            fontFamily: "var(--font-mono)",
+            padding: "4px 0 2px",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            letterSpacing: 0.3,
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Smart Analysis active — file will be analyzed with recommendations
+          </div>
+        )}
+
         {/* Textarea */}
         <textarea
           ref={ref}
