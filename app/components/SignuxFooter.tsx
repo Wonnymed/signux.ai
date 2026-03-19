@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { SignuxIcon } from "./SignuxIcon";
 import { useIsMobile } from "../lib/useIsMobile";
 import type { Mode } from "../lib/types";
@@ -12,23 +13,24 @@ const MODE_MAP: Record<string, Mode> = {
   "Invest": "invest",
 };
 
-const FOOTER_COLS = [
+type FooterLink = { text: string; href?: string; mode?: string; badge?: string };
+
+const FOOTER_COLS: { header: string; links: FooterLink[] }[] = [
   { header: "PRODUCT", links: [
-    { text: "Chat" }, { text: "Simulate" }, { text: "Intel" },
-    { text: "Launchpad", badge: "NEW" }, { text: "Global Ops" },
-    { text: "Invest" }, { text: "Pricing" },
-  ]},
-  { header: "SOLUTIONS", links: [
-    { text: "For Startups" }, { text: "For Agencies" }, { text: "For E-commerce" },
-    { text: "For Freelancers" }, { text: "For Importers" }, { text: "For Investors" },
+    { text: "Chat", mode: "Chat" },
+    { text: "Simulate", mode: "Simulate" },
+    { text: "Intel", mode: "Intel" },
+    { text: "Launchpad", mode: "Launchpad" },
+    { text: "Global Ops", mode: "Global Ops" },
+    { text: "Invest", mode: "Invest" },
+    { text: "Pricing", href: "/pricing" },
   ]},
   { header: "LEARN", links: [
-    { text: "Blog" }, { text: "Use Cases" }, { text: "Templates" },
-    { text: "Whitepaper", badge: "NEW" }, { text: "Help Center" }, { text: "Changelog" },
+    { text: "Use Cases", href: "/use-cases" },
+    { text: "Changelog", href: "/changelog" },
   ]},
   { header: "COMPANY", links: [
-    { text: "About" }, { text: "Affiliates" }, { text: "Careers" },
-    { text: "Contact" }, { text: "API Docs" },
+    { text: "About", href: "/about" },
   ]},
 ];
 
@@ -43,7 +45,7 @@ export default function SignuxFooter({ onSetMode }: { onSetMode?: (m: Mode) => v
     }}>
       <div style={{
         display: "grid",
-        gridTemplateColumns: isMobile ? "1fr 1fr" : "1.5fr 1fr 1fr 1fr 1fr",
+        gridTemplateColumns: isMobile ? "1fr 1fr" : "1.5fr 1fr 1fr 1fr",
         gap: isMobile ? 24 : 32, marginBottom: 40,
       }}>
         {/* Brand */}
@@ -60,7 +62,7 @@ export default function SignuxFooter({ onSetMode }: { onSetMode?: (m: Mode) => v
           <div style={{
             fontSize: 12, color: "var(--text-tertiary)", lineHeight: 1.5, maxWidth: 200,
           }}>
-            Think through any business decision before you make it.
+            Build smarter. Launch faster. Decide with confidence.
           </div>
         </div>
 
@@ -74,7 +76,35 @@ export default function SignuxFooter({ onSetMode }: { onSetMode?: (m: Mode) => v
               {col.header}
             </div>
             {col.links.map((link, i) => {
-              const mode = MODE_MAP[link.text];
+              const mode = link.mode ? MODE_MAP[link.mode] : undefined;
+              const isLink = !!link.href;
+
+              if (isLink) {
+                return (
+                  <Link
+                    key={i}
+                    href={link.href!}
+                    style={{
+                      display: "block", fontSize: 12, color: "var(--text-secondary)",
+                      padding: "3px 0", textDecoration: "none", transition: "color 150ms",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; }}
+                  >
+                    {link.text}
+                    {link.badge && (
+                      <span style={{
+                        fontFamily: "var(--font-mono)", fontSize: 7, letterSpacing: 1,
+                        background: "var(--accent-soft)", color: "var(--accent)",
+                        padding: "1px 4px", borderRadius: 3, marginLeft: 4,
+                      }}>
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              }
+
               return (
                 <div
                   key={i}
@@ -113,9 +143,8 @@ export default function SignuxFooter({ onSetMode }: { onSetMode?: (m: Mode) => v
           © 2026 Signux AI. All rights reserved.
         </div>
         <div style={{ display: "flex", gap: 16 }}>
-          {["Terms", "Privacy", "Security"].map(t => (
-            <span key={t} style={{ fontSize: 11, color: "var(--text-tertiary)", cursor: "pointer" }}>{t}</span>
-          ))}
+          <Link href="/terms" style={{ fontSize: 11, color: "var(--text-tertiary)", textDecoration: "none" }}>Terms</Link>
+          <Link href="/terms" style={{ fontSize: 11, color: "var(--text-tertiary)", textDecoration: "none" }}>Privacy</Link>
         </div>
       </div>
     </footer>

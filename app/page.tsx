@@ -56,7 +56,6 @@ const MODE_SECTIONS = [
     title: "Test your idea before you risk real money",
     desc: "Describe your business scenario. 15 AI specialists will debate it from every angle — finding the risks you didn't think of, the competitors you didn't see, and the numbers that actually matter. Like having a board of advisors that disagrees with each other.",
     features: ["15 AI specialists", "Find hidden risks", "Real numbers", "What-if testing", "Honest verdict"],
-    domains: "game theory · mechanism design · scenario planning · risk modeling · causal reasoning + 12 more",
     preview: SimulatePreview,
   },
   {
@@ -64,7 +63,6 @@ const MODE_SECTIONS = [
     title: "See what others miss in every deal, threat, and decision",
     desc: "Is that partnership offer legit? How will your competitors react? What's the biggest risk to your business right now? 7 specialized tools that analyze deals, detect lies, simulate competition, and prepare you for tough conversations.",
     features: ["Catch red flags", "Predict competitor moves", "Prepare for negotiations", "Map your risks", "Plan for uncertainty", "Research anything"],
-    domains: "deception detection · threat modeling · negotiation warfare · actor intelligence + 18 more",
     preview: IntelPreview,
   },
   {
@@ -72,7 +70,6 @@ const MODE_SECTIONS = [
     title: "Your first $1,000 in 90 days",
     desc: "Tell us what you're good at and how much you can invest. We'll find the best business for you, test it with AI before you start, create your 90-day plan, and check in every week to keep you on track. Like a co-founder that never sleeps.",
     features: ["Find your best business", "AI-tested before you start", "90-day plan", "Weekly check-ins", "Adapts as you grow"],
-    domains: "customer intel · GTM · pricing · operating systems · founder finance + 15 more",
     preview: LaunchpadPreview,
   },
   {
@@ -80,7 +77,6 @@ const MODE_SECTIONS = [
     title: "Expand anywhere. Know the rules before you break them.",
     desc: "Setting up in a new country? Importing from Asia? Need a tax-efficient structure? Get specific guidance for 100+ jurisdictions — not generic advice, but the exact steps, costs, and risks for YOUR situation.",
     features: ["100+ jurisdictions", "Tax optimization", "Import/export", "Crypto compliance", "Step-by-step guidance"],
-    domains: "geopolitics · jurisdictions · crypto opsec · trade routes · compliance + 20 more",
     preview: GlobalOpsPreview,
   },
   {
@@ -88,7 +84,6 @@ const MODE_SECTIONS = [
     title: "Should you invest? Get the real numbers.",
     desc: "Paste a deal, describe an opportunity, or evaluate a startup. Get expected value, risk scores, and an honest verdict — the same math hedge funds use, explained in plain language. Stop guessing. Start calculating.",
     features: ["Expected value", "Risk scores", "Honest verdict", "Plain language", "Stress testing"],
-    domains: "pricing economics · risk intel · decision engines · base rates · founder finance + 10 more",
     preview: InvestPreview,
   },
 ];
@@ -388,12 +383,6 @@ export default function LandingPage() {
                           <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
                         ))}
                       </div>
-                      <div style={{
-                        fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)",
-                        marginBottom: 24, opacity: 0.3, letterSpacing: 0.5,
-                      }}>
-                        Powered by: {sec.domains}
-                      </div>
                       <Link href="/chat" style={{
                         display: "inline-flex", alignItems: "center", gap: 8,
                         padding: "10px 24px", borderRadius: 50,
@@ -561,12 +550,6 @@ export default function LandingPage() {
                       {sec.features.map(f => (
                         <span key={f} style={{ fontSize: 11, color: "var(--text-tertiary)", padding: "4px 10px", borderRadius: 20, border: "1px solid var(--card-border)" }}>{f}</span>
                       ))}
-                    </div>
-                    <div style={{
-                      fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)",
-                      marginBottom: 24, opacity: 0.5, letterSpacing: 0.5,
-                    }}>
-                      Powered by: {sec.domains}
                     </div>
                     <Link href="/chat" style={{
                       display: "inline-flex", alignItems: "center", gap: 8,

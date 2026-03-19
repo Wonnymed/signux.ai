@@ -163,7 +163,7 @@ export default function WelcomeScreen({
             textTransform: "uppercase", color: "var(--text-tertiary)",
             marginBottom: 8, opacity: 0.5,
           }}>
-            Quick starts powered by intelligence
+            Start here
           </div>
           <div style={{
             display: "grid",
@@ -171,12 +171,12 @@ export default function WelcomeScreen({
             gap: 6,
           }}>
             {([
-              { q: "Is this deal legit? I need to evaluate a partnership offer", domains: "deception detection · risk intel", color: "#F59E0B" },
-              { q: "How will my competitors react if I launch this?", domains: "game theory · competitive intel", color: "#8B5CF6" },
-              { q: "What's the biggest threat to my business right now?", domains: "threat modeling · cybersecurity · geopolitics", color: "#DC2626" },
-              { q: "My revenue dropped — was it the price change or something else?", domains: "causal reasoning · pricing economics", color: "#06B6D4" },
-              { q: "I have a funding meeting tomorrow. Help me prepare.", domains: "negotiation warfare · BATNA · game theory", color: "#F97316" },
-              { q: "What could happen to my market in the next 12 months?", domains: "scenario planning · geopolitics · risk intel", color: "#22C55E" },
+              { q: "Is this deal legit? I need to evaluate a partnership offer", domains: "spot lies · assess risk", color: "#F59E0B" },
+              { q: "How will my competitors react if I launch this?", domains: "predict moves · find advantages", color: "#8B5CF6" },
+              { q: "What's the biggest threat to my business right now?", domains: "map threats · stay protected", color: "#DC2626" },
+              { q: "My revenue dropped — was it the price change or something else?", domains: "find real causes · check the math", color: "#06B6D4" },
+              { q: "I have a funding meeting tomorrow. Help me prepare.", domains: "prepare strategy · know your leverage", color: "#F97316" },
+              { q: "What could happen to my market in the next 12 months?", domains: "plan ahead · prepare for anything", color: "#22C55E" },
             ] as const).map((tmpl, i) => (
               <button
                 key={i}
