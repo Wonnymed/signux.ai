@@ -158,7 +158,7 @@ export async function checkUsageLimit(
 
   if (action === "chat" && usage.chat_today >= limits.chat_daily) {
     return NextResponse.json(
-      { error: `Daily chat limit reached (${limits.chat_daily}/day). Upgrade to Pro for unlimited.`, upgrade: true, tier },
+      { error: "You've used all your messages for today. Unlock unlimited to keep going.", upgrade: true, tier },
       { status: 403 }
     );
   }
@@ -166,8 +166,8 @@ export async function checkUsageLimit(
   if (action === "simulate" && usage.simulations_month >= limits.simulate_monthly) {
     return NextResponse.json(
       { error: tier === "free"
-        ? "Simulations require a Pro subscription. Upgrade to unlock."
-        : `Monthly simulation limit reached (${limits.simulate_monthly}/month). Upgrade to Max for unlimited.`,
+        ? "You've used your free simulation this month. Unlock more to keep predicting."
+        : "Monthly simulation limit reached. Unlock unlimited simulations.",
         upgrade: true, tier },
       { status: 403 }
     );
@@ -176,8 +176,8 @@ export async function checkUsageLimit(
   if (action === "research" && usage.researches_month >= limits.research_monthly) {
     return NextResponse.json(
       { error: tier === "free"
-        ? "Research requires a Pro subscription. Upgrade to unlock."
-        : "Research limit reached. Upgrade for more.",
+        ? "Deep research is available for Pro users. See what you're missing."
+        : "Research limit reached. Unlock more research.",
         upgrade: true, tier },
       { status: 403 }
     );

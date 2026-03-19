@@ -1414,19 +1414,26 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           zIndex: 50, borderRadius: 16,
         }}>
           <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
-            <Lock size={32} style={{ color: "var(--accent)", marginBottom: 16 }} />
-            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
-              Upgrade to Pro
+            <div style={{ fontSize: 32, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--font-brand)", marginBottom: 8 }}>
+              Your scenario is ready to analyze
             </div>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
-              Run unlimited simulations with AI agents analyzing your scenario
+            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.6 }}>
+              AI specialists are ready to debate your idea, find hidden risks, and predict outcomes. Unlock to see what they find.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20, textAlign: "left", padding: "12px 16px", borderRadius: 10, background: "var(--card-bg)", border: "1px solid var(--card-border)" }}>
+              {["Risks you haven't considered", "How competitors might respond", "Real projections and numbers", "A clear verdict: go or no-go"].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                  <span style={{ color: "#22c55e", fontSize: 14 }}>✓</span>
+                  {item}
+                </div>
+              ))}
             </div>
             <a href="/pricing" style={{
-              display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+              display: "inline-flex", padding: "12px 28px", borderRadius: 50,
               background: "var(--accent)", color: "#000", fontWeight: 600,
-              fontSize: 13, textDecoration: "none",
+              fontSize: 14, textDecoration: "none",
             }}>
-              See plans
+              See what the AI finds →
             </a>
             <button onClick={() => setShowPaywall(false)} style={{
               display: "block", margin: "12px auto 0", background: "none",

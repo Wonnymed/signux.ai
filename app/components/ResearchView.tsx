@@ -816,17 +816,17 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode, isLogg
           <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
             <Lock size={32} style={{ color: "#6B8AFF", marginBottom: 16 }} />
             <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
-              Upgrade to Pro
+              {"You're about to decide without the full picture"}
             </div>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
-              Run unlimited deep research with AI-powered multi-source analysis
+            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.6 }}>
+              Multi-source research, structured reports, and critical insights that Pro users see before every decision.
             </div>
             <a href="/pricing" style={{
-              display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+              display: "inline-flex", padding: "12px 28px", borderRadius: 50,
               background: "#6B8AFF", color: "#fff", fontWeight: 600,
-              fontSize: 13, textDecoration: "none",
+              fontSize: 14, textDecoration: "none",
             }}>
-              See plans
+              {"See what you're missing →"}
             </a>
             <button onClick={() => setShowPaywall(false)} style={{
               display: "block", margin: "12px auto 0", background: "none",

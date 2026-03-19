@@ -333,17 +333,106 @@ export default function LandingPage() {
               color: "#000", fontWeight: 600, fontSize: 15, textDecoration: "none",
               fontFamily: "var(--font-brand)", letterSpacing: 1,
             }}>Start free</Link>
-            <a href="#modes" style={{
+            <a href="#compare" style={{
               padding: "14px 32px", borderRadius: 50,
               border: "1px solid var(--border-primary)", color: "var(--text-secondary)",
               fontSize: 15, textDecoration: "none",
-            }}>See all modes</a>
+            }}>See the difference</a>
+          </div>
+
+          {/* Avatar stack + social proof */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 10, marginTop: 24,
+          }}>
+            <div style={{ display: "flex" }}>
+              {["NV","SK","AR","PT","LC","JM","RK"].map((initials, i) => (
+                <div key={i} style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: ["#D4AF37","#DC2626","#14B8A6","#22C55E","#8B5CF6","#F59E0B","#06B6D4"][i],
+                  border: "2px solid var(--bg-primary)",
+                  marginLeft: i > 0 ? -8 : 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 9, color: "#fff", fontWeight: 600,
+                }}>
+                  {initials}
+                </div>
+              ))}
+            </div>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              Used by founders and operators worldwide
+            </span>
           </div>
         </div>
 
         <div style={{ position: "absolute", bottom: 32, left: 0, right: 0, textAlign: "center", fontSize: 12, color: "var(--text-tertiary)" }}>
           Free to start. No credit card required.
         </div>
+      </section>
+
+      {/* ═══ COMPARISON TABLE ═══ */}
+      <Divider />
+      <section id="compare" style={{ padding: isMobile ? "48px 16px" : "48px 24px", maxWidth: 900, margin: "0 auto" }}>
+        <FadeSection>
+          <h2 style={{
+            fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 28,
+            color: "var(--text-primary)", textAlign: "center", marginBottom: 8,
+          }}>
+            What makes Signux different
+          </h2>
+          <p style={{ fontSize: 14, color: "var(--text-tertiary)", textAlign: "center", marginBottom: 32 }}>
+            Not another chatbot. A decision intelligence platform.
+          </p>
+
+          {/* Live indicator */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 20 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s ease-in-out infinite" }} />
+            <span style={{ fontSize: 12, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+              Live — analyzing decisions right now
+            </span>
+          </div>
+
+          <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--border-secondary)", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, fontFamily: "var(--font-sans)", minWidth: 700 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border-secondary)" }}>
+                  <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 1.5, textTransform: "uppercase", color: "var(--text-tertiary)", fontWeight: 400, width: "30%" }}>Capability</th>
+                  <th style={{ padding: "14px 16px", textAlign: "center", fontWeight: 700, color: "var(--accent)", fontSize: 14, background: "rgba(212,175,55,0.04)" }}>Signux AI</th>
+                  <th style={{ padding: "14px 16px", textAlign: "center", fontWeight: 500, color: "var(--text-tertiary)", fontSize: 13 }}>ChatGPT</th>
+                  <th style={{ padding: "14px 16px", textAlign: "center", fontWeight: 500, color: "var(--text-tertiary)", fontSize: 13 }}>Claude</th>
+                  <th style={{ padding: "14px 16px", textAlign: "center", fontWeight: 500, color: "var(--text-tertiary)", fontSize: 13 }}>Hiring a consultant</th>
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  { feature: "Predict if your idea will work", signux: "AI simulation", chatgpt: "Generic opinion", claude: "Generic opinion", consultant: "$5,000+" },
+                  { feature: "Detect lies and red flags in deals", signux: "Deal X-Ray", chatgpt: "✕", claude: "✕", consultant: "$25,000+" },
+                  { feature: "See how competitors will react", signux: "War Game", chatgpt: "✕", claude: "✕", consultant: "$10,000+" },
+                  { feature: "Map every threat to your business", signux: "Threat Radar", chatgpt: "✕", claude: "✕", consultant: "$500/hr" },
+                  { feature: "Prepare to win a negotiation", signux: "War Room", chatgpt: "Generic tips", claude: "Generic tips", consultant: "$500/hr" },
+                  { feature: "Go from idea to revenue in 90 days", signux: "Launchpad", chatgpt: "✕", claude: "✕", consultant: "$50,000+" },
+                  { feature: "Specialized business intelligence", signux: "Proprietary domains", chatgpt: "General knowledge", claude: "General knowledge", consultant: "1-2 specialties" },
+                  { feature: "Price", signux: "Free to start", chatgpt: "$20/mo", claude: "$20/mo", consultant: "$5,000+/mo" },
+                ] as const).map((row, i, arr) => (
+                  <tr key={i} style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--border-secondary)" : "none" }}>
+                    <td style={{ padding: "14px 20px", color: "var(--text-primary)", fontSize: 13, fontWeight: 500 }}>{row.feature}</td>
+                    <td style={{ padding: "14px 16px", textAlign: "center", background: "rgba(212,175,55,0.04)" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", fontSize: 12, fontWeight: 600, color: "#22c55e" }}>
+                        ✓ {row.signux}
+                      </span>
+                    </td>
+                    <td style={{ padding: "14px 16px", textAlign: "center", color: row.chatgpt === "✕" ? "var(--text-tertiary)" : "var(--text-secondary)", fontSize: 12, opacity: row.chatgpt === "✕" ? 0.4 : 0.7 }}>{row.chatgpt}</td>
+                    <td style={{ padding: "14px 16px", textAlign: "center", color: row.claude === "✕" ? "var(--text-tertiary)" : "var(--text-secondary)", fontSize: 12, opacity: row.claude === "✕" ? 0.4 : 0.7 }}>{row.claude}</td>
+                    <td style={{ padding: "14px 16px", textAlign: "center", color: "var(--text-secondary)", fontSize: 12, opacity: 0.7 }}>{row.consultant}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", marginTop: 12, opacity: 0.4 }}>
+            Comparison based on publicly available features as of 2026
+          </p>
+        </FadeSection>
       </section>
 
       {/* ═══ MODES SHOWCASE — Simulate + Intel first ═══ */}
@@ -714,6 +803,11 @@ export default function LandingPage() {
             fontSize: 16, textDecoration: "none", fontFamily: "var(--font-brand)",
             letterSpacing: 1,
           }}>Start free</Link>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16, opacity: 0.5 }}>
+            <span style={{ fontSize: 12, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+              Analyzing decisions since March 2026
+            </span>
+          </div>
         </FadeSection>
       </section>
 

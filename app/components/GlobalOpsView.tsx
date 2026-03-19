@@ -506,17 +506,17 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
           <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
             <Lock size={32} style={{ color: "#22C55E", marginBottom: 16 }} />
             <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
-              Upgrade to Max
+              This decision needs deeper intelligence
             </div>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
-              Access Global Ops for international tax, compliance, and trade intelligence
+            <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.6 }}>
+              International operations require the most powerful tools. Max users get jurisdiction-specific guidance, tax optimization, and compliance intel.
             </div>
             <a href="/pricing" style={{
-              display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+              display: "inline-flex", padding: "12px 28px", borderRadius: 50,
               background: "#22C55E", color: "#000", fontWeight: 600,
-              fontSize: 13, textDecoration: "none",
+              fontSize: 14, textDecoration: "none",
             }}>
-              See plans
+              {"See what you're missing →"}
             </a>
             <button onClick={() => setShowPaywall(false)} style={{
               display: "block", margin: "12px auto 0", background: "none",

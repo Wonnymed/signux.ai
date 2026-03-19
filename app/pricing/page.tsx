@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Check, ArrowRight, Zap, Crown, Star, Loader2 } from "lucide-react";
+import { Check, ArrowRight, Zap, Crown, Loader2 } from "lucide-react";
 import { SignuxIcon } from "../components/SignuxIcon";
 
 const PLANS = [
@@ -11,12 +11,12 @@ const PLANS = [
     period: "",
     description: "See what AI can do for your business.",
     features: [
-      "10 chat messages/day",
+      "5 chat messages/day",
+      "1 simulation/month",
       "AI business advisor",
       "Multilingual support",
     ],
     excluded: [
-      "Simulate mode",
       "Research mode",
       "Launchpad",
       "Global Ops",
@@ -71,27 +71,6 @@ const PLANS = [
     color: "#A855F7",
     popular: false,
     icon: Crown,
-  },
-  {
-    id: "founding",
-    name: "Founding",
-    price: "$500",
-    period: " one-time",
-    description: "Join the founding team. Shape the product.",
-    features: [
-      "Everything in Max",
-      "Lifetime access — no recurring fees",
-      "Request custom domains for your industry",
-      "Founding member badge",
-      "Direct access to founding team",
-      "Shape the product roadmap",
-      "Limited to first 100 founders",
-    ],
-    excluded: [],
-    cta: "Become a Founder",
-    color: "#D4AF37",
-    popular: false,
-    icon: Star,
   },
 ];
 
@@ -168,7 +147,7 @@ export default function PricingPage() {
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-        gap: 20, maxWidth: 1100, margin: "0 auto",
+        gap: 20, maxWidth: 880, margin: "0 auto",
         padding: "0 24px 80px",
       }}>
         {PLANS.map(plan => {

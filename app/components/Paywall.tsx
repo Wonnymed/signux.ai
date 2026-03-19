@@ -29,14 +29,16 @@ export default function Paywall({ requiredTier }: { requiredTier: string }) {
           fontSize: 22, fontWeight: 600, marginBottom: 8,
           fontFamily: "var(--font-brand)", letterSpacing: 1,
         }}>
-          Upgrade to {info.name}
+          {requiredTier === "max" ? "This decision needs deeper intelligence" : "You're about to decide without the full picture"}
         </h2>
 
         <p style={{
           fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5,
           marginBottom: 24,
         }}>
-          This mode requires a {info.name} subscription to unlock powerful business intelligence tools.
+          {requiredTier === "max"
+            ? "International operations and investment analysis require the most powerful tools. Max users get the full picture."
+            : "Hidden risks, competitor moves, and critical data that Pro users see before every decision."}
         </p>
 
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
@@ -50,7 +52,7 @@ export default function Paywall({ requiredTier }: { requiredTier: string }) {
               fontFamily: "var(--font-brand)", letterSpacing: 1,
             }}
           >
-            <Icon size={16} /> See plans <ArrowRight size={14} />
+            <Icon size={16} /> See what you&apos;re missing <ArrowRight size={14} />
           </button>
         </div>
       </div>

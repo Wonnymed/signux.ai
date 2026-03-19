@@ -1998,17 +1998,17 @@ function LaunchpadPaywall({ show, onClose }: { show: boolean; onClose: () => voi
       <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
         <Lock size={32} style={{ color: "#14B8A6", marginBottom: 16 }} />
         <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
-          Upgrade to Pro
+          Your business journey is ready to begin
         </div>
-        <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
-          Launch your business with AI-powered discovery, validation, and tracking
+        <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.6 }}>
+          AI-matched business ideas, validation, 90-day blueprint, and weekly check-ins. Pro users launch faster.
         </div>
         <a href="/pricing" style={{
-          display: "inline-flex", padding: "10px 24px", borderRadius: 50,
+          display: "inline-flex", padding: "12px 28px", borderRadius: 50,
           background: "#14B8A6", color: "#fff", fontWeight: 600,
-          fontSize: 13, textDecoration: "none",
+          fontSize: 14, textDecoration: "none",
         }}>
-          See plans
+          {"See what you're missing →"}
         </a>
         <button onClick={onClose} style={{
           display: "block", margin: "12px auto 0", background: "none",

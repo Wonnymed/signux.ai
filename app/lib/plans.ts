@@ -17,7 +17,7 @@ export const MODE_TIER_REQUIREMENT: Record<string, Tier> = {
 };
 
 export const TIER_LIMITS = {
-  free: { chat_daily: 10, simulate_monthly: 0, research_monthly: 0 },
+  free: { chat_daily: 5, simulate_monthly: 1, research_monthly: 0 },
   pro: { chat_daily: Infinity, simulate_monthly: 20, research_monthly: Infinity },
   max: { chat_daily: Infinity, simulate_monthly: Infinity, research_monthly: Infinity },
   founding: { chat_daily: Infinity, simulate_monthly: Infinity, research_monthly: Infinity },

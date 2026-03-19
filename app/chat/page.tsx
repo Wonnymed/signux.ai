@@ -432,7 +432,7 @@ export default function ChatPage() {
   /* ═══ Error Messages ═══ */
   const getErrorMessage = (error: any): string => {
     const msg = error?.message || "";
-    if (msg.includes("429")) return "You've reached the message limit. Upgrade to Pro for unlimited messages.";
+    if (msg.includes("429")) return "You've used all your messages for today. Unlock unlimited to keep going.";
     if (msg.includes("401")) return "Authentication error. Please sign in again.";
     if (msg.includes("500")) return "Our AI is temporarily overloaded. Please try again in a moment.";
     if (msg.includes("network") || msg.includes("fetch") || msg.includes("Failed to fetch")) return t("chat.connection_error");
