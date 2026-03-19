@@ -3,8 +3,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 import { getTierFromRequest } from "../../lib/usage";
 import { getModelsForTier } from "../../lib/models";
+import { getKnowledgeForMode } from "../../lib/knowledge-base";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const RC_KNOWLEDGE = getKnowledgeForMode("chat");
 
 export const maxDuration = 30;
 
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
       model: models.reality_check,
       max_tokens: 1500,
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
-      system: SECURITY_PREFIX + `You are Signux Reality Check — a brutally honest verdict engine. The user asks "Is it still worth it to X?" and you give a data-backed answer in 10 seconds.
+      system: SECURITY_PREFIX + RC_KNOWLEDGE + `\n\nYou are Signux Reality Check — a brutally honest verdict engine. The user asks "Is it still worth it to X?" and you give a data-backed answer in 10 seconds.
 
 SEARCH THE WEB for current data before answering. Use real numbers.
 

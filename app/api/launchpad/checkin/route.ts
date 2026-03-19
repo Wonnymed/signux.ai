@@ -4,8 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
 import { getTierFromRequest } from "../../../lib/usage";
 import { getModelsForTier } from "../../../lib/models";
+import { getKnowledgeForMode } from "../../../lib/knowledge-base";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const LP_KNOWLEDGE = getKnowledgeForMode("launchpad");
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: models.launchpad,
       max_tokens: 2000,
-      system: SECURITY_PREFIX + `You are the Signux Weekly Advisor — an AI co-founder doing a weekly check-in. You have PERFECT MEMORY of everything this user has told you.
+      system: SECURITY_PREFIX + LP_KNOWLEDGE + `\n\nYou are the Signux Weekly Advisor — an AI co-founder doing a weekly check-in. You have PERFECT MEMORY of everything this user has told you.
 
 YOUR JOB:
 1. Analyze their numbers HONESTLY — compare to benchmarks if available

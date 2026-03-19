@@ -5,8 +5,10 @@ import { NextRequest } from "next/server";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 import { getUserFromRequest, checkUsageLimit, incrementUsage, getTierFromRequest } from "../../lib/usage";
 import { getModelsForTier } from "../../lib/models";
+import { getKnowledgeForMode } from "../../lib/knowledge-base";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const SIMULATE_KNOWLEDGE = getKnowledgeForMode("simulate");
 const BATCH_SIZE = 4;
 
 function sendSSE(controller: ReadableStreamDefaultController, encoder: TextEncoder, data: any) {
@@ -156,14 +158,14 @@ RULES:
 - Respond in ${userLang}.`;
 
   if (round === 1) {
-    return SECURITY_PREFIX + base + `\n\nThis is Round 1: INITIAL ASSESSMENT.
+    return SECURITY_PREFIX + base + SIMULATE_KNOWLEDGE + `\n\nThis is Round 1: INITIAL ASSESSMENT.
 Analyze the scenario from your expertise. Be specific with numbers. Present your initial position on viability, costs, risks, and timeline.`;
   }
   if (round === 2) {
-    return SECURITY_PREFIX + base + `\n\nThis is Round 2: STRESS TEST.
+    return SECURITY_PREFIX + base + SIMULATE_KNOWLEDGE + `\n\nThis is Round 2: STRESS TEST.
 Review other agents' analyses and CHALLENGE weak points. Identify conflicts between assessments. Point out what other agents got wrong or overlooked. Push back on optimistic assumptions.`;
   }
-  return SECURITY_PREFIX + base + `\n\nThis is Round 3: ADVERSARIAL.
+  return SECURITY_PREFIX + base + SIMULATE_KNOWLEDGE + `\n\nThis is Round 3: ADVERSARIAL.
 The Devil's Advocate has attacked the plan. Defend your position OR agree with the attack and explain why. Be brutally honest — if the plan is flawed, say so. If you still support it, explain what MUST change.`;
 }
 
@@ -203,7 +205,7 @@ async function generateReport(scenario: string, graph: any, agents: any[], simul
   const response = await client.messages.create({
     model,
     max_tokens: 6000,
-    system: SECURITY_PREFIX + `You are Signux ReportAgent. Generate a comprehensive simulation report.
+    system: SECURITY_PREFIX + SIMULATE_KNOWLEDGE + `\n\nYou are Signux ReportAgent. Generate a comprehensive simulation report.
 
 You have data from ${agentCount} specialist agents across ${roundCount} rounds (${totalInteractions} total interactions).
 

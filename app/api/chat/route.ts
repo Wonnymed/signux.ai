@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 import { getUserFromRequest, checkUsageLimit, incrementUsage, getTierFromRequest } from "../../lib/usage";
 import { getModelsForTier } from "../../lib/models";
+import { getKnowledgeForMode } from "../../lib/knowledge-base";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabaseAdmin = createClient(
@@ -580,7 +581,8 @@ If it's an EMAIL/MESSAGE: Analyze tone, suggest improvements, flag issues.
 
 End with a section: "## What to do next" with numbered action items.` : "";
 
-    const fullSystemPrompt = SECURITY_PREFIX + baseSystemPrompt + contextPrefix + SMART_ATTACHMENT_INJECT + (isRC ? RC_SYSTEM_INJECT : "");
+    const knowledgeContext = getKnowledgeForMode(mode || "chat");
+    const fullSystemPrompt = SECURITY_PREFIX + baseSystemPrompt + contextPrefix + knowledgeContext + SMART_ATTACHMENT_INJECT + (isRC ? RC_SYSTEM_INJECT : "");
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream({

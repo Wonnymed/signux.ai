@@ -3,8 +3,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
 import { getTierFromRequest } from "../../../lib/usage";
 import { getModelsForTier } from "../../../lib/models";
+import { getKnowledgeForMode } from "../../../lib/knowledge-base";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const LP_KNOWLEDGE = getKnowledgeForMode("launchpad");
 
 export const maxDuration = 60;
 
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
       model: models.launchpad,
       max_tokens: 3000,
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
-      system: SECURITY_PREFIX + `You are Signux LaunchpadAgent — an AI co-founder that helps people start businesses. You are HONEST, not optimistic. You use REAL market data, not motivational cliches.
+      system: SECURITY_PREFIX + LP_KNOWLEDGE + `\n\nYou are Signux LaunchpadAgent — an AI co-founder that helps people start businesses. You are HONEST, not optimistic. You use REAL market data, not motivational cliches.
 
 Based on the user's profile, suggest 4 viable business ideas. For EACH idea:
 1. Search the web for current market demand and competition

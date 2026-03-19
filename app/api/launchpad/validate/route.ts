@@ -3,8 +3,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
 import { getTierFromRequest } from "../../../lib/usage";
 import { getModelsForTier } from "../../../lib/models";
+import { getKnowledgeForMode } from "../../../lib/knowledge-base";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const LP_KNOWLEDGE = getKnowledgeForMode("launchpad");
 
 export const maxDuration = 60;
 
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
               model: models.launchpad,
               max_tokens: 500,
               tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
-              system: SECURITY_PREFIX + `You are ${agent.name} in a Signux validation simulation. Be SPECIFIC, HONEST, and use NUMBERS. No motivational talk. Respond in ${lang || "en"}.`,
+              system: SECURITY_PREFIX + LP_KNOWLEDGE + `\n\nYou are ${agent.name} in a Signux validation simulation. Be SPECIFIC, HONEST, and use NUMBERS. No motivational talk. Respond in ${lang || "en"}.`,
               messages: [{ role: "user", content: agent.prompt }],
             });
             const text = response.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join("");
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
         const verdictResponse = await client.messages.create({
           model: models.launchpad,
           max_tokens: 2000,
-          system: SECURITY_PREFIX + `You are the Signux Validation Engine. Based on 6 specialist analyses, deliver an HONEST verdict.
+          system: SECURITY_PREFIX + LP_KNOWLEDGE + `\n\nYou are the Signux Validation Engine. Based on 6 specialist analyses, deliver an HONEST verdict.
 
 You MUST give a viability_score from 1-10. Here's the scale:
 - 1-3: This will almost certainly fail. Recommend pivoting.
