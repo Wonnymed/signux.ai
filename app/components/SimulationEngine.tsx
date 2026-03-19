@@ -50,12 +50,13 @@ type SimulationEngineProps = {
   simLiveAgents: SimAgent[];
   simTotalAgents: number;
   simStartTime: number | null;
-  onSimulate: () => void;
+  onSimulate: (scenarioOverride?: string) => void;
   onReset: () => void;
   simStarting: boolean;
   simAgentMessages: AgentMessage[];
   onSetMode?: (m: Mode) => void;
   lang?: string;
+  isLoggedIn?: boolean;
 };
 
 function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { score: number; label: string; color: string } {
@@ -80,7 +81,7 @@ function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { sco
 }
 
 export default function SimulationEngine(props: SimulationEngineProps) {
-  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang } = props;
+  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang, isLoggedIn } = props;
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,9 +101,22 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [godEyeRunning, setGodEyeRunning] = useState(false);
   const [godEyeResults, setGodEyeResults] = useState<GodEyeResult[]>([]);
   const [injectionHistory, setInjectionHistory] = useState<InjectionEntry[]>([]);
+  const [isDemo, setIsDemo] = useState(false);
   const isMobile = useIsMobile();
   const pad = isMobile ? "16px" : "24px";
   const { enhance, enhancing, wasEnhanced } = useEnhance("simulate");
+
+  const DEMO_SCENARIO = "I want to launch a premium coffee subscription service targeting remote workers in major US cities. Budget: $50K. I plan to source single-origin beans from Colombia and Ethiopia, roast locally, and deliver weekly. Target price: $35/month for 2 bags. I need to evaluate: market competition (Blue Bottle, Trade Coffee), logistics, customer acquisition strategy, and break-even timeline.";
+
+  const runDemoSimulation = () => {
+    if (typeof window !== "undefined" && localStorage.getItem("signux_demo_used")) return;
+    setIsDemo(true);
+    setSimScenario(DEMO_SCENARIO);
+    onSimulate(DEMO_SCENARIO);
+    if (typeof window !== "undefined") localStorage.setItem("signux_demo_used", "true");
+  };
+
+  const demoUsed = typeof window !== "undefined" && localStorage.getItem("signux_demo_used") === "true";
 
   const handleEnhance = async () => {
     const result = await enhance(simScenario);
@@ -292,6 +306,36 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               </div>
             ))}
           </div>
+
+          {/* ── DEMO BANNER ── */}
+          {!isLoggedIn && !demoUsed && (
+            <div style={{
+              padding: 20, borderRadius: 14,
+              border: "1px solid var(--mode-sim-border)",
+              background: "var(--mode-sim-bg)",
+              marginBottom: 24, textAlign: "center",
+              animation: "fadeIn 0.5s ease-out",
+            }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
+                See Simulate in action
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 14 }}>
+                Watch 15 AI agents debate a real business scenario
+              </div>
+              <button onClick={runDemoSimulation} style={{
+                padding: "10px 28px", borderRadius: 50,
+                background: "var(--mode-sim)", color: "#000",
+                fontWeight: 600, fontSize: 13, border: "none", cursor: "pointer",
+                fontFamily: "var(--font-brand)", letterSpacing: 1,
+                transition: "all 200ms",
+              }}
+                onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
+              >
+                Run demo simulation
+              </button>
+            </div>
+          )}
 
           {/* ── INPUT CONTAINER ── */}
           <div
@@ -1175,6 +1219,34 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           </div>
         )}
       </div>
+
+      {/* Demo CTA */}
+      {isDemo && !isLoggedIn && (
+        <div style={{
+          padding: 24, borderRadius: 14, textAlign: "center",
+          background: "var(--mode-sim-bg)", border: "1px solid var(--mode-sim-border)",
+          marginTop: 24,
+        }}>
+          <div style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
+            Now simulate YOUR business
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
+            Sign up free to run unlimited custom simulations
+          </div>
+          <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/signup"; }} style={{
+            padding: "12px 32px", borderRadius: 50,
+            background: "var(--accent)", color: "var(--text-inverse)",
+            fontWeight: 600, fontSize: 14, border: "none", cursor: "pointer",
+            fontFamily: "var(--font-brand)", letterSpacing: 1,
+            transition: "all 200ms",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
+          >
+            Sign up free
+          </button>
+        </div>
+      )}
 
       {/* God's Eye Modal */}
       {godEyeOpen && (

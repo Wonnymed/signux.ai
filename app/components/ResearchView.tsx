@@ -17,6 +17,7 @@ type ResearchViewProps = {
   lang: string;
   onContinueInChat?: (report: string) => void;
   onSetMode?: (m: Mode) => void;
+  isLoggedIn?: boolean;
 };
 
 /* Custom Search+ icon */
@@ -49,9 +50,10 @@ const CONSTELLATION_LINES = [
   { top: "70%", right: "10%", width: "22%", rotate: "8deg", delay: 1.6 },
 ];
 
-export default function ResearchView({ lang, onContinueInChat, onSetMode }: ResearchViewProps) {
+export default function ResearchView({ lang, onContinueInChat, onSetMode, isLoggedIn }: ResearchViewProps) {
   const [phase, setPhase] = useState<"input" | "running" | "complete">("input");
   const [query, setQuery] = useState("");
+  const [isDemo, setIsDemo] = useState(false);
   const [searchPlan, setSearchPlan] = useState<string[]>([]);
   const [currentSearchIndex, setCurrentSearchIndex] = useState(-1);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -106,8 +108,10 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode }: Rese
     "Synthesize report",
   ];
 
-  const startResearch = async () => {
-    if (!query.trim() || loading) return;
+  const startResearch = async (queryOverride?: string) => {
+    const q = queryOverride || query;
+    if (!q.trim() || loading) return;
+    if (queryOverride) setQuery(queryOverride);
     setLoading(true);
     setPhase("running");
     setSearchPlan([]);
@@ -119,7 +123,7 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode }: Rese
       const res = await signuxFetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, lang }),
+        body: JSON.stringify({ query: q, lang }),
       });
       if (!res.body) throw new Error("No stream");
       const reader = res.body.getReader();
@@ -282,6 +286,41 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode }: Rese
                 </div>
               ))}
             </div>
+
+            {/* ── DEMO BANNER ── */}
+            {!isLoggedIn && !(typeof window !== "undefined" && localStorage.getItem("signux_research_demo_used")) && (
+              <div style={{
+                padding: 20, borderRadius: 14,
+                border: "1px solid rgba(107,138,255,0.2)",
+                background: "rgba(107,138,255,0.05)",
+                marginBottom: 24, textAlign: "center",
+                animation: "fadeIn 0.5s ease-out",
+              }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
+                  See Deep Research in action
+                </div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 14 }}>
+                  Watch AI search multiple sources and compile a structured report
+                </div>
+                <button onClick={() => {
+                  const demoQuery = "Market analysis for the meal prep delivery industry in the US: market size, growth trends, consumer demographics, competitive landscape, unit economics, and entry barriers for a new player in 2026";
+                  setIsDemo(true);
+                  if (typeof window !== "undefined") localStorage.setItem("signux_research_demo_used", "true");
+                  startResearch(demoQuery);
+                }} style={{
+                  padding: "10px 28px", borderRadius: 50,
+                  background: "#6B8AFF", color: "#fff",
+                  fontWeight: 600, fontSize: 13, border: "none", cursor: "pointer",
+                  fontFamily: "var(--font-brand)", letterSpacing: 1,
+                  transition: "all 200ms",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
+                >
+                  Run demo research
+                </button>
+              </div>
+            )}
 
             {/* ── INPUT ── */}
             <div
@@ -690,6 +729,34 @@ export default function ResearchView({ lang, onContinueInChat, onSetMode }: Rese
             <MarkdownRenderer content={report} />
           </div>
         </div>
+
+        {/* Demo CTA */}
+        {isDemo && !isLoggedIn && (
+          <div style={{
+            padding: 24, borderRadius: 14, textAlign: "center",
+            background: "rgba(107,138,255,0.05)", border: "1px solid rgba(107,138,255,0.2)",
+            marginTop: 24,
+          }}>
+            <div style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
+              Research YOUR market
+            </div>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
+              Sign up free to run unlimited custom research reports
+            </div>
+            <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/signup"; }} style={{
+              padding: "12px 32px", borderRadius: 50,
+              background: "#6B8AFF", color: "#fff",
+              fontWeight: 600, fontSize: 14, border: "none", cursor: "pointer",
+              fontFamily: "var(--font-brand)", letterSpacing: 1,
+              transition: "all 200ms",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+              onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
+            >
+              Sign up free
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

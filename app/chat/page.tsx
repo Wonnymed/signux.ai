@@ -603,8 +603,10 @@ export default function ChatPage() {
   };
 
   /* ═══ Simulate Handler ═══ */
-  const simulate = async () => {
-    if (!simScenario.trim()) return;
+  const simulate = async (scenarioOverride?: string) => {
+    const sc = scenarioOverride || simScenario;
+    if (!sc.trim()) return;
+    if (scenarioOverride) setSimScenario(scenarioOverride);
     setSimStarting(true);
     await new Promise(r => setTimeout(r, 600));
     setSimStarting(false);
@@ -619,7 +621,7 @@ export default function ChatPage() {
       const res = await signuxFetch("/api/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario: simScenario, context: getProfile() }),
+        body: JSON.stringify({ scenario: sc, context: getProfile() }),
       });
       if (!res.body) throw new Error("No stream");
       const reader = res.body.getReader();
@@ -824,6 +826,7 @@ export default function ChatPage() {
                 lang={lang}
                 onContinueInChat={continueResearchInChat}
                 onSetMode={setMode}
+                isLoggedIn={isLoggedIn}
               />
             </motion.div>
           ) : mode === "simulate" ? (
@@ -850,6 +853,7 @@ export default function ChatPage() {
                 simAgentMessages={simAgentMessages}
                 onSetMode={setMode}
                 lang={lang}
+                isLoggedIn={isLoggedIn}
               />
             </motion.div>
           ) : mode === "launchpad" ? (
