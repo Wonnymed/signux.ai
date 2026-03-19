@@ -56,6 +56,33 @@ function parseFollowups(content: string): { cleanContent: string; followups: str
   return { cleanContent, followups };
 }
 
+function parseDomains(content: string): { cleanContent: string; domains: string[]; domainCount: number } {
+  const domainsMatch = content.match(/<!--\s*signux_domains:\s*(.+?)\s*-->/);
+  const countMatch = content.match(/<!--\s*signux_domain_count:\s*(\d+)\s*-->/);
+  let cleanContent = content
+    .replace(/<!--\s*signux_domains:\s*.+?\s*-->/g, "")
+    .replace(/<!--\s*signux_domain_count:\s*\d+\s*-->/g, "")
+    .trim();
+  if (!domainsMatch) return { cleanContent, domains: [], domainCount: 0 };
+  const domains = domainsMatch[1].split(",").map(d => d.trim()).filter(Boolean);
+  const domainCount = countMatch ? parseInt(countMatch[1], 10) : domains.length;
+  return { cleanContent, domains, domainCount };
+}
+
+type BlindSpot = { domain: string; question: string; why: string };
+
+function parseBlindspots(content: string): { cleanContent: string; blindspots: BlindSpot[] } {
+  const match = content.match(/<!--\s*signux_blindspots:\s*(\[[\s\S]*?\])\s*-->/);
+  const cleanContent = content.replace(/<!--\s*signux_blindspots:\s*\[[\s\S]*?\]\s*-->/g, "").trim();
+  if (!match) return { cleanContent, blindspots: [] };
+  try {
+    const parsed = JSON.parse(match[1]);
+    return { cleanContent, blindspots: Array.isArray(parsed) ? parsed : [] };
+  } catch {
+    return { cleanContent, blindspots: [] };
+  }
+}
+
 type MessageBlockProps = {
   message: Message;
   index: number;
@@ -74,16 +101,19 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [domainsExpanded, setDomainsExpanded] = useState(false);
   const isMobile = useIsMobile();
 
   const isUser = message.role === "user";
   const isStreaming = loading && isLast;
   const isEmpty = !message.content;
 
-  // Parse decision, confidence and followups from AI messages (chain: decision → confidence → followups)
+  // Parse chain: decision → confidence → followups → domains → blindspots
   const { cleanContent: c0, decision } = !isUser ? parseDecision(message.content) : { cleanContent: message.content, decision: null };
   const { cleanContent: c1, level: confidenceLevel, reason: confidenceReason } = !isUser ? parseConfidence(c0) : { cleanContent: c0, level: "", reason: "" };
-  const { cleanContent: parsedContent, followups } = !isUser ? parseFollowups(c1) : { cleanContent: c1, followups: [] as string[] };
+  const { cleanContent: c2, followups } = !isUser ? parseFollowups(c1) : { cleanContent: c1, followups: [] as string[] };
+  const { cleanContent: c3, domains, domainCount } = !isUser ? parseDomains(c2) : { cleanContent: c2, domains: [] as string[], domainCount: 0 };
+  const { cleanContent: parsedContent, blindspots } = !isUser ? parseBlindspots(c3) : { cleanContent: c3, blindspots: [] as BlindSpot[] };
   const isLastAI = isLast && !isUser;
 
   // Notify parent about detected decisions (only once when message completes)
@@ -304,9 +334,108 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
                     Decision tracked — we&apos;ll follow up in 30 days
                   </div>
                 )}
+                {/* Domain activation badge */}
+                {!isStreaming && domains.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      onClick={() => setDomainsExpanded(p => !p)}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 5,
+                        padding: "4px 10px", borderRadius: 6,
+                        background: "rgba(212,175,55,0.06)",
+                        border: "1px solid rgba(212,175,55,0.15)",
+                        cursor: "pointer", fontSize: 10,
+                        fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                        color: "#D4AF37", transition: "all 150ms",
+                      }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                      {domainCount} intelligence {domainCount === 1 ? "domain" : "domains"} activated
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                        style={{ transform: domainsExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 150ms" }}>
+                        <path d="m6 9 6 6 6-6"/>
+                      </svg>
+                    </button>
+                    {domainsExpanded && (
+                      <div style={{
+                        display: "flex", flexWrap: "wrap", gap: 4,
+                        marginTop: 6, animation: "fadeIn 0.15s ease",
+                      }}>
+                        {domains.map(d => (
+                          <span key={d} style={{
+                            padding: "2px 8px", borderRadius: 4,
+                            fontSize: 9, fontFamily: "var(--font-mono)",
+                            letterSpacing: 0.3,
+                            background: "rgba(212,175,55,0.08)",
+                            border: "1px solid rgba(212,175,55,0.12)",
+                            color: "#D4AF37",
+                          }}>
+                            {d.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
+
+          {/* Blind spot detector */}
+          {!isStreaming && blindspots.length > 0 && isLastAI && (
+            <div style={{
+              display: "flex", flexDirection: "column", gap: 6,
+              marginTop: 10, maxWidth: "100%",
+            }}>
+              <div style={{
+                fontSize: 10, color: "#ef4444",
+                fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                display: "flex", alignItems: "center", gap: 4, marginBottom: 2,
+              }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M2.73 17.52 10.56 3.44a1.65 1.65 0 0 1 2.88 0l7.83 14.08A1.65 1.65 0 0 1 19.86 20H4.14a1.65 1.65 0 0 1-1.41-2.48Z"/></svg>
+                Blind spots detected
+              </div>
+              {blindspots.map((bs, i) => (
+                <button
+                  key={i}
+                  onClick={() => onSendFollowup?.(bs.question)}
+                  style={{
+                    display: "flex", flexDirection: "column", gap: 4,
+                    padding: "8px 12px", borderRadius: 10,
+                    border: "1px solid rgba(239,68,68,0.12)",
+                    background: "rgba(239,68,68,0.03)",
+                    cursor: "pointer", textAlign: "left",
+                    transition: "all 150ms",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(239,68,68,0.3)";
+                    (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(239,68,68,0.12)";
+                    (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.03)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{
+                      padding: "1px 6px", borderRadius: 3, fontSize: 8,
+                      fontFamily: "var(--font-mono)", letterSpacing: 0.3,
+                      background: "rgba(239,68,68,0.08)", color: "#ef4444",
+                    }}>
+                      {bs.domain.replace(/_/g, " ")}
+                    </span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.3, marginLeft: "auto", flexShrink: 0 }}><path d="m5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </div>
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                    {bs.question}
+                  </span>
+                  <span style={{ fontSize: 10, color: "var(--text-tertiary)", lineHeight: 1.3 }}>
+                    {bs.why}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Actions — below bubble */}
           {!isStreaming && message.content && (

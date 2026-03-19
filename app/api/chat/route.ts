@@ -121,7 +121,22 @@ summary: One sentence describing the decision being made
 category: pricing|hiring|marketing|product|investment|structure|operations|other
 recommendation: What you recommended (one sentence)
 [/DECISION]
-Only add this when a REAL decision is being discussed, not for general questions.`;
+Only add this when a REAL decision is being discussed, not for general questions.
+
+4. DOMAIN ACTIVATION — At the very end of your response (after all other enrichment blocks), add:
+<!-- signux_domains: domain1, domain2, domain3 -->
+<!-- signux_domain_count: X -->
+List ONLY the intelligence domains you actually used to formulate your answer. Choose from: game_theory, deception_detection, threat_modeling, causal_reasoning, mechanism_design, scenario_planning, negotiation_warfare, crypto_opsec, geopolitics, risk_intel, decision_engines, competitive_intel, customer_intel, pricing_economics, sales_conversion, operating_systems, founder_finance, supply_chain, regulatory_intel, market_microstructure, behavioral_economics, network_effects, platform_dynamics, talent_strategy, brand_positioning, data_strategy, innovation_systems.
+X = the count of domains listed. Be honest — only list domains you genuinely drew knowledge from.
+
+5. BLIND SPOT DETECTOR — After domain activation, add:
+<!-- signux_blindspots: [{"domain":"domain_name","question":"A specific question they should consider","why":"Brief explanation of why this matters"}] -->
+Include 2-4 blind spots. Each must:
+- Come from a domain the user did NOT ask about but is relevant
+- Be a specific, actionable question (not generic advice)
+- Include why it matters in 1 sentence
+- Be written in the same language the user used
+Only include blind spots on substantive responses (not greetings or simple clarifications).`;
 }
 
 const TOOLS: Anthropic.Tool[] = [
@@ -309,7 +324,22 @@ summary: One sentence describing the decision being made
 category: pricing|hiring|marketing|product|investment|structure|operations|other
 recommendation: What you recommended (one sentence)
 [/DECISION]
-Only add this when a REAL decision is being discussed, not for general questions.`;
+Only add this when a REAL decision is being discussed, not for general questions.
+
+4. DOMAIN ACTIVATION — At the very end of your response (after all other enrichment blocks), add:
+<!-- signux_domains: domain1, domain2, domain3 -->
+<!-- signux_domain_count: X -->
+List ONLY the intelligence domains you actually used to formulate your answer. Choose from: game_theory, deception_detection, threat_modeling, causal_reasoning, mechanism_design, scenario_planning, negotiation_warfare, crypto_opsec, geopolitics, risk_intel, decision_engines, competitive_intel, customer_intel, pricing_economics, sales_conversion, operating_systems, founder_finance, supply_chain, regulatory_intel, market_microstructure, behavioral_economics, network_effects, platform_dynamics, talent_strategy, brand_positioning, data_strategy, innovation_systems.
+X = the count of domains listed. Be honest — only list domains you genuinely drew knowledge from.
+
+5. BLIND SPOT DETECTOR — After domain activation, add:
+<!-- signux_blindspots: [{"domain":"domain_name","question":"A specific question they should consider","why":"Brief explanation of why this matters"}] -->
+Include 2-4 blind spots. Each must:
+- Come from a domain the user did NOT ask about but is relevant
+- Be a specific, actionable question (not generic advice)
+- Include why it matters in 1 sentence
+- Be written in the same language the user used
+Only include blind spots on substantive responses (not greetings or simple clarifications).`;
 }
 
 function buildInvestSystemPrompt(): string {
@@ -401,7 +431,22 @@ summary: One sentence describing the decision being made
 category: pricing|hiring|marketing|product|investment|structure|operations|other
 recommendation: What you recommended (one sentence)
 [/DECISION]
-Only add this when a REAL decision is being discussed, not for general questions.`;
+Only add this when a REAL decision is being discussed, not for general questions.
+
+4. DOMAIN ACTIVATION — At the very end of your response (after all other enrichment blocks), add:
+<!-- signux_domains: domain1, domain2, domain3 -->
+<!-- signux_domain_count: X -->
+List ONLY the intelligence domains you actually used to formulate your answer. Choose from: game_theory, deception_detection, threat_modeling, causal_reasoning, mechanism_design, scenario_planning, negotiation_warfare, crypto_opsec, geopolitics, risk_intel, decision_engines, competitive_intel, customer_intel, pricing_economics, sales_conversion, operating_systems, founder_finance, supply_chain, regulatory_intel, market_microstructure, behavioral_economics, network_effects, platform_dynamics, talent_strategy, brand_positioning, data_strategy, innovation_systems.
+X = the count of domains listed. Be honest — only list domains you genuinely drew knowledge from.
+
+5. BLIND SPOT DETECTOR — After domain activation, add:
+<!-- signux_blindspots: [{"domain":"domain_name","question":"A specific question they should consider","why":"Brief explanation of why this matters"}] -->
+Include 2-4 blind spots. Each must:
+- Come from a domain the user did NOT ask about but is relevant
+- Be a specific, actionable question (not generic advice)
+- Include why it matters in 1 sentence
+- Be written in the same language the user used
+Only include blind spots on substantive responses (not greetings or simple clarifications).`;
 }
 
 const RC_PATTERNS = [
