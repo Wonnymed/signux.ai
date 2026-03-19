@@ -1,3 +1,5 @@
+export const maxDuration = 300;
+
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
@@ -71,31 +73,38 @@ async function setupAgents(graph: any, scenario: string, userLang: string, world
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 4000,
-    system: SECURITY_PREFIX + `You are a simulation architect. Generate 12-20 specialized business agent personas for this ecosystem simulation. Each agent represents a REAL person that would be involved in this business scenario.
+    system: SECURITY_PREFIX + `You are a simulation architect. Generate 12 to 15 specialist agents to analyze this operation.
 
-Include agents from ALL relevant categories (adapt based on scenario):
-- SUPPLY: factory owners, raw material suppliers, quality managers, production supervisors
-- LOGISTICS: freight forwarders, shipping line reps, customs brokers, warehouse managers, last-mile delivery
-- FINANCE: bank compliance officers, payment processors, insurance brokers, tax advisors, accountants
-- REGULATORY: customs officers, trade compliance specialists, industry regulators, standards inspectors
-- MARKET: market analysts, competitors, potential customers, distributors, retail buyers
-- LEGAL: international trade lawyers, contract specialists, IP protection advisors
-- CULTURAL: local agents, interpreters, cultural advisors, government liaisons
-- OPERATIONS: project managers, operations coordinators, logistics planners
+MANDATORY agents (ALWAYS include all 6):
+1. Financial Analyst — P&L, cash flow, unit economics, break-even
+2. Regulatory Expert — compliance, licensing, legal requirements
+3. Market Analyst — TAM/SAM/SOM, competition, trends
+4. Operations Specialist — logistics, processes, supply chain
+5. Risk Assessor — risk matrix, probability × impact
+6. Devil's Advocate — ATTACKS the plan, finds fatal flaws, worst-case scenarios
+
+CONTEXTUAL agents (include 6-9 based on the scenario):
+- Tax Strategist (if cross-border or tax-relevant)
+- Technology Advisor (if tech/SaaS)
+- HR Consultant (if hiring/team involved)
+- Marketing Strategist (if customer acquisition relevant)
+- Customer Experience Expert (if B2C or service)
+- Supply Chain Analyst (if physical goods)
+- Legal Counsel (if contracts/IP involved)
+- Industry Specialist (specific to the industry mentioned)
+- Geopolitical Analyst (if international operations)
 
 Each agent MUST have:
 - A realistic human name appropriate to their country/culture
-- A category from: supply, logistics, finance, regulatory, market, legal, cultural, operations
 - Specific personality traits that affect their decisions
 - Concrete knowledge with REAL numbers (prices, timelines, regulations)
 - Clear objectives and motivations (some conflicting with others)
 - Natural biases that create realistic tension
 
 NOT all agents should agree. Create natural conflicts:
-- The supplier wants higher prices, the buyer wants lower
-- The customs broker is cautious, the freight forwarder is aggressive on timelines
-- The lawyer sees risks everywhere, the market analyst sees opportunity
-- The tax advisor and the accountant disagree on optimal structure
+- The Devil's Advocate should find fatal flaws in the plan
+- The Risk Assessor and Market Analyst should disagree on opportunity vs risk
+- The Financial Analyst and Operations Specialist should have different cost assumptions
 
 Return ONLY valid JSON:
 {
@@ -103,23 +112,24 @@ Return ONLY valid JSON:
     {
       "id": "string (snake_case)",
       "name": "string (human name)",
-      "role": "string (e.g. 'Chinese Factory Owner in Guangzhou')",
-      "category": "string (supply|logistics|finance|regulatory|market|legal|cultural|operations)",
+      "role": "string (e.g. 'Financial Analyst')",
+      "category": "string (finance|regulatory|market|operations|risk|adversarial|tax|tech|hr|marketing|cx|supply_chain|legal|industry|geopolitical)",
+      "expertise": "string (specific domain expertise)",
       "personality": "string (2-3 sentences: negotiation style, risk tolerance, priorities)",
       "knowledge": "string (what this agent knows: pricing, regulations, routes, market data)",
-      "objectives": "string (what this agent wants from the deal)",
-      "bias": "string (natural bias: e.g. 'tends to overstate quality', 'conservative on timelines')"
+      "objectives": "string (what this agent wants from the analysis)",
+      "bias": "string (natural bias: e.g. 'conservative on projections', 'skeptical of new markets')"
     }
   ],
   "simulation_parameters": {
     "rounds": 3,
-    "scenario_type": "import|offshore|investment|market_entry|deal",
+    "scenario_type": "import|offshore|investment|market_entry|deal|startup|expansion",
     "time_horizon": "string (e.g. '45 days', '6 months')",
     "key_metrics": ["total_cost", "timeline", "risk_level", "roi_estimate"]
   }
 }
 
-Respond in ${userLang}. Generate at least 12 agents with good diversity across categories.`,
+Respond in ${userLang}. Generate at least 12 and up to 15 agents.`,
     messages: [{ role: "user", content: `SCENARIO: ${scenario}\n\nENTITY GRAPH:\n${JSON.stringify(graph)}${worldContext ? `\n\nCURRENT WORLD CONTEXT (use real numbers from this):\n${worldContext}` : ""}` }],
   });
   const text = (response.content[0] as any).text || "{}";
@@ -127,41 +137,55 @@ Respond in ${userLang}. Generate at least 12 agents with good diversity across c
   catch { return { agents: [], simulation_parameters: { rounds: 3, scenario_type: "deal", time_horizon: "30 days", key_metrics: [] } }; }
 }
 
-async function processAgent(
-  agent: any, round: number, rounds: number, scenario: string,
-  graph: any, context: any, previousDiscussion: string, userLang: string, worldContext: string
-): Promise<string> {
-  try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 800,
-      system: SECURITY_PREFIX + `You are ${agent.name}, ${agent.role}. Category: ${agent.category}.
+function getRoundPrompt(agent: any, round: number, rounds: number, userLang: string): string {
+  const base = `You are ${agent.name}, ${agent.role}. Category: ${agent.category}.
 
+EXPERTISE: ${agent.expertise || agent.knowledge}
 PERSONALITY: ${agent.personality}
 KNOWLEDGE: ${agent.knowledge}
 OBJECTIVES: ${agent.objectives}
 BIAS: ${agent.bias}
 
-You are in round ${round} of ${rounds} of a business ecosystem simulation.
-
 RULES:
 - Stay in character at ALL times. You ARE this person.
 - Reference specific numbers, prices, timelines, regulations when possible.
-- React to what other agents said — agree, disagree, challenge, build upon.
-- In round 1: Give your initial analysis and position (2-3 paragraphs max).
-- In round 2+: Respond to others, refine your position, negotiate, challenge assumptions (2-3 paragraphs max).
 - Be specific. Real numbers. Real timelines. Real risks.
-- If you disagree with another agent, say so directly and explain why.
-- Keep your response focused and concise — you're one voice among many.
-- Respond in ${userLang}.`,
+- Keep your response focused and concise (2-3 paragraphs max).
+- Respond in ${userLang}.`;
+
+  if (round === 1) {
+    return SECURITY_PREFIX + base + `\n\nThis is Round 1: INITIAL ASSESSMENT.
+Analyze the scenario from your expertise. Be specific with numbers. Present your initial position on viability, costs, risks, and timeline.`;
+  }
+  if (round === 2) {
+    return SECURITY_PREFIX + base + `\n\nThis is Round 2: STRESS TEST.
+Review other agents' analyses and CHALLENGE weak points. Identify conflicts between assessments. Point out what other agents got wrong or overlooked. Push back on optimistic assumptions.`;
+  }
+  return SECURITY_PREFIX + base + `\n\nThis is Round 3: ADVERSARIAL.
+The Devil's Advocate has attacked the plan. Defend your position OR agree with the attack and explain why. Be brutally honest — if the plan is flawed, say so. If you still support it, explain what MUST change.`;
+}
+
+async function processAgent(
+  agent: any, round: number, rounds: number, scenario: string,
+  graph: any, context: any, previousDiscussion: string, userLang: string, worldContext: string
+): Promise<string> {
+  try {
+    const agentPromise = client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 800,
+      system: getRoundPrompt(agent, round, rounds, userLang),
       messages: [{
         role: "user",
         content: `SCENARIO: ${scenario}\n\nENTITY GRAPH: ${JSON.stringify(graph)}\n\nUSER CONTEXT: ${JSON.stringify(context || {})}${worldContext ? `\n\nCURRENT WORLD CONTEXT:\n${worldContext}` : ""}\n\nPREVIOUS DISCUSSION:\n${previousDiscussion || "This is the opening round. Present your initial analysis."}\n\nYour analysis for round ${round}:`
       }],
     });
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Agent timeout")), 45000)
+    );
+    const response = await Promise.race([agentPromise, timeoutPromise]);
     return (response.content[0] as any).text || "";
   } catch {
-    return `[${agent.name} was unable to respond in this round]`;
+    return `[${agent.name} timed out or was unable to respond in this round]`;
   }
 }
 
@@ -176,16 +200,15 @@ async function generateReport(scenario: string, graph: any, agents: any[], simul
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 8192,
-    system: SECURITY_PREFIX + `You are Signux ReportAgent. Generate a comprehensive ecosystem simulation report.
+    max_tokens: 6000,
+    system: SECURITY_PREFIX + `You are Signux ReportAgent. Generate a comprehensive simulation report.
 
-You have data from ${agentCount} specialist agents across ${roundCount} rounds (${totalInteractions} total interactions). This is a MASSIVE simulation with diverse stakeholders.
+You have data from ${agentCount} specialist agents across ${roundCount} rounds (${totalInteractions} total interactions).
 
 RULES:
 - Be specific with ALL numbers — never say "varies" without giving a range
 - Use the ENTITY GRAPH for accurate relationships
 - Reference what specific agents said to support conclusions
-- Calculate all costs in USD AND BRL (use approximate rate 1 USD = 5.5 BRL)
 - The report must be actionable — reader should know exactly what to do next
 - Synthesize ALL perspectives across all agent categories
 - Use the CURRENT WORLD CONTEXT to ground all numbers in reality
@@ -205,49 +228,33 @@ ${simText}
 
 Generate the report with EXACTLY these sections:
 
-## EXECUTIVE SUMMARY
-3-4 lines. What was simulated, key finding, recommendation.
+## Executive Summary
+3-4 sentences. What was simulated, key finding, recommendation.
 
-## COST BREAKDOWN
-Table format with ALL costs itemized. Include: product, freight, insurance, customs duty, VAT/taxes, clearance fees, inland transport, agent fees, bank fees, contingency. Show total in USD and BRL.
+## Viability Score: X/10
+(With assessment: 8-10 strong GO, 5-7 proceed with caution, 1-4 NO-GO)
 
-## TIMELINE
-Week by week or phase by phase. From day 1 to completion. Include milestones and dependencies.
+## Key Findings
+Top 5 findings from all agents, ranked by impact.
 
-## RISK MAP
-Each risk with:
-- Description
-- Probability: Low / Medium / High
-- Impact: Low / Medium / High
-- Mitigation strategy
+## Risk Matrix
+| Risk | Probability | Impact | Severity | Mitigation |
+Top 8-10 risks identified across all rounds.
 
-## STAKEHOLDER MAP
-Which agents support GO vs NO-GO and why. Group by category. Identify the swing votes.
+## Agent Consensus & Disagreements
+Where agents agreed and where they conflicted. Reference specific agents.
 
-## CONSENSUS & DISSENT
-- Points where most agents agree (with specific references)
-- Key disagreements and why they matter
-- Hidden risks revealed by specific agents
-- Unexpected opportunities identified
+## Financial Projections
+Revenue, costs, break-even, ROI — with specific numbers. Include optimistic, realistic, and pessimistic scenarios.
 
-## THREE SCENARIOS
-### Optimistic
-Numbers, timeline, profit margin
+## Recommended Path Forward
+Numbered action items, specific and time-bound. What to do in the next 7 days, 30 days, 90 days.
 
-### Realistic
-Numbers, timeline, profit margin
+## Kill Conditions
+3-5 conditions that should make them STOP and abandon the plan.
 
-### Pessimistic
-Numbers, timeline, what goes wrong
-
-## KEY INSIGHTS
-What the agents revealed that wasn't obvious. The 3 most critical decision points.
-
-## FINAL VERDICT
-### GO or NO-GO
-Clear recommendation with 3 reasons why.
-If GO: exact next steps (numbered, actionable)
-If NO-GO: what would need to change for it to become viable`
+## What the Devil's Advocate Said
+Summary of the strongest attacks on the plan from Round 3. Which attacks were valid and which were defended successfully.`
     }],
   });
 
@@ -276,27 +283,36 @@ export async function POST(req: NextRequest) {
   const readable = new ReadableStream({
     async start(controller) {
       try {
+        const ROUND_LABELS = ["", "Initial Assessment", "Stress Test", "Adversarial"];
+
         // Stage -1: Gather real-time intelligence
+        sendSSE(controller, encoder, { type: "status", message: "Gathering real-world intelligence..." });
         sendSSE(controller, encoder, { type: "stage", stage: -1 });
         const worldContext = await getWorldContext(scenario);
         sendSSE(controller, encoder, { type: "stage_done", stage: -1 });
 
         // Stage 0: Graph
+        sendSSE(controller, encoder, { type: "status", message: "Building entity graph..." });
         sendSSE(controller, encoder, { type: "stage", stage: 0 });
         const graph = await buildGraph(scenario, worldContext);
         sendSSE(controller, encoder, { type: "stage_done", stage: 0, data: { graph } });
+        sendSSE(controller, encoder, { type: "graph", data: graph });
 
         // Stage 1: Agents
+        sendSSE(controller, encoder, { type: "status", message: "Setting up agents..." });
         sendSSE(controller, encoder, { type: "stage", stage: 1 });
         const { agents, simulation_parameters } = await setupAgents(graph, scenario, userLang, worldContext);
+        sendSSE(controller, encoder, { type: "agents", agents });
         sendSSE(controller, encoder, { type: "stage_done", stage: 1, data: { agents, simulation_parameters }, totalAgents: agents.length });
 
         // Stage 2+3: Simulation rounds with parallel batching
         sendSSE(controller, encoder, { type: "stage", stage: 2 });
         const allMessages: any[] = [];
-        const rounds = Math.min(simulation_parameters.rounds || 3, 4);
+        const rounds = Math.min(simulation_parameters?.rounds || 3, 3);
 
         for (let round = 1; round <= rounds; round++) {
+          sendSSE(controller, encoder, { type: "round", round, label: ROUND_LABELS[round] });
+
           if (round > 1) {
             sendSSE(controller, encoder, { type: "stage", stage: 3 });
           }
@@ -305,7 +321,7 @@ export async function POST(req: NextRequest) {
             const batch = agents.slice(batchStart, batchStart + BATCH_SIZE);
 
             for (const agent of batch) {
-              sendSSE(controller, encoder, { type: "agent_start", agentName: agent.name, role: agent.role, category: agent.category, round });
+              sendSSE(controller, encoder, { type: "agent_start", agent: agent.name, agentName: agent.name, role: agent.role, category: agent.category, round });
             }
 
             const previousDiscussion = allMessages
@@ -319,16 +335,20 @@ export async function POST(req: NextRequest) {
             for (let i = 0; i < batch.length; i++) {
               const agent = batch[i];
               const content = batchResults[i];
-              const msg = { agentId: agent.id, agentName: agent.name, role: agent.role, category: agent.category, content, round };
+              const msg = { agentId: agent.id, agentName: agent.name, agent: agent.name, role: agent.role, category: agent.category, content, round };
               allMessages.push(msg);
+              sendSSE(controller, encoder, { type: "agent_complete", ...msg });
+              // Keep backward-compat event
               sendSSE(controller, encoder, { type: "agent_done", ...msg });
             }
           }
         }
 
         // Stage 4: Report
+        sendSSE(controller, encoder, { type: "status", message: "Generating final report..." });
         sendSSE(controller, encoder, { type: "stage", stage: 4 });
         const report = await generateReport(scenario, graph, agents, allMessages, simulation_parameters, userLang, worldContext);
+        sendSSE(controller, encoder, { type: "report", content: report });
         sendSSE(controller, encoder, { type: "stage_done", stage: 4 });
 
         // Final result
@@ -340,7 +360,7 @@ export async function POST(req: NextRequest) {
             report,
             metadata: {
               total_interactions: allMessages.length,
-              rounds: simulation_parameters.rounds,
+              rounds,
               agents_count: agents.length,
               timestamp: new Date().toISOString(),
             },
