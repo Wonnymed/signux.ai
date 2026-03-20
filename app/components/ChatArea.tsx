@@ -108,28 +108,32 @@ export default function ChatArea({
   /* Chat state */
   return (
     <>
+      <div className="temporal-grid" />
+      <div className="prediction-horizon" />
       <div
         ref={areaRef}
         onScroll={handleScroll}
-        style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", position: "relative", userSelect: "none", WebkitUserSelect: "none" as any }}
+        style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", position: "relative", userSelect: "none", WebkitUserSelect: "none" as any, zIndex: 2 }}
       >
         <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", paddingTop: 20, paddingBottom: 32 }}>
           {messages.map((m, i) => (
-            <MessageBlock
-              key={i}
-              message={m}
-              index={i}
-              isLast={i === messages.length - 1}
-              loading={loading}
-              searching={searching}
-              userInitials={userInitials}
-              onRetry={i === messages.length - 1 ? onRetry : undefined}
-              onCopy={onCopy}
-              onSendFollowup={(text) => onSend(text)}
-              onDecisionDetected={onDecisionDetected}
-              tier={tier}
-              previousUserMessage={i > 0 && messages[i - 1]?.role === "user" ? messages[i - 1].content : undefined}
-            />
+            <div key={i}>
+              <MessageBlock
+                message={m}
+                index={i}
+                isLast={i === messages.length - 1}
+                loading={loading}
+                searching={searching}
+                userInitials={userInitials}
+                onRetry={i === messages.length - 1 ? onRetry : undefined}
+                onCopy={onCopy}
+                onSendFollowup={(text) => onSend(text)}
+                onDecisionDetected={onDecisionDetected}
+                tier={tier}
+                previousUserMessage={i > 0 && messages[i - 1]?.role === "user" ? messages[i - 1].content : undefined}
+              />
+              {i < messages.length - 1 && <div className="timeline-connector" />}
+            </div>
           ))}
           <div ref={bottomRef} />
         </div>

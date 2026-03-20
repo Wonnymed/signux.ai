@@ -368,8 +368,12 @@ Actions must be SPECIFIC (not "research the market" but "survey 20 potential cus
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{ display: "flex", justifyContent: "flex-start", padding: pad, gap: 10 }}
+        style={{ display: "flex", justifyContent: "flex-start", padding: pad, gap: 10, position: "relative" }}
+        className={!isStreaming && message.content ? "ai-message-enter" : undefined}
       >
+        {/* Scan line — appears once on new message */}
+        {!isStreaming && message.content && <div className="scan-line" />}
+
         {/* Avatar */}
         <div style={{
           width: 28, height: 28, borderRadius: "50%",
@@ -383,7 +387,9 @@ Actions must be SPECIFIC (not "research the market" but "survey 20 potential cus
         {/* Message column */}
         <div style={{ maxWidth: aiMaxWidth, minWidth: 0 }}>
           {/* Bubble */}
-          <div style={{
+          <div
+            className={!isStreaming && confidenceLevel === "HIGH" ? "confidence-glow-high" : !isStreaming && confidenceLevel === "MEDIUM" ? "confidence-glow-medium" : !isStreaming && confidenceLevel === "LOW" ? "confidence-glow-low" : undefined}
+            style={{
             padding: "12px 16px",
             borderRadius: "4px 18px 18px 18px",
             background: "var(--bg-secondary)",
@@ -395,8 +401,25 @@ Actions must be SPECIFIC (not "research the market" but "survey 20 potential cus
             WebkitUserSelect: "text" as any,
             transition: "all 0.3s ease",
           }}>
-            {/* Loading state — thinking indicator */}
+            {/* Loading state — Oracle Eye */}
             {isEmpty && isStreaming && (
+              <div style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                gap: 12, padding: "8px 0",
+                animation: "fadeIn 300ms ease",
+              }}>
+                <div className="oracle-eye" />
+                <span style={{
+                  fontSize: 12, color: "var(--text-tertiary)",
+                  fontFamily: "var(--font-mono)", letterSpacing: 1,
+                }}>
+                  {searching ? t("chat.searching") : thinkingPhrase}
+                </span>
+              </div>
+            )}
+
+            {/* Legacy loading dots — hidden, replaced by oracle eye above */}
+            {false && isEmpty && isStreaming && (
               <div style={{
                 display: "flex", alignItems: "center", gap: 8,
                 padding: "2px 0",
@@ -568,10 +591,11 @@ Actions must be SPECIFIC (not "research the market" but "survey 20 potential cus
                     {domainsExpanded && (
                       <div style={{
                         display: "flex", flexWrap: "wrap", gap: 4,
-                        marginTop: 6, animation: "fadeIn 0.15s ease",
+                        marginTop: 6,
                       }}>
-                        {domains.map(d => (
-                          <span key={d} style={{
+                        {domains.map((d, i) => (
+                          <span key={d} className="domain-badge" style={{
+                            animationDelay: `${i * 0.1}s`,
                             padding: "2px 8px", borderRadius: 4,
                             fontSize: 9, fontFamily: "var(--font-mono)",
                             letterSpacing: 0.3,

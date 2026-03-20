@@ -912,6 +912,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                 onSimulate(fullScenario);
               }}
               disabled={!simScenario.trim() || simStarting}
+              className={simScenario.trim() && !simStarting ? "predict-button" : undefined}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
                 background: simScenario.trim() && !simStarting ? "var(--accent)" : "rgba(212,175,55,0.3)",
@@ -922,6 +923,11 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                 cursor: simScenario.trim() && !simStarting ? "pointer" : "not-allowed",
                 transition: "all 200ms",
                 opacity: simScenario.trim() && !simStarting ? 1 : 0.5,
+              }}
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                e.currentTarget.style.setProperty("--mouse-x", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+                e.currentTarget.style.setProperty("--mouse-y", `${((e.clientY - rect.top) / rect.height) * 100}%`);
               }}
               onMouseEnter={e => {
                 if (simScenario.trim() && !simStarting) {
@@ -1303,7 +1309,20 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     );
 
     return (
-      <div style={{ flex: 1, overflow: "hidden", padding: isMobile ? "16px" : "24px 32px", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, overflow: "hidden", padding: isMobile ? "16px" : "24px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
+        {/* Probability particles during simulation */}
+        <div className="probability-particles">
+          {Array.from({ length: isMobile ? 8 : 15 }, (_, i) => (
+            <span key={i} style={{
+              left: `${Math.random() * 100}%`,
+              animationDuration: `${8 + Math.random() * 12}s`,
+              animationDelay: `${Math.random() * 5}s`,
+              width: `${2 + Math.random() * 3}px`,
+              height: `${2 + Math.random() * 3}px`,
+              opacity: 0.1 + Math.random() * 0.2,
+            }} />
+          ))}
+        </div>
         {isMobile ? (
           /* Mobile: single column, feed then agents */
           <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1700,7 +1719,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {/* Vote Badge */}
             {vote && (
-              <div style={{
+              <div className={vote.result === "GO" ? "confidence-glow-high" : vote.result === "CAUTION" ? "confidence-glow-medium" : "confidence-glow-low"} style={{
                 display: "flex", alignItems: "center", gap: 14,
                 padding: "14px 20px", borderRadius: "var(--radius-md)",
                 background: vote.result === "GO" ? "rgba(34,197,94,0.06)"
@@ -1710,12 +1729,19 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   : vote.result === "CAUTION" ? "rgba(245,158,11,0.15)"
                   : "rgba(239,68,68,0.15)"}`,
               }}>
-                <div style={{
-                  fontSize: 26, fontWeight: 700,
-                  color: vote.result === "GO" ? "#22c55e" : vote.result === "CAUTION" ? "#f59e0b" : "#ef4444",
-                  fontFamily: "var(--font-brand)", letterSpacing: 2,
+                <div className="verdict-container" style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  position: "relative",
                 }}>
-                  {vote.result}
+                  <div className="verdict-ring" style={{ color: vote.result === "GO" ? "#22c55e" : vote.result === "CAUTION" ? "#f59e0b" : "#ef4444" }} />
+                  <div style={{
+                    fontSize: 28, fontWeight: 800,
+                    color: vote.result === "GO" ? "#22c55e" : vote.result === "CAUTION" ? "#f59e0b" : "#ef4444",
+                    fontFamily: "var(--font-brand)", letterSpacing: 2,
+                    textShadow: `0 0 20px ${vote.result === "GO" ? "rgba(34,197,94,0.4)" : vote.result === "CAUTION" ? "rgba(245,158,11,0.4)" : "rgba(239,68,68,0.4)"}`,
+                  }}>
+                    {vote.result}
+                  </div>
                 </div>
                 <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
                   <span style={{ color: "#22c55e", fontWeight: 600 }}>{vote.go} GO</span>

@@ -52,6 +52,8 @@ export default function WelcomeScreen({
       padding: isMobile ? "24px 16px 16px" : "40px 24px 24px",
       position: "relative",
     }}>
+      <div className="temporal-grid" />
+      <div className="prediction-horizon" />
       {/* Radial glow */}
       <div style={{
         position: "absolute", top: "30%", left: "50%",
@@ -91,11 +93,12 @@ export default function WelcomeScreen({
 
         {/* Tagline */}
         <p style={{
-          fontSize: isMobile ? 14 : 16, color: "var(--text-secondary)",
-          maxWidth: isMobile ? 260 : 420,
+          fontSize: isMobile ? 16 : 20, color: "var(--text-secondary)",
+          maxWidth: isMobile ? 280 : 440,
           textAlign: "center", lineHeight: 1.5, marginBottom: isMobile ? 16 : 28,
+          fontFamily: "var(--font-accent)", fontStyle: "italic",
         }}>
-          What do you want to know before everyone else?
+          See what happens before it happens
         </p>
 
         {/* Input */}
@@ -129,17 +132,22 @@ export default function WelcomeScreen({
           {MODE_BANNERS.map(m => {
             const Icon = m.icon;
             return (
-              <button key={m.key} onClick={() => onSwitchMode?.(m.key)} style={{
+              <button key={m.key} onClick={() => onSwitchMode?.(m.key)} className="predict-button" style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: isMobile ? "8px 12px" : "10px 10px",
                 borderRadius: 10, cursor: "pointer",
                 border: `1px solid ${m.border}`, background: m.bg,
-                transition: "all 200ms", textAlign: "left",
+                textAlign: "left",
                 minHeight: 44, whiteSpace: "nowrap",
                 flex: isMobile ? "0 0 auto" : undefined,
               }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = m.color; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = m.border; }}
+                onMouseMove={e => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  e.currentTarget.style.setProperty("--mouse-x", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+                  e.currentTarget.style.setProperty("--mouse-y", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+                }}
               >
                 <Icon size={14} style={{ color: m.color, flexShrink: 0 }} />
                 <div>
