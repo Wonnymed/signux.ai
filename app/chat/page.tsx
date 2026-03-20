@@ -1,5 +1,6 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { getProfile } from "../lib/profile";
@@ -169,8 +170,19 @@ function OfflineBanner() {
   );
 }
 
+/* ═══ Suspense wrapper for useSearchParams ═══ */
+export default function ChatPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <ChatPage />
+    </Suspense>
+  );
+}
+
 /* ═══ Main Orchestrator ═══ */
-export default function ChatPage() {
+function ChatPage() {
+  const searchParams = useSearchParams();
+
   /* ── State ── */
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -226,6 +238,17 @@ export default function ChatPage() {
     projects, activeProject, activeProjectId, selectProject,
     createProject, updateProject,
   } = useProjects(!!authUser);
+
+  /* Read mode from URL query param (e.g. /chat?mode=simulate from /projects navigation) */
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    const validModes = ["chat", "simulate", "intel", "launchpad", "globalops", "invest"];
+    if (modeParam && validModes.includes(modeParam)) {
+      setMode(modeParam as Mode);
+      // Clean URL without reload
+      window.history.replaceState({}, "", "/chat");
+    }
+  }, [searchParams]);
 
   /* Refs */
   const inputRef = useRef<HTMLTextAreaElement>(null);

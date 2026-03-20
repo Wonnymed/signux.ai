@@ -4,33 +4,33 @@
 
 /* Fonts loaded via <link> in layout.tsx for preconnect + font-display: swap */
 
-/* ═══ Light Mode (Default) ═══ */
+/* ═══ Dark Mode (Default) ═══ */
 :root {
-  --bg-primary: #FAF9F7;
-  --bg-primary-rgb: 250,249,247;
-  --bg-secondary: #F3F1EE;
-  --bg-tertiary: #ECEAE6;
-  --bg-message-user: #F3F1EE;
-  --bg-message-ai: #FAF9F7;
-  --bg-sidebar: #F5F4F2;
-  --sidebar-bg: #F5F4F2;
-  --sidebar-border: #E8E4DE;
-  --bg-input: #FFFFFF;
-  --bg-hover: #ECEAE6;
-  --bg-active: #E5E2DC;
+  --bg-primary: #1A1918;
+  --bg-primary-rgb: 26,25,24;
+  --bg-secondary: #211F1E;
+  --bg-tertiary: #2A2826;
+  --bg-message-user: #211F1E;
+  --bg-message-ai: #1A1918;
+  --bg-sidebar: #121110;
+  --sidebar-bg: #121110;
+  --sidebar-border: #2A2725;
+  --bg-input: #252322;
+  --bg-hover: #2A2826;
+  --bg-active: #353230;
 
-  --text-primary: #1A1918;
-  --text-secondary: #78716C;
-  --text-tertiary: #A8A29E;
+  --text-primary: #F3F0EC;
+  --text-secondary: #A8A29E;
+  --text-tertiary: #6B6560;
   --text-inverse: #FFFFFF;
 
-  --border-primary: #DDD8D0;
-  --border-secondary: #E8E4DE;
+  --border-primary: #3D3833;
+  --border-secondary: #2E2A27;
 
-  --accent: #B8941E;
-  --accent-hover: #9A7A14;
-  --accent-light: #D4AF37;
-  --accent-bg: rgba(184,148,30,0.06);
+  --accent: #D4AF37;
+  --accent-hover: #E8CC6E;
+  --accent-light: #E8CC6E;
+  --accent-bg: rgba(212,175,55,0.06);
 
   --success: #10B981;
   --warning: #F59E0B;
@@ -59,44 +59,44 @@
   /* Oracle tint */
   --oracle-tint: rgba(212,175,55,0.02);
 
-  --shadow-sm: 0 1px 2px rgba(10,9,8,0.04);
-  --shadow-md: 0 2px 8px rgba(10,9,8,0.06);
-  --shadow-lg: 0 4px 16px rgba(10,9,8,0.08);
+  --shadow-sm: 0 1px 2px rgba(10,9,8,0.3);
+  --shadow-md: 0 2px 8px rgba(10,9,8,0.4);
+  --shadow-lg: 0 4px 16px rgba(10,9,8,0.5);
 
   --sidebar-collapsed: 52px;
   --sidebar-expanded: 280px;
 
   /* Mode accent colors */
   --mode-sim: #D4AF37;
-  --mode-sim-bg: rgba(212,175,55,0.08);
-  --mode-sim-border: rgba(212,175,55,0.15);
-  --mode-res: #4A6FE5;
-  --mode-res-bg: rgba(74,111,229,0.08);
-  --mode-res-border: rgba(74,111,229,0.15);
-  --mode-intel: #B91C1C;
+  --mode-sim-bg: rgba(212,175,55,0.06);
+  --mode-sim-border: rgba(212,175,55,0.1);
+  --mode-res: #6B8AFF;
+  --mode-res-bg: rgba(107,138,255,0.06);
+  --mode-res-border: rgba(107,138,255,0.1);
+  --mode-intel: #DC2626;
   --mode-intel-bg: rgba(220,38,38,0.04);
   --mode-intel-border: rgba(220,38,38,0.12);
-  --mode-lp: #0D9488;
-  --mode-lp-bg: rgba(13,148,136,0.08);
-  --mode-lp-border: rgba(13,148,136,0.15);
-  --mode-go: #16A34A;
-  --mode-go-bg: rgba(22,163,74,0.08);
-  --mode-go-border: rgba(22,163,74,0.15);
-  --mode-inv: #9333EA;
-  --mode-inv-bg: rgba(147,51,234,0.08);
-  --mode-inv-border: rgba(147,51,234,0.15);
+  --mode-lp: #14B8A6;
+  --mode-lp-bg: rgba(20,184,166,0.06);
+  --mode-lp-border: rgba(20,184,166,0.1);
+  --mode-go: #22C55E;
+  --mode-go-bg: rgba(34,197,94,0.06);
+  --mode-go-border: rgba(34,197,94,0.1);
+  --mode-inv: #A855F7;
+  --mode-inv-bg: rgba(168,85,247,0.06);
+  --mode-inv-border: rgba(168,85,247,0.1);
 
   /* Shared surface tokens */
-  --card-bg: #FFFFFF;
-  --card-border: #E8E4DE;
-  --card-hover-bg: rgba(0,0,0,0.03);
-  --card-hover-border: #DDD8D0;
-  --glow-color: rgba(212,175,55,0.08);
-  --particle-color: rgba(26,25,24,0.08);
-  --divider: rgba(26,25,24,0.06);
-  --pill-bg: rgba(26,25,24,0.03);
-  --pill-border: rgba(26,25,24,0.08);
-  --pill-text: rgba(26,25,24,0.4);
+  --card-bg: #252322;
+  --card-border: #2E2A27;
+  --card-hover-bg: #2A2826;
+  --card-hover-border: #3D3833;
+  --glow-color: rgba(212,175,55,0.04);
+  --particle-color: rgba(243,240,236,0.12);
+  --divider: rgba(243,240,236,0.04);
+  --pill-bg: rgba(243,240,236,0.02);
+  --pill-border: rgba(243,240,236,0.04);
+  --pill-text: rgba(243,240,236,0.16);
 }
 
 /* ═══ Dark Mode ═══ */

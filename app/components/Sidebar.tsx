@@ -413,14 +413,19 @@ export default function Sidebar({
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : (authUser?.initials || "?");
   const displayName = profileName || authUser?.name || "";
 
-  // Navigate to /chat if on a different route, then set mode
+  // Navigate to /chat with mode as query param if on a different route
   const handleMode = (m: Mode) => {
-    if (pathname !== "/chat") router.push("/chat");
-    setMode(m);
+    if (pathname !== "/chat") {
+      router.push(`/chat?mode=${m}`);
+    } else {
+      setMode(m);
+    }
     if (open) onClose();
   };
   const handleNew = () => {
-    if (pathname !== "/chat") router.push("/chat");
+    if (pathname !== "/chat") {
+      router.push("/chat");
+    }
     onNewConversation();
     if (open) onClose();
   };
