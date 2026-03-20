@@ -261,9 +261,9 @@ export default function Sidebar({
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : (authUser?.initials || "?");
   const displayName = profileName || authUser?.name || "";
 
-  const handleMode = (m: Mode) => { setMode(m); if (isMobile || open) onClose(); };
-  const handleNew = () => { onNewConversation(); if (isMobile || open) onClose(); };
-  const handleSettings = () => { onOpenSettings(); if (isMobile || open) onClose(); };
+  const handleMode = (m: Mode) => { setMode(m); if (open) onClose(); };
+  const handleNew = () => { onNewConversation(); if (open) onClose(); };
+  const handleSettings = () => { onOpenSettings(); if (open) onClose(); };
   const toggleSidebar = () => { if (open) onClose(); else onOpen(); };
 
   /* ═══ Project Selector State ═══ */
@@ -329,15 +329,15 @@ export default function Sidebar({
     setStreak(s);
   }, []);
 
-  // Mobile: click outside to close
+  // Click outside to close (mobile + desktop expanded)
   useEffect(() => {
-    if (!isMobile || !open) return;
+    if (!open) return;
     const handler = (e: MouseEvent) => {
       if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) onClose();
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [isMobile, open, onClose]);
+  }, [open, onClose]);
 
   // Escape to close sidebar (both mobile and desktop)
   useEffect(() => {
@@ -368,30 +368,23 @@ export default function Sidebar({
     );
   }
 
-  // Desktop: always icon-only 56px rail + overlay panel when open
+  // Desktop: single sidebar that changes width between collapsed (56px) and expanded (260px)
+  const sidebarWidth = open ? 260 : 56;
+
   return (
-    <>
-      <aside style={{
-        width: 56, minWidth: 56, flexShrink: 0,
-        background: "var(--bg-sidebar)", borderRight: "1px solid var(--sidebar-border)",
-        display: "flex", flexDirection: "column", overflow: "hidden",
-      }}>
-        {renderCollapsedContent()}
-      </aside>
-      {open && (
-        <>
-          <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(10,9,8,0.3)", zIndex: 199 }} />
-          <aside ref={sidebarRef} style={{
-            position: "fixed", top: 0, left: 56, bottom: 0, width: 260, zIndex: 200,
-            background: "var(--bg-sidebar)", borderRight: "1px solid var(--sidebar-border)",
-            display: "flex", flexDirection: "column",
-            animation: "slideInLeft 0.15s ease-out",
-          }}>
-            {renderExpandedContent()}
-          </aside>
-        </>
-      )}
-    </>
+    <aside ref={sidebarRef} style={{
+      width: sidebarWidth,
+      minWidth: sidebarWidth,
+      flexShrink: 0,
+      background: "var(--bg-sidebar)",
+      borderRight: "1px solid var(--sidebar-border)",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      transition: "width 200ms ease, min-width 200ms ease",
+    }}>
+      {open ? renderExpandedContent() : renderCollapsedContent()}
+    </aside>
   );
 
   // ═══ EXPANDED (full sidebar with text) ═══
@@ -678,7 +671,7 @@ export default function Sidebar({
                       key={conv.id}
                       conv={conv}
                       isActive={conv.id === activeConversationId}
-                      onLoad={() => { onLoadConversation?.(conv.id); if (isMobile) onClose(); }}
+                      onLoad={() => { onLoadConversation?.(conv.id); onClose(); }}
                       onDelete={() => onDeleteConversation?.(conv.id)}
                     />
                   ))}
@@ -810,7 +803,7 @@ export default function Sidebar({
                 </div>
               </div>
               {onSignOut && (
-                <button onClick={() => { onSignOut(); if (isMobile) onClose(); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none", background: "none", borderRadius: "var(--radius-xs)", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left", marginTop: 2 }}
+                <button onClick={() => { onSignOut(); onClose(); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none", background: "none", borderRadius: "var(--radius-xs)", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left", marginTop: 2 }}
                   onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <LogOut size={16} strokeWidth={1.5} /> <span>{t("auth.sign_out")}</span>
                 </button>
