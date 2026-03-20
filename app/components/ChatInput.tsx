@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { ArrowUp, Paperclip, Globe, X, FileText, FileCode, Mic, MicOff, Wand2, Loader2 } from "lucide-react";
+import { ArrowUp, Paperclip, Globe, X, FileText, FileCode, Mic, MicOff, Wand2, Loader2, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 import { useEnhance } from "../lib/useEnhance";
 import { t, getLanguage } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -83,6 +83,130 @@ function isSupportedFile(file: File): boolean {
 function isSpeechSupported(): boolean {
   return typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+}
+
+/* ═══ Paperclip Popover ═══ */
+function PaperclipPopover({ onFileClick, isMobile }: { onFileClick: () => void; isMobile: boolean }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div ref={popoverRef} style={{ position: "relative" }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: isMobile ? 44 : 34, height: isMobile ? 44 : 34, borderRadius: 8,
+          background: isOpen ? "rgba(212,175,55,0.08)" : "transparent",
+          border: "none",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer",
+          color: isOpen ? "var(--accent)" : "rgba(212,175,55,0.4)",
+          transition: "all 150ms ease",
+        }}
+        onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.color = "rgba(212,175,55,0.7)"; }}
+        onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.color = "rgba(212,175,55,0.4)"; }}
+        aria-label="Add photos & files"
+      >
+        <Paperclip size={16} />
+      </button>
+
+      {isOpen && (
+        <div style={{
+          position: "absolute",
+          bottom: "calc(100% + 8px)",
+          left: isMobile ? "50%" : 0,
+          transform: isMobile ? "translateX(-50%)" : "none",
+          minWidth: isMobile ? "calc(100vw - 64px)" : 240,
+          maxWidth: 320,
+          padding: 6,
+          borderRadius: 14,
+          background: "var(--card-bg)",
+          border: "1px solid rgba(212,175,55,0.15)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.05)",
+          zIndex: 100,
+          animation: "popoverSlideUp 150ms ease-out",
+        }}>
+          <div style={{
+            padding: "6px 10px 8px",
+            fontSize: 11, fontWeight: 600,
+            color: "var(--text-tertiary)",
+            letterSpacing: 0.3,
+            fontFamily: "var(--font-mono)",
+            textTransform: "uppercase" as const,
+          }}>
+            Add to conversation
+          </div>
+
+          <button onClick={() => { onFileClick(); setIsOpen(false); }} style={{
+            display: "flex", alignItems: "center", gap: 10,
+            width: "100%", padding: "10px 12px", borderRadius: 10,
+            background: "transparent", border: "none",
+            cursor: "pointer", textAlign: "left" as const,
+            transition: "background 150ms ease",
+            color: "var(--text-primary)",
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(212,175,55,0.06)"}
+          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+          >
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: "rgba(212,175,55,0.06)",
+              border: "1px solid rgba(212,175,55,0.1)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--accent)", flexShrink: 0,
+            }}>
+              <FileText size={15} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>Upload files & images</div>
+              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 1 }}>
+                PDF, TXT, CSV, DOC, images
+              </div>
+            </div>
+          </button>
+
+          <button onClick={() => { setIsOpen(false); }} style={{
+            display: "flex", alignItems: "center", gap: 10,
+            width: "100%", padding: "10px 12px", borderRadius: 10,
+            background: "transparent", border: "none",
+            cursor: "pointer", textAlign: "left" as const,
+            transition: "background 150ms ease",
+            color: "var(--text-primary)",
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(212,175,55,0.06)"}
+          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+          >
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: "rgba(212,175,55,0.06)",
+              border: "1px solid rgba(212,175,55,0.1)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--accent)", flexShrink: 0,
+            }}>
+              <LinkIcon size={15} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>Paste a URL</div>
+              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 1 }}>
+                Website, article, or document link
+              </div>
+            </div>
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 type ChatInputProps = {
@@ -282,7 +406,6 @@ export default function ChatInput({
     recognition.continuous = true;
     recognition.maxAlternatives = 1;
 
-    // Store the text that was in the input before we started
     const baseText = value;
     finalTranscriptRef.current = "";
 
@@ -386,15 +509,10 @@ export default function ChatInput({
   const canSend = (value.trim() || attachments.length > 0) && !loading;
   const speechSupported = typeof window !== "undefined" && isSpeechSupported();
   const iconSize = 16;
-  const sendSize = isMobile ? 36 : 32;
-  const touchPad = isMobile ? 10 : 6;
-
-  const glowActive = focused || !!value.trim();
 
   return (
     <div
       style={{ width: "100%", maxWidth: 768, margin: "0 auto", position: "relative" }}
-
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -423,7 +541,7 @@ export default function ChatInput({
           <span style={{ fontSize: 10, opacity: 0.6, marginLeft: "auto", whiteSpace: "nowrap" }}>Click to activate</span>
           <button onClick={(e) => { e.stopPropagation(); setSuggestion(null); }} style={{
             background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 0, fontSize: 12, lineHeight: 1, flexShrink: 0,
-          }}>✕</button>
+          }}>&#x2715;</button>
         </div>
       )}
 
@@ -431,7 +549,7 @@ export default function ChatInput({
       {dragging && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 10,
-          background: "var(--bg-primary)", borderRadius: 9999,
+          background: "var(--bg-primary)", borderRadius: 24,
           border: "2px dashed var(--accent)", display: "flex",
           alignItems: "center", justifyContent: "center",
           color: "var(--accent)", fontSize: 14, fontWeight: 500,
@@ -441,14 +559,22 @@ export default function ChatInput({
         </div>
       )}
 
-      {/* Glow container */}
+      {/* Gold composer container */}
       <div
-        className={`input-glow${glowActive ? " focused" : ""}`}
         style={{
+          display: "flex",
+          flexDirection: "column",
+          borderRadius: 24,
+          border: focused
+            ? "1px solid rgba(212,175,55,0.45)"
+            : "1px solid rgba(212,175,55,0.25)",
+          background: "var(--card-bg)",
+          boxShadow: focused
+            ? "0 0 0 1px rgba(212,175,55,0.15), 0 0 30px rgba(212,175,55,0.08)"
+            : "0 0 0 1px rgba(212,175,55,0.08), 0 0 20px rgba(212,175,55,0.04)",
           overflow: "hidden",
-          padding: "12px 16px 8px 16px",
+          transition: "border-color 300ms ease, box-shadow 300ms ease",
           ...(isListening ? { borderColor: "var(--error)", boxShadow: "none" } : {}),
-          ...(attachments.length > 0 ? { borderRadius: "var(--radius-lg)" } : {}),
         }}
       >
         {/* Listening indicator bar */}
@@ -533,7 +659,7 @@ export default function ChatInput({
             fontSize: 11,
             color: "var(--accent)",
             fontFamily: "var(--font-mono)",
-            padding: "4px 0 2px",
+            padding: "4px 16px 2px",
             display: "flex",
             alignItems: "center",
             gap: 4,
@@ -558,7 +684,7 @@ export default function ChatInput({
           style={{
             width: "100%",
             resize: "none",
-            padding: 0,
+            padding: isMobile ? "14px 16px 4px" : "18px 20px 4px",
             background: "transparent",
             border: "none",
             color: "var(--text-primary)",
@@ -569,25 +695,19 @@ export default function ChatInput({
             maxHeight: 120,
             opacity: enhancing ? 0.5 : 1,
             transition: "opacity 150ms ease",
+            caretColor: "var(--accent)",
+            fontFamily: "var(--font-body)",
           }}
         />
 
         {/* Toolbar row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "4px 10px 10px" : "4px 12px 12px" }}>
           {/* Left toolbar icons */}
           <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                background: "none", border: "none", cursor: "pointer",
-                padding: touchPad, borderRadius: 6, display: "flex",
-                color: "var(--text-tertiary)", transition: "color 0.15s",
-                minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center",
-              }}
-              aria-label="Attach file"
-            >
-              <Paperclip size={iconSize} />
-            </button>
+            <PaperclipPopover
+              onFileClick={() => fileInputRef.current?.click()}
+              isMobile={isMobile}
+            />
             <input
               ref={fileInputRef}
               type="file"
@@ -604,7 +724,7 @@ export default function ChatInput({
                   border: searchActive ? "1px solid var(--accent)" : "none",
                   cursor: "pointer",
                   padding: 6, borderRadius: 6, display: "flex",
-                  color: searchActive ? "var(--accent)" : "var(--text-tertiary)",
+                  color: searchActive ? "var(--accent)" : "rgba(212,175,55,0.4)",
                   transition: "all 0.15s",
                 }}
                 aria-label="Web search"
@@ -619,13 +739,15 @@ export default function ChatInput({
               style={{
                 background: "none", border: "none",
                 cursor: speechSupported ? "pointer" : "default",
-                padding: touchPad, borderRadius: "var(--radius-xs)", display: "flex",
-                color: isListening ? "var(--error)" : "var(--text-tertiary)",
+                padding: isMobile ? 10 : 6, borderRadius: "var(--radius-xs)", display: "flex",
+                color: isListening ? "var(--error)" : "rgba(212,175,55,0.4)",
                 opacity: speechSupported ? 1 : 0.3,
                 transition: "color 0.15s",
                 animation: isListening ? "voicePulse 1.5s ease-in-out infinite" : "none",
-                width: 28, height: 28, alignItems: "center", justifyContent: "center",
+                width: isMobile ? 44 : 28, height: isMobile ? 44 : 28, alignItems: "center", justifyContent: "center",
               }}
+              onMouseEnter={(e) => { if (!isListening) e.currentTarget.style.color = "rgba(212,175,55,0.7)"; }}
+              onMouseLeave={(e) => { if (!isListening) e.currentTarget.style.color = "rgba(212,175,55,0.4)"; }}
               aria-label={t("voice.tooltip")}
             >
               {isListening ? <MicOff size={iconSize} /> : <Mic size={iconSize} />}
@@ -636,26 +758,26 @@ export default function ChatInput({
               <button
                 onClick={handleEnhance}
                 disabled={enhancing}
-                title={`Enhance your message (${navigator?.platform?.includes("Mac") ? "⌘" : "Ctrl"}+E)`}
+                title={`Enhance your message (${navigator?.platform?.includes("Mac") ? "\u2318" : "Ctrl"}+E)`}
                 style={{
                   width: 28,
                   height: 28,
                   borderRadius: 6,
                   border: "none",
-                  background: wasEnhanced ? "var(--accent-soft, rgba(212,175,55,0.1))" : enhancing ? "var(--bg-tertiary)" : "none",
+                  background: wasEnhanced ? "rgba(212,175,55,0.1)" : enhancing ? "var(--bg-tertiary)" : "none",
                   cursor: enhancing ? "wait" : "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: wasEnhanced ? "var(--accent)" : enhancing ? "var(--text-tertiary)" : "var(--text-tertiary)",
+                  color: wasEnhanced ? "var(--accent)" : enhancing ? "var(--text-tertiary)" : "rgba(212,175,55,0.4)",
                   transition: "all 200ms",
                   padding: 0,
                 }}
                 onMouseEnter={e => {
-                  if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.06))"; e.currentTarget.style.color = "var(--accent)"; }
+                  if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "rgba(212,175,55,0.06)"; e.currentTarget.style.color = "var(--accent)"; }
                 }}
                 onMouseLeave={e => {
-                  if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--text-tertiary)"; }
+                  if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(212,175,55,0.4)"; }
                 }}
               >
                 {enhancing ? (
@@ -667,7 +789,6 @@ export default function ChatInput({
             )}
           </div>
 
-          {/* Send button */}
           {/* Enhanced badge */}
           {wasEnhanced && (
             <div style={{
@@ -685,29 +806,29 @@ export default function ChatInput({
             </div>
           )}
 
-          {/* Send button */}
+          {/* Send button — gold */}
           <button
             onClick={onSend}
             disabled={!canSend}
-            className={canSend ? "btn-primary-glow" : undefined}
             style={{
-              width: sendSize,
-              height: sendSize,
+              width: isMobile ? 36 : 36,
+              height: isMobile ? 36 : 36,
               borderRadius: "50%",
-              background: canSend ? "var(--accent)" : "var(--bg-tertiary)",
-              border: "none",
-              cursor: canSend ? "pointer" : "not-allowed",
+              background: canSend ? "var(--accent)" : "rgba(212,175,55,0.08)",
+              border: canSend ? "1px solid var(--accent)" : "1px solid rgba(212,175,55,0.15)",
+              cursor: canSend ? "pointer" : "default",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "all 0.2s",
-              color: canSend ? "var(--text-inverse)" : "var(--text-tertiary)",
+              transition: "all 300ms ease",
               flexShrink: 0,
               transform: canSend ? "scale(1)" : "scale(0.92)",
-              boxShadow: canSend ? "0 0 12px rgba(212,175,55,0.2)" : "none",
+              boxShadow: canSend ? "0 0 16px rgba(212,175,55,0.2)" : "none",
             }}
           >
-            <ArrowUp size={16} />
+            <ArrowUp size={16} style={{
+              color: canSend ? "#000" : "rgba(212,175,55,0.4)",
+            }} />
           </button>
         </div>
       </div>

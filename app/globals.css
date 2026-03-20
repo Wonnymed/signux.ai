@@ -337,6 +337,11 @@ textarea, input, button {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes popoverSlideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-12px); }
   to { opacity: 1; transform: translateX(0); }
@@ -853,19 +858,19 @@ textarea, input, button {
 
 /* ═══ Input Glow ═══ */
 .input-glow {
-  border: 1px solid var(--border-primary);
-  border-radius: 9999px;
-  background: var(--bg-primary);
-  transition: box-shadow 300ms ease, border-color 200ms ease;
-  box-shadow: 0 0 0 1px rgba(212,175,55,0.0);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 24px;
+  background: var(--card-bg);
+  transition: box-shadow 300ms ease, border-color 300ms ease;
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.08), 0 0 20px rgba(212,175,55,0.04);
 }
 .input-glow:hover {
-  border-color: rgba(212,175,55,0.15);
-  box-shadow: 0 0 10px rgba(212,175,55,0.04);
+  border-color: rgba(212,175,55,0.35);
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.1), 0 0 24px rgba(212,175,55,0.06);
 }
 .input-glow.focused {
-  border-color: rgba(212,175,55,0.3);
-  box-shadow: 0 0 20px rgba(212,175,55,0.08), 0 0 40px rgba(212,175,55,0.04);
+  border-color: rgba(212,175,55,0.45);
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.15), 0 0 30px rgba(212,175,55,0.08);
 }
 
 /* ═══ Mobile ═══ */

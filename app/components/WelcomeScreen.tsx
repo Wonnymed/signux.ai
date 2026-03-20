@@ -47,7 +47,7 @@ export default function WelcomeScreen({
       justifyContent: "center",
       minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
       padding: isMobile ? "0 16px" : "0 24px",
-      maxWidth: 768,
+      maxWidth: 720,
       margin: "0 auto",
       width: "100%",
       position: "relative",
@@ -56,12 +56,12 @@ export default function WelcomeScreen({
       {/* ===== Spacer top (40/60 split) ===== */}
       <div style={{ flex: 0.4 }} />
 
-      {/* ===== 1. LOGO GRANDE ===== */}
+      {/* ===== 1. LOGO ===== */}
       <div style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: isMobile ? 8 : 10,
+        gap: isMobile ? 8 : 12,
         marginBottom: isMobile ? 36 : 48,
       }}>
         <SignuxIcon size={isMobile ? 44 : 64} />
@@ -92,10 +92,10 @@ export default function WelcomeScreen({
         </div>
       </div>
 
-      {/* ===== 2. INPUT ===== */}
+      {/* ===== 2. INPUT — max 640px ===== */}
       <div style={{
         width: "100%",
-        maxWidth: 600,
+        maxWidth: 640,
         marginBottom: 20,
       }}>
         <ChatInput
@@ -112,7 +112,7 @@ export default function WelcomeScreen({
         />
       </div>
 
-      {/* ===== 3. MODE ICONS ===== */}
+      {/* ===== 3. MODE ICONS — gold idle ===== */}
       <div style={{
         display: "flex",
         gap: isMobile ? 8 : 10,
@@ -128,8 +128,8 @@ export default function WelcomeScreen({
               width: isMobile ? 44 : 42,
               height: isMobile ? 44 : 42,
               borderRadius: 12,
-              border: "1px solid var(--border-secondary)",
-              background: "transparent",
+              border: "1px solid rgba(212,175,55,0.2)",
+              background: "rgba(212,175,55,0.04)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -138,26 +138,26 @@ export default function WelcomeScreen({
               position: "relative",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = `${color}50`;
-              e.currentTarget.style.background = `${color}0A`;
-              e.currentTarget.style.transform = "translateY(-3px)";
-              e.currentTarget.style.boxShadow = `0 6px 16px ${color}15`;
+              e.currentTarget.style.borderColor = `${color}66`;
+              e.currentTarget.style.background = `${color}14`;
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = `0 4px 12px ${color}1A`;
               const icon = e.currentTarget.querySelector("svg");
               if (icon) (icon as HTMLElement).style.color = color;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border-secondary)";
-              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)";
+              e.currentTarget.style.background = "rgba(212,175,55,0.04)";
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "none";
               const icon = e.currentTarget.querySelector("svg");
-              if (icon) (icon as HTMLElement).style.color = "var(--text-tertiary)";
+              if (icon) (icon as HTMLElement).style.color = "rgba(212,175,55,0.5)";
             }}
           >
             <Icon
               size={isMobile ? 16 : 18}
               strokeWidth={1.5}
-              style={{ color: "var(--text-tertiary)", transition: "color 200ms" }}
+              style={{ color: "rgba(212,175,55,0.5)", transition: "color 200ms" }}
             />
           </button>
         ))}
@@ -188,11 +188,10 @@ export default function WelcomeScreen({
             document.getElementById("landing-start")?.scrollIntoView({ behavior: "smooth" });
           }} style={{
             width: 28, height: 28, borderRadius: "50%",
-            border: "1px solid var(--border-secondary)",
+            border: "1px solid rgba(212,175,55,0.2)",
             background: "transparent",
             display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: "var(--text-tertiary)",
-            opacity: 0.25,
+            cursor: "pointer", color: "rgba(212,175,55,0.4)",
             animation: "bounce 2.5s ease-in-out infinite",
           }}>
             <ChevronDown size={12} />
