@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
-import { SquarePen, MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2, Flame, FolderOpen, Plus, ChevronDown, X, Upload, Eye, LayoutDashboard } from "lucide-react";
+import { MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2, Flame, FolderOpen, Plus, ChevronDown, X, Upload, Eye, LayoutDashboard } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t, getLanguage, setLanguage as setLang, ALL_LANGUAGES } from "../lib/i18n";
 import type { Mode } from "../lib/types";
@@ -50,23 +50,14 @@ const MODES: { key: Mode; icon: any; label: string; color?: string }[] = [
   { key: "invest", icon: TrendingUp, label: "sidebar.mode_invest", color: "#A855F7" },
 ];
 
-/* Sidebar panel toggle icon — two rectangles like Okara */
-function SidebarToggleIcon({ size = 20 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-      <line x1="9" y1="3" x2="9" y2="21" />
-    </svg>
-  );
-}
-
 /* ═══ Sidebar Icon Button with React Tooltip ═══ */
-function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, size = 44 }: {
+function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, isPrimary, size = 40 }: {
   icon: React.ReactNode;
   tooltip: string;
   active?: boolean;
   activeColor?: string;
   onClick: () => void;
+  isPrimary?: boolean;
   size?: number;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -75,7 +66,7 @@ function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, size =
 
   const handleMouseEnter = () => {
     setHovered(true);
-    tooltipTimer.current = setTimeout(() => setShowTooltip(true), 400);
+    tooltipTimer.current = setTimeout(() => setShowTooltip(true), 350);
   };
 
   const handleMouseLeave = () => {
@@ -83,6 +74,10 @@ function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, size =
     setShowTooltip(false);
     if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
   };
+
+  useEffect(() => {
+    return () => { if (tooltipTimer.current) clearTimeout(tooltipTimer.current); };
+  }, []);
 
   return (
     <div style={{ position: "relative" }}
@@ -106,6 +101,8 @@ function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, size =
           : "transparent",
         color: active
           ? (activeColor || "var(--accent)")
+          : isPrimary
+          ? (hovered ? "var(--accent)" : "var(--text-primary)")
           : hovered
           ? "var(--text-primary)"
           : "var(--text-tertiary)",
@@ -122,9 +119,9 @@ function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, size =
           transform: "translateY(-50%)",
           padding: "6px 12px",
           borderRadius: 8,
-          background: "var(--bg-tertiary)",
+          background: "var(--card-bg, #252322)",
           border: "1px solid var(--border-secondary)",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
           whiteSpace: "nowrap",
           zIndex: 200,
           animation: "tooltipFadeIn 150ms ease-out forwards",
@@ -397,15 +394,15 @@ export default function Sidebar({
               SIGNUX <span style={{ fontWeight: 300, opacity: 0.4 }}>AI</span>
             </span>
           </div>
-          <button onClick={onClose} title="Close sidebar" style={{
+          <button onClick={onClose} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            width: 44, height: 44, border: "none", background: "none",
+            width: 28, height: 28, border: "none", background: "transparent",
             cursor: "pointer", borderRadius: 6,
-            color: "var(--text-tertiary)", transition: "color 0.15s",
+            color: "var(--text-tertiary)", transition: "color 150ms",
           }}
           onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
           onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}>
-            <SidebarToggleIcon size={18} />
+            <X size={14} />
           </button>
         </div>
 
@@ -420,7 +417,7 @@ export default function Sidebar({
           }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(212,175,55,0.05)"; e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}>
-            <SquarePen size={16} strokeWidth={1.5} />
+            <Plus size={16} strokeWidth={2} />
             <span>{t("sidebar.new_chat")}</span>
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)", marginLeft: "auto" }}>⌘K</span>
           </button>
@@ -833,13 +830,23 @@ export default function Sidebar({
           icon={<SignuxIcon variant="gold" size={24} />}
           tooltip="Open sidebar"
           onClick={onOpen}
-          size={40}
         />
 
-        {/* 16px gap between logo and menu */}
+        {/* 16px gap between logo and new chat */}
         <div style={{ height: 16 }} />
 
-        {/* Menu buttons — gap 4px */}
+        {/* New conversation — Plus icon, isPrimary */}
+        <SidebarIconButton
+          icon={<Plus size={iconSize} strokeWidth={2} />}
+          tooltip={t("sidebar.new_chat")}
+          onClick={handleNew}
+          isPrimary
+        />
+
+        {/* Separator */}
+        <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
+
+        {/* Mode buttons — gap 4px */}
         <div style={{
           display: "flex",
           flexDirection: "column",
@@ -847,16 +854,6 @@ export default function Sidebar({
           gap: 4,
           flex: 1,
         }}>
-          {/* New conversation */}
-          <SidebarIconButton
-            icon={<SquarePen size={iconSize} strokeWidth={iconSW} />}
-            tooltip={t("sidebar.new_chat")}
-            onClick={handleNew}
-          />
-
-          {/* Separator */}
-          <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "6px 0", opacity: 0.5 }} />
-
           {/* Mode buttons */}
           {MODES.map(({ key, icon: Icon, label, color }, idx) => (
             <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -875,6 +872,9 @@ export default function Sidebar({
           ))}
         </div>
 
+        {/* Separator */}
+        <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
+
         {/* Bottom buttons — gap 4px */}
         <div style={{
           display: "flex",
@@ -890,28 +890,19 @@ export default function Sidebar({
 
           {/* User avatar or login icon */}
           {isLoggedIn ? (
-            <div
-              style={{ cursor: "pointer", position: "relative" }}
-              onClick={onOpen}
-              title={displayName}
-            >
-              <div style={{
-                width: 44,
-                height: 44,
-                borderRadius: 6,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                {authUser?.avatar ? (
+            <SidebarIconButton
+              icon={
+                authUser?.avatar ? (
                   <img src={authUser.avatar} alt={displayName} width={28} height={28} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
                 ) : (
                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--bg-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>
                     {userInitials}
                   </div>
-                )}
-              </div>
-            </div>
+                )
+              }
+              tooltip={displayName || "Profile"}
+              onClick={onOpen}
+            />
           ) : (
             <SidebarIconButton
               icon={<LogIn size={iconSize} strokeWidth={iconSW} />}
