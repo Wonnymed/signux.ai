@@ -276,7 +276,7 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
           width: "100%",
         }}>
           {INVEST_TYPES.map((type) => (
-            <button key={type.id} onClick={() => setInvestType(type.id)} style={{
+            <button key={type.id} onClick={() => setInvestType(prev => prev === type.id ? null : type.id)} style={{
               padding: "6px 14px", borderRadius: 50,
               border: `1px solid ${investType === type.id ? "rgba(59,130,246,0.4)" : "var(--border-secondary)"}`,
               background: investType === type.id ? "rgba(59,130,246,0.08)" : "transparent",

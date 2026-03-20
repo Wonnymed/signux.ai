@@ -340,8 +340,11 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
           }}>
             {REGIONS.map((r) => (
               <button key={r.value} onClick={() => {
-                setSelectedRegion(r.value);
-                if (!input.trim()) setInput(`I want to expand my business to ${r.region}`);
+                setSelectedRegion(prev => {
+                  if (prev === r.value) return null;
+                  if (!input.trim()) setInput(`I want to expand my business to ${r.region}`);
+                  return r.value;
+                });
               }} style={{
                 padding: "6px 12px", borderRadius: 50,
                 border: `1px solid ${selectedRegion === r.value ? "rgba(139,92,246,0.4)" : "var(--border-secondary)"}`,
