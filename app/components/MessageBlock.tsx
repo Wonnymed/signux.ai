@@ -109,6 +109,7 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   const [showWork, setShowWork] = useState(false);
   const [showSources, setShowSources] = useState(false);
   const [isWatching, setIsWatching] = useState(false);
+  const [showGraph, setShowGraph] = useState(false);
   const isMobile = useIsMobile();
 
   // Thinking phrase (randomized once per mount)
@@ -124,8 +125,8 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   const { cleanContent: c2, followups } = !isUser ? parseFollowups(c1) : { cleanContent: c1, followups: [] as string[] };
 
   // Centralized metadata parser
-  const { cleanContent: c3, metadata } = !isUser ? parseSignuxMetadata(c2) : { cleanContent: c2, metadata: { domains: [], domainCount: 0, blindspots: [], depth: 0, verification: null, worklog: null, vote: null, sentiment: null, sources: [], followups: [], timeline: [], competitive: null, workflow: [] } };
-  const { domains, domainCount, blindspots, depth, verification, worklog, sentiment, sources, followups: smartFollowups, competitive, workflow } = metadata;
+  const { cleanContent: c3, metadata } = !isUser ? parseSignuxMetadata(c2) : { cleanContent: c2, metadata: { domains: [], domainCount: 0, blindspots: [], depth: 0, verification: null, worklog: null, vote: null, sentiment: null, sources: [], followups: [], timeline: [], competitive: null, workflow: [], knowledgeGraph: null, financials: null } };
+  const { domains, domainCount, blindspots, depth, verification, worklog, sentiment, sources, followups: smartFollowups, competitive, workflow, knowledgeGraph, financials } = metadata;
 
   // Plan detection
   const { hasPlan, planContent, restContent } = !isUser && !isStreaming ? parsePlan(c3) : { hasPlan: false, planContent: "", restContent: c3 };
@@ -835,6 +836,32 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
             </div>
           )}
 
+          {/* ═══ FINANCIAL DATA POINTS ═══ */}
+          {!isStreaming && financials && financials.data_points?.length > 0 && (
+            <div style={{
+              display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8,
+            }}>
+              {financials.data_points.map((dp: any, i: number) => (
+                <div key={i} style={{
+                  padding: "4px 10px", borderRadius: 6,
+                  background: dp.confidence === "high" ? "rgba(34,197,94,0.06)" : dp.confidence === "low" ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)",
+                  border: `1px solid ${dp.confidence === "high" ? "rgba(34,197,94,0.12)" : dp.confidence === "low" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)"}`,
+                  fontSize: 10,
+                }}>
+                  <span style={{ color: "var(--text-tertiary)" }}>{dp.metric}: </span>
+                  <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{dp.value}</span>
+                  <span style={{
+                    marginLeft: 4, fontSize: 8, padding: "1px 4px", borderRadius: 3,
+                    background: dp.confidence === "high" ? "rgba(34,197,94,0.15)" : dp.confidence === "low" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
+                    color: dp.confidence === "high" ? "#22c55e" : dp.confidence === "low" ? "#ef4444" : "#f59e0b",
+                  }}>
+                    {dp.source}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* ═══ SOURCE CARDS ═══ */}
           {!isStreaming && sources.length > 0 && (
             <div style={{ marginTop: 8 }}>
@@ -882,6 +909,65 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══ KNOWLEDGE GRAPH ═══ */}
+          {!isStreaming && knowledgeGraph && knowledgeGraph.nodes?.length >= 3 && (
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => setShowGraph(!showGraph)} style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "4px 10px", borderRadius: 50,
+                background: "var(--bg-tertiary)", border: "1px solid var(--border-secondary)",
+                cursor: "pointer", fontSize: 11, color: "var(--text-tertiary)",
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/>
+                  <line x1="8.5" y1="7.5" x2="15.5" y2="16.5"/><line x1="8.5" y1="6" x2="15.5" y2="6"/>
+                </svg>
+                {knowledgeGraph.nodes.length} domains connected
+                <span style={{ fontSize: 8, transition: "transform 200ms", transform: showGraph ? "rotate(180deg)" : "none" }}>{"\u25BC"}</span>
+              </button>
+
+              {showGraph && (
+                <div style={{
+                  marginTop: 8, padding: "14px 16px", borderRadius: 12,
+                  border: "1px solid var(--border-secondary)",
+                  background: "var(--bg-tertiary)",
+                  animation: "fadeIn 0.15s ease",
+                }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                    {knowledgeGraph.nodes.map((node: any, i: number) => (
+                      <div key={i} style={{
+                        display: "flex", alignItems: "center", gap: 4,
+                        padding: "4px 10px", borderRadius: 50,
+                        background: "rgba(212,175,55,0.08)",
+                        border: "1px solid rgba(212,175,55,0.15)",
+                        fontSize: 11,
+                        fontWeight: node.weight >= 3 ? 700 : node.weight >= 2 ? 600 : 400,
+                        color: node.weight >= 3 ? "var(--accent)" : "var(--text-secondary)",
+                      }}>
+                        <div style={{
+                          width: 6 + node.weight * 2, height: 6 + node.weight * 2,
+                          borderRadius: "50%", background: "var(--accent)",
+                          opacity: 0.3 + node.weight * 0.2,
+                        }} />
+                        {node.label}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--text-tertiary)", lineHeight: 1.6 }}>
+                    {knowledgeGraph.edges.map((edge: any, i: number) => (
+                      <div key={i}>
+                        <span style={{ color: "var(--text-secondary)" }}>{edge.from}</span>
+                        {" \u2192 "}
+                        <span style={{ color: "var(--text-secondary)" }}>{edge.to}</span>
+                        <span style={{ opacity: 0.5 }}> ({edge.label})</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

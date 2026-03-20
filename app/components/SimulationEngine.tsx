@@ -126,6 +126,27 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [scenarioA, setScenarioA] = useState("");
   const [scenarioB, setScenarioB] = useState("");
 
+  // Customizable agent roles
+  type AgentRole = { id: string; name: string; active: boolean };
+  const DEFAULT_ROLES: AgentRole[] = [
+    { id: "strategy", name: "Strategy Lead", active: true },
+    { id: "financial", name: "Financial Analyst", active: true },
+    { id: "risk", name: "Risk Assessor", active: true },
+    { id: "market", name: "Market Expert", active: true },
+    { id: "operations", name: "Operations Lead", active: true },
+    { id: "devil", name: "Devil's Advocate", active: true },
+  ];
+  const OPTIONAL_ROLES: AgentRole[] = [
+    { id: "lawyer", name: "Legal Advisor", active: false },
+    { id: "tech", name: "Tech Architect", active: false },
+    { id: "hr", name: "HR Specialist", active: false },
+    { id: "global", name: "International Expert", active: false },
+    { id: "customer", name: "Customer Advocate", active: false },
+    { id: "investor", name: "Investor Perspective", active: false },
+  ];
+  const [customAgents, setCustomAgents] = useState<AgentRole[]>([...DEFAULT_ROLES]);
+  const [showAgentCustomizer, setShowAgentCustomizer] = useState(false);
+
   const isMobile = useIsMobile();
   const pad = isMobile ? "16px" : "24px";
   const { enhance, enhancing, wasEnhanced } = useEnhance("simulate");
@@ -685,6 +706,77 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             </div>
           )}
 
+          {/* ── CUSTOMIZE TEAM ── */}
+          <div style={{ marginBottom: 12 }}>
+            <button onClick={() => setShowAgentCustomizer(!showAgentCustomizer)} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 8,
+              border: "1px solid var(--border-secondary)",
+              background: "transparent", cursor: "pointer",
+              fontSize: 11, color: "var(--text-tertiary)",
+              transition: "all 150ms",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
+            >
+              <Users size={12} />
+              Customize team ({customAgents.filter(a => a.active).length} specialists)
+              <span style={{ fontSize: 8, transition: "transform 200ms", transform: showAgentCustomizer ? "rotate(180deg)" : "none" }}>{"\u25BC"}</span>
+            </button>
+
+            {showAgentCustomizer && (
+              <div style={{
+                marginTop: 8, padding: "12px 14px", borderRadius: 10,
+                border: "1px solid var(--border-secondary)", background: "var(--bg-tertiary)",
+                animation: "fadeIn 0.15s ease",
+              }}>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 8, fontFamily: "var(--font-mono)", letterSpacing: 0.5 }}>
+                  ACTIVE TEAM
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+                  {customAgents.filter(a => a.active).map((agent) => (
+                    <button key={agent.id} onClick={() => {
+                      setCustomAgents(customAgents.map(a => a.id === agent.id ? { ...a, active: false } : a));
+                    }} style={{
+                      display: "flex", alignItems: "center", gap: 4,
+                      padding: "4px 10px", borderRadius: 50,
+                      background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.15)",
+                      fontSize: 11, color: "var(--text-primary)", cursor: "pointer",
+                    }}>
+                      {agent.name} <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{"\u2715"}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 8, fontFamily: "var(--font-mono)", letterSpacing: 0.5 }}>
+                  ADD SPECIALIST
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {[...OPTIONAL_ROLES, ...customAgents.filter(a => !a.active)]
+                    .filter((a, i, arr) => arr.findIndex(x => x.id === a.id) === i)
+                    .filter(a => !customAgents.find(ag => ag.id === a.id && ag.active))
+                    .map((agent) => (
+                    <button key={agent.id} onClick={() => {
+                      if (customAgents.find(a => a.id === agent.id)) {
+                        setCustomAgents(customAgents.map(a => a.id === agent.id ? { ...a, active: true } : a));
+                      } else {
+                        setCustomAgents([...customAgents, { ...agent, active: true }]);
+                      }
+                    }} style={{
+                      display: "flex", alignItems: "center", gap: 4,
+                      padding: "4px 10px", borderRadius: 50,
+                      border: "1px dashed var(--border-secondary)",
+                      background: "transparent", fontSize: 11,
+                      color: "var(--text-tertiary)", cursor: "pointer",
+                    }}>
+                      + {agent.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* ── CTA BUTTON ── */}
           <div style={{ textAlign: "center", animation: "fadeIn 0.8s ease-out" }}>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -713,9 +805,14 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               onClick={() => {
                 if (!isLoggedIn) { window.location.href = "/signup"; return; }
                 if (tier === "free") { setShowPaywall(true); return; }
-                const fullScenario = seedMaterial ? `CONTEXT MATERIAL (from ${seedFileName}):\n${seedMaterial}\n\n---\n\nUSER SCENARIO:\n${simScenario}` : simScenario;
-                if (seedMaterial) { setSimScenario(fullScenario); }
-                onSimulate(seedMaterial ? fullScenario : undefined);
+                const activeTeam = customAgents.filter(a => a.active);
+                const teamPrefix = activeTeam.length !== DEFAULT_ROLES.length || activeTeam.some(a => !DEFAULT_ROLES.find(d => d.id === a.id))
+                  ? `\n\nSPECIALIST TEAM FOR THIS SIMULATION:\n${activeTeam.map(a => `- ${a.name}`).join("\n")}\n\nRun the debate with ONLY these specialists. Each should contribute from their specific expertise.`
+                  : "";
+                const baseScenario = seedMaterial ? `CONTEXT MATERIAL (from ${seedFileName}):\n${seedMaterial}\n\n---\n\nUSER SCENARIO:\n${simScenario}` : simScenario;
+                const fullScenario = baseScenario + teamPrefix;
+                if (seedMaterial || teamPrefix) { setSimScenario(fullScenario); }
+                onSimulate(fullScenario);
               }}
               disabled={!simScenario.trim() || simStarting}
               style={{

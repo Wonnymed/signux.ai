@@ -66,6 +66,16 @@ export type SignuxCompetitive = {
   recommended_actions: string[];
 };
 
+export type SignuxKnowledgeGraph = {
+  nodes: Array<{ id: string; label: string; weight: number }>;
+  edges: Array<{ from: string; to: string; label: string }>;
+};
+
+export type SignuxFinancials = {
+  data_points: Array<{ metric: string; value: string; source: string; confidence: string }>;
+  recommended_sources: string[];
+};
+
 export interface SignuxMetadata {
   domains: string[];
   domainCount: number;
@@ -80,6 +90,8 @@ export interface SignuxMetadata {
   timeline: SignuxTimelineEvent[];
   competitive: SignuxCompetitive | null;
   workflow: string[];
+  knowledgeGraph: SignuxKnowledgeGraph | null;
+  financials: SignuxFinancials | null;
 }
 
 export function parseSignuxMetadata(content: string): { cleanContent: string; metadata: SignuxMetadata } {
@@ -160,8 +172,20 @@ export function parseSignuxMetadata(content: string): { cleanContent: string; me
   try { if (workflowMatch) workflow = JSON.parse(workflowMatch[1]); } catch {}
   clean = clean.replace(/<!--\s*signux_workflow:\s*\[[\s\S]*?\]\s*-->/g, "");
 
+  // Parse knowledge graph
+  const kgMatch = clean.match(/<!--\s*signux_knowledge_graph:\s*(\{[\s\S]*?\})\s*-->/);
+  let knowledgeGraph: SignuxKnowledgeGraph | null = null;
+  try { if (kgMatch) knowledgeGraph = JSON.parse(kgMatch[1]); } catch {}
+  clean = clean.replace(/<!--\s*signux_knowledge_graph:\s*\{[\s\S]*?\}\s*-->/g, "");
+
+  // Parse financials
+  const financialsMatch = clean.match(/<!--\s*signux_financials:\s*(\{[\s\S]*?\})\s*-->/);
+  let financials: SignuxFinancials | null = null;
+  try { if (financialsMatch) financials = JSON.parse(financialsMatch[1]); } catch {}
+  clean = clean.replace(/<!--\s*signux_financials:\s*\{[\s\S]*?\}\s*-->/g, "");
+
   return {
     cleanContent: clean.trim(),
-    metadata: { domains, domainCount, blindspots, depth, verification, worklog, vote, sentiment, sources, followups, timeline, competitive, workflow },
+    metadata: { domains, domainCount, blindspots, depth, verification, worklog, vote, sentiment, sources, followups, timeline, competitive, workflow, knowledgeGraph, financials },
   };
 }

@@ -87,6 +87,16 @@ COMPETITIVE INTELLIGENCE (when competitors are mentioned):
 When the user mentions specific competitors or companies by name, include competitive intelligence in your analysis and add:
 <!-- signux_competitive: {"competitor": "Company X", "threat_level": "high|medium|low", "signals": ["signal1", "signal2"], "recommended_actions": ["action1", "action2"]} -->
 Only add when a specific competitor was actually analyzed.
+
+KNOWLEDGE GRAPH (when 3+ domains are used):
+When your analysis draws from 3 or more knowledge domains, include a knowledge graph in metadata:
+<!-- signux_knowledge_graph: {"nodes": [{"id": "domain-id", "label": "Domain Name", "weight": 1-3}], "edges": [{"from": "domain1", "to": "domain2", "label": "how they connect"}]} -->
+Rules: max 6 nodes, max 8 edges. Weight 1-3 indicates consultation depth. Only include when genuinely using 3+ domains.
+
+FINANCIAL DATA (for investment/market analyses):
+When discussing investments, companies, or financial metrics, include verified data points:
+<!-- signux_financials: {"data_points": [{"metric": "Revenue", "value": "$2.3M", "source": "estimated|verified|industry", "confidence": "high|medium|low"}], "recommended_sources": ["Yahoo Finance", "SEC EDGAR"]} -->
+NEVER make up specific financial numbers. Use estimates with "~" prefix or say "check [source]". Only include when financial data is relevant.
 `;
 
 function buildSystemPrompt(): string {
@@ -622,6 +632,25 @@ When analyzing an investment opportunity, structure as a professional equity res
 
 ---
 *This analysis is for informational purposes only. Always verify with qualified professionals before making investment decisions.*
+
+FINANCIAL DATA RIGOR:
+When analyzing investments, companies, or markets, be SPECIFIC with numbers:
+
+**Key Financial Data:**
+- Revenue: $X (source: latest available data)
+- Growth Rate: X% YoY
+- Profit Margin: X%
+- Market Cap: $X (if public)
+- Industry Average P/E: X
+
+If exact numbers unavailable, clearly state estimates:
+- 'Estimated revenue: ~$X based on [reasoning]'
+- 'Industry benchmark: X% margin typical for [sector]'
+
+NEVER make up specific financial numbers. Estimate with "~" or recommend checking specific sources.
+
+Always include financial metadata:
+<!-- signux_financials: {"data_points": [{"metric": "Revenue", "value": "$2.3M", "source": "estimated", "confidence": "medium"}], "recommended_sources": ["Yahoo Finance", "SEC EDGAR", "Crunchbase"]} -->
 
 RESPONSE ENRICHMENT (mandatory on every response):
 

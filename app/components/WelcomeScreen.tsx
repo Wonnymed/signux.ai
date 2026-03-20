@@ -5,6 +5,7 @@ import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
 import type { Mode } from "../lib/types";
+import TemplateLibrary from "./TemplateLibrary";
 
 type WelcomeScreenProps = {
   profileName: string;
@@ -148,6 +149,14 @@ export default function WelcomeScreen({
               </button>
             );
           })}
+        </div>
+
+        {/* Template Library */}
+        <div style={{ width: "100%" }}>
+          <TemplateLibrary onSelectTemplate={(template) => {
+            setInput(template.prompt);
+            if (template.mode && onSwitchMode) onSwitchMode(template.mode as Mode);
+          }} />
         </div>
 
         {/* Trust line */}
