@@ -1567,3 +1567,15 @@ textarea, input, button {
 .invest-amount-pills::-webkit-scrollbar {
   display: none;
 }
+
+/* ═══ Scroll Hint — seta animada premium ═══ */
+@keyframes scrollHintBounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 0.6;
+  }
+}

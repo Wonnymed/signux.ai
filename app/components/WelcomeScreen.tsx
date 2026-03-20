@@ -1,5 +1,6 @@
 "use client";
-import { Zap, Shield, Rocket, Globe, TrendingUp, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Zap, Shield, Rocket, Globe, TrendingUp } from "lucide-react";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
@@ -38,6 +39,16 @@ export default function WelcomeScreen({
   onToast, onSwitchMode,
 }: WelcomeScreenProps) {
   const isMobile = useIsMobile();
+  const [showScrollHint, setShowScrollHint] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      setShowScrollHint(scrollY < 80);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div style={{
@@ -160,37 +171,38 @@ export default function WelcomeScreen({
       {/* Spacer bottom */}
       <div style={{ flex: 0.58 }} />
 
-      {/* Trust line + scroll hint — mobile only */}
-      {isMobile && (
-        <div style={{
+      {/* Scroll Hint — apenas visual, não é botão */}
+      <div
+        style={{
           position: "absolute",
-          bottom: 20,
+          bottom: isMobile ? 20 : 28,
+          left: "50%",
+          transform: "translateX(-50%)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 10,
-        }}>
-          <span style={{
-            fontSize: 11,
-            color: "var(--text-tertiary)",
-            opacity: 0.3,
-          }}>
-            Free to start · No credit card
-          </span>
-          <button onClick={() => {
-            document.getElementById("landing-start")?.scrollIntoView({ behavior: "smooth" });
-          }} style={{
-            width: 28, height: 28, borderRadius: "50%",
-            border: "1px solid rgba(212,175,55,0.2)",
-            background: "transparent",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: "rgba(212,175,55,0.4)",
-            animation: "bounce 2.5s ease-in-out infinite",
-          }}>
-            <ChevronDown size={12} />
-          </button>
-        </div>
-      )}
+          gap: 0,
+          opacity: showScrollHint ? 1 : 0,
+          transition: "opacity 0.5s ease",
+          pointerEvents: "none",
+          cursor: "default",
+          userSelect: "none",
+        }}
+      >
+        <svg
+          width={isMobile ? 18 : 20}
+          height={isMobile ? 18 : 20}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="rgba(212,175,55,0.35)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ animation: "scrollHintBounce 2.5s ease-in-out infinite" }}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </div>
     </div>
   );
 }
