@@ -5,6 +5,7 @@ import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/se
 import { getUserFromRequest, checkUsageLimit, incrementUsage, getTierFromRequest } from "../../lib/usage";
 import { getModelsForTier } from "../../lib/models";
 import { getKnowledgeForMode } from "../../lib/knowledge-base";
+import { detectComplexity, getModelForComplexity } from "../../lib/modelSelector";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabaseAdmin = createClient(
@@ -52,6 +53,30 @@ For any business analysis, strategy question, or decision evaluation, include ne
 
 Rules: 2-4 items per section, bold name + 1 sentence each, specific to this scenario, ordered by importance.
 Skip this for casual chat, greetings, or simple factual answers.
+
+SENTIMENT SIGNAL (for business/market/investment analyses):
+At the end of your response, include:
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+- bullish: favorable outlook, positive momentum, opportunity-rich
+- bearish: unfavorable outlook, risks outweigh benefits, caution advised
+- neutral: balanced, no strong directional signal
+- mixed: some factors bullish, others bearish — conflicting signals
+Only add on substantive business/market analyses. Skip for casual chat.
+
+SOURCE CARDS (list key sources used):
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence why this source matters"}] -->
+Include 2-5 sources. Types: web = web search result, kb = Signux knowledge base, framework = analytical framework, data = data point.
+Only add when you used identifiable sources. Skip for casual responses.
+
+SMART FOLLOW-UPS (suggest 2-4 follow-up explorations):
+<!-- signux_followups: [{"question": "Specific follow-up question", "why": "Why this matters"}] -->
+Strategic explorations of adjacent angles the user hasn't considered. Written in the user's language.
+Only add on substantive responses.
+
+PARALLEL RESEARCH INDICATOR (show research breadth):
+When your analysis draws from multiple knowledge domains simultaneously, naturally mention the parallel threads:
+- "Analyzing from 4 domains simultaneously: [game-theory], [pricing-economics], [risk-detection], [competitive-intel]..."
+Use this as a transition, not a separate block. Only when genuinely pulling from 3+ domains.
 `;
 
 function buildSystemPrompt(): string {
@@ -1012,9 +1037,12 @@ End with a section: "## What to do next" with numbered action items.` : "";
           while (continueLoop) {
             continueLoop = false;
 
+            const lastUserMsg = messages[messages.length - 1]?.content || "";
+            const complexity = detectComplexity(typeof lastUserMsg === "string" ? lastUserMsg : "");
+            const smartModel = getModelForComplexity(complexity, tier);
             const chatModel = mode === "invest" ? models.invest
               : mode === "globalops" ? models.globalops
-              : models.chat;
+              : smartModel;
             const response = await client.messages.create({
               model: chatModel,
               max_tokens: 4096,

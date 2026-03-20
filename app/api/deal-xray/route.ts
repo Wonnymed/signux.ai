@@ -94,7 +94,13 @@ Confidence must be honest: 0.9+ very high, 0.7-0.9 good, 0.5-0.7 moderate, below
 List actual reasoning steps taken, not generic descriptions.
 
 <!-- signux_domains: domain1, domain2, domain3 -->
-<!-- signux_domain_count: X -->`,
+<!-- signux_domain_count: X -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
       messages: [{ role: "user", content: `X-Ray this deal:\n\n${dealContent}\n\nVerify all claims via web search. Respond in ${lang || "en"}.` }],
     });
 

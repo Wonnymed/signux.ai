@@ -327,7 +327,19 @@ Confidence must be honest: 0.9+ very high, 0.7-0.9 good, 0.5-0.7 moderate, below
 List actual reasoning steps taken. Include how many agents contributed and key frameworks applied.
 
 <!-- signux_domains: domain1, domain2, domain3 -->
-<!-- signux_domain_count: X -->`
+<!-- signux_domain_count: X -->
+
+<!-- signux_timeline: [{"period": "Month 1-2", "event": "Setup phase", "impact": "Initial investment required", "probability": 0.95}, {"period": "Month 3-4", "event": "Market entry", "impact": "First revenue expected", "probability": 0.7}] -->
+Include 4-8 timeline events covering the full time horizon. Each must have period, event description, impact, and probability (0-1).
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence based on simulation consensus"} -->
+Signal must reflect the overall simulation verdict. bullish = strong GO, bearish = STOP, mixed = split votes, neutral = CAUTION majority.
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "Why this source matters"}] -->
+Include 3-6 key sources that informed the simulation analysis.
+
+<!-- signux_followups: [{"question": "What-if follow-up", "why": "Why explore this angle"}] -->
+Include 3-5 strategic what-if scenarios the user should simulate next.`
     }],
   });
 

@@ -75,7 +75,13 @@ Return JSON:
 }
 
 <!-- signux_domains: performance-analysis, business-metrics, growth-strategy, pivot-assessment -->
-<!-- signux_domain_count: 4 -->`,
+<!-- signux_domain_count: 4 -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
       messages: [{
         role: "user",
         content: `PROJECT: ${project.business_name} (Week ${checkin.week_number})

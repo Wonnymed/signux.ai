@@ -56,7 +56,13 @@ Return ONLY a valid JSON array of 4 objects. No explanation.
 IMPORTANT: Be REALISTIC with revenue projections. Most new businesses make $0 in month 1. Don't sugarcoat.
 
 <!-- signux_domains: market-research, business-strategy, competitive-analysis, financial-modeling -->
-<!-- signux_domain_count: 4 -->`,
+<!-- signux_domain_count: 4 -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
       messages: [{
         role: "user",
         content: `PROFILE:\nSkills: ${skills}\nTime: ${timeAvailable}\nCapital: ${capital}\nRisk tolerance: ${riskTolerance}/10\nPriorities: ${priorities?.join(", ")}\n\nSuggest 4 businesses. Search the web for current market data. Respond in ${lang || "en"}.`,

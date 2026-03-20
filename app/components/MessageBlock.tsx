@@ -107,6 +107,7 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   const [showUpgradePrompt, setShowUpgradePrompt] = useState<string | null>(null);
   const [showVerification, setShowVerification] = useState(false);
   const [showWork, setShowWork] = useState(false);
+  const [showSources, setShowSources] = useState(false);
   const isMobile = useIsMobile();
 
   // Thinking phrase (randomized once per mount)
@@ -122,8 +123,8 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   const { cleanContent: c2, followups } = !isUser ? parseFollowups(c1) : { cleanContent: c1, followups: [] as string[] };
 
   // Centralized metadata parser
-  const { cleanContent: c3, metadata } = !isUser ? parseSignuxMetadata(c2) : { cleanContent: c2, metadata: { domains: [], domainCount: 0, blindspots: [], depth: 0, verification: null, worklog: null, vote: null } };
-  const { domains, domainCount, blindspots, depth, verification, worklog } = metadata;
+  const { cleanContent: c3, metadata } = !isUser ? parseSignuxMetadata(c2) : { cleanContent: c2, metadata: { domains: [], domainCount: 0, blindspots: [], depth: 0, verification: null, worklog: null, vote: null, sentiment: null, sources: [], followups: [], timeline: [] } };
+  const { domains, domainCount, blindspots, depth, verification, worklog, sentiment, sources, followups: smartFollowups } = metadata;
 
   // Plan detection
   const { hasPlan, planContent, restContent } = !isUser && !isStreaming ? parsePlan(c3) : { hasPlan: false, planContent: "", restContent: c3 };
@@ -712,6 +713,145 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
                   <span style={{ fontSize: 10, color: "var(--text-tertiary)", lineHeight: 1.3 }}>
                     {bs.why}
                   </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ═══ SENTIMENT BADGE ═══ */}
+          {!isStreaming && sentiment && (
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              marginTop: 8, padding: "4px 10px", borderRadius: 50,
+              background: sentiment.signal === "bullish" ? "rgba(34,197,94,0.08)"
+                : sentiment.signal === "bearish" ? "rgba(239,68,68,0.08)"
+                : sentiment.signal === "mixed" ? "rgba(245,158,11,0.08)"
+                : "rgba(148,163,184,0.08)",
+              border: `1px solid ${
+                sentiment.signal === "bullish" ? "rgba(34,197,94,0.2)"
+                : sentiment.signal === "bearish" ? "rgba(239,68,68,0.2)"
+                : sentiment.signal === "mixed" ? "rgba(245,158,11,0.2)"
+                : "rgba(148,163,184,0.2)"
+              }`,
+            }}>
+              <span style={{ fontSize: 12 }}>
+                {sentiment.signal === "bullish" ? "\u25B2" : sentiment.signal === "bearish" ? "\u25BC" : sentiment.signal === "mixed" ? "\u25C6" : "\u25CF"}
+              </span>
+              <span style={{
+                fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
+                color: sentiment.signal === "bullish" ? "#22c55e"
+                  : sentiment.signal === "bearish" ? "#ef4444"
+                  : sentiment.signal === "mixed" ? "#f59e0b"
+                  : "#94a3b8",
+              }}>
+                {sentiment.signal}
+              </span>
+              <span style={{
+                fontSize: 10, color: "var(--text-tertiary)",
+                fontFamily: "var(--font-mono)",
+              }}>
+                {Math.round(sentiment.confidence * 100)}%
+              </span>
+              {sentiment.reason && (
+                <span style={{ fontSize: 10, color: "var(--text-tertiary)", marginLeft: 2 }}>
+                  — {sentiment.reason}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* ═══ SOURCE CARDS ═══ */}
+          {!isStreaming && sources.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <button
+                onClick={() => setShowSources(!showSources)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "4px 10px", borderRadius: 50,
+                  background: "var(--bg-tertiary)", border: "1px solid var(--border-secondary)",
+                  cursor: "pointer", fontSize: 11, color: "var(--text-tertiary)",
+                }}
+              >
+                <FileText size={12} />
+                {sources.length} source{sources.length > 1 ? "s" : ""} used
+                <span style={{ fontSize: 8, transition: "transform 200ms", transform: showSources ? "rotate(180deg)" : "none" }}>&#9660;</span>
+              </button>
+
+              {showSources && (
+                <div style={{
+                  marginTop: 6, display: "flex", flexDirection: "column", gap: 4,
+                  animation: "fadeIn 0.15s ease",
+                }}>
+                  {sources.map((src, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "flex-start", gap: 8,
+                      padding: "8px 12px", borderRadius: 8,
+                      background: "var(--bg-tertiary)",
+                      border: "1px solid var(--border-secondary)",
+                      fontSize: 12,
+                    }}>
+                      <span style={{
+                        padding: "1px 5px", borderRadius: 3, fontSize: 9,
+                        fontFamily: "var(--font-mono)", letterSpacing: 0.3,
+                        background: src.type === "web" ? "rgba(59,130,246,0.1)" : src.type === "kb" ? "rgba(212,175,55,0.1)" : src.type === "framework" ? "rgba(168,85,247,0.1)" : "rgba(148,163,184,0.1)",
+                        color: src.type === "web" ? "#3b82f6" : src.type === "kb" ? "var(--accent)" : src.type === "framework" ? "#a855f7" : "#94a3b8",
+                        flexShrink: 0, marginTop: 1,
+                      }}>
+                        {src.type}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{src.title}</div>
+                        {src.relevance && (
+                          <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>{src.relevance}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══ SMART FOLLOW-UPS (from metadata) ═══ */}
+          {!isStreaming && smartFollowups.length > 0 && isLastAI && (
+            <div style={{
+              display: "flex", flexWrap: "wrap", gap: 6,
+              marginTop: 10,
+            }}>
+              <div style={{
+                width: "100%", fontSize: 10, color: "var(--text-tertiary)",
+                fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                display: "flex", alignItems: "center", gap: 4, marginBottom: 2,
+              }}>
+                <Search size={10} />
+                Explore deeper
+              </div>
+              {smartFollowups.map((sf, i) => (
+                <button
+                  key={i}
+                  onClick={() => onSendFollowup?.(sf.question)}
+                  title={sf.why}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "6px 12px", borderRadius: 50,
+                    border: "1px solid var(--card-border)",
+                    background: "var(--card-bg)",
+                    cursor: "pointer", fontSize: 11,
+                    color: "var(--text-secondary)",
+                    transition: "all 150ms",
+                    maxWidth: "100%",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+                    (e.currentTarget as HTMLElement).style.background = "var(--card-hover-bg)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--card-border)";
+                    (e.currentTarget as HTMLElement).style.background = "var(--card-bg)";
+                  }}
+                >
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sf.question}</span>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, opacity: 0.3 }}><path d="m5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </button>
               ))}
             </div>

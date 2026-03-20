@@ -89,7 +89,13 @@ Return ONLY valid JSON:
 }
 
 <!-- signux_domains: market-validation, risk-assessment, financial-analysis, competitive-intelligence, customer-research -->
-<!-- signux_domain_count: 5 -->`,
+<!-- signux_domain_count: 5 -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
           messages: [{
             role: "user",
             content: `BUSINESS: ${business.name} - ${business.description}\nPROFILE: Skills: ${profile.skills}, Capital: ${profile.capital}, Time: ${profile.time}\n\nAGENT ANALYSES:\n${results.map(r => `[${r.agent}]:\n${r.analysis}`).join("\n\n")}\n\nDeliver honest verdict. Respond in ${lang || "en"}.`,

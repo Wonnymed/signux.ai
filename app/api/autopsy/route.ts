@@ -55,7 +55,13 @@ For every significant finding or claim, cite the source inline:
 - [web: source] for web-verified data
 
 <!-- signux_domains: decision-analysis, risk-assessment, behavioral-economics, process-evaluation -->
-<!-- signux_domain_count: 4 -->`,
+<!-- signux_domain_count: 4 -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
       messages: [
         {
           role: "user",

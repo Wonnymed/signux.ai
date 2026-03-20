@@ -65,7 +65,13 @@ CITATION FORMAT:
 For every significant finding or claim, cite the source inline:
 - [KB: negotiation-strategy] for knowledge base insights
 - [framework: BATNA/ZOPA/game-theory] for analytical frameworks
-- [web: source] for web-verified data`,
+- [web: source] for web-verified data
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
         messages: [{ role: "user", content: `Negotiation context: ${context}\n\nResearch the other party and prepare intel. Respond in ${lang || "en"}.` }],
       });
       const text = response.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join("");
@@ -120,7 +126,13 @@ CITATION FORMAT:
 For every significant finding or claim, cite the source inline:
 - [KB: negotiation-strategy] for knowledge base insights
 - [framework: game-theory/mechanism-design/behavioral-psychology] for analytical frameworks
-- [web: source] for web-verified data`,
+- [web: source] for web-verified data
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
         messages: [{ role: "user", content: `Negotiation context: ${context}\n\nBuild complete strategy. Respond in ${lang || "en"}.` }],
       });
       const text = (response.content[0] as any).text || "{}";
@@ -253,7 +265,13 @@ CITATION FORMAT:
 For every significant finding or claim, cite the source inline:
 - [KB: negotiation-analysis] for knowledge base insights
 - [framework: BATNA/game-theory/behavioral-psychology] for analytical frameworks
-- [web: source] for web-verified data`,
+- [web: source] for web-verified data
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
         messages: [{ role: "user", content: `ORIGINAL CONTEXT: ${context}\n\nWHAT HAPPENED:\n${debrief_notes}\n\nAnalyze my negotiation. Respond in ${lang || "en"}.` }],
       });
       const text = (response.content[0] as any).text || "{}";

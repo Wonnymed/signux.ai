@@ -12,7 +12,7 @@ import { useEnhance } from "../lib/useEnhance";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { signuxFetch } from "../lib/api-client";
 import type { SimAgent, SimResult, Mode } from "../lib/types";
-import { parseSignuxMetadata, type SignuxVote } from "../lib/parseMetadata";
+import { parseSignuxMetadata, type SignuxVote, type SignuxTimelineEvent, type SignuxSentiment, type SignuxSource, type SignuxFollowup } from "../lib/parseMetadata";
 import { AGENT_CATEGORY_COLORS, DEFAULT_CATEGORY_COLOR, ENTITY_COLORS, DEFAULT_ENTITY_COLOR } from "../lib/types";
 
 const SIM_EXAMPLE_KEYS = ["sim.example.1", "sim.example.2", "sim.example.3"];
@@ -1058,6 +1058,10 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
   const rawReport = simResult.report || "";
   const { cleanContent: reportText, metadata: reportMeta } = parseSignuxMetadata(rawReport);
   const vote = reportMeta.vote;
+  const reportTimeline = reportMeta.timeline;
+  const reportSentiment = reportMeta.sentiment;
+  const reportSources = reportMeta.sources;
+  const reportFollowups = reportMeta.followups;
   const uniqueRounds = [...new Set(simulation.map((m: any) => m.round))].sort();
   const uniqueCategories = [...new Set(simAgents.map((a: any) => a.category).filter(Boolean))] as string[];
   const uniqueAgentNames = [...new Set(simulation.map((m: any) => m.agentName))] as string[];
@@ -1469,6 +1473,164 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             }) : (
               <div style={{ padding: 24, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)" }}>
                 <MarkdownRenderer content={reportText} />
+              </div>
+            )}
+
+            {/* ═══ TIMELINE PROJECTION ═══ */}
+            {reportTimeline.length > 0 && (
+              <div style={{ marginTop: 20 }}>
+                <div style={{
+                  fontSize: 10, letterSpacing: "0.15em", color: "var(--text-tertiary)",
+                  textTransform: "uppercase", fontFamily: "var(--font-mono)", marginBottom: 10,
+                }}>
+                  Timeline Projection
+                </div>
+                <div style={{
+                  borderRadius: "var(--radius-md)", overflow: "hidden",
+                  border: "1px solid var(--border-secondary)",
+                }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ background: "var(--bg-tertiary)" }}>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border-secondary)" }}>Period</th>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border-secondary)" }}>Event</th>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border-secondary)" }}>Impact</th>
+                        <th style={{ padding: "8px 12px", textAlign: "center", fontWeight: 600, color: "var(--text-secondary)", borderBottom: "1px solid var(--border-secondary)", width: 70 }}>Prob.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportTimeline.map((evt, i) => (
+                        <tr key={i} style={{ borderBottom: i < reportTimeline.length - 1 ? "1px solid var(--border-secondary)" : "none" }}>
+                          <td style={{ padding: "8px 12px", color: "var(--accent)", fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>{evt.period}</td>
+                          <td style={{ padding: "8px 12px", color: "var(--text-primary)" }}>{evt.event}</td>
+                          <td style={{ padding: "8px 12px", color: "var(--text-secondary)" }}>{evt.impact}</td>
+                          <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                            {evt.probability != null && (
+                              <span style={{
+                                padding: "2px 6px", borderRadius: 4, fontSize: 10,
+                                fontFamily: "var(--font-mono)", fontWeight: 600,
+                                background: evt.probability >= 0.7 ? "rgba(34,197,94,0.1)" : evt.probability >= 0.4 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                                color: evt.probability >= 0.7 ? "#22c55e" : evt.probability >= 0.4 ? "#f59e0b" : "#ef4444",
+                              }}>
+                                {Math.round(evt.probability * 100)}%
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ═══ SENTIMENT BADGE ═══ */}
+            {reportSentiment && (
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                marginTop: 16, padding: "6px 14px", borderRadius: 50,
+                background: reportSentiment.signal === "bullish" ? "rgba(34,197,94,0.08)"
+                  : reportSentiment.signal === "bearish" ? "rgba(239,68,68,0.08)"
+                  : reportSentiment.signal === "mixed" ? "rgba(245,158,11,0.08)"
+                  : "rgba(148,163,184,0.08)",
+                border: `1px solid ${
+                  reportSentiment.signal === "bullish" ? "rgba(34,197,94,0.25)"
+                  : reportSentiment.signal === "bearish" ? "rgba(239,68,68,0.25)"
+                  : reportSentiment.signal === "mixed" ? "rgba(245,158,11,0.25)"
+                  : "rgba(148,163,184,0.25)"
+                }`,
+              }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
+                  color: reportSentiment.signal === "bullish" ? "#22c55e"
+                    : reportSentiment.signal === "bearish" ? "#ef4444"
+                    : reportSentiment.signal === "mixed" ? "#f59e0b"
+                    : "#94a3b8",
+                }}>
+                  {reportSentiment.signal === "bullish" ? "\u25B2" : reportSentiment.signal === "bearish" ? "\u25BC" : "\u25C6"} {reportSentiment.signal}
+                </span>
+                <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+                  {Math.round(reportSentiment.confidence * 100)}%
+                </span>
+                {reportSentiment.reason && (
+                  <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>— {reportSentiment.reason}</span>
+                )}
+              </div>
+            )}
+
+            {/* ═══ SOURCE CARDS ═══ */}
+            {reportSources.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{
+                  fontSize: 10, letterSpacing: "0.15em", color: "var(--text-tertiary)",
+                  textTransform: "uppercase", fontFamily: "var(--font-mono)", marginBottom: 8,
+                }}>
+                  Sources ({reportSources.length})
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {reportSources.map((src, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "6px 10px", borderRadius: 8,
+                      background: "var(--bg-tertiary)",
+                      border: "1px solid var(--border-secondary)",
+                      fontSize: 11,
+                    }}>
+                      <span style={{
+                        padding: "1px 4px", borderRadius: 3, fontSize: 8,
+                        fontFamily: "var(--font-mono)",
+                        background: src.type === "web" ? "rgba(59,130,246,0.1)" : src.type === "kb" ? "rgba(212,175,55,0.1)" : "rgba(168,85,247,0.1)",
+                        color: src.type === "web" ? "#3b82f6" : src.type === "kb" ? "var(--accent)" : "#a855f7",
+                      }}>
+                        {src.type}
+                      </span>
+                      <span style={{ color: "var(--text-secondary)" }}>{src.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ═══ FOLLOW-UP SUGGESTIONS ═══ */}
+            {reportFollowups.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{
+                  fontSize: 10, letterSpacing: "0.15em", color: "var(--text-tertiary)",
+                  textTransform: "uppercase", fontFamily: "var(--font-mono)", marginBottom: 8,
+                }}>
+                  Explore Next
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {reportFollowups.map((sf, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        if (props.setSimScenario && props.onSimulate) {
+                          props.setSimScenario(sf.question);
+                        }
+                      }}
+                      title={sf.why}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "6px 12px", borderRadius: 50,
+                        border: "1px solid var(--card-border)",
+                        background: "var(--card-bg)",
+                        cursor: "pointer", fontSize: 11,
+                        color: "var(--text-secondary)",
+                        transition: "all 150ms",
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.borderColor = "var(--card-border)";
+                      }}
+                    >
+                      {sf.question}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, opacity: 0.3 }}><path d="m5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>

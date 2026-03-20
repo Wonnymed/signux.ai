@@ -145,7 +145,13 @@ At the end, include hidden metadata:
 <!-- signux_verification: {"confidence": 0.XX, "checked": ["list verified"], "caveats": ["limitations"]} -->
 <!-- signux_worklog: {"steps": [{"action": "type", "detail": "detail"}], "sources_count": N, "domains_used": N, "reasoning_steps": N} -->
 <!-- signux_domains: domain1, domain2 -->
-<!-- signux_domain_count: X -->`,
+<!-- signux_domain_count: X -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
           messages: [{
             role: "user",
             content: `MARKET:\n${market}\n\nALL MOVES:\n${allMoves.map(m => `[${m.agent} - Round ${m.round}]: ${m.content}`).join("\n\n")}\n\nAnalyze and deliver the war game report. Respond in ${lang || "en"}.`,

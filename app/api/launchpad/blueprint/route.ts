@@ -81,7 +81,13 @@ Return JSON:
 Search the web for current tool pricing and market data.
 
 <!-- signux_domains: business-planning, financial-modeling, go-to-market, operations, pricing-strategy -->
-<!-- signux_domain_count: 5 -->`,
+<!-- signux_domain_count: 5 -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
       messages: [{
         role: "user",
         content: `BUSINESS: ${business.name} - ${business.description}\nCategory: ${business.category}\nPROFILE: Skills: ${profile.skills}, Capital: ${profile.capital}, Time: ${profile.time}\nVALIDATION SCORE: ${validationReport?.viability_score || "N/A"}\n\nGenerate the 90-day blueprint. Respond in ${lang || "en"}.`,

@@ -53,7 +53,13 @@ export async function POST(req: NextRequest) {
         const response = await client.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 400,
-          system: `${SECURITY_PREFIX}You are an expert in ${ds.label}. Using this knowledge:${knowledge.slice(0, 1500)}\n\n${ds.prompt}\n\nBe specific, concise, and give a different perspective than a generic AI would. Max 3 paragraphs. End with a confidence level (HIGH/MEDIUM/LOW) and one key insight.\n\n<!-- signux_domains: game-theory, risk-intelligence, behavioral-economics -->\n<!-- signux_domain_count: 3 -->`,
+          system: `${SECURITY_PREFIX}You are an expert in ${ds.label}. Using this knowledge:${knowledge.slice(0, 1500)}\n\n${ds.prompt}\n\nBe specific, concise, and give a different perspective than a generic AI would. Max 3 paragraphs. End with a confidence level (HIGH/MEDIUM/LOW) and one key insight.\n\n<!-- signux_domains: game-theory, risk-intelligence, behavioral-economics -->\n<!-- signux_domain_count: 3 -->
+
+<!-- signux_sentiment: {"signal": "bullish|bearish|neutral|mixed", "confidence": 0.XX, "reason": "1-sentence explanation"} -->
+
+<!-- signux_sources: [{"title": "Source name", "type": "web|kb|framework|data", "relevance": "1-sentence"}] -->
+
+<!-- signux_followups: [{"question": "Follow-up question", "why": "Why this matters"}] -->`,
           messages: [
             {
               role: "user",
