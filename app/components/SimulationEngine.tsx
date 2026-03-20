@@ -1,11 +1,13 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Check, AlertTriangle, Download, ChevronDown, ChevronRight,
   FileText, RotateCcw, MessageSquare, BarChart3, Network,
   Globe, Users, Clock, Zap, Search, Shield, Activity, Play,
   Wand2, Loader2, Eye, X, Share2, Lock, Link2, Paperclip, Columns,
+  TrendingUp, TrendingDown, Minus, Save,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { useEnhance } from "../lib/useEnhance";
@@ -955,7 +957,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     );
   }
 
-  /* ═══ RUNNING STATE — 3 UNIVERSE CANVAS ═══ */
+  /* ═══ RUNNING STATE — 3 UNIVERSE ANIMATED CANVAS ═══ */
   if (simulating) {
     const progressPct = Math.min(((simStage + 1) / 6) * 100, 100);
     const doneAgents = simLiveAgents.filter(a => a.done).length;
@@ -982,9 +984,9 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     });
 
     const UNIVERSES = [
-      { id: "A", label: "UNIVERSE A", subtitle: "OPTIMISTIC", color: "#10B981", glow: "rgba(16,185,129,0.08)", msgs: universeA, probability: Math.max(15, 35 - universeC.length * 2) },
-      { id: "B", label: "UNIVERSE B", subtitle: "REALISTIC", color: "#3B82F6", glow: "rgba(59,130,246,0.08)", msgs: universeB, probability: 50 },
-      { id: "C", label: "UNIVERSE C", subtitle: "PESSIMISTIC", color: "#F59E0B", glow: "rgba(245,158,11,0.08)", msgs: universeC, probability: Math.min(35, 15 + universeC.length * 2) },
+      { id: "A", label: "UNIVERSE A", subtitle: "OPTIMISTIC", color: "#10B981", glow: "rgba(16,185,129,0.06)", borderGlow: "rgba(16,185,129,0.15)", msgs: universeA, probability: Math.max(15, 35 - universeC.length * 2), trendIcon: TrendingUp, profitDir: "+", riskLabel: "Low" },
+      { id: "B", label: "UNIVERSE B", subtitle: "REALISTIC", color: "#3B82F6", glow: "rgba(59,130,246,0.06)", borderGlow: "rgba(59,130,246,0.15)", msgs: universeB, probability: 50, trendIcon: Minus, profitDir: "~", riskLabel: "Medium", featured: true },
+      { id: "C", label: "UNIVERSE C", subtitle: "PESSIMISTIC", color: "#F59E0B", glow: "rgba(245,158,11,0.06)", borderGlow: "rgba(245,158,11,0.15)", msgs: universeC, probability: Math.min(35, 15 + universeC.length * 2), trendIcon: TrendingDown, profitDir: "-", riskLabel: "High" },
     ];
 
     // Normalize probabilities to 100%
@@ -995,131 +997,305 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     const maxMsgs = Math.max(universeA.length, universeB.length, universeC.length);
     const winningUniverse = universeA.length === maxMsgs ? "A" : universeB.length === maxMsgs ? "B" : "C";
     const votePercent = simAgentMessages.length > 0 ? Math.round((maxMsgs / simAgentMessages.length) * 100) : 0;
+    const winningColor = UNIVERSES.find(u => u.id === winningUniverse)?.color || "#D4AF37";
 
-    const UniverseColumn = ({ u }: { u: typeof UNIVERSES[0] }) => (
-      <div style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        borderRadius: 16,
-        border: `1px solid ${u.color}20`,
-        background: u.glow,
-        boxShadow: `0 0 40px ${u.color}06, inset 0 1px 0 ${u.color}10`,
-        overflow: "hidden",
-        minWidth: 0,
-        transition: "box-shadow 300ms",
-      }}>
-        {/* Column header */}
-        <div style={{
-          padding: "14px 16px 10px",
-          borderBottom: `1px solid ${u.color}15`,
-          background: `${u.color}05`,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: u.color,
-                boxShadow: `0 0 8px ${u.color}60`,
-                animation: "skeletonPulse 2s ease-in-out infinite",
-              }} />
-              <span style={{
-                fontSize: 10, fontWeight: 700, letterSpacing: 1.5,
-                color: u.color, fontFamily: "var(--font-mono)",
-              }}>
-                {u.label}
-              </span>
-            </div>
-            <span style={{
-              fontSize: 10, fontWeight: 600, color: u.color,
-              padding: "2px 8px", borderRadius: 50,
-              background: `${u.color}15`, fontFamily: "var(--font-mono)",
-            }}>
-              {u.probability}%
-            </span>
-          </div>
-          <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 500 }}>
-            {u.subtitle}
-          </div>
+    // Mini sparkline data generation based on message count
+    const generateSparkline = (msgs: AgentMessage[], direction: string) => {
+      const points = 12;
+      const data: number[] = [];
+      for (let i = 0; i < points; i++) {
+        const base = direction === "+" ? 20 + i * 6 : direction === "-" ? 80 - i * 5 : 45 + Math.sin(i * 0.8) * 15;
+        data.push(base + (Math.sin(i * 1.2 + msgs.length) * 10));
+      }
+      return data;
+    };
 
-          {/* Mini metrics */}
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-            <div style={{
-              flex: 1, padding: "6px 8px", borderRadius: 8,
-              background: `${u.color}08`, border: `1px solid ${u.color}10`,
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: u.color }}>{u.msgs.length}</div>
-              <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Reports</div>
-            </div>
-            <div style={{
-              flex: 1, padding: "6px 8px", borderRadius: 8,
-              background: `${u.color}08`, border: `1px solid ${u.color}10`,
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: u.color }}>{risk.score}</div>
-              <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Risk</div>
-            </div>
-          </div>
-        </div>
+    // Timeline months for vertical timeline
+    const timelineMonths = ["M1", "M3", "M6", "M9", "M12", "M18", "M24"];
 
-        {/* Timeline + Messages feed */}
-        <div ref={u.id === "B" ? feedRef : undefined} style={{
-          flex: 1, overflowY: "auto", padding: "8px 10px",
-          display: "flex", flexDirection: "column", gap: 6,
-        }}>
-          {u.msgs.length === 0 ? (
+    const UniverseColumn = ({ u, index }: { u: typeof UNIVERSES[0]; index: number }) => {
+      const TrendIcon = u.trendIcon;
+      const sparkData = generateSparkline(u.msgs, u.profitDir);
+      const sparkMax = Math.max(...sparkData);
+      const sparkMin = Math.min(...sparkData);
+      const sparkRange = sparkMax - sparkMin || 1;
+      const sparkPath = sparkData.map((v, i) => {
+        const x = (i / (sparkData.length - 1)) * 100;
+        const y = 100 - ((v - sparkMin) / sparkRange) * 100;
+        return `${i === 0 ? "M" : "L"}${x},${y}`;
+      }).join(" ");
+
+      // Calculate how far along the timeline we are
+      const timelineProgress = Math.min(u.msgs.length / 6, 1);
+
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, delay: index * 0.15, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            borderRadius: 16,
+            border: (u as any).featured ? `2px solid #D4AF37` : `1px solid ${u.color}25`,
+            background: `linear-gradient(180deg, ${u.glow} 0%, transparent 60%)`,
+            boxShadow: (u as any).featured
+              ? `0 0 60px ${u.color}10, 0 0 30px rgba(212,175,55,0.08), inset 0 1px 0 ${u.color}15`
+              : `0 0 40px ${u.color}06, inset 0 1px 0 ${u.color}10`,
+            overflow: "hidden",
+            minWidth: 0,
+            position: "relative",
+          }}
+        >
+          {/* Gold ring for featured (Realistic) */}
+          {(u as any).featured && (
             <div style={{
-              flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-              padding: 20,
-            }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-tertiary)" }}>
-                <span className="loading-dots" style={{ transform: "scale(0.6)" }}><span /><span /><span /></span>
-                Analyzing...
-              </span>
-            </div>
-          ) : (
-            u.msgs.map((msg, i) => {
-              const cc = AGENT_CATEGORY_COLORS[msg.category || ""] || DEFAULT_CATEGORY_COLOR;
-              return (
-                <div key={i} style={{
-                  padding: "10px 12px", borderRadius: 10,
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid var(--border-secondary)",
-                  borderLeft: `2px solid ${u.color}40`,
-                  animation: "fadeInUp 0.3s ease-out",
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                    <div style={{
-                      width: 22, height: 22, borderRadius: "50%",
-                      background: cc.bg, display: "flex",
-                      alignItems: "center", justifyContent: "center",
-                      fontSize: 9, fontWeight: 600, color: cc.color, flexShrink: 0,
-                    }}>
-                      {msg.agentName.charAt(0)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {msg.agentName}
-                      </div>
-                    </div>
-                    {msg.round != null && (
-                      <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>R{msg.round}</span>
-                    )}
-                  </div>
-                  <div style={{
-                    fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)",
-                    whiteSpace: "pre-wrap", maxHeight: 120, overflow: "hidden",
-                    maskImage: (msg.content?.length || 0) > 300 ? "linear-gradient(to bottom, black 75%, transparent)" : undefined,
-                    WebkitMaskImage: (msg.content?.length || 0) > 300 ? "linear-gradient(to bottom, black 75%, transparent)" : undefined,
-                  }}>
-                    {msg.content}
-                  </div>
-                </div>
-              );
-            })
+              position: "absolute", inset: -1, borderRadius: 17,
+              border: "1px solid rgba(212,175,55,0.25)",
+              pointerEvents: "none", zIndex: 1,
+            }} />
           )}
-        </div>
-      </div>
-    );
+
+          {/* Column header */}
+          <div style={{
+            padding: "14px 16px 12px",
+            borderBottom: `1px solid ${u.color}15`,
+            background: `${u.color}05`,
+            position: "relative",
+            zIndex: 2,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <motion.div
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{
+                    width: 8, height: 8, borderRadius: "50%",
+                    background: u.color,
+                    boxShadow: `0 0 12px ${u.color}80`,
+                  }}
+                />
+                <span style={{
+                  fontSize: 10, fontWeight: 700, letterSpacing: 1.5,
+                  color: u.color, fontFamily: "var(--font-mono)",
+                }}>
+                  {u.label}
+                </span>
+              </div>
+              <motion.span
+                key={u.probability}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                style={{
+                  fontSize: 18, fontWeight: 800, color: u.color,
+                  fontFamily: "var(--font-mono)", lineHeight: 1,
+                }}
+              >
+                {u.probability}%
+              </motion.span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 500, marginBottom: 10 }}>
+              {u.subtitle}
+            </div>
+
+            {/* Metrics row */}
+            <div style={{ display: "flex", gap: 6 }}>
+              <div style={{
+                flex: 1, padding: "6px 8px", borderRadius: 8,
+                background: `${u.color}08`, border: `1px solid ${u.color}12`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <TrendIcon size={10} style={{ color: u.color }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: u.color }}>{u.profitDir === "+" ? "↑" : u.profitDir === "-" ? "↓" : "→"} P&L</span>
+                </div>
+                <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Profit</div>
+              </div>
+              <div style={{
+                flex: 1, padding: "6px 8px", borderRadius: 8,
+                background: `${u.color}08`, border: `1px solid ${u.color}12`,
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: u.color }}>{u.msgs.length}</div>
+                <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Reports</div>
+              </div>
+              <div style={{
+                flex: 1, padding: "6px 8px", borderRadius: 8,
+                background: `${u.color}08`, border: `1px solid ${u.color}12`,
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: u.color }}>{u.riskLabel}</div>
+                <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Risk</div>
+              </div>
+            </div>
+
+            {/* Mini P&L Sparkline */}
+            <div style={{ marginTop: 8, height: 32, position: "relative", overflow: "hidden", borderRadius: 6 }}>
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
+                <defs>
+                  <linearGradient id={`grad-${u.id}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={u.color} stopOpacity="0.2" />
+                    <stop offset="100%" stopColor={u.color} stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d={`${sparkPath} L100,100 L0,100 Z`} fill={`url(#grad-${u.id})`} />
+                <path d={sparkPath} fill="none" stroke={u.color} strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Vertical Timeline + Agent Messages */}
+          <div ref={u.id === "B" ? feedRef : undefined} style={{
+            flex: 1, overflowY: "auto", padding: "10px 10px 10px 14px",
+            display: "flex", flexDirection: "column", gap: 0,
+            position: "relative",
+          }}>
+            {/* Timeline track */}
+            <div style={{
+              position: "absolute", left: 18, top: 10, bottom: 10,
+              width: 2, background: `${u.color}12`, borderRadius: 1,
+              zIndex: 0,
+            }}>
+              <motion.div
+                animate={{ height: `${timelineProgress * 100}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                style={{
+                  width: "100%", background: `${u.color}50`, borderRadius: 1,
+                }}
+              />
+            </div>
+
+            {u.msgs.length === 0 ? (
+              <div style={{
+                flex: 1, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                padding: 20, gap: 12,
+              }}>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <Loader2 size={18} style={{ color: u.color, opacity: 0.5 }} />
+                </motion.div>
+                <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                  Agents analyzing...
+                </span>
+                {/* Ghost timeline markers */}
+                {timelineMonths.slice(0, 4).map((m, i) => (
+                  <motion.div
+                    key={m}
+                    animate={{ opacity: [0.1, 0.3, 0.1] }}
+                    transition={{ duration: 1.5, delay: i * 0.3, repeat: Infinity }}
+                    style={{
+                      width: "80%", height: 24, borderRadius: 6,
+                      background: `${u.color}06`, border: `1px solid ${u.color}08`,
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {u.msgs.map((msg, i) => {
+                  const cc = AGENT_CATEGORY_COLORS[msg.category || ""] || DEFAULT_CATEGORY_COLOR;
+                  const monthLabel = timelineMonths[Math.min(i, timelineMonths.length - 1)];
+                  return (
+                    <motion.div
+                      key={`${u.id}-${i}`}
+                      initial={{ opacity: 0, x: -20, scale: 0.9 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      transition={{ duration: 0.4, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                      style={{
+                        padding: "10px 12px 10px 24px",
+                        borderRadius: 10,
+                        background: "rgba(255,255,255,0.02)",
+                        border: "1px solid var(--border-secondary)",
+                        borderLeft: `2px solid ${u.color}40`,
+                        marginBottom: 6,
+                        position: "relative",
+                        zIndex: 1,
+                      }}
+                    >
+                      {/* Timeline dot */}
+                      <div style={{
+                        position: "absolute", left: -7, top: 14,
+                        width: 10, height: 10, borderRadius: "50%",
+                        background: "var(--bg-primary)",
+                        border: `2px solid ${u.color}60`,
+                        zIndex: 2,
+                      }}>
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: i * 0.1 + 0.2, type: "spring" }}
+                          style={{
+                            width: 4, height: 4, borderRadius: "50%",
+                            background: u.color, margin: "auto",
+                            marginTop: 1,
+                          }}
+                        />
+                      </div>
+
+                      {/* Month label */}
+                      <div style={{
+                        position: "absolute", left: -36, top: 12,
+                        fontSize: 8, fontWeight: 700, color: `${u.color}60`,
+                        fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                      }}>
+                        {monthLabel}
+                      </div>
+
+                      {/* Agent header */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: i * 0.08 + 0.1, type: "spring", stiffness: 300 }}
+                          style={{
+                            width: 24, height: 24, borderRadius: "50%",
+                            background: cc.bg,
+                            border: `1.5px solid ${cc.color}40`,
+                            display: "flex",
+                            alignItems: "center", justifyContent: "center",
+                            fontSize: 9, fontWeight: 700, color: cc.color, flexShrink: 0,
+                          }}
+                        >
+                          {msg.agentName.charAt(0)}
+                        </motion.div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontSize: 11, fontWeight: 600, color: "var(--text-primary)",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          }}>
+                            {msg.agentName}
+                          </div>
+                        </div>
+                        {msg.round != null && (
+                          <span style={{
+                            fontSize: 8, color: `${u.color}80`, fontFamily: "var(--font-mono)",
+                            padding: "1px 5px", borderRadius: 4,
+                            background: `${u.color}10`,
+                          }}>
+                            R{msg.round}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Message content */}
+                      <div style={{
+                        fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)",
+                        whiteSpace: "pre-wrap", maxHeight: 100, overflow: "hidden",
+                        maskImage: (msg.content?.length || 0) > 250 ? "linear-gradient(to bottom, black 70%, transparent)" : undefined,
+                        WebkitMaskImage: (msg.content?.length || 0) > 250 ? "linear-gradient(to bottom, black 70%, transparent)" : undefined,
+                      }}>
+                        {msg.content}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            )}
+          </div>
+        </motion.div>
+      );
+    };
 
     return (
       <div style={{
@@ -1140,113 +1316,180 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           ))}
         </div>
 
-        {/* Top status bar */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          padding: isMobile ? "10px 16px" : "10px 24px",
-          borderBottom: "1px solid var(--border-secondary)",
-          background: "rgba(0,0,0,0.15)",
-          flexShrink: 0,
-        }}>
-          <Zap size={14} style={{ color: "#D4AF37" }} />
+        {/* Top status bar — war-room aesthetic */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: isMobile ? "10px 16px" : "12px 24px",
+            borderBottom: "1px solid var(--border-secondary)",
+            background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%)",
+            flexShrink: 0,
+          }}
+        >
+          <motion.div
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          >
+            <Zap size={14} style={{ color: "#D4AF37" }} />
+          </motion.div>
           <span style={{
-            fontSize: 11, fontWeight: 700, letterSpacing: 1,
+            fontSize: 11, fontWeight: 700, letterSpacing: 1.5,
             color: "#D4AF37", fontFamily: "var(--font-mono)",
           }}>
             SIMULATION RUNNING
           </span>
-          <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
-            {doneAgents}/{simTotalAgents || "?"} agents · {elapsed}s
-          </span>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "2px 10px", borderRadius: 50,
+            background: "rgba(212,175,55,0.06)",
+            border: "1px solid rgba(212,175,55,0.12)",
+          }}>
+            <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+              {doneAgents}/{simTotalAgents || "?"} agents
+            </span>
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "2px 10px", borderRadius: 50,
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid var(--border-secondary)",
+          }}>
+            <Clock size={10} style={{ color: "var(--text-tertiary)" }} />
+            <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+              {elapsed}s
+            </span>
+          </div>
           <div style={{ flex: 1 }} />
           <span style={{
             fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)",
           }}>
             Stage {simStage + 1}/6
           </span>
-          {/* Progress bar */}
+          {/* Animated progress bar */}
           <div style={{
-            width: 120, height: 3, borderRadius: 2,
+            width: isMobile ? 80 : 140, height: 4, borderRadius: 2,
             background: "var(--bg-tertiary)", overflow: "hidden",
+            position: "relative",
           }}>
-            <div style={{
-              height: "100%", borderRadius: 2,
-              background: "#D4AF37",
-              width: `${progressPct}%`,
-              transition: "width 0.8s ease",
-            }} />
+            <motion.div
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{
+                height: "100%", borderRadius: 2,
+                background: "linear-gradient(90deg, #D4AF37, #F5D680)",
+                position: "relative",
+              }}
+            />
+            {/* Shimmer effect */}
+            <motion.div
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "absolute", top: 0, width: "30%", height: "100%",
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+                borderRadius: 2,
+              }}
+            />
           </div>
-        </div>
+        </motion.div>
 
         {/* 3-Universe Canvas */}
         {isMobile ? (
           <div style={{
             flex: 1, overflowY: "auto",
-            padding: "12px 12px 80px",
+            padding: "12px 12px 90px",
             display: "flex", flexDirection: "column", gap: 12,
           }}>
-            {UNIVERSES.map(u => (
-              <UniverseColumn key={u.id} u={u} />
+            {UNIVERSES.map((u, i) => (
+              <UniverseColumn key={u.id} u={u} index={i} />
             ))}
           </div>
         ) : (
           <div style={{
-            flex: 1, display: "flex", gap: 12,
-            padding: "16px 20px 80px",
+            flex: 1, display: "flex", gap: 14,
+            padding: "16px 20px 90px",
             overflow: "hidden",
           }}>
-            {UNIVERSES.map(u => (
-              <UniverseColumn key={u.id} u={u} />
+            {UNIVERSES.map((u, i) => (
+              <UniverseColumn key={u.id} u={u} index={i} />
             ))}
           </div>
         )}
 
         {/* Footer bar — voting + actions */}
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0,
-          display: "flex", alignItems: "center", gap: 10,
-          padding: isMobile ? "10px 12px" : "10px 20px",
-          background: "rgba(10,10,10,0.85)",
-          backdropFilter: "blur(12px)",
-          borderTop: "1px solid var(--border-secondary)",
-          flexWrap: "wrap",
-          zIndex: 10,
-        }}>
-          {/* Voting indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            display: "flex", alignItems: "center", gap: 10,
+            padding: isMobile ? "10px 12px" : "12px 20px",
+            background: "linear-gradient(180deg, rgba(10,10,10,0.75) 0%, rgba(10,10,10,0.95) 100%)",
+            backdropFilter: "blur(16px)",
+            borderTop: "1px solid var(--border-secondary)",
+            flexWrap: "wrap",
+            zIndex: 10,
+          }}
+        >
+          {/* Voting indicator with animated bar */}
           <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "4px 12px", borderRadius: 50,
-            background: "rgba(212,175,55,0.06)",
-            border: "1px solid rgba(212,175,55,0.12)",
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "6px 14px", borderRadius: 50,
+            background: `${winningColor}08`,
+            border: `1px solid ${winningColor}20`,
           }}>
-            <BarChart3 size={12} style={{ color: "#D4AF37" }} />
-            <span style={{ fontSize: 11, color: "#D4AF37", fontWeight: 600 }}>
-              {votePercent}% favor Universe {winningUniverse}
+            <BarChart3 size={13} style={{ color: winningColor }} />
+            <span style={{ fontSize: 12, color: winningColor, fontWeight: 700, fontFamily: "var(--font-mono)" }}>
+              {votePercent}%
             </span>
+            <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+              favor Universe {winningUniverse}
+            </span>
+            {/* Mini vote bar */}
+            <div style={{
+              width: 60, height: 4, borderRadius: 2,
+              background: "rgba(255,255,255,0.05)", overflow: "hidden",
+            }}>
+              <motion.div
+                animate={{ width: `${votePercent}%` }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                style={{
+                  height: "100%", borderRadius: 2,
+                  background: winningColor,
+                }}
+              />
+            </div>
           </div>
 
           <div style={{ flex: 1 }} />
 
           {/* Action buttons */}
           {[
-            { label: "Live Variable", icon: <Eye size={11} />, onClick: () => setGodEyeOpen(!godEyeOpen) },
-            { label: "Compare", icon: <Columns size={11} />, onClick: () => {} },
+            { label: isMobile ? "Variable" : "Mudar variável ao vivo", icon: <Eye size={12} />, onClick: () => setGodEyeOpen(!godEyeOpen) },
+            { label: isMobile ? "Compare" : "Comparar A vs B", icon: <Columns size={12} />, onClick: () => {} },
+            { label: isMobile ? "Save" : "Salvar Simulação", icon: <Save size={12} />, onClick: () => {} },
           ].map((btn, i) => (
             <button key={i} onClick={btn.onClick} style={{
-              display: "flex", alignItems: "center", gap: 5,
-              padding: "5px 12px", borderRadius: 50,
-              border: "1px solid var(--border-secondary)",
-              background: "transparent", color: "var(--text-tertiary)",
-              fontSize: 10, cursor: "pointer", transition: "all 150ms",
+              display: "flex", alignItems: "center", gap: 6,
+              padding: isMobile ? "6px 10px" : "7px 16px", borderRadius: 50,
+              border: i === 1 ? "1px solid rgba(212,175,55,0.3)" : "1px solid var(--border-secondary)",
+              background: i === 1 ? "rgba(212,175,55,0.08)" : "transparent",
+              color: i === 1 ? "#D4AF37" : "var(--text-tertiary)",
+              fontSize: 11, fontWeight: i === 1 ? 600 : 400,
+              cursor: "pointer", transition: "all 150ms",
               whiteSpace: "nowrap",
             }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)"; e.currentTarget.style.color = "#D4AF37"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-secondary)"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(212,175,55,0.4)"; e.currentTarget.style.color = "#D4AF37"; e.currentTarget.style.background = "rgba(212,175,55,0.06)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = i === 1 ? "rgba(212,175,55,0.3)" : "var(--border-secondary)"; e.currentTarget.style.color = i === 1 ? "#D4AF37" : "var(--text-tertiary)"; e.currentTarget.style.background = i === 1 ? "rgba(212,175,55,0.08)" : "transparent"; }}
             >
               {btn.icon} {btn.label}
             </button>
           ))}
-        </div>
+        </motion.div>
       </div>
     );
   }
