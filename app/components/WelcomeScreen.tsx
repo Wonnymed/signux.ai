@@ -1,6 +1,5 @@
 "use client";
-import { Zap, Shield, Rocket, Globe, TrendingUp, ChevronDown, ArrowUp, Paperclip } from "lucide-react";
-import { useRef } from "react";
+import { Zap, Shield, Rocket, Globe, TrendingUp, ChevronDown } from "lucide-react";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
@@ -167,37 +166,39 @@ export default function WelcomeScreen({
       {/* ===== Spacer bottom (60%) ===== */}
       <div style={{ flex: 0.6 }} />
 
-      {/* ===== 4. TRUST + SCROLL ===== */}
-      <div style={{
-        position: "absolute",
-        bottom: 20,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 10,
-      }}>
-        <span style={{
-          fontSize: 11,
-          color: "var(--text-tertiary)",
-          opacity: 0.3,
+      {/* ===== 4. TRUST + SCROLL — Mobile only ===== */}
+      {isMobile && (
+        <div style={{
+          position: "absolute",
+          bottom: 20,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 10,
         }}>
-          Free to start · No credit card required
-        </span>
+          <span style={{
+            fontSize: 11,
+            color: "var(--text-tertiary)",
+            opacity: 0.3,
+          }}>
+            Free to start · No credit card
+          </span>
 
-        <button onClick={() => {
-          document.getElementById("landing-start")?.scrollIntoView({ behavior: "smooth" });
-        }} style={{
-          width: 28, height: 28, borderRadius: "50%",
-          border: "1px solid var(--border-secondary)",
-          background: "transparent",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer", color: "var(--text-tertiary)",
-          opacity: 0.25,
-          animation: "bounce 2.5s ease-in-out infinite",
-        }}>
-          <ChevronDown size={12} />
-        </button>
-      </div>
+          <button onClick={() => {
+            document.getElementById("landing-start")?.scrollIntoView({ behavior: "smooth" });
+          }} style={{
+            width: 28, height: 28, borderRadius: "50%",
+            border: "1px solid var(--border-secondary)",
+            background: "transparent",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "var(--text-tertiary)",
+            opacity: 0.25,
+            animation: "bounce 2.5s ease-in-out infinite",
+          }}>
+            <ChevronDown size={12} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
