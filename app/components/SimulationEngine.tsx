@@ -4,7 +4,7 @@ import {
   Check, AlertTriangle, Download, ChevronDown, ChevronRight,
   FileText, RotateCcw, MessageSquare, BarChart3, Network,
   Globe, Users, Clock, Zap, Search, Shield, Activity, Play,
-  Wand2, Loader2, Eye, X, Share2, Lock,
+  Wand2, Loader2, Eye, X, Share2, Lock, Link2, Paperclip, Columns,
 } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -410,656 +410,522 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
 
   /* ═══ WELCOME STATE ═══ */
   if (!simResult && !simulating) {
-    const scenarios = [
-      {
-        tag: "LAUNCH", dotColor: "#22c55e",
-        title: "Open a franchise in 3 new cities",
-        fill: "I want to launch a coffee franchise expanding from São Paulo to 3 new cities in Brazil. Budget $200K. Need to evaluate: locations, licensing, supply chain, staffing, and competitive landscape.",
-      },
-      {
-        tag: "SCALE", dotColor: "#3b82f6",
-        title: "Expand SaaS product into new market",
-        fill: "My SaaS product has 5K users in the US. I want to expand to EU market. Need to evaluate: GDPR compliance, pricing localization, payment processing, legal entity structure, and go-to-market strategy.",
-      },
-      {
-        tag: "OPTIMIZE", dotColor: "#f59e0b",
-        title: "Restructure operations to cut 30% costs",
-        fill: "My e-commerce company does $2M/year revenue but margins are thin at 8%. I want to restructure operations to cut costs by 30%. Evaluate: supply chain, fulfillment, automation, outsourcing, and renegotiation opportunities.",
-      },
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const quickScenarios = [
+      "Open a franchise in 3 new cities",
+      "Launch a SaaS at $29/mo",
+      "Expand to the Korean market",
+      "Raise a $2M seed round",
+      "Cut costs 30% without layoffs",
+      "Partner with a competitor",
     ];
 
-    const capabilities = [
-      "Predict outcomes",
-      "Find hidden risks",
-      "Stress-test anything",
-      "See the future first",
-    ];
+    const handleRun = () => {
+      if (!isLoggedIn) { window.location.href = "/signup"; return; }
+      if (tier === "free") { setShowPaywall(true); return; }
+      const activeTeam = customAgents.filter(a => a.active);
+      const teamPrefix = activeTeam.length !== DEFAULT_ROLES.length || activeTeam.some(a => !DEFAULT_ROLES.find(d => d.id === a.id))
+        ? `\n\nSPECIALIST TEAM FOR THIS SIMULATION:\n${activeTeam.map(a => `- ${a.name}`).join("\n")}\n\nRun the debate with ONLY these specialists. Each should contribute from their specific expertise.`
+        : "";
+      const baseScenario = seedMaterial ? `CONTEXT MATERIAL (from ${seedFileName}):\n${seedMaterial}\n\n---\n\nUSER SCENARIO:\n${simScenario}` : simScenario;
+      const fullScenario = baseScenario + teamPrefix;
+      if (seedMaterial || teamPrefix) { setSimScenario(fullScenario); }
+      onSimulate(fullScenario);
+    };
 
-    const agentAvatars = [
-      { letter: "R", bg: "rgba(139,92,246,0.15)", color: "#8b5cf6" },
-      { letter: "F", bg: "rgba(59,130,246,0.15)", color: "#3b82f6" },
-      { letter: "A", bg: "rgba(239,68,68,0.15)", color: "#ef4444" },
-      { letter: "O", bg: "rgba(34,197,94,0.15)", color: "#22c55e" },
-      { letter: "M", bg: "rgba(245,158,11,0.15)", color: "#f59e0b" },
-    ];
+    const handleCompare = () => {
+      if (!scenarioA.trim() || !scenarioB.trim()) return;
+      if (!isLoggedIn) { window.location.href = "/signup"; return; }
+      if (tier === "free") { setShowPaywall(true); return; }
+      const comparisonPrompt = `COMPARE TWO SCENARIOS SIDE BY SIDE:\n\nSCENARIO A: ${scenarioA}\n\nSCENARIO B: ${scenarioB}\n\nAnalyze BOTH scenarios using the same criteria. Then provide a clear comparison:\n\n## Scenario A: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## Scenario B: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## ⚖️ Head-to-Head Comparison\n\n| Criteria | Scenario A | Scenario B | Winner |\n|---|---|---|---|\n| Viability Score | X/10 | X/10 | A/B |\n| Risk Level | Low/Med/High | Low/Med/High | A/B |\n| Expected ROI | X% | X% | A/B |\n| Time to Results | X months | X months | A/B |\n| Capital Required | $X | $X | A/B |\n| Competition | Low/Med/High | Low/Med/High | A/B |\n\n## 🏆 Verdict\n**Winner: Scenario [A/B]** — [1 paragraph explaining why, acknowledging trade-offs]\n\n## 🤔 Consider This\n- If your priority is [X], choose Scenario A because...\n- If your priority is [Y], choose Scenario B because...\n- A hybrid approach might be: [suggestion combining best of both]`;
+      setSimScenario(comparisonPrompt);
+      onSimulate(comparisonPrompt);
+    };
 
     return (
-        <section style={{
-          minHeight: isMobile ? "75vh" : "85vh",
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          padding: isMobile ? "24px 16px 32px" : "32px 24px 40px",
-          position: "relative", overflow: "hidden",
-          backgroundImage: "linear-gradient(rgba(212,175,55,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.03) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
+      <section style={{
+        display: "flex", flexDirection: "column",
+        padding: isMobile ? "12px 16px 24px" : "16px 24px 32px",
+        position: "relative", overflow: "hidden",
+      }}>
+
+        {/* ── COMPACT HEADER ── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 8, paddingTop: isMobile ? 8 : 20, paddingBottom: 4,
         }}>
-          {/* Scan line */}
           <div style={{
-            position: "absolute", top: 0, left: 0, right: 0, height: 1,
-            background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent)",
-            animation: "scanDown 4s ease-in-out infinite",
-            pointerEvents: "none",
-          }} />
-          {/* Ambient glow bottom */}
-          <div style={{
-            position: "absolute", bottom: -100, left: "50%", transform: "translateX(-50%)",
-            width: 400, height: 200,
-            background: "radial-gradient(ellipse, rgba(212,175,55,0.04), transparent 70%)",
-            pointerEvents: "none",
-          }} />
-
-          <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
-
-          {/* ── HEADER ── */}
-          <div style={{ textAlign: "center", marginBottom: 10, animation: "fadeIn 0.4s ease-out" }}>
-            {/* Icon ring */}
-            <div style={{
-              width: 40, height: 40, borderRadius: "50%",
-              border: "1px solid rgba(212,175,55,0.2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 8px", position: "relative",
-            }}>
-              <div style={{
-                position: "absolute", inset: -4, borderRadius: "50%",
-                border: "1px solid rgba(212,175,55,0.08)",
-              }} />
-              <Zap size={20} style={{ color: "var(--accent)" }} />
-            </div>
-
-            {/* Title */}
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 0 }}>
-              <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 700,
-                letterSpacing: 3, color: "var(--text-primary)",
-              }}>
-                SIMULATE
-              </span>
-              <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 300,
-                letterSpacing: 2, color: "var(--text-tertiary)", marginLeft: 8,
-              }}>
-                ENGINE
-              </span>
-            </div>
-
-            {/* Subtitle */}
-            <div style={{
-              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5,
-              textTransform: "uppercase" as const, color: "rgba(212,175,55,0.6)",
-              marginTop: 6,
-            }}>
-              See what happens before it happens
-            </div>
-
-            {/* Divider */}
-            <div style={{
-              width: 48, height: 1,
-              background: "linear-gradient(90deg, transparent, var(--accent), transparent)",
-              margin: "8px auto 0",
-            }} />
-          </div>
-
-          {/* ── CAPABILITY STRIP ── */}
-          <div style={{
-            display: "flex", flexWrap: "wrap", justifyContent: "center",
-            gap: isMobile ? 8 : 16, marginBottom: 8,
-            animation: "fadeIn 0.5s ease-out",
+            width: 26, height: 26, borderRadius: 8,
+            background: "rgba(212,175,55,0.08)",
+            border: "1px solid rgba(212,175,55,0.15)",
+            display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            {capabilities.map(cap => (
-              <div key={cap} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{
-                  width: 5, height: 5, borderRadius: "50%",
-                  background: "var(--accent)", opacity: 0.6,
-                }} />
-                <span style={{
-                  fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1.5,
-                  textTransform: "uppercase" as const, color: "var(--text-secondary)",
-                }}>
-                  {cap}
-                </span>
-              </div>
-            ))}
+            <Zap size={13} style={{ color: "var(--accent)" }} />
           </div>
-
-          {/* ── DEMO BANNER ── */}
-          {!isLoggedIn && !demoUsed && (
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "8px 14px", borderRadius: 8,
-              border: "1px solid var(--mode-sim-border)",
-              background: "var(--mode-sim-bg)",
-              marginBottom: 10, width: "100%",
-              animation: "fadeIn 0.5s ease-out",
-            }}>
-              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                See it work — Watch AI predict the future of a coffee franchise idea
-              </span>
-              <button onClick={runDemoSimulation} style={{
-                padding: "5px 14px", borderRadius: 50,
-                background: "var(--mode-sim)", color: "#000",
-                fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
-                whiteSpace: "nowrap" as const, marginLeft: 12,
-              }}>
-                Run demo
-              </button>
-            </div>
-          )}
-
-          {/* ── SEED MATERIAL ── */}
-          <div style={{
-            marginBottom: 10, padding: "10px 14px", borderRadius: 10,
-            border: seedMaterial ? "1px solid rgba(212,175,55,0.2)" : "1px dashed var(--border-secondary)",
-            background: seedMaterial ? "rgba(212,175,55,0.03)" : "var(--bg-secondary)",
-            animation: "fadeIn 0.5s ease-out",
+          <span style={{
+            fontFamily: "var(--font-brand)", fontSize: 15, fontWeight: 700,
+            letterSpacing: 3, color: "var(--text-primary)",
           }}>
-            {seedMaterial ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <FileText size={14} style={{ color: "var(--accent)", flexShrink: 0 }} />
-                <span style={{ fontSize: 12, color: "var(--text-secondary)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {seedFileName || "Context loaded"} ({seedMaterial.length.toLocaleString()} chars)
-                </span>
-                <button onClick={() => { setSeedMaterial(""); setSeedFileName(""); }} style={{
-                  background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 2,
-                }}>
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 6, textAlign: "center" }}>
-                  Add context: paste a URL, upload a file, or drop data
-                </div>
-                <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-                  {showUrlInput ? (
-                    <div style={{ display: "flex", gap: 6, width: "100%" }}>
-                      <input
-                        autoFocus
-                        value={urlInput}
-                        onChange={e => setUrlInput(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter") handleUrlPaste(); if (e.key === "Escape") setShowUrlInput(false); }}
-                        placeholder="https://..."
-                        style={{
-                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12,
-                          border: "1px solid var(--border-secondary)", background: "var(--bg-primary)",
-                          color: "var(--text-primary)", outline: "none",
-                        }}
-                      />
-                      <button onClick={handleUrlPaste} style={{
-                        padding: "6px 12px", borderRadius: 6, fontSize: 11,
-                        background: "var(--accent)", color: "#000", border: "none", cursor: "pointer", fontWeight: 600,
-                      }}>Add</button>
-                      <button onClick={() => setShowUrlInput(false)} style={{
-                        background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 2,
-                      }}><X size={14} /></button>
-                    </div>
-                  ) : (
-                    <>
-                      <button onClick={() => setShowUrlInput(true)} style={{
-                        padding: "4px 10px", borderRadius: 6, fontSize: 11,
-                        border: "1px solid var(--border-secondary)",
-                        background: "transparent", color: "var(--text-secondary)", cursor: "pointer",
-                      }}>
-                        Paste URL
-                      </button>
-                      <label style={{
-                        padding: "4px 10px", borderRadius: 6, fontSize: 11,
-                        border: "1px solid var(--border-secondary)",
-                        color: "var(--text-secondary)", cursor: "pointer", display: "inline-flex", alignItems: "center",
-                      }}>
-                        Upload file
-                        <input type="file" accept=".pdf,.txt,.csv,.doc,.docx,.json,.md" hidden
-                          onChange={e => handleFileUpload(e.target.files?.[0])}
-                        />
-                      </label>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+            SIMULATE
+          </span>
+        </div>
+        <p style={{
+          textAlign: "center", fontSize: 13, color: "var(--text-tertiary)",
+          marginBottom: isMobile ? 14 : 16,
+        }}>
+          Describe any scenario — see what happens before it happens
+        </p>
 
-          {/* ── INPUT CONTAINER ── */}
-          <div
-            style={{
-              border: simScenario.trim() ? "1px solid rgba(212,175,55,0.3)" : "1px solid rgba(212,175,55,0.12)",
-              borderRadius: 16,
-              background: simScenario.trim() ? "var(--card-bg)" : "var(--card-bg)",
-              padding: isMobile ? 12 : 16,
-              transition: "all 300ms ease",
+        {/* ── MAIN INPUT CONTAINER ── */}
+        {!compareMode && (
+          <div style={{ maxWidth: 680, margin: "0 auto", width: "100%" }}>
+            <div style={{
+              borderRadius: 14,
+              border: simScenario.trim()
+                ? "1px solid rgba(212,175,55,0.25)"
+                : "1px solid var(--border-secondary)",
+              background: "var(--card-bg)",
+              overflow: "hidden",
+              transition: "border-color 200ms, box-shadow 200ms",
               boxShadow: simScenario.trim()
-                ? "0 0 30px rgba(212,175,55,0.06), 0 0 60px rgba(212,175,55,0.03)"
+                ? "0 0 20px rgba(212,175,55,0.04)"
                 : "none",
-              marginBottom: 12,
-              animation: "fadeIn 0.5s ease-out",
-            }}
-            onFocus={e => {
-              e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)";
-              e.currentTarget.style.boxShadow = "0 0 30px rgba(212,175,55,0.06), 0 0 60px rgba(212,175,55,0.03)";
-              e.currentTarget.style.background = "var(--card-bg)";
-            }}
-            onBlur={e => {
-              if (!simScenario.trim()) {
-                e.currentTarget.style.borderColor = "rgba(212,175,55,0.12)";
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.background = "var(--card-bg)";
-              }
-            }}
-          >
-            {/* Label */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              marginBottom: 10,
             }}>
+              <textarea
+                value={simScenario}
+                onChange={e => setSimScenario(e.target.value)}
+                onKeyDown={e => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "e") {
+                    e.preventDefault();
+                    handleEnhance();
+                  }
+                }}
+                placeholder="I want to open a coffee franchise in 3 new cities with a $200K budget..."
+                rows={isMobile ? 3 : 4}
+                style={{
+                  width: "100%", padding: "16px 18px 8px",
+                  background: "transparent", border: "none",
+                  color: "var(--text-primary)", fontSize: 14,
+                  lineHeight: 1.6, resize: "none", outline: "none",
+                  fontFamily: "var(--font-body)",
+                  opacity: enhancing ? 0.5 : 1,
+                }}
+              />
+
+              {/* Bottom bar: upload + enhance + simulate */}
               <div style={{
-                width: 4, height: 4, borderRadius: "50%",
-                background: "var(--accent)",
-                animation: "pulse 2s ease-in-out infinite",
-              }} />
-              <span style={{
-                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
-                textTransform: "uppercase" as const, color: "rgba(212,175,55,0.5)",
+                display: "flex", alignItems: "center",
+                padding: "8px 12px", gap: 6,
+                borderTop: "1px solid var(--border-secondary)",
               }}>
-                DESCRIBE YOUR SCENARIO
-              </span>
-            </div>
+                <button onClick={() => setShowUrlInput(!showUrlInput)} style={{
+                  display: "flex", alignItems: "center", gap: isMobile ? 0 : 4,
+                  padding: "5px 10px", borderRadius: 6,
+                  background: "transparent",
+                  border: "1px solid var(--border-secondary)",
+                  color: "var(--text-tertiary)", fontSize: 11,
+                  cursor: "pointer",
+                }}>
+                  <Link2 size={12} />
+                  {!isMobile && <span style={{ marginLeft: 4 }}>URL</span>}
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} style={{
+                  display: "flex", alignItems: "center", gap: isMobile ? 0 : 4,
+                  padding: "5px 10px", borderRadius: 6,
+                  background: "transparent",
+                  border: "1px solid var(--border-secondary)",
+                  color: "var(--text-tertiary)", fontSize: 11,
+                  cursor: "pointer",
+                }}>
+                  <Paperclip size={12} />
+                  {!isMobile && <span style={{ marginLeft: 4 }}>File</span>}
+                </button>
+                <input type="file" ref={fileInputRef} hidden
+                  accept=".pdf,.txt,.csv,.doc,.docx,.json,.md"
+                  onChange={e => handleFileUpload(e.target.files?.[0])}
+                />
 
-            <textarea
-              value={simScenario}
-              onChange={e => setSimScenario(e.target.value)}
-              onKeyDown={e => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "e") {
-                  e.preventDefault();
-                  handleEnhance();
-                  return;
-                }
-              }}
-              placeholder="I want to open a coffee franchise in 3 new cities with a $200K budget..."
-              style={{
-                width: "100%", minHeight: 56, padding: 0,
-                background: "transparent", border: "none",
-                color: "var(--text-primary)", fontSize: 14, lineHeight: 1.5,
-                resize: "none", outline: "none",
-                fontFamily: "var(--font-sans)",
-                opacity: enhancing ? 0.5 : 1, transition: "opacity 150ms ease",
-              }}
-            />
-          </div>
+                {/* Uploaded file indicator */}
+                {seedFileName && (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "3px 8px", borderRadius: 4,
+                    background: "rgba(212,175,55,0.06)",
+                    border: "1px solid rgba(212,175,55,0.12)",
+                    fontSize: 10, color: "var(--accent)",
+                    maxWidth: 120, overflow: "hidden",
+                  }}>
+                    <FileText size={10} style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {seedFileName.slice(0, 20)}{seedFileName.length > 20 ? "..." : ""}
+                    </span>
+                    <button onClick={() => { setSeedMaterial(""); setSeedFileName(""); }} style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--text-tertiary)", fontSize: 11, padding: 0, marginLeft: 2, flexShrink: 0,
+                    }}>
+                      <X size={10} />
+                    </button>
+                  </div>
+                )}
 
-          {/* ── SCENARIO CARDS ── */}
-          <div style={{ marginBottom: 8, animation: "fadeIn 0.6s ease-out" }}>
-            <div style={{
-              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
-              textTransform: "uppercase" as const, color: "var(--text-tertiary)",
-              marginBottom: 8,
-            }}>
-              QUICK SCENARIOS
-            </div>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-              gap: 6,
-            }}>
-              {scenarios.map(sc => (
+                {/* Enhance button */}
+                {simScenario.trim().length >= 10 && (
+                  <button
+                    onClick={handleEnhance}
+                    disabled={enhancing}
+                    title="Enhance (⌘E)"
+                    style={{
+                      display: "flex", alignItems: "center", gap: 4,
+                      padding: "5px 10px", borderRadius: 6,
+                      border: "1px solid var(--border-secondary)",
+                      background: wasEnhanced ? "rgba(212,175,55,0.08)" : "transparent",
+                      color: wasEnhanced ? "var(--accent)" : "var(--text-tertiary)",
+                      fontSize: 11, cursor: enhancing ? "wait" : "pointer",
+                    }}
+                  >
+                    {enhancing ? <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 size={11} />}
+                    {isMobile ? "" : wasEnhanced ? "Enhanced" : "Enhance"}
+                  </button>
+                )}
+
+                <div style={{ flex: 1 }} />
+
+                {/* SIMULATE BUTTON — always visible */}
                 <button
-                  key={sc.tag}
-                  onClick={() => setSimScenario(sc.fill)}
+                  onClick={handleRun}
+                  disabled={!simScenario.trim() || simStarting}
                   style={{
-                    background: "var(--card-bg)",
-                    border: "1px solid var(--card-border)",
-                    borderRadius: 10, padding: "8px 12px",
-                    cursor: "pointer", transition: "all 200ms",
-                    textAlign: "left", position: "relative",
-                    borderLeft: "2px solid transparent",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)";
-                    e.currentTarget.style.borderLeftColor = "var(--accent)";
-                    e.currentTarget.style.background = "rgba(212,175,55,0.03)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = "var(--card-border)";
-                    e.currentTarget.style.borderLeftColor = "transparent";
-                    e.currentTarget.style.background = "var(--card-bg)";
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "8px 20px", borderRadius: 50,
+                    background: simScenario.trim() && !simStarting ? "var(--accent)" : "rgba(255,255,255,0.05)",
+                    color: simScenario.trim() && !simStarting ? "#000" : "var(--text-tertiary)",
+                    fontSize: 13, fontWeight: 700, border: "none",
+                    cursor: simScenario.trim() && !simStarting ? "pointer" : "default",
+                    opacity: simScenario.trim() && !simStarting ? 1 : 0.4,
+                    transition: "all 300ms ease",
+                    letterSpacing: 0.5,
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                    <div style={{
-                      width: 4, height: 4, borderRadius: "50%",
-                      background: sc.dotColor,
-                    }} />
-                    <span style={{
-                      fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1,
-                      textTransform: "uppercase" as const, color: "var(--text-secondary)",
-                    }}>
-                      {sc.tag}
-                    </span>
-                  </div>
-                  <div style={{
-                    fontSize: 13, color: "var(--text-primary)",
-                    lineHeight: 1.4,
-                  }}>
-                    {sc.title}
-                  </div>
+                  {simStarting ? (
+                    <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                  ) : (
+                    <Play size={13} fill={simScenario.trim() && !simStarting ? "#000" : "var(--text-tertiary)"} />
+                  )}
+                  {simStarting ? "Starting..." : "Simulate"}
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── AGENT PREVIEW STRIP (compact) ── */}
-          {!isMobile && (
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              gap: 8, padding: "6px 0", marginBottom: 4,
-              animation: "fadeIn 0.7s ease-out",
-            }}>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                {agentAvatars.map((av, i) => (
-                  <div key={av.letter} style={{
-                    width: 22, height: 22, borderRadius: "50%",
-                    background: av.bg, display: "flex",
-                    alignItems: "center", justifyContent: "center",
-                    fontSize: 8, fontWeight: 600, color: av.color,
-                    border: "2px solid var(--bg-primary)",
-                    marginLeft: i > 0 ? -5 : 0,
-                    zIndex: 5 - i,
-                  }}>
-                    {av.letter}
-                  </div>
-                ))}
-                <div style={{
-                  width: 22, height: 22, borderRadius: "50%",
-                  background: "var(--card-border)", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  fontSize: 8, fontWeight: 500, color: "var(--text-secondary)",
-                  border: "2px solid var(--bg-primary)",
-                  marginLeft: -5,
-                }}>
-                  +10
-                </div>
               </div>
-              <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
-                <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>15 agents</span> · 3 rounds · 5 risk axes
-              </span>
-            </div>
-          )}
 
-          {/* ── CUSTOMIZE TEAM ── */}
-          <div style={{ marginBottom: 12 }}>
-            <button onClick={() => setShowAgentCustomizer(!showAgentCustomizer)} style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 8,
-              border: "1px solid var(--border-secondary)",
-              background: "transparent", cursor: "pointer",
-              fontSize: 11, color: "var(--text-tertiary)",
-              transition: "all 150ms",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
-            >
-              <Users size={12} />
-              Customize team ({customAgents.filter(a => a.active).length} specialists)
-              <span style={{ fontSize: 8, transition: "transform 200ms", transform: showAgentCustomizer ? "rotate(180deg)" : "none" }}>{"\u25BC"}</span>
-            </button>
-
-            {showAgentCustomizer && (
-              <div style={{
-                marginTop: 8, padding: "12px 14px", borderRadius: 10,
-                border: "1px solid var(--border-secondary)", background: "var(--bg-tertiary)",
-                animation: "fadeIn 0.15s ease",
-              }}>
-                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 8, fontFamily: "var(--font-mono)", letterSpacing: 0.5 }}>
-                  ACTIVE TEAM
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-                  {customAgents.filter(a => a.active).map((agent) => (
-                    <button key={agent.id} onClick={() => {
-                      setCustomAgents(customAgents.map(a => a.id === agent.id ? { ...a, active: false } : a));
-                    }} style={{
-                      display: "flex", alignItems: "center", gap: 4,
-                      padding: "4px 10px", borderRadius: 50,
-                      background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.15)",
-                      fontSize: 11, color: "var(--text-primary)", cursor: "pointer",
-                    }}>
-                      {agent.name} <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{"\u2715"}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 8, fontFamily: "var(--font-mono)", letterSpacing: 0.5 }}>
-                  ADD SPECIALIST
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {[...OPTIONAL_ROLES, ...customAgents.filter(a => !a.active)]
-                    .filter((a, i, arr) => arr.findIndex(x => x.id === a.id) === i)
-                    .filter(a => !customAgents.find(ag => ag.id === a.id && ag.active))
-                    .map((agent) => (
-                    <button key={agent.id} onClick={() => {
-                      if (customAgents.find(a => a.id === agent.id)) {
-                        setCustomAgents(customAgents.map(a => a.id === agent.id ? { ...a, active: true } : a));
-                      } else {
-                        setCustomAgents([...customAgents, { ...agent, active: true }]);
-                      }
-                    }} style={{
-                      display: "flex", alignItems: "center", gap: 4,
-                      padding: "4px 10px", borderRadius: 50,
-                      border: "1px dashed var(--border-secondary)",
-                      background: "transparent", fontSize: 11,
-                      color: "var(--text-tertiary)", cursor: "pointer",
-                    }}>
-                      + {agent.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── CTA BUTTON ── */}
-          <div style={{ textAlign: "center", animation: "fadeIn 0.8s ease-out" }}>
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            {simScenario.trim().length >= 10 && (
-              <button
-                onClick={handleEnhance}
-                disabled={enhancing}
-                title="Enhance your scenario (⌘E)"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "6px 14px", borderRadius: 50,
-                  border: "1px solid var(--card-border)",
-                  background: wasEnhanced ? "var(--accent-soft, rgba(212,175,55,0.1))" : "none",
-                  color: wasEnhanced ? "var(--accent)" : "var(--text-tertiary)",
-                  fontSize: 11, cursor: enhancing ? "wait" : "pointer",
-                  transition: "all 200ms", fontFamily: "var(--font-mono)", letterSpacing: 0.5,
-                }}
-                onMouseEnter={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; } }}
-                onMouseLeave={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.borderColor = "var(--card-border)"; e.currentTarget.style.color = "var(--text-tertiary)"; } }}
-              >
-                {enhancing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 size={12} />}
-                {wasEnhanced ? "Enhanced" : "Enhance"}
-              </button>
-            )}
-            <button
-              onClick={() => {
-                if (!isLoggedIn) { window.location.href = "/signup"; return; }
-                if (tier === "free") { setShowPaywall(true); return; }
-                const activeTeam = customAgents.filter(a => a.active);
-                const teamPrefix = activeTeam.length !== DEFAULT_ROLES.length || activeTeam.some(a => !DEFAULT_ROLES.find(d => d.id === a.id))
-                  ? `\n\nSPECIALIST TEAM FOR THIS SIMULATION:\n${activeTeam.map(a => `- ${a.name}`).join("\n")}\n\nRun the debate with ONLY these specialists. Each should contribute from their specific expertise.`
-                  : "";
-                const baseScenario = seedMaterial ? `CONTEXT MATERIAL (from ${seedFileName}):\n${seedMaterial}\n\n---\n\nUSER SCENARIO:\n${simScenario}` : simScenario;
-                const fullScenario = baseScenario + teamPrefix;
-                if (seedMaterial || teamPrefix) { setSimScenario(fullScenario); }
-                onSimulate(fullScenario);
-              }}
-              disabled={!simScenario.trim() || simStarting}
-              className={simScenario.trim() && !simStarting ? "predict-button" : undefined}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 10,
-                background: simScenario.trim() && !simStarting ? "var(--accent)" : "rgba(212,175,55,0.3)",
-                color: "var(--bg-primary)", border: "none", borderRadius: 50,
-                padding: "12px 32px",
-                fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 14,
-                letterSpacing: 2, textTransform: "uppercase" as const,
-                cursor: simScenario.trim() && !simStarting ? "pointer" : "not-allowed",
-                transition: "all 200ms",
-                opacity: simScenario.trim() && !simStarting ? 1 : 0.5,
-              }}
-              onMouseMove={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                e.currentTarget.style.setProperty("--mouse-x", `${((e.clientX - rect.left) / rect.width) * 100}%`);
-                e.currentTarget.style.setProperty("--mouse-y", `${((e.clientY - rect.top) / rect.height) * 100}%`);
-              }}
-              onMouseEnter={e => {
-                if (simScenario.trim() && !simStarting) {
-                  e.currentTarget.style.filter = "brightness(1.1)";
-                  e.currentTarget.style.boxShadow = "0 0 30px rgba(212,175,55,0.2)";
-                }
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.filter = "none";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              {simStarting ? (
-                <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2, borderColor: "rgba(0,0,0,0.2)", borderTopColor: "var(--bg-primary)" }} />
-              ) : (
-                <Play size={16} />
-              )}
-              {simStarting ? "INITIALIZING..." : "RUN SIMULATION"}
-            </button>
-            {!compareMode && (
-              <button
-                onClick={() => setCompareMode(true)}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "10px 18px", borderRadius: 50,
-                  border: "1px solid var(--border-secondary)",
-                  background: "transparent", color: "var(--text-secondary)",
-                  fontSize: 13, fontWeight: 500, cursor: "pointer",
-                  transition: "all 200ms",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="7" height="18" rx="1"/>
-                  <rect x="14" y="3" width="7" height="18" rx="1"/>
-                </svg>
-                Compare A vs B
-              </button>
-            )}
-            </div>
-
-            {/* Compare A vs B inputs */}
-            {compareMode && (
-              <div style={{ width: "100%", marginTop: 16 }}>
+              {/* URL input (expandable) */}
+              {showUrlInput && (
                 <div style={{
-                  display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, width: "100%",
+                  display: "flex", gap: 6, padding: "8px 12px",
+                  borderTop: "1px solid var(--border-secondary)",
                 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontSize: 11, fontWeight: 600, color: "#3b82f6",
-                      fontFamily: "var(--font-mono)", marginBottom: 6,
-                    }}>SCENARIO A</div>
-                    <textarea
-                      value={scenarioA}
-                      onChange={(e) => setScenarioA(e.target.value)}
-                      placeholder="First scenario..."
-                      style={{
-                        width: "100%", minHeight: 100, padding: 12, borderRadius: 10,
-                        border: "1px solid rgba(59,130,246,0.2)",
-                        background: "rgba(59,130,246,0.03)",
-                        color: "var(--text-primary)", fontSize: 13, resize: "vertical",
-                        fontFamily: "inherit",
-                      }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontSize: 11, fontWeight: 600, color: "#8b5cf6",
-                      fontFamily: "var(--font-mono)", marginBottom: 6,
-                    }}>SCENARIO B</div>
-                    <textarea
-                      value={scenarioB}
-                      onChange={(e) => setScenarioB(e.target.value)}
-                      placeholder="Second scenario..."
-                      style={{
-                        width: "100%", minHeight: 100, padding: 12, borderRadius: 10,
-                        border: "1px solid rgba(139,92,246,0.2)",
-                        background: "rgba(139,92,246,0.03)",
-                        color: "var(--text-primary)", fontSize: 13, resize: "vertical",
-                        fontFamily: "inherit",
-                      }}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "center" }}>
-                  <button
-                    onClick={() => {
-                      if (!scenarioA.trim() || !scenarioB.trim()) return;
-                      if (!isLoggedIn) { window.location.href = "/signup"; return; }
-                      if (tier === "free") { setShowPaywall(true); return; }
-                      const comparisonPrompt = `COMPARE TWO SCENARIOS SIDE BY SIDE:\n\nSCENARIO A: ${scenarioA}\n\nSCENARIO B: ${scenarioB}\n\nAnalyze BOTH scenarios using the same criteria. Then provide a clear comparison:\n\n## Scenario A: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## Scenario B: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## ⚖️ Head-to-Head Comparison\n\n| Criteria | Scenario A | Scenario B | Winner |\n|---|---|---|---|\n| Viability Score | X/10 | X/10 | A/B |\n| Risk Level | Low/Med/High | Low/Med/High | A/B |\n| Expected ROI | X% | X% | A/B |\n| Time to Results | X months | X months | A/B |\n| Capital Required | $X | $X | A/B |\n| Competition | Low/Med/High | Low/Med/High | A/B |\n\n## 🏆 Verdict\n**Winner: Scenario [A/B]** — [1 paragraph explaining why, acknowledging trade-offs]\n\n## 🤔 Consider This\n- If your priority is [X], choose Scenario A because...\n- If your priority is [Y], choose Scenario B because...\n- A hybrid approach might be: [suggestion combining best of both]`;
-                      setSimScenario(comparisonPrompt);
-                      onSimulate(comparisonPrompt);
-                    }}
-                    disabled={!scenarioA.trim() || !scenarioB.trim() || simStarting}
+                  <input
+                    type="url"
+                    placeholder="https://competitor-site.com or article URL..."
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") handleUrlPaste(); if (e.key === "Escape") setShowUrlInput(false); }}
+                    autoFocus
                     style={{
-                      padding: "10px 24px", borderRadius: 50,
-                      background: scenarioA.trim() && scenarioB.trim() ? "var(--accent)" : "rgba(212,175,55,0.3)",
-                      color: "var(--bg-primary)", fontWeight: 600,
-                      fontSize: 13, border: "none", cursor: scenarioA.trim() && scenarioB.trim() ? "pointer" : "not-allowed",
-                      opacity: scenarioA.trim() && scenarioB.trim() ? 1 : 0.5,
-                      fontFamily: "var(--font-brand)", letterSpacing: 1, textTransform: "uppercase" as const,
-                    }}
-                  >
-                    Compare scenarios
-                  </button>
-                  <button
-                    onClick={() => { setCompareMode(false); setScenarioA(""); setScenarioB(""); }}
-                    style={{
-                      padding: "10px 18px", borderRadius: 50,
+                      flex: 1, padding: "6px 10px", borderRadius: 6,
                       border: "1px solid var(--border-secondary)",
-                      background: "transparent", color: "var(--text-tertiary)",
-                      fontSize: 12, cursor: "pointer",
+                      background: "var(--bg-secondary)", color: "var(--text-primary)",
+                      fontSize: 12, outline: "none",
                     }}
-                  >
-                    Cancel
-                  </button>
+                  />
+                  <button onClick={() => {
+                    handleUrlPaste();
+                    setShowUrlInput(false);
+                  }} style={{
+                    padding: "6px 12px", borderRadius: 6,
+                    background: "var(--accent)", color: "#000",
+                    fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer",
+                  }}>Add</button>
                 </div>
-              </div>
-            )}
-
-            <div style={{
-              fontSize: 11, color: "var(--text-tertiary)",
-              marginTop: 16,
-            }}>
-              Simulations take 60-120s. Always verify with qualified professionals.
+              )}
             </div>
           </div>
+        )}
 
+        {/* ── COMPARE A vs B (replaces main textarea when active) ── */}
+        {compareMode && (
+          <div style={{ maxWidth: 680, margin: "0 auto", width: "100%" }}>
+            <div style={{
+              display: "flex", flexDirection: isMobile ? "column" : "row", gap: 10,
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: 10, fontWeight: 700, color: "#3b82f6",
+                  fontFamily: "var(--font-mono)", marginBottom: 4, letterSpacing: 0.5,
+                }}>SCENARIO A</div>
+                <textarea
+                  value={scenarioA}
+                  onChange={(e) => setScenarioA(e.target.value)}
+                  placeholder="First scenario..."
+                  rows={isMobile ? 3 : 4}
+                  style={{
+                    width: "100%", padding: "10px 12px", borderRadius: 10,
+                    border: "1px solid rgba(59,130,246,0.15)",
+                    background: "rgba(59,130,246,0.03)",
+                    color: "var(--text-primary)", fontSize: 13,
+                    resize: "none", outline: "none",
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: 10, fontWeight: 700, color: "#8b5cf6",
+                  fontFamily: "var(--font-mono)", marginBottom: 4, letterSpacing: 0.5,
+                }}>SCENARIO B</div>
+                <textarea
+                  value={scenarioB}
+                  onChange={(e) => setScenarioB(e.target.value)}
+                  placeholder="Second scenario..."
+                  rows={isMobile ? 3 : 4}
+                  style={{
+                    width: "100%", padding: "10px 12px", borderRadius: 10,
+                    border: "1px solid rgba(139,92,246,0.15)",
+                    background: "rgba(139,92,246,0.03)",
+                    color: "var(--text-primary)", fontSize: 13,
+                    resize: "none", outline: "none",
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "center" }}>
+              <button
+                onClick={handleCompare}
+                disabled={!scenarioA.trim() || !scenarioB.trim() || simStarting}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "8px 20px", borderRadius: 50,
+                  background: (scenarioA.trim() && scenarioB.trim()) ? "var(--accent)" : "rgba(255,255,255,0.05)",
+                  color: (scenarioA.trim() && scenarioB.trim()) ? "#000" : "var(--text-tertiary)",
+                  fontSize: 13, fontWeight: 700, border: "none",
+                  cursor: (scenarioA.trim() && scenarioB.trim()) ? "pointer" : "default",
+                  opacity: (scenarioA.trim() && scenarioB.trim()) ? 1 : 0.4,
+                }}
+              >
+                <Columns size={13} /> Compare →
+              </button>
+              <button
+                onClick={() => { setCompareMode(false); setScenarioA(""); setScenarioB(""); }}
+                style={{
+                  padding: "8px 14px", borderRadius: 50,
+                  border: "1px solid var(--border-secondary)",
+                  background: "transparent", color: "var(--text-tertiary)",
+                  fontSize: 12, cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── QUICK SCENARIOS — chips ── */}
+        <div style={{
+          maxWidth: 680, margin: "8px auto 0", padding: "0",
+          display: "flex", alignItems: "center", gap: 6,
+          flexWrap: isMobile ? "nowrap" : "wrap",
+          overflowX: isMobile ? "auto" : undefined,
+          WebkitOverflowScrolling: isMobile ? "touch" : undefined,
+          scrollbarWidth: "none" as const,
+          paddingBottom: isMobile ? 4 : 0,
+          width: "100%",
+        }}>
+          <span style={{ fontSize: 10, color: "var(--text-tertiary)", flexShrink: 0 }}>
+            Try:
+          </span>
+          {quickScenarios.map((sc, i) => (
+            <button key={i} onClick={() => setSimScenario(sc)} style={{
+              padding: "5px 11px", borderRadius: 50,
+              border: "1px solid var(--border-secondary)",
+              background: "transparent", color: "var(--text-secondary)",
+              fontSize: 11, cursor: "pointer",
+              transition: "all 150ms",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)";
+              e.currentTarget.style.color = "var(--accent)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border-secondary)";
+              e.currentTarget.style.color = "var(--text-secondary)";
+            }}
+            >
+              {sc}
+            </button>
+          ))}
         </div>
-        </section>
+
+        {/* ── TEAM INFO + CONTROLS ── */}
+        <div style={{
+          maxWidth: 680, margin: "12px auto 0", width: "100%",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 12, flexWrap: "wrap",
+        }}>
+          <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+            {customAgents.filter(a => a.active).length} AI specialists · 3 debate rounds
+          </span>
+
+          <button onClick={() => setShowAgentCustomizer(!showAgentCustomizer)} style={{
+            display: "flex", alignItems: "center", gap: 4,
+            padding: "4px 10px", borderRadius: 6,
+            border: "1px solid var(--border-secondary)",
+            background: "transparent", color: "var(--text-tertiary)",
+            fontSize: 10, cursor: "pointer",
+          }}>
+            <Users size={11} />
+            Customize team
+            <ChevronDown size={10} style={{
+              transform: showAgentCustomizer ? "rotate(180deg)" : "none",
+              transition: "transform 200ms",
+            }} />
+          </button>
+
+          {!compareMode && (
+            <button onClick={() => setCompareMode(true)} style={{
+              display: "flex", alignItems: "center", gap: 4,
+              padding: "4px 10px", borderRadius: 6,
+              border: "1px solid var(--border-secondary)",
+              background: "transparent", color: "var(--text-tertiary)",
+              fontSize: 10, cursor: "pointer",
+            }}>
+              <Columns size={11} />
+              Compare A vs B
+            </button>
+          )}
+        </div>
+
+        {/* ── CUSTOMIZE TEAM (expandable) ── */}
+        {showAgentCustomizer && (
+          <div style={{ maxWidth: 680, margin: "10px auto 0", width: "100%" }}>
+            <div style={{
+              padding: "12px 14px", borderRadius: 10,
+              border: "1px solid var(--border-secondary)", background: "var(--card-bg)",
+            }}>
+              <div style={{
+                fontSize: 10, color: "var(--text-tertiary)",
+                fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                marginBottom: 8, textTransform: "uppercase" as const,
+              }}>
+                Active specialists
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                {customAgents.filter(a => a.active).map((agent) => (
+                  <button key={agent.id} onClick={() => {
+                    setCustomAgents(customAgents.map(a => a.id === agent.id ? { ...a, active: false } : a));
+                  }} style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "4px 10px", borderRadius: 50,
+                    background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.12)",
+                    fontSize: 11, color: "var(--text-primary)", cursor: "pointer",
+                  }}>
+                    {agent.name} <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{"\u2715"}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{
+                fontSize: 10, color: "var(--text-tertiary)",
+                fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                marginBottom: 6, textTransform: "uppercase" as const,
+              }}>
+                Add specialist
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {[...OPTIONAL_ROLES, ...customAgents.filter(a => !a.active)]
+                  .filter((a, i, arr) => arr.findIndex(x => x.id === a.id) === i)
+                  .filter(a => !customAgents.find(ag => ag.id === a.id && ag.active))
+                  .map((agent) => (
+                  <button key={agent.id} onClick={() => {
+                    if (customAgents.find(a => a.id === agent.id)) {
+                      setCustomAgents(customAgents.map(a => a.id === agent.id ? { ...a, active: true } : a));
+                    } else {
+                      setCustomAgents([...customAgents, { ...agent, active: true }]);
+                    }
+                  }} style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "4px 10px", borderRadius: 50,
+                    border: "1px dashed var(--border-secondary)",
+                    background: "transparent", fontSize: 11,
+                    color: "var(--text-tertiary)", cursor: "pointer",
+                  }}>
+                    + {agent.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── DEMO — subtle chip ── */}
+        {!isLoggedIn && !demoUsed && (
+          <div style={{
+            maxWidth: 680, margin: "8px auto 0", width: "100%",
+            textAlign: "center",
+          }}>
+            <button onClick={runDemoSimulation} style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "5px 12px", borderRadius: 50,
+              border: "1px dashed rgba(212,175,55,0.2)",
+              background: "transparent",
+              color: "var(--text-tertiary)", fontSize: 10,
+              cursor: "pointer",
+            }}>
+              <Play size={10} style={{ color: "var(--accent)" }} />
+              See a demo simulation
+            </button>
+          </div>
+        )}
+
+        {/* ── DISCLAIMER ── */}
+        <p style={{
+          textAlign: "center", fontSize: 10,
+          color: "var(--text-tertiary)", opacity: 0.3,
+          marginTop: 16, paddingBottom: 20,
+        }}>
+          Simulations take 60-120s. Always verify with qualified professionals.
+        </p>
+
+        {/* Paywall modal */}
+        {showPaywall && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 999,
+            background: "rgba(0,0,0,0.6)", display: "flex",
+            alignItems: "center", justifyContent: "center",
+          }} onClick={() => setShowPaywall(false)}>
+            <div onClick={e => e.stopPropagation()} style={{
+              background: "var(--bg-primary)", borderRadius: 16,
+              padding: 32, maxWidth: 400, width: "90%",
+              border: "1px solid var(--border-secondary)",
+              textAlign: "center",
+            }}>
+              <Lock size={32} style={{ color: "var(--accent)", marginBottom: 12 }} />
+              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: "var(--text-primary)" }}>
+                Upgrade to Pro
+              </h3>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>
+                Simulations require a Pro plan. Upgrade to unlock unlimited predictions.
+              </p>
+              <button onClick={() => { window.location.href = "/pricing"; }} style={{
+                padding: "10px 24px", borderRadius: 50,
+                background: "var(--accent)", color: "#000",
+                fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
+              }}>
+                View Plans
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
     );
   }
 
