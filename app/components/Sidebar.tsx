@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp,
   Settings, LogIn, LogOut, Trash2, FolderOpen, Plus, ChevronDown,
@@ -406,14 +406,24 @@ export default function Sidebar({
   tier, usage, limits,
 }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const sidebarRef = useRef<HTMLElement>(null);
   const avatarRef = useRef<HTMLButtonElement>(null);
   const avatarCollapsedRef = useRef<HTMLButtonElement>(null);
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : (authUser?.initials || "?");
   const displayName = profileName || authUser?.name || "";
 
-  const handleMode = (m: Mode) => { setMode(m); if (open) onClose(); };
-  const handleNew = () => { onNewConversation(); if (open) onClose(); };
+  // Navigate to /chat if on a different route, then set mode
+  const handleMode = (m: Mode) => {
+    if (pathname !== "/chat") router.push("/chat");
+    setMode(m);
+    if (open) onClose();
+  };
+  const handleNew = () => {
+    if (pathname !== "/chat") router.push("/chat");
+    onNewConversation();
+    if (open) onClose();
+  };
 
   /* ═══ Profile Popover State ═══ */
   const [profilePopoverOpen, setProfilePopoverOpen] = useState(false);
