@@ -280,7 +280,12 @@ export async function POST(req: NextRequest) {
   const tier = await getTierFromRequest(req);
   const models = getModelsForTier(tier);
 
-  const { scenario, context } = await req.json();
+  const { scenario: rawScenario, context } = await req.json();
+
+  // Detect what-if re-simulation and context material
+  const isPreviousSim = rawScenario.includes("PREVIOUS SIMULATION:");
+  const hasContextMaterial = rawScenario.includes("CONTEXT MATERIAL");
+  const scenario = rawScenario;
   const encoder = new TextEncoder();
   const langMap: Record<string, string> = {
     en: "English", "pt-BR": "Portuguese", es: "Spanish", fr: "French", de: "German",
@@ -301,7 +306,7 @@ export async function POST(req: NextRequest) {
         // Stage -1: Gather real-time intelligence
         sendSSE(controller, encoder, { type: "status", message: "Gathering real-world intelligence..." });
         sendSSE(controller, encoder, { type: "stage", stage: -1 });
-        const worldContext = await getWorldContext(scenario, models.simulate_agents);
+        const worldContext = await getWorldContext(isPreviousSim ? scenario.split("NOW RE-SIMULATE")[0] : scenario, models.simulate_agents);
         sendSSE(controller, encoder, { type: "stage_done", stage: -1 });
 
         // Stage 0: Graph

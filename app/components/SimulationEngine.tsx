@@ -104,6 +104,22 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [godEyeResults, setGodEyeResults] = useState<GodEyeResult[]>([]);
   const [injectionHistory, setInjectionHistory] = useState<InjectionEntry[]>([]);
   const [isDemo, setIsDemo] = useState(false);
+
+  // Seed Material state
+  const [seedMaterial, setSeedMaterial] = useState("");
+  const [seedFileName, setSeedFileName] = useState("");
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
+
+  // Talk to Agent state
+  const [agentChat, setAgentChat] = useState<{ agent: any; context: string } | null>(null);
+  const [agentChatInput, setAgentChatInput] = useState("");
+  const [agentChatMessages, setAgentChatMessages] = useState<{ role: string; content: string }[]>([]);
+  const [agentChatLoading, setAgentChatLoading] = useState(false);
+
+  // What-If inline state
+  const [whatIfInput, setWhatIfInput] = useState("");
+
   const isMobile = useIsMobile();
   const pad = isMobile ? "16px" : "24px";
   const { enhance, enhancing, wasEnhanced } = useEnhance("simulate");
@@ -125,6 +141,98 @@ export default function SimulationEngine(props: SimulationEngineProps) {
     if (result) {
       setSimScenario(result);
     }
+  };
+
+  // Seed material handlers
+  const handleFileUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const truncated = text.slice(0, 3000);
+      setSeedMaterial(truncated);
+      setSeedFileName(file.name);
+    } catch {}
+  };
+
+  const handleUrlPaste = () => {
+    if (!urlInput.trim()) return;
+    setSeedMaterial(`[URL Reference: ${urlInput.trim()}]`);
+    setSeedFileName(urlInput.trim());
+    setShowUrlInput(false);
+    setUrlInput("");
+  };
+
+  // What-If re-simulation
+  const handleWhatIf = (variable: string) => {
+    if (!variable.trim()) return;
+    const whatIfScenario = `PREVIOUS SIMULATION:\nScenario: ${simScenario}\nResult summary: ${(simResult?.report || "").slice(0, 500)}\n\nNOW RE-SIMULATE WITH THIS CHANGE:\n${variable}\n\nAnalyze how this variable changes the outcome. Compare with the previous simulation. Show what's different.`;
+    setWhatIfInput("");
+    setSimScenario(whatIfScenario);
+    onSimulate(whatIfScenario);
+  };
+
+  // Talk to agent handler
+  const sendAgentChat = async () => {
+    if (!agentChatInput.trim() || agentChatLoading || !agentChat) return;
+    const userMsg = agentChatInput.trim();
+    setAgentChatInput("");
+    setAgentChatMessages(prev => [...prev, { role: "user", content: userMsg }]);
+    setAgentChatLoading(true);
+    try {
+      const res = await signuxFetch("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          messages: [
+            ...agentChatMessages.map(m => ({ role: m.role, content: m.content })),
+            { role: "user", content: userMsg },
+          ],
+          systemOverride: agentChat.context,
+        }),
+      });
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader");
+      const decoder = new TextDecoder();
+      let fullText = "";
+      setAgentChatMessages(prev => [...prev, { role: "assistant", content: "" }]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        fullText += chunk;
+        setAgentChatMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: fullText };
+          return updated;
+        });
+      }
+    } catch {
+      setAgentChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't respond. Please try again." }]);
+    }
+    setAgentChatLoading(false);
+  };
+
+  const openAgentChat = (agent: any) => {
+    const agentMessages = simulation
+      .filter((m: any) => m.agentName === agent.name || m.agentId === agent.id)
+      .map((m: any) => m.content)
+      .join("\n\n");
+
+    const context = `You are now speaking as ${agent.name}, ${agent.role}. You participated in a multi-agent simulation about this scenario:
+
+"${simScenario}"
+
+Your expertise: ${agent.expertise || agent.knowledge || "Specialist in " + agent.role}
+Your personality: ${agent.personality || "Professional and analytical"}
+Your bias: ${agent.bias || "None specified"}
+
+Your analysis during the simulation:
+${agentMessages || "You participated in the multi-agent debate."}
+
+Stay in character. Answer questions from YOUR perspective as this specialist. Be specific about why you gave your analysis and what risks you see. If the user challenges your analysis, defend it or update it based on new information. Keep responses concise (2-3 paragraphs max). Respond in the same language the user uses.`;
+
+    setAgentChat({ agent, context });
+    setAgentChatMessages([]);
+    setAgentChatInput("");
   };
 
   const toggleSection = (key: string) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -333,6 +441,79 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             </div>
           )}
 
+          {/* ── SEED MATERIAL ── */}
+          <div style={{
+            marginBottom: 10, padding: "10px 14px", borderRadius: 10,
+            border: seedMaterial ? "1px solid rgba(212,175,55,0.2)" : "1px dashed var(--border-secondary)",
+            background: seedMaterial ? "rgba(212,175,55,0.03)" : "var(--bg-secondary)",
+            animation: "fadeIn 0.5s ease-out",
+          }}>
+            {seedMaterial ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <FileText size={14} style={{ color: "var(--accent)", flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: "var(--text-secondary)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {seedFileName || "Context loaded"} ({seedMaterial.length.toLocaleString()} chars)
+                </span>
+                <button onClick={() => { setSeedMaterial(""); setSeedFileName(""); }} style={{
+                  background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 2,
+                }}>
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 6, textAlign: "center" }}>
+                  Add context: paste a URL, upload a file, or drop data
+                </div>
+                <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                  {showUrlInput ? (
+                    <div style={{ display: "flex", gap: 6, width: "100%" }}>
+                      <input
+                        autoFocus
+                        value={urlInput}
+                        onChange={e => setUrlInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") handleUrlPaste(); if (e.key === "Escape") setShowUrlInput(false); }}
+                        placeholder="https://..."
+                        style={{
+                          flex: 1, padding: "6px 10px", borderRadius: 6, fontSize: 12,
+                          border: "1px solid var(--border-secondary)", background: "var(--bg-primary)",
+                          color: "var(--text-primary)", outline: "none",
+                        }}
+                      />
+                      <button onClick={handleUrlPaste} style={{
+                        padding: "6px 12px", borderRadius: 6, fontSize: 11,
+                        background: "var(--accent)", color: "#000", border: "none", cursor: "pointer", fontWeight: 600,
+                      }}>Add</button>
+                      <button onClick={() => setShowUrlInput(false)} style={{
+                        background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 2,
+                      }}><X size={14} /></button>
+                    </div>
+                  ) : (
+                    <>
+                      <button onClick={() => setShowUrlInput(true)} style={{
+                        padding: "4px 10px", borderRadius: 6, fontSize: 11,
+                        border: "1px solid var(--border-secondary)",
+                        background: "transparent", color: "var(--text-secondary)", cursor: "pointer",
+                      }}>
+                        Paste URL
+                      </button>
+                      <label style={{
+                        padding: "4px 10px", borderRadius: 6, fontSize: 11,
+                        border: "1px solid var(--border-secondary)",
+                        color: "var(--text-secondary)", cursor: "pointer", display: "inline-flex", alignItems: "center",
+                      }}>
+                        Upload file
+                        <input type="file" accept=".pdf,.txt,.csv,.doc,.docx,.json,.md" hidden
+                          onChange={e => handleFileUpload(e.target.files?.[0])}
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
           {/* ── INPUT CONTAINER ── */}
           <div
             style={{
@@ -526,7 +707,9 @@ export default function SimulationEngine(props: SimulationEngineProps) {
               onClick={() => {
                 if (!isLoggedIn) { window.location.href = "/signup"; return; }
                 if (tier === "free") { setShowPaywall(true); return; }
-                onSimulate();
+                const fullScenario = seedMaterial ? `CONTEXT MATERIAL (from ${seedFileName}):\n${seedMaterial}\n\n---\n\nUSER SCENARIO:\n${simScenario}` : simScenario;
+                if (seedMaterial) { setSimScenario(fullScenario); }
+                onSimulate(seedMaterial ? fullScenario : undefined);
               }}
               disabled={!simScenario.trim() || simStarting}
               style={{
@@ -1027,6 +1210,163 @@ export default function SimulationEngine(props: SimulationEngineProps) {
           ))}
         </div>
 
+        {/* Talk to Agents */}
+        {simAgents.length > 0 && (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
+            }}>
+              <MessageSquare size={14} style={{ color: "var(--accent)" }} />
+              <span style={{
+                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
+                textTransform: "uppercase", color: "var(--accent)",
+              }}>
+                Talk to Agents
+              </span>
+              <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
+                — Click an agent to continue the conversation
+              </span>
+            </div>
+            <div style={{
+              display: "flex", flexWrap: "wrap", gap: 8,
+            }}>
+              {simAgents.map((agent: any) => {
+                const catColor = AGENT_CATEGORY_COLORS[agent.category as keyof typeof AGENT_CATEGORY_COLORS] || DEFAULT_CATEGORY_COLOR;
+                const isActive = agentChat?.agent?.id === agent.id;
+                return (
+                  <button
+                    key={agent.id}
+                    onClick={() => openAgentChat(agent)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      padding: "8px 14px", borderRadius: 24,
+                      border: isActive ? `2px solid ${catColor}` : "1px solid var(--border-secondary)",
+                      background: isActive ? `${catColor}15` : "var(--bg-secondary)",
+                      cursor: "pointer", transition: "all 150ms",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = catColor; e.currentTarget.style.background = `${catColor}10`; }}
+                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = "var(--border-secondary)"; e.currentTarget.style.background = "var(--bg-secondary)"; } }}
+                  >
+                    <div style={{
+                      width: 28, height: 28, borderRadius: "50%",
+                      background: `${catColor}20`, color: catColor,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 12, fontWeight: 700, fontFamily: "var(--font-brand)",
+                    }}>
+                      {agent.name?.charAt(0) || "?"}
+                    </div>
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.2 }}>
+                        {agent.name}
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
+                        {agent.role}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Agent Chat Panel */}
+        {agentChat && (
+          <div style={{
+            marginBottom: 28, borderRadius: "var(--radius-md)",
+            border: `1px solid ${AGENT_CATEGORY_COLORS[(agentChat.agent.category as keyof typeof AGENT_CATEGORY_COLORS)] || DEFAULT_CATEGORY_COLOR}40`,
+            background: "var(--bg-secondary)", overflow: "hidden",
+          }}>
+            {/* Chat header */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 16px",
+              borderBottom: "1px solid var(--border-secondary)",
+              background: `${AGENT_CATEGORY_COLORS[(agentChat.agent.category as keyof typeof AGENT_CATEGORY_COLORS)] || DEFAULT_CATEGORY_COLOR}08`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: `${AGENT_CATEGORY_COLORS[(agentChat.agent.category as keyof typeof AGENT_CATEGORY_COLORS)] || DEFAULT_CATEGORY_COLOR}20`,
+                  color: AGENT_CATEGORY_COLORS[(agentChat.agent.category as keyof typeof AGENT_CATEGORY_COLORS)] || DEFAULT_CATEGORY_COLOR,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 14, fontWeight: 700, fontFamily: "var(--font-brand)",
+                }}>
+                  {agentChat.agent.name?.charAt(0)}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{agentChat.agent.name}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{agentChat.agent.role}</div>
+                </div>
+              </div>
+              <button onClick={() => setAgentChat(null)} style={{
+                background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 4,
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Chat messages */}
+            <div style={{ maxHeight: 320, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+              {agentChatMessages.length === 0 && (
+                <div style={{ textAlign: "center", padding: 20, color: "var(--text-tertiary)", fontSize: 13 }}>
+                  Ask {agentChat.agent.name} about their analysis, challenge their assumptions, or explore deeper.
+                </div>
+              )}
+              {agentChatMessages.map((msg, i) => (
+                <div key={i} style={{
+                  alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+                  maxWidth: "80%", padding: "10px 14px", borderRadius: 12,
+                  background: msg.role === "user" ? "var(--accent)" : "var(--card-bg)",
+                  color: msg.role === "user" ? "#000" : "var(--text-secondary)",
+                  fontSize: 13, lineHeight: 1.6, border: msg.role === "user" ? "none" : "1px solid var(--border-secondary)",
+                }}>
+                  {msg.role === "assistant" ? <MarkdownRenderer content={msg.content} /> : msg.content}
+                </div>
+              ))}
+              {agentChatLoading && (
+                <div style={{ alignSelf: "flex-start", padding: "10px 14px", borderRadius: 12, background: "var(--card-bg)", border: "1px solid var(--border-secondary)", fontSize: 13, color: "var(--text-tertiary)" }}>
+                  <Loader2 size={14} style={{ animation: "spin 1s linear infinite", display: "inline-block", marginRight: 6 }} />
+                  {agentChat.agent.name} is thinking...
+                </div>
+              )}
+            </div>
+
+            {/* Chat input */}
+            <div style={{
+              display: "flex", gap: 8, padding: "12px 16px",
+              borderTop: "1px solid var(--border-secondary)",
+            }}>
+              <input
+                value={agentChatInput}
+                onChange={e => setAgentChatInput(e.target.value)}
+                placeholder={`Ask ${agentChat.agent.name} a question...`}
+                disabled={agentChatLoading}
+                style={{
+                  flex: 1, padding: "10px 14px", borderRadius: 8,
+                  border: "1px solid var(--border-secondary)", background: "var(--bg-primary)",
+                  color: "var(--text-primary)", fontSize: 13, outline: "none",
+                  fontFamily: "var(--font-sans)",
+                }}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAgentChat(); } }}
+              />
+              <button
+                onClick={sendAgentChat}
+                disabled={!agentChatInput.trim() || agentChatLoading}
+                style={{
+                  padding: "10px 18px", borderRadius: 8,
+                  background: agentChatInput.trim() && !agentChatLoading ? "var(--accent)" : "var(--bg-tertiary)",
+                  color: agentChatInput.trim() && !agentChatLoading ? "#000" : "var(--text-tertiary)",
+                  border: "none", fontWeight: 600, fontSize: 12, cursor: agentChatInput.trim() && !agentChatLoading ? "pointer" : "default",
+                  fontFamily: "var(--font-brand)", letterSpacing: 1,
+                }}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Tab selector — pill style */}
         <div style={{
           display: "flex", gap: 4, marginBottom: 28, padding: 4,
@@ -1218,6 +1558,79 @@ export default function SimulationEngine(props: SimulationEngineProps) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* What-If Engine */}
+      <div style={{ marginTop: 32 }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, marginBottom: 14,
+        }}>
+          <Zap size={14} style={{ color: "var(--mode-sim)" }} />
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2,
+            textTransform: "uppercase", color: "var(--mode-sim)",
+          }}>
+            What-If Engine
+          </span>
+        </div>
+
+        {/* Suggested what-ifs */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+          {[
+            "What if the budget doubles?",
+            "What if a key competitor enters?",
+            "What if the timeline extends 6 months?",
+            "What if regulation changes?",
+            "What if demand drops 50%?",
+            "What if we pivot the target market?",
+          ].map(suggestion => (
+            <button
+              key={suggestion}
+              onClick={() => handleWhatIf(suggestion)}
+              style={{
+                padding: "6px 14px", borderRadius: 20,
+                border: "1px solid var(--mode-sim-border)",
+                background: "var(--mode-sim-bg)",
+                fontSize: 11, color: "var(--mode-sim)",
+                cursor: "pointer", transition: "all 150ms",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--mode-sim)"; e.currentTarget.style.color = "#000"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--mode-sim-bg)"; e.currentTarget.style.color = "var(--mode-sim)"; }}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom what-if input */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={whatIfInput}
+            onChange={e => setWhatIfInput(e.target.value)}
+            placeholder="Or type your own: What if..."
+            style={{
+              flex: 1, padding: "10px 14px", borderRadius: 8,
+              border: "1px solid var(--mode-sim-border)", background: "var(--card-bg)",
+              color: "var(--text-primary)", fontSize: 13, outline: "none",
+              fontFamily: "var(--font-sans)",
+            }}
+            onKeyDown={e => { if (e.key === "Enter" && whatIfInput.trim()) handleWhatIf(whatIfInput); }}
+          />
+          <button
+            onClick={() => { if (whatIfInput.trim()) handleWhatIf(whatIfInput); }}
+            disabled={!whatIfInput.trim()}
+            style={{
+              padding: "10px 20px", borderRadius: 8,
+              background: whatIfInput.trim() ? "var(--mode-sim)" : "var(--bg-tertiary)",
+              color: whatIfInput.trim() ? "#000" : "var(--text-tertiary)",
+              border: "none", fontWeight: 600, fontSize: 12, cursor: whatIfInput.trim() ? "pointer" : "default",
+              fontFamily: "var(--font-brand)", letterSpacing: 1,
+              display: "flex", alignItems: "center", gap: 6,
+            }}
+          >
+            <Play size={12} /> Re-simulate
+          </button>
+        </div>
       </div>
 
       {/* Demo CTA */}
