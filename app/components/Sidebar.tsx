@@ -1,6 +1,12 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
-import { MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2, FolderOpen, Plus, ChevronDown, X, Upload, LayoutDashboard } from "lucide-react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import {
+  MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp,
+  Settings, LogIn, LogOut, Trash2, FolderOpen, Plus, ChevronDown,
+  X, Upload, LayoutDashboard, PanelLeft,
+} from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
@@ -47,6 +53,46 @@ const MODES: { key: Mode; icon: any; label: string; color?: string }[] = [
   { key: "invest", icon: TrendingUp, label: "sidebar.mode_invest", color: "#A855F7" },
 ];
 
+/* ═══ Reusable Sidebar Tooltip ═══ */
+function SidebarTooltip({ show, text }: { show: boolean; text: string }) {
+  const [visible, setVisible] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (show) {
+      timer.current = setTimeout(() => setVisible(true), 350);
+    } else {
+      setVisible(false);
+      if (timer.current) clearTimeout(timer.current);
+    }
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [show]);
+
+  if (!visible) return null;
+
+  return (
+    <div style={{
+      position: "absolute",
+      left: "calc(100% + 12px)",
+      top: "50%",
+      transform: "translateY(-50%)",
+      padding: "6px 12px",
+      borderRadius: 8,
+      background: "var(--card-bg, #252322)",
+      border: "1px solid var(--border-secondary)",
+      boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+      whiteSpace: "nowrap",
+      zIndex: 200,
+      animation: "tooltipFadeIn 150ms ease-out forwards",
+      pointerEvents: "none",
+    }}>
+      <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)" }}>
+        {text}
+      </span>
+    </div>
+  );
+}
+
 /* ═══ Sidebar Icon Button with React Tooltip ═══ */
 function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, isPrimary, suppressTooltip, size = 40 }: {
   icon: React.ReactNode;
@@ -59,37 +105,11 @@ function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, isPrim
   size?: number;
 }) {
   const [hovered, setHovered] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const tooltipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleMouseEnter = () => {
-    setHovered(true);
-    if (!suppressTooltip) {
-      tooltipTimer.current = setTimeout(() => setShowTooltip(true), 350);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setHovered(false);
-    setShowTooltip(false);
-    if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
-  };
-
-  useEffect(() => {
-    if (suppressTooltip) {
-      setShowTooltip(false);
-      if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
-    }
-  }, [suppressTooltip]);
-
-  useEffect(() => {
-    return () => { if (tooltipTimer.current) clearTimeout(tooltipTimer.current); };
-  }, []);
 
   return (
     <div style={{ position: "relative" }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <button onClick={onClick} style={{
         width: size,
@@ -118,238 +138,126 @@ function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, isPrim
         {icon}
       </button>
 
-      {showTooltip && (
-        <div style={{
-          position: "absolute",
-          left: "calc(100% + 12px)",
-          top: "50%",
-          transform: "translateY(-50%)",
-          padding: "6px 12px",
-          borderRadius: 8,
-          background: "var(--card-bg, #252322)",
-          border: "1px solid var(--border-secondary)",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
-          whiteSpace: "nowrap",
-          zIndex: 200,
-          animation: "tooltipFadeIn 150ms ease-out forwards",
-          pointerEvents: "none",
-        }}>
-          <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)" }}>
-            {tooltip}
-          </span>
-        </div>
-      )}
+      {!suppressTooltip && <SidebarTooltip show={hovered} text={tooltip} />}
     </div>
   );
 }
 
-/* ═══ Sidebar Logo Button — crossfade logo ↔ expand icon on hover ═══ */
-function SidebarLogoButton({ onClick }: { onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const tooltipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleMouseEnter = () => {
-    setHovered(true);
-    tooltipTimer.current = setTimeout(() => setShowTooltip(true), 350);
-  };
-
-  const handleMouseLeave = () => {
-    setHovered(false);
-    setShowTooltip(false);
-    if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
-  };
-
-  useEffect(() => {
-    return () => { if (tooltipTimer.current) clearTimeout(tooltipTimer.current); };
-  }, []);
-
-  return (
-    <div
-      style={{ position: "relative" }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <button
-        onClick={onClick}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 6,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "default",
-          border: "none",
-          padding: 0,
-          position: "relative",
-          background: hovered ? "rgba(255,255,255,0.06)" : "transparent",
-          transition: "background 150ms ease",
-        }}
-      >
-        {/* Logo — visible when NOT hovered */}
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          opacity: hovered ? 0 : 1,
-          transform: hovered ? "scale(0.85)" : "scale(1)",
-          transition: "opacity 180ms ease, transform 180ms ease",
-        }}>
-          <SignuxIcon variant="gold" size={24} />
-        </div>
-
-        {/* Expand icon — visible when hovered */}
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          opacity: hovered ? 1 : 0,
-          transform: hovered ? "scale(1)" : "scale(0.85)",
-          transition: "opacity 180ms ease, transform 180ms ease",
-          color: "var(--text-primary)",
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="9" y1="3" x2="9" y2="21" />
-            <polyline points="14 9 17 12 14 15" />
-          </svg>
-        </div>
-      </button>
-
-      {/* Tooltip */}
-      {showTooltip && (
-        <div style={{
-          position: "absolute",
-          left: "calc(100% + 12px)",
-          top: "50%",
-          transform: "translateY(-50%)",
-          padding: "6px 12px",
-          borderRadius: 8,
-          background: "var(--card-bg, #252322)",
-          border: "1px solid var(--border-secondary)",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
-          whiteSpace: "nowrap",
-          zIndex: 200,
-          animation: "tooltipFadeIn 150ms ease-out forwards",
-          pointerEvents: "none",
-        }}>
-          <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)" }}>
-            Open sidebar
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ═══ Profile Popover — Dashboard, Settings, Sign out ═══ */
-function ProfilePopover({ authUser, userInitials, displayName, tier, onOpenSettings, onSignOut, onClose }: {
+/* ═══ Profile Popover — Portal-based, renders in <body> ═══ */
+function ProfilePopover({
+  anchorRef, isOpen, onClose, authUser, userInitials, displayName,
+  tier, onOpenSettings, onSignOut, sidebarWidth,
+}: {
+  anchorRef: React.RefObject<HTMLElement | null>;
+  isOpen: boolean;
+  onClose: () => void;
   authUser?: AuthUser | null;
   userInitials: string;
   displayName: string;
   tier?: string;
   onOpenSettings: () => void;
   onSignOut?: () => void;
-  onClose: () => void;
+  sidebarWidth: number;
 }) {
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
+  useEffect(() => { setMounted(true); }, []);
 
-  const menuItem = (icon: React.ReactNode, label: string, onClick: () => void, color?: string) => (
+  if (!isOpen || !mounted) return null;
+
+  const menuItem = (icon: React.ReactNode, label: string, onClick: () => void, danger?: boolean) => (
     <button
+      key={label}
       onClick={() => { onClick(); onClose(); }}
       style={{
         display: "flex", alignItems: "center", gap: 10,
-        width: "100%", padding: "8px 12px", border: "none",
-        borderRadius: 8, background: "transparent",
-        cursor: "pointer", color: color || "var(--text-secondary)",
-        fontSize: 13, textAlign: "left",
+        width: "100%", padding: "9px 10px", borderRadius: 8,
+        background: "transparent", border: "none",
+        cursor: "pointer", textAlign: "left",
+        color: danger ? "#EF4444" : "var(--text-primary)",
+        fontSize: 13, fontWeight: 400,
         transition: "background 150ms",
       }}
-      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
-      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+      onMouseEnter={(e) => e.currentTarget.style.background = danger ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.04)"}
+      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
     >
       {icon}
-      <span>{label}</span>
+      {label}
     </button>
   );
 
-  return (
-    <div
-      ref={popoverRef}
-      style={{
-        position: "absolute",
-        bottom: "calc(100% + 8px)",
-        left: 0,
-        width: 220,
-        padding: 6,
-        borderRadius: 12,
-        background: "var(--card-bg, #252322)",
-        border: "1px solid var(--border-secondary)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-        zIndex: 300,
-        animation: "tooltipFadeIn 150ms ease-out forwards",
-      }}
-    >
-      {/* User info header */}
+  return createPortal(
+    <>
+      {/* Invisible backdrop to close on click outside */}
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, zIndex: 9998, background: "transparent" }}
+      />
+
+      {/* Popover */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 10,
-        padding: "10px 12px 8px",
+        position: "fixed",
+        bottom: 16,
+        left: sidebarWidth + 12,
+        zIndex: 9999,
+        width: 240,
+        padding: 8,
+        borderRadius: 14,
+        background: "var(--card-bg, #252322)",
+        border: "1px solid var(--border-secondary, #2E2A27)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)",
+        animation: "profilePopoverIn 150ms ease-out",
       }}>
-        {authUser?.avatar ? (
-          <img src={authUser.avatar} alt={displayName} width={32} height={32}
-            style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
-        ) : (
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: "var(--bg-tertiary)", color: "var(--text-primary)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, fontWeight: 600, flexShrink: 0,
-          }}>
-            {userInitials}
-          </div>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {displayName}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
-            {tier === "max" || tier === "founding" ? (
-              <span style={{ color: "#A855F7" }}>Max plan</span>
-            ) : tier === "pro" ? (
-              <span style={{ color: "#D4AF37" }}>Pro plan</span>
-            ) : (
-              "Free plan"
-            )}
+        {/* User info */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "10px 8px",
+          borderBottom: "1px solid var(--border-secondary)",
+          marginBottom: 4,
+        }}>
+          {authUser?.avatar ? (
+            <img src={authUser.avatar} alt={displayName} width={36} height={36}
+              style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
+          ) : (
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "rgba(212,175,55,0.1)",
+              border: "1px solid rgba(212,175,55,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 14, fontWeight: 600, color: "var(--accent)",
+            }}>
+              {userInitials}
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {displayName}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+              {tier === "max" || tier === "founding" ? (
+                <span style={{ color: "#A855F7" }}>Max plan</span>
+              ) : tier === "pro" ? (
+                <span style={{ color: "#D4AF37" }}>Pro plan</span>
+              ) : (
+                "Free plan"
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Menu items */}
+        {menuItem(<LayoutDashboard size={15} strokeWidth={1.5} />, "Dashboard", () => { window.location.href = "/dashboard"; })}
+        {menuItem(<Settings size={15} strokeWidth={1.5} />, "Settings", onOpenSettings)}
+
+        {onSignOut && (
+          <>
+            <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 8px" }} />
+            {menuItem(<LogOut size={15} strokeWidth={1.5} />, "Sign out", onSignOut, true)}
+          </>
+        )}
       </div>
-
-      <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 8px" }} />
-
-      {/* Menu items */}
-      {menuItem(<LayoutDashboard size={15} strokeWidth={1.5} />, "Dashboard", () => { window.location.href = "/dashboard"; })}
-      {menuItem(<Settings size={15} strokeWidth={1.5} />, "Settings", onOpenSettings)}
-
-      {onSignOut && (
-        <>
-          <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 8px" }} />
-          {menuItem(<LogOut size={15} strokeWidth={1.5} />, "Sign out", onSignOut, "var(--text-tertiary)")}
-        </>
-      )}
-    </div>
+    </>,
+    document.body,
   );
 }
 
@@ -453,20 +361,38 @@ function ConversationItem({ conv, isActive, onLoad, onDelete }: {
   );
 }
 
+/* ═══ Skeleton Loader ═══ */
+function HistorySkeleton() {
+  return (
+    <div style={{ padding: "8px" }}>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{
+          height: 38, borderRadius: 8, marginBottom: 4,
+          background: "rgba(255,255,255,0.02)",
+          animation: "skeletonPulse 1.5s ease-in-out infinite",
+        }} />
+      ))}
+    </div>
+  );
+}
+
+/* ═══ MAIN SIDEBAR COMPONENT ═══ */
 export default function Sidebar({
   mode, setMode, profileName, onNewConversation, onOpenSettings,
   open, onClose, onOpen, isLoggedIn, onSignOut, isMobile, authUser,
-  conversations = [], loadingHistory = false, activeConversationId, onLoadConversation, onDeleteConversation,
+  conversations, loadingHistory = false, activeConversationId, onLoadConversation, onDeleteConversation,
   projects = [], activeProject, onSelectProject, onCreateProject, onOpenKnowledge,
   tier, usage, limits,
 }: SidebarProps) {
+  const router = useRouter();
   const sidebarRef = useRef<HTMLElement>(null);
+  const avatarRef = useRef<HTMLButtonElement>(null);
+  const avatarCollapsedRef = useRef<HTMLButtonElement>(null);
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : (authUser?.initials || "?");
   const displayName = profileName || authUser?.name || "";
 
   const handleMode = (m: Mode) => { setMode(m); if (open) onClose(); };
   const handleNew = () => { onNewConversation(); if (open) onClose(); };
-  const toggleSidebar = () => { if (open) onClose(); else onOpen(); };
 
   /* ═══ Project Selector State ═══ */
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
@@ -488,6 +414,9 @@ export default function Sidebar({
 
   /* ═══ Profile Popover State ═══ */
   const [profilePopoverOpen, setProfilePopoverOpen] = useState(false);
+
+  /* ═══ Close sidebar button hover state ═══ */
+  const [closeHovered, setCloseHovered] = useState(false);
 
   /* ═══ Decision Follow-up Badge ═══ */
   const [pendingDecisions, setPendingDecisions] = useState(0);
@@ -528,8 +457,12 @@ export default function Sidebar({
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
+  // Close profile popover when sidebar state changes
+  useEffect(() => { setProfilePopoverOpen(false); }, [open]);
+
   const iconSize = 18;
   const iconSW = 1.5;
+  const sidebarWidth = open ? 260 : 56;
 
   // Mobile overlay
   if (isMobile) {
@@ -545,55 +478,114 @@ export default function Sidebar({
         }}>
           {renderExpandedContent()}
         </aside>
+
+        {/* Profile popover — portal */}
+        <ProfilePopover
+          anchorRef={avatarRef}
+          isOpen={profilePopoverOpen}
+          onClose={() => setProfilePopoverOpen(false)}
+          authUser={authUser}
+          userInitials={userInitials}
+          displayName={displayName}
+          tier={tier}
+          onOpenSettings={() => { onOpenSettings(); onClose(); }}
+          onSignOut={onSignOut ? () => { onSignOut(); onClose(); } : undefined}
+          sidebarWidth={280}
+        />
       </>
     );
   }
 
   // Desktop: single sidebar, collapsed 56px / expanded 260px
-  const sidebarWidth = open ? 260 : 56;
-
   return (
-    <aside ref={sidebarRef} style={{
-      width: sidebarWidth,
-      minWidth: sidebarWidth,
-      flexShrink: 0,
-      background: "var(--bg-sidebar)",
-      borderRight: "1px solid var(--sidebar-border)",
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden",
-      transition: "width 200ms ease, min-width 200ms ease",
-    }}>
-      {open ? renderExpandedContent() : renderCollapsedContent()}
-    </aside>
+    <>
+      <aside ref={sidebarRef} style={{
+        width: sidebarWidth,
+        minWidth: sidebarWidth,
+        flexShrink: 0,
+        background: "var(--bg-sidebar)",
+        borderRight: "1px solid var(--sidebar-border)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        transition: "width 200ms ease, min-width 200ms ease",
+      }}>
+        {open ? renderExpandedContent() : renderCollapsedContent()}
+      </aside>
+
+      {/* Profile popover — portal, outside sidebar clipping */}
+      <ProfilePopover
+        anchorRef={open ? avatarRef : avatarCollapsedRef}
+        isOpen={profilePopoverOpen}
+        onClose={() => setProfilePopoverOpen(false)}
+        authUser={authUser}
+        userInitials={userInitials}
+        displayName={displayName}
+        tier={tier}
+        onOpenSettings={() => { onOpenSettings(); if (open) onClose(); }}
+        onSignOut={onSignOut ? () => { onSignOut(); if (open) onClose(); } : undefined}
+        sidebarWidth={sidebarWidth}
+      />
+    </>
   );
 
   // ═══ EXPANDED ═══
   function renderExpandedContent() {
+    // Conversations: null = not yet loaded, [] = loaded but empty
+    const convList = conversations;
+    const isLoading = loadingHistory || convList === undefined;
+
     return (
       <>
-        {/* Header */}
-        <div style={{ padding: "12px 12px 12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
+        {/* Header — logo left, PanelLeft close button right */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 12px 12px 16px",
+          height: 56,
+          borderBottom: "1px solid var(--border-secondary)",
+        }}>
+          {/* Logo + brand name */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <SignuxIcon variant="gold" size={24} />
-            <span style={{ fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700, letterSpacing: 3, color: "var(--text-primary)" }}>
-              SIGNUX <span style={{ fontWeight: 300, opacity: 0.4 }}>AI</span>
+            <SignuxIcon variant="gold" size={20} />
+            <span style={{
+              fontFamily: "var(--font-brand)",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: 2.5,
+              color: "var(--text-primary)",
+            }}>
+              SIGNUX
             </span>
           </div>
-          <button onClick={onClose} style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: 28, height: 28, border: "none", background: "transparent",
-            cursor: "pointer", borderRadius: 6,
-            color: "var(--text-tertiary)", transition: "color 150ms",
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
-          onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}>
-            <X size={14} />
-          </button>
+
+          {/* Close button — PanelLeft icon */}
+          <div style={{ position: "relative" }}
+            onMouseEnter={() => setCloseHovered(true)}
+            onMouseLeave={() => setCloseHovered(false)}
+          >
+            <button
+              onClick={onClose}
+              style={{
+                width: 32, height: 32, borderRadius: 6,
+                border: "none", padding: 0,
+                background: closeHovered ? "rgba(255,255,255,0.06)" : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer",
+                color: closeHovered ? "var(--text-primary)" : "var(--text-tertiary)",
+                transition: "all 150ms ease",
+              }}
+            >
+              <PanelLeft size={16} strokeWidth={1.5} />
+            </button>
+
+            <SidebarTooltip show={closeHovered} text="Close Sidebar" />
+          </div>
         </div>
 
         {/* New chat */}
-        <div style={{ padding: "0 8px 8px" }}>
+        <div style={{ padding: "8px 8px 8px" }}>
           <button onClick={handleNew} style={{
             display: "flex", alignItems: "center", gap: 10, width: "100%",
             padding: "10px 14px", border: "1px solid var(--border-secondary)",
@@ -609,127 +601,25 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* Projects selector */}
-        {isLoggedIn && (
-          <div style={{ padding: "0 8px 8px", position: "relative" }} ref={projectDropdownRef}>
-            <button
-              onClick={() => setProjectDropdownOpen(!projectDropdownOpen)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                padding: "8px 12px", border: "1px solid var(--border-secondary)",
-                borderRadius: "var(--radius-xs)", background: "transparent",
-                cursor: "pointer", color: "var(--text-secondary)", fontSize: 12,
-                transition: "all 150ms",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)"; }}
-              onMouseLeave={e => { if (!projectDropdownOpen) e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
-            >
-              <FolderOpen size={14} style={{ color: activeProject?.color || "var(--text-tertiary)", flexShrink: 0 }} />
-              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
-                {activeProject ? activeProject.name : "Projects"}
-              </span>
-              <ChevronDown size={12} style={{ flexShrink: 0, opacity: 0.5, transform: projectDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
-            </button>
-
-            {projectDropdownOpen && (
-              <div style={{
-                position: "absolute", top: "100%", left: 8, right: 8,
-                background: "var(--bg-secondary, #141414)", border: "1px solid var(--border-secondary)",
-                borderRadius: "var(--radius-sm)", zIndex: 100,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                maxHeight: 280, overflowY: "auto",
-              }}>
-                <button
-                  onClick={() => { onSelectProject?.(null); setProjectDropdownOpen(false); }}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 8, width: "100%",
-                    padding: "8px 12px", border: "none", background: !activeProject ? "var(--bg-hover)" : "transparent",
-                    cursor: "pointer", color: "var(--text-secondary)", fontSize: 12, textAlign: "left",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                  onMouseLeave={e => { if (activeProject) e.currentTarget.style.background = "transparent"; }}
-                >
-                  <MessageSquare size={13} style={{ opacity: 0.5 }} />
-                  <span>All chats</span>
-                </button>
-
-                {projects.length > 0 && (
-                  <div style={{ height: 1, background: "var(--border-secondary)", margin: "2px 0" }} />
-                )}
-
-                {projects.filter(p => !p.archived).map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => { onSelectProject?.(p.id); setProjectDropdownOpen(false); }}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 8, width: "100%",
-                      padding: "8px 12px", border: "none",
-                      background: p.id === activeProject?.id ? "var(--bg-hover)" : "transparent",
-                      cursor: "pointer", color: "var(--text-secondary)", fontSize: 12, textAlign: "left",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                    onMouseLeave={e => { if (p.id !== activeProject?.id) e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#D4AF37", flexShrink: 0 }} />
-                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                    {p.conversation_count > 0 && (
-                      <span style={{ fontSize: 10, opacity: 0.4 }}>{p.conversation_count}</span>
-                    )}
-                  </button>
-                ))}
-
-                <div style={{ height: 1, background: "var(--border-secondary)", margin: "2px 0" }} />
-
-                {showNewProjectInput ? (
-                  <div style={{ padding: "8px 12px", display: "flex", gap: 6 }}>
-                    <input
-                      autoFocus
-                      value={newProjectName}
-                      onChange={e => setNewProjectName(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && newProjectName.trim()) {
-                          onCreateProject?.(newProjectName.trim());
-                          setNewProjectName("");
-                          setShowNewProjectInput(false);
-                          setProjectDropdownOpen(false);
-                        } else if (e.key === "Escape") {
-                          setShowNewProjectInput(false);
-                          setNewProjectName("");
-                        }
-                      }}
-                      placeholder="Project name..."
-                      style={{
-                        flex: 1, padding: "4px 8px", fontSize: 12,
-                        background: "var(--bg-primary)", border: "1px solid var(--border-secondary)",
-                        borderRadius: 4, color: "var(--text-primary)", outline: "none",
-                      }}
-                    />
-                    <button
-                      onClick={() => { setShowNewProjectInput(false); setNewProjectName(""); }}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 2 }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowNewProjectInput(true)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 8, width: "100%",
-                      padding: "8px 12px", border: "none", background: "transparent",
-                      cursor: "pointer", color: "var(--accent)", fontSize: 12, textAlign: "left",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <Plus size={13} />
-                    <span>New project</span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Projects — navigates to /projects page */}
+        <div style={{ padding: "0 8px 8px" }}>
+          <button
+            onClick={() => { router.push("/projects"); onClose(); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 8, width: "100%",
+              padding: "8px 12px", border: "none",
+              borderRadius: "var(--radius-xs)", background: "transparent",
+              cursor: "pointer", color: "var(--text-secondary)", fontSize: 13,
+              transition: "all 150ms", textAlign: "left",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          >
+            <FolderOpen size={16} strokeWidth={1.5} style={{ color: activeProject?.color || "var(--text-tertiary)", flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>Projects</span>
+            <ChevronDown size={12} style={{ flexShrink: 0, opacity: 0.3, transform: "rotate(-90deg)" }} />
+          </button>
+        </div>
 
         <div style={{ height: 1, background: "var(--border-secondary)", margin: "0 8px 8px" }} />
 
@@ -788,7 +678,7 @@ export default function Sidebar({
         <div style={{ height: 1, background: "var(--border-secondary)", margin: "0 8px 8px" }} />
 
         {/* History area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 8px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 8px", minHeight: 200 }}>
           {activeProject && (
             <div style={{
               padding: "6px 12px", fontSize: 10, fontWeight: 600,
@@ -813,18 +703,16 @@ export default function Sidebar({
               )}
             </div>
           )}
-          {loadingHistory ? (
-            <div style={{ padding: "16px 4px", fontSize: 12, color: "var(--text-tertiary)", textAlign: "center" }}>
-              <span className="loading-dots">...</span>
-            </div>
-          ) : conversations.length === 0 ? (
+          {isLoading ? (
+            <HistorySkeleton />
+          ) : convList && convList.length === 0 ? (
             <div style={{ padding: "24px 4px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", fontStyle: "italic", opacity: 0.4 }}>
               <MessageSquare size={12} style={{ marginBottom: 4, display: "block", margin: "0 auto 6px" }} />
               Start a conversation
             </div>
-          ) : (
+          ) : convList ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
-              {groupByDate(conversations).map(group => (
+              {groupByDate(convList).map(group => (
                 <div key={group.label}>
                   <div style={{
                     padding: "10px 12px 4px", fontSize: 11, fontWeight: 600,
@@ -845,11 +733,11 @@ export default function Sidebar({
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
-        {/* Bottom — profile only */}
-        <div style={{ borderTop: "1px solid var(--border-secondary)", padding: 8, position: "relative" }}>
+        {/* Bottom — profile */}
+        <div style={{ borderTop: "1px solid var(--border-secondary)", padding: 8 }}>
           {/* Decision follow-up badge */}
           {pendingDecisions > 0 && (
             <a href="/decisions" style={{
@@ -874,47 +762,37 @@ export default function Sidebar({
 
           {/* Profile row — click opens popover */}
           {isLoggedIn && displayName ? (
-            <div style={{ position: "relative" }}>
-              {profilePopoverOpen && (
-                <ProfilePopover
-                  authUser={authUser}
-                  userInitials={userInitials}
-                  displayName={displayName}
-                  tier={tier}
-                  onOpenSettings={() => { onOpenSettings(); onClose(); }}
-                  onSignOut={onSignOut ? () => { onSignOut(); onClose(); } : undefined}
-                  onClose={() => setProfilePopoverOpen(false)}
-                />
+            <button
+              ref={avatarRef}
+              onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                width: "100%", padding: "8px 10px", border: "none",
+                borderRadius: 8, background: profilePopoverOpen ? "rgba(255,255,255,0.04)" : "transparent",
+                cursor: "pointer", transition: "background 150ms",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+              onMouseLeave={e => { if (!profilePopoverOpen) e.currentTarget.style.background = "transparent"; }}
+            >
+              {authUser?.avatar ? (
+                <img src={authUser.avatar} alt={displayName} width={28} height={28}
+                  style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
+              ) : (
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.15)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 600, color: "var(--accent)",
+                }}>
+                  {userInitials}
+                </div>
               )}
-              <button
-                onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  width: "100%", padding: "8px 10px", border: "none",
-                  borderRadius: 8, background: profilePopoverOpen ? "rgba(255,255,255,0.04)" : "transparent",
-                  cursor: "pointer", transition: "background 150ms",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
-                onMouseLeave={e => { if (!profilePopoverOpen) e.currentTarget.style.background = "transparent"; }}
-              >
-                {authUser?.avatar ? (
-                  <img src={authUser.avatar} alt={displayName} width={28} height={28}
-                    style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
-                ) : (
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: "var(--bg-tertiary)", color: "var(--text-primary)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 11, fontWeight: 600, flexShrink: 0,
-                  }}>
-                    {userInitials}
-                  </div>
-                )}
-                <span style={{ fontSize: 13, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, textAlign: "left" }}>
+              <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {displayName}
-                </span>
-              </button>
-            </div>
+                </div>
+              </div>
+            </button>
           ) : !isLoggedIn ? (
             <button onClick={() => { window.location.href = "/login"; }} style={{
               display: "flex", alignItems: "center", gap: 10, width: "100%",
@@ -942,8 +820,8 @@ export default function Sidebar({
         height: "100%",
         padding: "16px 0",
       }}>
-        {/* Logo — hover swaps to expand icon, click opens sidebar */}
-        <SidebarLogoButton onClick={toggleSidebar} />
+        {/* Logo — hover substitutes PanelLeft icon, click opens sidebar */}
+        <CollapsedLogoButton onClick={onOpen} />
 
         <div style={{ height: 16 }} />
 
@@ -985,27 +863,24 @@ export default function Sidebar({
         {/* Separator */}
         <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
 
-        {/* Bottom — avatar only */}
-        <div style={{ position: "relative" }}>
-          {/* Profile popover for collapsed state */}
-          {profilePopoverOpen && isLoggedIn && (
-            <ProfilePopover
-              authUser={authUser}
-              userInitials={userInitials}
-              displayName={displayName}
-              tier={tier}
-              onOpenSettings={onOpenSettings}
-              onSignOut={onSignOut}
-              onClose={() => setProfilePopoverOpen(false)}
-            />
-          )}
-          {isLoggedIn ? (
+        {/* Bottom — avatar */}
+        {isLoggedIn ? (
+          <div style={{ position: "relative" }}
+            onMouseEnter={() => {}}
+            onMouseLeave={() => {}}
+          >
             <SidebarIconButton
               icon={
                 authUser?.avatar ? (
                   <img src={authUser.avatar} alt={displayName} width={28} height={28} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
                 ) : (
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--bg-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%",
+                    background: "rgba(212,175,55,0.08)",
+                    border: "1px solid rgba(212,175,55,0.15)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 11, fontWeight: 600, color: "var(--accent)",
+                  }}>
                     {userInitials}
                   </div>
                 )
@@ -1013,15 +888,78 @@ export default function Sidebar({
               tooltip={displayName || "Profile"}
               onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
             />
-          ) : (
-            <SidebarIconButton
-              icon={<LogIn size={iconSize} strokeWidth={iconSW} />}
-              tooltip={t("auth.sign_in")}
-              onClick={() => { window.location.href = "/login"; }}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          <SidebarIconButton
+            icon={<LogIn size={iconSize} strokeWidth={iconSW} />}
+            tooltip={t("auth.sign_in")}
+            onClick={() => { window.location.href = "/login"; }}
+          />
+        )}
       </div>
     );
   }
+}
+
+/* ═══ Collapsed Logo Button — logo substitutes to PanelLeft on hover ═══ */
+function CollapsedLogoButton({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      style={{ position: "relative" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <button
+        onClick={onClick}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 6,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          border: "none",
+          padding: 0,
+          background: hovered ? "rgba(255,255,255,0.06)" : "transparent",
+          transition: "background 150ms ease",
+        }}
+      >
+        {/* Container for cross-fade substitution */}
+        <div style={{ position: "relative", width: 24, height: 24 }}>
+          {/* Logo — visible when NOT hovered */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: hovered ? 0 : 1,
+            transition: "opacity 200ms ease",
+          }}>
+            <SignuxIcon variant="gold" size={24} />
+          </div>
+
+          {/* PanelLeft — visible when hovered */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: hovered ? 1 : 0,
+            transition: "opacity 200ms ease",
+            color: "var(--text-primary)",
+          }}>
+            <PanelLeft size={18} strokeWidth={1.5} />
+          </div>
+        </div>
+      </button>
+
+      {/* Tooltip "Open Sidebar" */}
+      <SidebarTooltip show={hovered} text="Open Sidebar" />
+    </div>
+  );
 }
