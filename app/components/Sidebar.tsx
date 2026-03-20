@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp,
   Settings, LogIn, LogOut, Trash2, FolderOpen, Plus, ChevronDown,
-  X, Upload, LayoutDashboard, PanelLeft,
+  X, Upload, LayoutDashboard, PanelLeft, Crown,
 } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
@@ -823,7 +823,7 @@ export default function Sidebar({
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0,
               }}>
-                <Zap size={14} style={{ color: "#D4AF37" }} />
+                <Crown size={14} style={{ color: "#D4AF37" }} />
               </div>
             </div>
           )}
@@ -934,7 +934,7 @@ export default function Sidebar({
         {/* Upgrade to Pro — replaces Settings (Settings is in profile menu) */}
         {tier !== "pro" && tier !== "max" && tier !== "founding" && (
           <SidebarIconButton
-            icon={<Zap size={iconSize} strokeWidth={iconSW} />}
+            icon={<Crown size={iconSize} strokeWidth={iconSW} />}
             tooltip="Upgrade to Pro"
             modeColor="#D4AF37"
             onClick={() => router.push("/pricing")}
