@@ -46,44 +46,38 @@ export default function WelcomeScreen({
       alignItems: "center",
       justifyContent: "center",
       minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
-      padding: isMobile ? "0 16px" : "0 24px",
-      maxWidth: 720,
-      margin: "0 auto",
+      padding: isMobile ? "0 20px" : "0 32px",
       width: "100%",
       position: "relative",
     }}>
 
-      {/* ===== Spacer top (40/60 split) ===== */}
-      <div style={{ flex: 0.4 }} />
+      {/* Spacer top — pushes content slightly above center */}
+      <div style={{ flex: 0.42 }} />
 
-      {/* ===== 1. LOGO ===== */}
+      {/* Logo block */}
       <div style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         gap: isMobile ? 8 : 12,
-        marginBottom: isMobile ? 36 : 48,
+        marginBottom: isMobile ? 40 : 52,
       }}>
-        <SignuxIcon size={isMobile ? 44 : 64} />
-        <div style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: 8,
-        }}>
+        <SignuxIcon size={isMobile ? 40 : 56} />
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
           <span style={{
             fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 28 : 40,
+            fontSize: isMobile ? 26 : 36,
             fontWeight: 800,
-            letterSpacing: 8,
+            letterSpacing: 6,
             color: "var(--text-primary)",
           }}>
             SIGNUX
           </span>
           <span style={{
             fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 28 : 40,
+            fontSize: isMobile ? 26 : 36,
             fontWeight: 300,
-            letterSpacing: 8,
+            letterSpacing: 6,
             color: "var(--text-tertiary)",
             opacity: 0.3,
           }}>
@@ -92,11 +86,11 @@ export default function WelcomeScreen({
         </div>
       </div>
 
-      {/* ===== 2. INPUT — max 640px ===== */}
+      {/* Composer — same max-width as conversation input */}
       <div style={{
         width: "100%",
-        maxWidth: 640,
-        marginBottom: 20,
+        maxWidth: 680,
+        marginBottom: 24,
       }}>
         <ChatInput
           value={input}
@@ -112,10 +106,10 @@ export default function WelcomeScreen({
         />
       </div>
 
-      {/* ===== 3. MODE ICONS — each mode's designated color ===== */}
+      {/* Mode icons */}
       <div style={{
         display: "flex",
-        gap: isMobile ? 8 : 10,
+        gap: isMobile ? 10 : 12,
         marginBottom: 32,
       }}>
         {MODE_ICONS.map(({ mode, icon: Icon, color, tooltip }) => (
@@ -163,10 +157,10 @@ export default function WelcomeScreen({
         ))}
       </div>
 
-      {/* ===== Spacer bottom (60%) ===== */}
-      <div style={{ flex: 0.6 }} />
+      {/* Spacer bottom */}
+      <div style={{ flex: 0.58 }} />
 
-      {/* ===== 4. TRUST + SCROLL — Mobile only ===== */}
+      {/* Trust line + scroll hint — mobile only */}
       {isMobile && (
         <div style={{
           position: "absolute",
@@ -183,7 +177,6 @@ export default function WelcomeScreen({
           }}>
             Free to start · No credit card
           </span>
-
           <button onClick={() => {
             document.getElementById("landing-start")?.scrollIntoView({ behavior: "smooth" });
           }} style={{

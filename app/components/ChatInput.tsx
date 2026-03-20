@@ -1,11 +1,11 @@
 "use client";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { ArrowUp, Paperclip, Globe, X, FileText, FileCode, Mic, MicOff, Wand2, Loader2, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
+import { ArrowUp, Paperclip, Globe, X, FileText, FileCode, Mic, MicOff, Wand2, Loader2, Link as LinkIcon } from "lucide-react";
 import { useEnhance } from "../lib/useEnhance";
 import { t, getLanguage } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_FILES = 10;
 
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
@@ -26,35 +26,13 @@ const CODE_EXTENSIONS = [
 ];
 
 const LANG_TO_BCP47: Record<string, string> = {
-  "en": "en-US",
-  "pt-BR": "pt-BR",
-  "es": "es-ES",
-  "fr": "fr-FR",
-  "de": "de-DE",
-  "it": "it-IT",
-  "nl": "nl-NL",
-  "ru": "ru-RU",
-  "zh-Hans": "zh-CN",
-  "zh-Hant": "zh-TW",
-  "ja": "ja-JP",
-  "ko": "ko-KR",
-  "ar": "ar-SA",
-  "hi": "hi-IN",
-  "tr": "tr-TR",
-  "pl": "pl-PL",
-  "sv": "sv-SE",
-  "da": "da-DK",
-  "no": "nb-NO",
-  "fi": "fi-FI",
-  "cs": "cs-CZ",
-  "ro": "ro-RO",
-  "hu": "hu-HU",
-  "uk": "uk-UA",
-  "el": "el-GR",
-  "id": "id-ID",
-  "vi": "vi-VN",
-  "th": "th-TH",
-  "he": "he-IL",
+  "en": "en-US", "pt-BR": "pt-BR", "es": "es-ES", "fr": "fr-FR",
+  "de": "de-DE", "it": "it-IT", "nl": "nl-NL", "ru": "ru-RU",
+  "zh-Hans": "zh-CN", "zh-Hant": "zh-TW", "ja": "ja-JP", "ko": "ko-KR",
+  "ar": "ar-SA", "hi": "hi-IN", "tr": "tr-TR", "pl": "pl-PL",
+  "sv": "sv-SE", "da": "da-DK", "no": "nb-NO", "fi": "fi-FI",
+  "cs": "cs-CZ", "ro": "ro-RO", "hu": "hu-HU", "uk": "uk-UA",
+  "el": "el-GR", "id": "id-ID", "vi": "vi-VN", "th": "th-TH", "he": "he-IL",
 };
 
 export type FileAttachment = {
@@ -101,21 +79,23 @@ function PaperclipPopover({ onFileClick, isMobile }: { onFileClick: () => void; 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  const btnSize = isMobile ? 40 : 32;
+
   return (
     <div ref={popoverRef} style={{ position: "relative" }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          width: isMobile ? 44 : 34, height: isMobile ? 44 : 34, borderRadius: 8,
+          width: btnSize, height: btnSize, borderRadius: 8,
           background: isOpen ? "rgba(212,175,55,0.08)" : "transparent",
           border: "none",
           display: "flex", alignItems: "center", justifyContent: "center",
           cursor: "pointer",
-          color: isOpen ? "var(--accent)" : "rgba(212,175,55,0.4)",
+          color: isOpen ? "var(--accent)" : "var(--text-tertiary)",
           transition: "all 150ms ease",
         }}
-        onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.color = "rgba(212,175,55,0.7)"; }}
-        onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.color = "rgba(212,175,55,0.4)"; }}
+        onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.color = "var(--accent)"; }}
+        onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.color = isOpen ? "var(--accent)" : "var(--text-tertiary)"; }}
         aria-label="Add photos & files"
       >
         <Paperclip size={16} />
@@ -132,17 +112,16 @@ function PaperclipPopover({ onFileClick, isMobile }: { onFileClick: () => void; 
           padding: 6,
           borderRadius: 14,
           background: "var(--card-bg)",
-          border: "1px solid rgba(212,175,55,0.15)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.05)",
+          border: "1px solid var(--border-secondary)",
+          boxShadow: "var(--shadow-lg)",
           zIndex: 100,
           animation: "popoverSlideUp 150ms ease-out",
         }}>
           <div style={{
             padding: "6px 10px 8px",
-            fontSize: 11, fontWeight: 600,
+            fontSize: 10, fontWeight: 600,
             color: "var(--text-tertiary)",
-            letterSpacing: 0.3,
-            fontFamily: "var(--font-mono)",
+            letterSpacing: 0.5,
             textTransform: "uppercase" as const,
           }}>
             Add to conversation
@@ -150,56 +129,54 @@ function PaperclipPopover({ onFileClick, isMobile }: { onFileClick: () => void; 
 
           <button onClick={() => { onFileClick(); setIsOpen(false); }} style={{
             display: "flex", alignItems: "center", gap: 10,
-            width: "100%", padding: "10px 12px", borderRadius: 10,
+            width: "100%", padding: "8px 10px", borderRadius: 10,
             background: "transparent", border: "none",
             cursor: "pointer", textAlign: "left" as const,
             transition: "background 150ms ease",
             color: "var(--text-primary)",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(212,175,55,0.06)"}
+          onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-hover)"}
           onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
           >
             <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: "rgba(212,175,55,0.06)",
-              border: "1px solid rgba(212,175,55,0.1)",
+              width: 30, height: 30, borderRadius: 8,
+              background: "var(--accent-bg)",
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "var(--accent)", flexShrink: 0,
             }}>
-              <FileText size={15} />
+              <FileText size={14} />
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 500 }}>Upload files & images</div>
               <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 1 }}>
-                PDF, TXT, CSV, DOC, images
+                PDF, CSV, DOC, images
               </div>
             </div>
           </button>
 
           <button onClick={() => { setIsOpen(false); }} style={{
             display: "flex", alignItems: "center", gap: 10,
-            width: "100%", padding: "10px 12px", borderRadius: 10,
+            width: "100%", padding: "8px 10px", borderRadius: 10,
             background: "transparent", border: "none",
             cursor: "pointer", textAlign: "left" as const,
             transition: "background 150ms ease",
             color: "var(--text-primary)",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(212,175,55,0.06)"}
+          onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-hover)"}
           onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
           >
             <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: "rgba(212,175,55,0.06)",
-              border: "1px solid rgba(212,175,55,0.1)",
+              width: 30, height: 30, borderRadius: 8,
+              background: "var(--accent-bg)",
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "var(--accent)", flexShrink: 0,
             }}>
-              <LinkIcon size={15} />
+              <LinkIcon size={14} />
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 500 }}>Paste a URL</div>
               <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 1 }}>
-                Website, article, or document link
+                Website, article, or document
               </div>
             </div>
           </button>
@@ -236,7 +213,6 @@ export default function ChatInput({
   const dragCounter = useRef(0);
   const { enhance, enhancing, wasEnhanced } = useEnhance(mode || "chat");
 
-  /* Voice state */
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
@@ -252,7 +228,6 @@ export default function ChatInput({
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  /* Cleanup recognition on unmount */
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
@@ -296,18 +271,11 @@ export default function ChatInput({
     });
   };
 
-  /* ═══ File Processing ═══ */
   const processFiles = async (files: File[]) => {
     const newAttachments: FileAttachment[] = [];
     for (const file of files) {
-      if (!isSupportedFile(file)) {
-        onToast?.(t("file.not_supported"), "error");
-        continue;
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        onToast?.(t("file.too_large"), "error");
-        continue;
-      }
+      if (!isSupportedFile(file)) { onToast?.(t("file.not_supported"), "error"); continue; }
+      if (file.size > MAX_FILE_SIZE) { onToast?.(t("file.too_large"), "error"); continue; }
       const isImage = IMAGE_TYPES.includes(file.type);
       let preview: string | undefined;
       if (isImage) {
@@ -317,12 +285,7 @@ export default function ChatInput({
           reader.readAsDataURL(file);
         });
       }
-      newAttachments.push({
-        file,
-        type: isImage ? "image" : "document",
-        preview,
-        id: Math.random().toString(36).slice(2),
-      });
+      newAttachments.push({ file, type: isImage ? "image" : "document", preview, id: Math.random().toString(36).slice(2) });
     }
     if (newAttachments.length > 0) {
       onAttachmentsChange([...attachments, ...newAttachments].slice(0, MAX_FILES));
@@ -339,130 +302,53 @@ export default function ChatInput({
     onAttachmentsChange(attachments.filter(a => a.id !== id));
   };
 
-  /* ═══ Drag & Drop ═══ */
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current++;
-    if (e.dataTransfer.types.includes("Files")) {
-      setDragging(true);
-    }
-  };
+  const handleDragEnter = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); dragCounter.current++; if (e.dataTransfer.types.includes("Files")) setDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); dragCounter.current--; if (dragCounter.current === 0) setDragging(false); };
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); };
+  const handleDrop = async (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragging(false); dragCounter.current = 0; const files = Array.from(e.dataTransfer.files); if (files.length > 0) await processFiles(files); };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current--;
-    if (dragCounter.current === 0) {
-      setDragging(false);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragging(false);
-    dragCounter.current = 0;
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      await processFiles(files);
-    }
-  };
-
-  /* ═══ Paste ═══ */
   const handlePaste = async (e: React.ClipboardEvent) => {
     const items = Array.from(e.clipboardData.items);
     const imageItems = items.filter(item => item.type.startsWith("image/"));
     if (imageItems.length > 0) {
       e.preventDefault();
       const files: File[] = [];
-      for (const item of imageItems) {
-        const file = item.getAsFile();
-        if (file) files.push(file);
-      }
+      for (const item of imageItems) { const file = item.getAsFile(); if (file) files.push(file); }
       await processFiles(files);
     }
   };
 
-  /* ═══ Voice Input ═══ */
   const startListening = useCallback(() => {
-    if (!isSpeechSupported()) {
-      onToast?.(t("voice.not_supported"), "error");
-      return;
-    }
-
+    if (!isSpeechSupported()) { onToast?.(t("voice.not_supported"), "error"); return; }
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
-
     const bcp47 = LANG_TO_BCP47[getLanguage()] || "en-US";
     recognition.lang = bcp47;
     recognition.interimResults = true;
     recognition.continuous = true;
     recognition.maxAlternatives = 1;
-
     const baseText = value;
     finalTranscriptRef.current = "";
-
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
+    recognition.onstart = () => setIsListening(true);
     recognition.onresult = (event: any) => {
-      let interim = "";
-      let final = "";
-
+      let interim = "", final = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          final += transcript;
-        } else {
-          interim += transcript;
-        }
+        if (event.results[i].isFinal) final += transcript;
+        else interim += transcript;
       }
-
-      if (final) {
-        finalTranscriptRef.current += final;
-      }
-
+      if (final) finalTranscriptRef.current += final;
       const separator = baseText && (finalTranscriptRef.current || interim) ? " " : "";
-      const combined = baseText + separator + finalTranscriptRef.current + interim;
-      onChange(combined);
+      onChange(baseText + separator + finalTranscriptRef.current + interim);
     };
-
-    recognition.onerror = (event: any) => {
-      if (event.error === "not-allowed") {
-        onToast?.(t("voice.denied"), "error");
-      }
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
+    recognition.onerror = (event: any) => { if (event.error === "not-allowed") onToast?.(t("voice.denied"), "error"); setIsListening(false); };
+    recognition.onend = () => setIsListening(false);
     recognition.start();
   }, [value, onChange, onToast]);
 
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-    }
-    setIsListening(false);
-  }, []);
-
-  const toggleVoice = useCallback(() => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  }, [isListening, startListening, stopListening]);
+  const stopListening = useCallback(() => { if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} } setIsListening(false); }, []);
+  const toggleVoice = useCallback(() => { if (isListening) stopListening(); else startListening(); }, [isListening, startListening, stopListening]);
 
   /* ═══ Smart Context Detector ═══ */
   const [suggestion, setSuggestion] = useState<{tool: string; label: string; color: string; command: string} | null>(null);
@@ -470,37 +356,23 @@ export default function ChatInput({
   const detectIntent = useCallback((text: string) => {
     const lower = text.toLowerCase();
     const patterns: Array<{keywords: string[]; tool: string; label: string; color: string; command: string}> = [
-      { keywords: ["deal", "pitch deck", "investing", "acquisition", "term sheet", "due diligence", "partnership offer", "evaluate this", "is this legit", "trust", "scam"],
-        tool: "Deal X-Ray", label: "Analyze with Deal X-Ray?", color: "#F59E0B", command: "/xray" },
-      { keywords: ["threat", "risk", "danger", "vulnerable", "security", "attack", "competitor threat", "what could go wrong"],
-        tool: "Threat Radar", label: "Run Threat Radar?", color: "#DC2626", command: "/threats" },
-      { keywords: ["competitor", "competition", "market share", "they launched", "competing", "how will they react", "competitive"],
-        tool: "War Game", label: "Simulate with War Game?", color: "#8B5CF6", command: "/wargame" },
-      { keywords: ["caused", "because of", "led to", "resulted in", "why did", "correlation", "impact of", "dropped after", "increased when"],
-        tool: "Causal Map", label: "Map with Causal Map?", color: "#06B6D4", command: "/causal" },
-      { keywords: ["negotiat", "meeting tomorrow", "pitch to", "asking for", "salary", "raise", "contract", "close the deal", "convince"],
-        tool: "Negotiation War Room", label: "Prepare with War Room?", color: "#F97316", command: "/negotiate" },
-      { keywords: ["what if", "next year", "future", "scenario", "12 months", "what could happen", "plan for", "prepare for"],
-        tool: "Scenario Planner", label: "Plan with Scenarios?", color: "#22C55E", command: "/scenarios" },
-      { keywords: ["simulate", "stress test", "what would happen", "test my idea", "agents", "debate"],
-        tool: "Simulate", label: "Run Simulation?", color: "#D4AF37", command: "" },
-      { keywords: ["start a business", "startup", "launch", "side project", "business idea", "validate", "mvp"],
-        tool: "Launchpad", label: "Start with Launchpad?", color: "#14B8A6", command: "" },
+      { keywords: ["deal", "pitch deck", "investing", "acquisition", "term sheet", "due diligence", "partnership offer", "evaluate this", "is this legit", "trust", "scam"], tool: "Deal X-Ray", label: "Analyze with Deal X-Ray?", color: "#F59E0B", command: "/xray" },
+      { keywords: ["threat", "risk", "danger", "vulnerable", "security", "attack", "competitor threat", "what could go wrong"], tool: "Threat Radar", label: "Run Threat Radar?", color: "#DC2626", command: "/threats" },
+      { keywords: ["competitor", "competition", "market share", "they launched", "competing", "how will they react", "competitive"], tool: "War Game", label: "Simulate with War Game?", color: "#8B5CF6", command: "/wargame" },
+      { keywords: ["caused", "because of", "led to", "resulted in", "why did", "correlation", "impact of", "dropped after", "increased when"], tool: "Causal Map", label: "Map with Causal Map?", color: "#06B6D4", command: "/causal" },
+      { keywords: ["negotiat", "meeting tomorrow", "pitch to", "asking for", "salary", "raise", "contract", "close the deal", "convince"], tool: "Negotiation War Room", label: "Prepare with War Room?", color: "#F97316", command: "/negotiate" },
+      { keywords: ["what if", "next year", "future", "scenario", "12 months", "what could happen", "plan for", "prepare for"], tool: "Scenario Planner", label: "Plan with Scenarios?", color: "#22C55E", command: "/scenarios" },
+      { keywords: ["simulate", "stress test", "what would happen", "test my idea", "agents", "debate"], tool: "Simulate", label: "Run Simulation?", color: "#D4AF37", command: "" },
+      { keywords: ["start a business", "startup", "launch", "side project", "business idea", "validate", "mvp"], tool: "Launchpad", label: "Start with Launchpad?", color: "#14B8A6", command: "" },
     ];
     for (const pattern of patterns) {
-      if (pattern.keywords.some(kw => lower.includes(kw))) {
-        setSuggestion({ tool: pattern.tool, label: pattern.label, color: pattern.color, command: pattern.command });
-        return;
-      }
+      if (pattern.keywords.some(kw => lower.includes(kw))) { setSuggestion({ tool: pattern.tool, label: pattern.label, color: pattern.color, command: pattern.command }); return; }
     }
     setSuggestion(null);
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (value.length >= 15) detectIntent(value);
-      else setSuggestion(null);
-    }, 500);
+    const timer = setTimeout(() => { if (value.length >= 15) detectIntent(value); else setSuggestion(null); }, 500);
     return () => clearTimeout(timer);
   }, [value, detectIntent]);
 
@@ -508,11 +380,14 @@ export default function ChatInput({
   const [focused, setFocused] = useState(false);
   const canSend = (value.trim() || attachments.length > 0) && !loading;
   const speechSupported = typeof window !== "undefined" && isSpeechSupported();
-  const iconSize = 16;
+  const hasAttachments = attachments.length > 0;
+
+  /* ═══ Computed border radius — rounded when empty, softer when content ═══ */
+  const radius = hasAttachments ? 20 : 24;
 
   return (
     <div
-      style={{ width: "100%", maxWidth: 768, margin: "0 auto", position: "relative" }}
+      style={{ width: "100%", position: "relative" }}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -526,15 +401,9 @@ export default function ChatInput({
             padding: "6px 12px", borderRadius: 8,
             background: `${suggestion.color}08`, border: `1px solid ${suggestion.color}15`,
             marginBottom: 6, fontSize: 12, color: suggestion.color,
-            animation: "fadeIn 300ms ease",
-            cursor: "pointer",
+            animation: "fadeIn 300ms ease", cursor: "pointer",
           }}
-          onClick={() => {
-            if (suggestion.command) {
-              onChange(`${suggestion.command} ${value}`);
-            }
-            setSuggestion(null);
-          }}
+          onClick={() => { if (suggestion.command) onChange(`${suggestion.command} ${value}`); setSuggestion(null); }}
         >
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: suggestion.color, flexShrink: 0 }} />
           <span>{suggestion.label}</span>
@@ -549,7 +418,7 @@ export default function ChatInput({
       {dragging && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 10,
-          background: "var(--bg-primary)", borderRadius: 24,
+          background: "var(--bg-primary)", borderRadius: radius,
           border: "2px dashed var(--accent)", display: "flex",
           alignItems: "center", justifyContent: "center",
           color: "var(--accent)", fontSize: 14, fontWeight: 500,
@@ -559,91 +428,53 @@ export default function ChatInput({
         </div>
       )}
 
-      {/* Gold composer container */}
+      {/* ═══ Composer Shell ═══ */}
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: 24,
-          border: focused
-            ? "1px solid rgba(212,175,55,0.45)"
-            : "1px solid rgba(212,175,55,0.25)",
+          borderRadius: radius,
+          border: `1px solid ${focused ? "rgba(212,175,55,0.4)" : "var(--border-secondary)"}`,
           background: "var(--card-bg)",
           boxShadow: focused
-            ? "0 0 0 1px rgba(212,175,55,0.15), 0 0 30px rgba(212,175,55,0.08)"
-            : "0 0 0 1px rgba(212,175,55,0.08), 0 0 20px rgba(212,175,55,0.04)",
+            ? "0 0 0 1px rgba(212,175,55,0.12), 0 2px 24px rgba(212,175,55,0.06)"
+            : "0 1px 3px rgba(0,0,0,0.06)",
+          transition: "border-color 200ms ease, box-shadow 200ms ease",
           overflow: "hidden",
-          transition: "border-color 300ms ease, box-shadow 300ms ease",
           ...(isListening ? { borderColor: "var(--error)", boxShadow: "none" } : {}),
         }}
       >
-        {/* Listening indicator bar */}
+        {/* Listening bar */}
         {isListening && (
-          <div style={{
-            height: 2, background: "var(--error)",
-            animation: "pulse 1.5s ease-in-out infinite",
-          }} />
+          <div style={{ height: 2, background: "var(--error)", animation: "pulse 1.5s ease-in-out infinite" }} />
         )}
 
-        {/* Attachment previews */}
-        {attachments.length > 0 && (
-          <div style={{
-            display: "flex", gap: 8, padding: "10px 14px 4px",
-            overflowX: "auto", alignItems: "center",
-          }}>
+        {/* Attachments */}
+        {hasAttachments && (
+          <div style={{ display: "flex", gap: 8, padding: "12px 16px 4px", overflowX: "auto", alignItems: "center" }}>
             {attachments.map(att => (
               <div key={att.id} style={{ position: "relative", flexShrink: 0 }}>
                 {att.type === "image" && att.preview ? (
                   <div style={{ position: "relative" }}>
-                    <img
-                      src={att.preview}
-                      alt={att.file.name}
-                      style={{
-                        width: 48, height: 48, borderRadius: "var(--radius-sm)",
-                        objectFit: "cover", display: "block",
-                      }}
-                    />
-                    <button
-                      onClick={() => removeAttachment(att.id)}
-                      style={{
-                        position: "absolute", top: -6, right: -6,
-                        width: 18, height: 18, borderRadius: "50%",
-                        background: "var(--text-primary)", border: "none",
-                        color: "var(--text-inverse)", cursor: "pointer",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 10,
-                      }}
-                    >
-                      <X size={10} />
-                    </button>
+                    <img src={att.preview} alt={att.file.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", display: "block" }} />
+                    <button onClick={() => removeAttachment(att.id)} style={{
+                      position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%",
+                      background: "var(--text-primary)", border: "none", color: "var(--text-inverse)",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10,
+                    }}><X size={10} /></button>
                   </div>
                 ) : (
                   <div style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    padding: "6px 10px", background: "var(--bg-secondary)",
-                    border: "1px solid var(--border-secondary)",
-                    borderRadius: "var(--radius-sm)", height: 48,
+                    display: "flex", alignItems: "center", gap: 8, padding: "6px 10px",
+                    background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)",
+                    borderRadius: 8, height: 48,
                   }}>
                     {isCodeFile(att.file.name) ? <FileCode size={16} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} /> : <FileText size={16} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />}
                     <div style={{ minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 12, fontWeight: 500, color: "var(--text-primary)",
-                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                        maxWidth: 120,
-                      }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>
                         {att.file.name}
                       </div>
-                      <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
-                        {formatFileSize(att.file.size)}
-                      </div>
+                      <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{formatFileSize(att.file.size)}</div>
                     </div>
-                    <button
-                      onClick={() => removeAttachment(att.id)}
-                      style={{
-                        background: "none", border: "none", cursor: "pointer",
-                        color: "var(--text-tertiary)", display: "flex", padding: 2,
-                      }}
-                    >
+                    <button onClick={() => removeAttachment(att.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", display: "flex", padding: 2 }}>
                       <X size={12} />
                     </button>
                   </div>
@@ -653,20 +484,14 @@ export default function ChatInput({
           </div>
         )}
 
-        {/* Smart Analysis badge */}
-        {attachments.length > 0 && (
+        {/* Analysis badge */}
+        {hasAttachments && (
           <div style={{
-            fontSize: 11,
-            color: "var(--accent)",
-            fontFamily: "var(--font-mono)",
-            padding: "4px 16px 2px",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            letterSpacing: 0.3,
+            fontSize: 11, color: "var(--accent)", fontFamily: "var(--font-mono)",
+            padding: "4px 16px 0", display: "flex", alignItems: "center", gap: 4, letterSpacing: 0.3,
           }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Smart Analysis active — file will be analyzed with recommendations
+            Smart Analysis active
           </div>
         )}
 
@@ -684,15 +509,15 @@ export default function ChatInput({
           style={{
             width: "100%",
             resize: "none",
-            padding: isMobile ? "14px 16px 4px" : "18px 20px 4px",
+            padding: isMobile ? "14px 16px 6px" : "16px 20px 6px",
             background: "transparent",
             border: "none",
             color: "var(--text-primary)",
             fontSize: 16,
             outline: "none",
             lineHeight: "24px",
-            minHeight: 22,
-            maxHeight: 120,
+            minHeight: 24,
+            maxHeight: 140,
             opacity: enhancing ? 0.5 : 1,
             transition: "opacity 150ms ease",
             caretColor: "var(--accent)",
@@ -700,135 +525,107 @@ export default function ChatInput({
           }}
         />
 
-        {/* Toolbar row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "4px 10px 10px" : "4px 12px 12px" }}>
-          {/* Left toolbar icons */}
-          <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-            <PaperclipPopover
-              onFileClick={() => fileInputRef.current?.click()}
-              isMobile={isMobile}
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept={ACCEPT_STRING}
-              style={{ display: "none" }}
-              onChange={handleFileSelect}
-            />
-            {onToggleSearch && (
-              <button
-                onClick={onToggleSearch}
-                style={{
-                  background: searchActive ? "var(--accent-bg)" : "none",
-                  border: searchActive ? "1px solid var(--accent)" : "none",
-                  cursor: "pointer",
-                  padding: 6, borderRadius: 6, display: "flex",
-                  color: searchActive ? "var(--accent)" : "rgba(212,175,55,0.4)",
-                  transition: "all 0.15s",
-                }}
-                aria-label="Web search"
-              >
-                <Globe size={16} />
-              </button>
-            )}
-            {/* Mic button */}
-            {showVoice && (
+        {/* ═══ Toolbar ═══ */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          padding: isMobile ? "2px 8px 8px" : "2px 12px 10px",
+          gap: 2,
+        }}>
+          {/* Left actions */}
+          <PaperclipPopover onFileClick={() => fileInputRef.current?.click()} isMobile={isMobile} />
+          <input ref={fileInputRef} type="file" multiple accept={ACCEPT_STRING} style={{ display: "none" }} onChange={handleFileSelect} />
+
+          {onToggleSearch && (
+            <button
+              onClick={onToggleSearch}
+              style={{
+                width: isMobile ? 40 : 32, height: isMobile ? 40 : 32, borderRadius: 8,
+                background: searchActive ? "var(--accent-bg)" : "transparent",
+                border: searchActive ? "1px solid var(--accent)" : "none",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                color: searchActive ? "var(--accent)" : "var(--text-tertiary)",
+                transition: "all 0.15s",
+              }}
+              aria-label="Web search"
+            >
+              <Globe size={16} />
+            </button>
+          )}
+
+          {showVoice && (
             <button
               onClick={toggleVoice}
               style={{
-                background: "none", border: "none",
+                width: isMobile ? 40 : 32, height: isMobile ? 40 : 32, borderRadius: 8,
+                background: "transparent", border: "none",
                 cursor: speechSupported ? "pointer" : "default",
-                padding: isMobile ? 10 : 6, borderRadius: "var(--radius-xs)", display: "flex",
-                color: isListening ? "var(--error)" : "rgba(212,175,55,0.4)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: isListening ? "var(--error)" : "var(--text-tertiary)",
                 opacity: speechSupported ? 1 : 0.3,
                 transition: "color 0.15s",
                 animation: isListening ? "voicePulse 1.5s ease-in-out infinite" : "none",
-                width: isMobile ? 44 : 28, height: isMobile ? 44 : 28, alignItems: "center", justifyContent: "center",
               }}
-              onMouseEnter={(e) => { if (!isListening) e.currentTarget.style.color = "rgba(212,175,55,0.7)"; }}
-              onMouseLeave={(e) => { if (!isListening) e.currentTarget.style.color = "rgba(212,175,55,0.4)"; }}
+              onMouseEnter={(e) => { if (!isListening) e.currentTarget.style.color = "var(--accent)"; }}
+              onMouseLeave={(e) => { if (!isListening) e.currentTarget.style.color = "var(--text-tertiary)"; }}
               aria-label={t("voice.tooltip")}
             >
-              {isListening ? <MicOff size={iconSize} /> : <Mic size={iconSize} />}
+              {isListening ? <MicOff size={16} /> : <Mic size={16} />}
             </button>
-            )}
-            {/* Enhance button */}
-            {value.trim().length >= 10 && (
-              <button
-                onClick={handleEnhance}
-                disabled={enhancing}
-                title={`Enhance your message (${navigator?.platform?.includes("Mac") ? "\u2318" : "Ctrl"}+E)`}
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
-                  border: "none",
-                  background: wasEnhanced ? "rgba(212,175,55,0.1)" : enhancing ? "var(--bg-tertiary)" : "none",
-                  cursor: enhancing ? "wait" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: wasEnhanced ? "var(--accent)" : enhancing ? "var(--text-tertiary)" : "rgba(212,175,55,0.4)",
-                  transition: "all 200ms",
-                  padding: 0,
-                }}
-                onMouseEnter={e => {
-                  if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "rgba(212,175,55,0.06)"; e.currentTarget.style.color = "var(--accent)"; }
-                }}
-                onMouseLeave={e => {
-                  if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(212,175,55,0.4)"; }
-                }}
-              >
-                {enhancing ? (
-                  <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} />
-                ) : (
-                  <Wand2 size={15} />
-                )}
-              </button>
-            )}
-          </div>
+          )}
+
+          {value.trim().length >= 10 && (
+            <button
+              onClick={handleEnhance}
+              disabled={enhancing}
+              title={`Enhance (${navigator?.platform?.includes("Mac") ? "\u2318" : "Ctrl"}+E)`}
+              style={{
+                width: isMobile ? 40 : 32, height: isMobile ? 40 : 32, borderRadius: 8,
+                border: "none",
+                background: wasEnhanced ? "rgba(212,175,55,0.1)" : enhancing ? "var(--bg-tertiary)" : "transparent",
+                cursor: enhancing ? "wait" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: wasEnhanced ? "var(--accent)" : enhancing ? "var(--text-tertiary)" : "var(--text-tertiary)",
+                transition: "all 200ms",
+              }}
+              onMouseEnter={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--accent)"; } }}
+              onMouseLeave={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-tertiary)"; } }}
+            >
+              {enhancing ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 size={15} />}
+            </button>
+          )}
+
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
 
           {/* Enhanced badge */}
           {wasEnhanced && (
             <div style={{
-              fontSize: 10,
-              color: "var(--accent)",
-              fontFamily: "var(--font-mono)",
-              letterSpacing: 0.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              animation: "fadeIn 200ms ease",
-              whiteSpace: "nowrap",
+              fontSize: 10, color: "var(--accent)", fontFamily: "var(--font-mono)",
+              letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 4,
+              animation: "fadeIn 200ms ease", whiteSpace: "nowrap", marginRight: 8,
             }}>
-              <Wand2 size={10} /> Enhanced — review and send
+              <Wand2 size={10} /> Enhanced
             </div>
           )}
 
-          {/* Send button — gold */}
+          {/* Send */}
           <button
             onClick={onSend}
             disabled={!canSend}
             style={{
-              width: isMobile ? 36 : 36,
-              height: isMobile ? 36 : 36,
+              width: 36, height: 36,
               borderRadius: "50%",
-              background: canSend ? "var(--accent)" : "rgba(212,175,55,0.08)",
-              border: canSend ? "1px solid var(--accent)" : "1px solid rgba(212,175,55,0.15)",
+              background: canSend ? "var(--accent)" : "var(--bg-tertiary)",
+              border: "none",
               cursor: canSend ? "pointer" : "default",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 300ms ease",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 200ms ease",
               flexShrink: 0,
-              transform: canSend ? "scale(1)" : "scale(0.92)",
-              boxShadow: canSend ? "0 0 16px rgba(212,175,55,0.2)" : "none",
+              opacity: canSend ? 1 : 0.5,
             }}
           >
-            <ArrowUp size={16} style={{
-              color: canSend ? "#000" : "rgba(212,175,55,0.4)",
-            }} />
+            <ArrowUp size={16} style={{ color: canSend ? "#000" : "var(--text-tertiary)" }} />
           </button>
         </div>
       </div>

@@ -8,6 +8,9 @@ import WelcomeScreen from "./WelcomeScreen";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import LandingSections from "./LandingSections";
 
+/* Shared content width — single source of truth for alignment */
+const CONTENT_MAX_WIDTH = 720;
+
 type ChatAreaProps = {
   messages: Message[];
   loading: boolean;
@@ -49,7 +52,6 @@ export default function ChatArea({
 
   const userInitials = profileName ? profileName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "OP";
 
-  /* Detect manual scroll */
   const handleScroll = useCallback(() => {
     const area = areaRef.current;
     if (!area) return;
@@ -58,7 +60,6 @@ export default function ChatArea({
     setUserScrolledUp(distFromBottom > 200);
   }, []);
 
-  /* Smart auto-scroll: throttled with RAF for smooth streaming */
   const scrollRaf = useRef(0);
   useEffect(() => {
     if (!isNearBottomRef.current) return;
@@ -68,7 +69,6 @@ export default function ChatArea({
     });
   }, [messages]);
 
-  /* Scroll to bottom button handler */
   const scrollToBottom = useCallback(() => {
     const area = areaRef.current;
     if (!area) return;
@@ -77,7 +77,9 @@ export default function ChatArea({
     setUserScrolledUp(false);
   }, []);
 
-  /* Welcome state */
+  const hPad = isMobile ? 16 : 24;
+
+  /* ═══ Welcome state ═══ */
   if (messages.length === 0) {
     return (
       <>
@@ -109,17 +111,34 @@ export default function ChatArea({
     );
   }
 
-  /* Chat state */
+  /* ═══ Conversation state ═══ */
   return (
     <>
       <div className="temporal-grid" />
       <div className="prediction-horizon" />
+
+      {/* Scrollable messages area */}
       <div
         ref={areaRef}
         onScroll={handleScroll}
-        style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", position: "relative", userSelect: "none", WebkitUserSelect: "none" as any, zIndex: 2 }}
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          zIndex: 2,
+        }}
       >
-        <div style={{ width: "100%", maxWidth: 768, margin: "0 auto", padding: isMobile ? "20px 16px 120px" : "20px 24px 120px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{
+          width: "100%",
+          maxWidth: CONTENT_MAX_WIDTH,
+          margin: "0 auto",
+          padding: `20px ${hPad}px 120px`,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}>
           {messages.map((m, i) => (
             <MessageBlock
               key={i}
@@ -158,24 +177,22 @@ export default function ChatArea({
         )}
       </div>
 
-      {/* Fixed input at bottom */}
-      <div style={{
-        flexShrink: 0,
-        position: "relative",
-        display: "flex",
-        justifyContent: "center",
-      }}>
+      {/* ═══ Fixed input dock ═══ */}
+      <div style={{ flexShrink: 0, position: "relative" }}>
+        {/* Fade gradient */}
         <div style={{
           position: "absolute",
-          top: -40, left: 0, right: 0, height: 40,
+          top: -48, left: 0, right: 0, height: 48,
           background: "linear-gradient(to bottom, transparent, var(--bg-primary))",
           pointerEvents: "none",
         }} />
+
         <div style={{
-          width: "100%", maxWidth: 768,
-          padding: isMobile ? "8px 16px 20px" : "12px 24px 20px",
-          paddingBottom: "calc(20px + var(--safe-bottom, 0px))",
-          background: "var(--bg-primary)",
+          width: "100%",
+          maxWidth: CONTENT_MAX_WIDTH,
+          margin: "0 auto",
+          padding: `8px ${hPad}px`,
+          paddingBottom: `calc(16px + var(--safe-bottom, 0px))`,
         }}>
           {loading && onStop && (
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
