@@ -493,7 +493,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           marginBottom: isMobile ? "clamp(24px, 4vh, 40px)" : "clamp(32px, 6vh, 60px)",
           maxWidth: 500,
         }}>
-          Describe any scenario — see what happens before it happens
+          See the future before it happens — and choose the best path
         </p>
 
         <div style={{
@@ -525,7 +525,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                     handleEnhance();
                   }
                 }}
-                placeholder="I want to open a coffee franchise in 3 new cities with a $200K budget..."
+                placeholder="Describe any business scenario… Ex: I want to open a coffee franchise in 3 cities with a $200K budget…"
                 rows={isMobile ? 3 : 4}
                 style={{
                   width: "100%", padding: "16px 18px 8px",
@@ -637,7 +637,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   ) : (
                     <Play size={13} fill={simScenario.trim() && !simStarting ? "#000" : "var(--text-tertiary)"} />
                   )}
-                  {simStarting ? "Starting..." : "Simulate"}
+                  {simStarting ? "Starting..." : "SIMULATE FUTURE"}
                 </button>
               </div>
 
@@ -955,283 +955,298 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     );
   }
 
-  /* ═══ RUNNING STATE ═══ */
+  /* ═══ RUNNING STATE — 3 UNIVERSE CANVAS ═══ */
   if (simulating) {
     const progressPct = Math.min(((simStage + 1) / 6) * 100, 100);
     const doneAgents = simLiveAgents.filter(a => a.done).length;
-    const risk = calculateRiskScore(simLiveAgents, simAgentMessages);
     const elapsed = simStartTime ? Math.floor((Date.now() - simStartTime) / 1000) : 0;
-    const categoryCount: Record<string, number> = {};
-    simAgentMessages.forEach(m => { if (m.category) categoryCount[m.category] = (categoryCount[m.category] || 0) + 1; });
+    const risk = calculateRiskScore(simLiveAgents, simAgentMessages);
 
-    const leftPanel = (
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {/* Progress bar */}
+    // Classify agent messages into 3 universes based on role/category
+    const universeA: AgentMessage[] = [];
+    const universeB: AgentMessage[] = [];
+    const universeC: AgentMessage[] = [];
+
+    simAgentMessages.forEach((msg, i) => {
+      const role = (msg.role || msg.agentName || "").toLowerCase();
+      const cat = (msg.category || "").toLowerCase();
+      if (role.includes("strategy") || role.includes("market") || role.includes("operation") || cat.includes("opportunity")) {
+        universeA.push(msg);
+      } else if (role.includes("financial") || role.includes("customer") || role.includes("tech") || cat.includes("finance")) {
+        universeB.push(msg);
+      } else if (role.includes("risk") || role.includes("devil") || role.includes("legal") || cat.includes("risk")) {
+        universeC.push(msg);
+      } else {
+        [universeA, universeB, universeC][i % 3].push(msg);
+      }
+    });
+
+    const UNIVERSES = [
+      { id: "A", label: "UNIVERSE A", subtitle: "OPTIMISTIC", color: "#10B981", glow: "rgba(16,185,129,0.08)", msgs: universeA, probability: Math.max(15, 35 - universeC.length * 2) },
+      { id: "B", label: "UNIVERSE B", subtitle: "REALISTIC", color: "#3B82F6", glow: "rgba(59,130,246,0.08)", msgs: universeB, probability: 50 },
+      { id: "C", label: "UNIVERSE C", subtitle: "PESSIMISTIC", color: "#F59E0B", glow: "rgba(245,158,11,0.08)", msgs: universeC, probability: Math.min(35, 15 + universeC.length * 2) },
+    ];
+
+    // Normalize probabilities to 100%
+    const totalProb = UNIVERSES.reduce((s, u) => s + u.probability, 0);
+    UNIVERSES.forEach(u => { u.probability = Math.round((u.probability / totalProb) * 100); });
+
+    // Find which universe has majority vote
+    const maxMsgs = Math.max(universeA.length, universeB.length, universeC.length);
+    const winningUniverse = universeA.length === maxMsgs ? "A" : universeB.length === maxMsgs ? "B" : "C";
+    const votePercent = simAgentMessages.length > 0 ? Math.round((maxMsgs / simAgentMessages.length) * 100) : 0;
+
+    const UniverseColumn = ({ u }: { u: typeof UNIVERSES[0] }) => (
+      <div style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 16,
+        border: `1px solid ${u.color}20`,
+        background: u.glow,
+        boxShadow: `0 0 40px ${u.color}06, inset 0 1px 0 ${u.color}10`,
+        overflow: "hidden",
+        minWidth: 0,
+        transition: "box-shadow 300ms",
+      }}>
+        {/* Column header */}
         <div style={{
-          width: "100%", height: 3, background: "var(--bg-tertiary)",
-          borderRadius: 2, overflow: "hidden",
+          padding: "14px 16px 10px",
+          borderBottom: `1px solid ${u.color}15`,
+          background: `${u.color}05`,
         }}>
-          <div style={{
-            height: "100%", background: "var(--accent)",
-            borderRadius: 2, transition: "width 0.8s ease",
-            width: `${progressPct}%`,
-          }} />
-        </div>
-
-        {/* Stages list */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {SIM_STAGE_KEYS.map((key, idx) => {
-            const isDone = idx < simStage;
-            const isCurrent = idx === simStage;
-            const StageIcon = SIM_STAGE_ICONS[idx];
-            return (
-              <div key={key} style={{ display: "flex", gap: 12 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 20 }}>
-                  <div style={{
-                    width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "all 0.3s",
-                    background: isDone ? "var(--success)" : isCurrent ? "var(--bg-primary)" : "var(--bg-tertiary)",
-                    border: isCurrent ? "2px solid var(--accent)" : isDone ? "none" : "1px solid var(--border-primary)",
-                  }}>
-                    {isDone && <Check size={11} style={{ color: "var(--text-primary)" }} />}
-                    {isCurrent && <span className="spinner" style={{ width: 12, height: 12, borderWidth: 2 }} />}
-                  </div>
-                  {idx < 5 && (
-                    <div style={{
-                      width: 1, flex: 1, minHeight: 20,
-                      background: isDone ? "var(--success)" : "var(--border-secondary)",
-                      opacity: isDone ? 0.3 : 1,
-                      transition: "background 0.3s",
-                    }} />
-                  )}
-                </div>
-                <div style={{ paddingBottom: 16, paddingTop: 1, display: "flex", alignItems: "center", gap: 6 }}>
-                  <StageIcon size={13} style={{ color: isCurrent ? "var(--accent)" : isDone ? "var(--text-tertiary)" : "var(--text-tertiary)", opacity: isDone ? 0.5 : 1 }} />
-                  <span style={{
-                    fontSize: 13,
-                    color: isCurrent ? "var(--text-primary)" : isDone ? "var(--text-secondary)" : "var(--text-tertiary)",
-                    fontWeight: isCurrent ? 500 : 400,
-                  }}>
-                    {t(key)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Risk Dashboard */}
-        <div style={{
-          padding: 16, borderRadius: "var(--radius-md)",
-          background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Shield size={14} style={{ color: risk.color }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Risk Assessment
-            </span>
-          </div>
-          {/* Score bar */}
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 22, fontWeight: 700, color: risk.color }}>{risk.score}</span>
-              <span style={{ fontSize: 11, color: risk.color, fontWeight: 500, alignSelf: "flex-end" }}>{risk.label}</span>
-            </div>
-            <div style={{ width: "100%", height: 4, background: "var(--bg-tertiary)", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{
-                height: "100%", borderRadius: 2,
-                background: risk.color,
-                width: `${risk.score}%`,
-                transition: "width 0.5s ease",
+                width: 8, height: 8, borderRadius: "50%",
+                background: u.color,
+                boxShadow: `0 0 8px ${u.color}60`,
+                animation: "skeletonPulse 2s ease-in-out infinite",
               }} />
-            </div>
-          </div>
-          {/* Stats row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <div style={{ padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--bg-tertiary)" }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{doneAgents}/{simTotalAgents || "?"}</div>
-              <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Agents</div>
-            </div>
-            <div style={{ padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--bg-tertiary)" }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{simAgentMessages.length}</div>
-              <div style={{ fontSize: 10, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Messages</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Category breakdown */}
-        {Object.keys(categoryCount).length > 0 && (
-          <div style={{
-            padding: 16, borderRadius: "var(--radius-md)",
-            background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <Activity size={14} style={{ color: "var(--text-tertiary)" }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Categories
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: 1.5,
+                color: u.color, fontFamily: "var(--font-mono)",
+              }}>
+                {u.label}
               </span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {Object.entries(categoryCount).map(([cat, count]) => {
-                const cc = AGENT_CATEGORY_COLORS[cat] || DEFAULT_CATEGORY_COLOR;
-                return (
-                  <div key={cat} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: cc.color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: "var(--text-secondary)", flex: 1 }}>{t(`sim.category.${cat}`)}</span>
-                    <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)" }}>{count}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Agent list */}
-        {simLiveAgents.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {simLiveAgents.map((a, i) => {
-              const cc = AGENT_CATEGORY_COLORS[a.category || ""] || DEFAULT_CATEGORY_COLOR;
-              return (
-                <div key={`${a.name}-${i}`} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "8px 12px", borderRadius: "var(--radius-sm)",
-                  background: "var(--bg-secondary)",
-                  animation: "fadeInUp 0.2s ease-out",
-                }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%",
-                    background: cc.bg, display: "flex",
-                    alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 600, color: cc.color,
-                    flexShrink: 0,
-                  }}>
-                    {a.name.charAt(0)}
-                  </div>
-                  <span style={{ fontSize: 12, color: "var(--text-primary)", flex: 1 }}>{a.name}</span>
-                  {a.done ? (
-                    <Check size={12} style={{ color: "var(--success)" }} />
-                  ) : (
-                    <span className="loading-dots" style={{ transform: "scale(0.7)" }}><span /><span /><span /></span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-
-    const rightPanel = (
-      <div
-        ref={feedRef}
-        style={{
-          flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8,
-          padding: isMobile ? 0 : "0 4px",
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "0 0 12px", borderBottom: "1px solid var(--border-secondary)",
-          position: "sticky", top: 0, background: "var(--bg-primary)", zIndex: 2,
-        }}>
-          <MessageSquare size={14} style={{ color: "var(--accent)" }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Live Agent Feed
-          </span>
-          <span style={{
-            marginLeft: "auto", fontSize: 11, fontFamily: "var(--font-mono)",
-            color: "var(--text-tertiary)",
-          }}>
-            {simAgentMessages.length} messages
-          </span>
-        </div>
-
-        {simAgentMessages.length === 0 ? (
-          <div style={{
-            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-            color: "var(--text-tertiary)", fontSize: 13,
-          }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="loading-dots"><span /><span /><span /></span>
-              Waiting for agent reports...
+            <span style={{
+              fontSize: 10, fontWeight: 600, color: u.color,
+              padding: "2px 8px", borderRadius: 50,
+              background: `${u.color}15`, fontFamily: "var(--font-mono)",
+            }}>
+              {u.probability}%
             </span>
           </div>
-        ) : (
-          simAgentMessages.map((msg, i) => {
-            const cc = AGENT_CATEGORY_COLORS[msg.category || ""] || DEFAULT_CATEGORY_COLOR;
-            return (
-              <div key={i} style={{
-                padding: "14px 16px", borderRadius: "var(--radius-md)",
-                background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)",
-                borderLeft: `3px solid ${cc.color}`,
-                animation: "fadeInUp 0.2s ease-out",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: "50%",
-                    background: cc.bg, display: "flex",
-                    alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 600, color: cc.color, flexShrink: 0,
-                  }}>
-                    {msg.agentName.charAt(0)}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{msg.agentName}</div>
-                    <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
-                      {msg.role}{msg.category && ` · ${t(`sim.category.${msg.category}`)}`}
-                      {msg.round != null && ` · Round ${msg.round}`}
-                    </div>
-                  </div>
-                </div>
-                <div style={{
-                  fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)",
-                  whiteSpace: "pre-wrap", maxHeight: 200, overflow: "hidden",
-                  maskImage: (msg.content?.length || 0) > 600 ? "linear-gradient(to bottom, black 80%, transparent)" : undefined,
-                  WebkitMaskImage: (msg.content?.length || 0) > 600 ? "linear-gradient(to bottom, black 80%, transparent)" : undefined,
+          <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 500 }}>
+            {u.subtitle}
+          </div>
+
+          {/* Mini metrics */}
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <div style={{
+              flex: 1, padding: "6px 8px", borderRadius: 8,
+              background: `${u.color}08`, border: `1px solid ${u.color}10`,
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: u.color }}>{u.msgs.length}</div>
+              <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Reports</div>
+            </div>
+            <div style={{
+              flex: 1, padding: "6px 8px", borderRadius: 8,
+              background: `${u.color}08`, border: `1px solid ${u.color}10`,
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: u.color }}>{risk.score}</div>
+              <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "uppercase" }}>Risk</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline + Messages feed */}
+        <div ref={u.id === "B" ? feedRef : undefined} style={{
+          flex: 1, overflowY: "auto", padding: "8px 10px",
+          display: "flex", flexDirection: "column", gap: 6,
+        }}>
+          {u.msgs.length === 0 ? (
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 20,
+            }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-tertiary)" }}>
+                <span className="loading-dots" style={{ transform: "scale(0.6)" }}><span /><span /><span /></span>
+                Analyzing...
+              </span>
+            </div>
+          ) : (
+            u.msgs.map((msg, i) => {
+              const cc = AGENT_CATEGORY_COLORS[msg.category || ""] || DEFAULT_CATEGORY_COLOR;
+              return (
+                <div key={i} style={{
+                  padding: "10px 12px", borderRadius: 10,
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px solid var(--border-secondary)",
+                  borderLeft: `2px solid ${u.color}40`,
+                  animation: "fadeInUp 0.3s ease-out",
                 }}>
-                  {msg.content}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <div style={{
+                      width: 22, height: 22, borderRadius: "50%",
+                      background: cc.bg, display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                      fontSize: 9, fontWeight: 600, color: cc.color, flexShrink: 0,
+                    }}>
+                      {msg.agentName.charAt(0)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {msg.agentName}
+                      </div>
+                    </div>
+                    {msg.round != null && (
+                      <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>R{msg.round}</span>
+                    )}
+                  </div>
+                  <div style={{
+                    fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)",
+                    whiteSpace: "pre-wrap", maxHeight: 120, overflow: "hidden",
+                    maskImage: (msg.content?.length || 0) > 300 ? "linear-gradient(to bottom, black 75%, transparent)" : undefined,
+                    WebkitMaskImage: (msg.content?.length || 0) > 300 ? "linear-gradient(to bottom, black 75%, transparent)" : undefined,
+                  }}>
+                    {msg.content}
+                  </div>
                 </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
     );
 
     return (
-      <div style={{ flex: 1, overflow: "hidden", padding: isMobile ? "16px" : "24px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
-        {/* Probability particles during simulation */}
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column",
+        overflow: "hidden", position: "relative",
+      }}>
+        {/* Probability particles */}
         <div className="probability-particles">
-          {Array.from({ length: isMobile ? 8 : 15 }, (_, i) => (
+          {Array.from({ length: isMobile ? 6 : 12 }, (_, i) => (
             <span key={i} style={{
               left: `${Math.random() * 100}%`,
               animationDuration: `${8 + Math.random() * 12}s`,
               animationDelay: `${Math.random() * 5}s`,
               width: `${2 + Math.random() * 3}px`,
               height: `${2 + Math.random() * 3}px`,
-              opacity: 0.1 + Math.random() * 0.2,
+              opacity: 0.1 + Math.random() * 0.15,
             }} />
           ))}
         </div>
+
+        {/* Top status bar */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: isMobile ? "10px 16px" : "10px 24px",
+          borderBottom: "1px solid var(--border-secondary)",
+          background: "rgba(0,0,0,0.15)",
+          flexShrink: 0,
+        }}>
+          <Zap size={14} style={{ color: "#D4AF37" }} />
+          <span style={{
+            fontSize: 11, fontWeight: 700, letterSpacing: 1,
+            color: "#D4AF37", fontFamily: "var(--font-mono)",
+          }}>
+            SIMULATION RUNNING
+          </span>
+          <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+            {doneAgents}/{simTotalAgents || "?"} agents · {elapsed}s
+          </span>
+          <div style={{ flex: 1 }} />
+          <span style={{
+            fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)",
+          }}>
+            Stage {simStage + 1}/6
+          </span>
+          {/* Progress bar */}
+          <div style={{
+            width: 120, height: 3, borderRadius: 2,
+            background: "var(--bg-tertiary)", overflow: "hidden",
+          }}>
+            <div style={{
+              height: "100%", borderRadius: 2,
+              background: "#D4AF37",
+              width: `${progressPct}%`,
+              transition: "width 0.8s ease",
+            }} />
+          </div>
+        </div>
+
+        {/* 3-Universe Canvas */}
         {isMobile ? (
-          /* Mobile: single column, feed then agents */
-          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 20 }}>
-            {leftPanel}
-            <div style={{ flex: 1, minHeight: 300, display: "flex", flexDirection: "column" }}>{rightPanel}</div>
+          <div style={{
+            flex: 1, overflowY: "auto",
+            padding: "12px 12px 80px",
+            display: "flex", flexDirection: "column", gap: 12,
+          }}>
+            {UNIVERSES.map(u => (
+              <UniverseColumn key={u.id} u={u} />
+            ))}
           </div>
         ) : (
-          /* Desktop: 2-column */
-          <div style={{ flex: 1, display: "flex", gap: 24, minHeight: 0 }}>
-            <div style={{ width: 300, flexShrink: 0, overflowY: "auto" }}>
-              {leftPanel}
-            </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-              {rightPanel}
-            </div>
+          <div style={{
+            flex: 1, display: "flex", gap: 12,
+            padding: "16px 20px 80px",
+            overflow: "hidden",
+          }}>
+            {UNIVERSES.map(u => (
+              <UniverseColumn key={u.id} u={u} />
+            ))}
           </div>
         )}
+
+        {/* Footer bar — voting + actions */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0,
+          display: "flex", alignItems: "center", gap: 10,
+          padding: isMobile ? "10px 12px" : "10px 20px",
+          background: "rgba(10,10,10,0.85)",
+          backdropFilter: "blur(12px)",
+          borderTop: "1px solid var(--border-secondary)",
+          flexWrap: "wrap",
+          zIndex: 10,
+        }}>
+          {/* Voting indicator */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "4px 12px", borderRadius: 50,
+            background: "rgba(212,175,55,0.06)",
+            border: "1px solid rgba(212,175,55,0.12)",
+          }}>
+            <BarChart3 size={12} style={{ color: "#D4AF37" }} />
+            <span style={{ fontSize: 11, color: "#D4AF37", fontWeight: 600 }}>
+              {votePercent}% favor Universe {winningUniverse}
+            </span>
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Action buttons */}
+          {[
+            { label: "Live Variable", icon: <Eye size={11} />, onClick: () => setGodEyeOpen(!godEyeOpen) },
+            { label: "Compare", icon: <Columns size={11} />, onClick: () => {} },
+          ].map((btn, i) => (
+            <button key={i} onClick={btn.onClick} style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "5px 12px", borderRadius: 50,
+              border: "1px solid var(--border-secondary)",
+              background: "transparent", color: "var(--text-tertiary)",
+              fontSize: 10, cursor: "pointer", transition: "all 150ms",
+              whiteSpace: "nowrap",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)"; e.currentTarget.style.color = "#D4AF37"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-secondary)"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
+            >
+              {btn.icon} {btn.label}
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
