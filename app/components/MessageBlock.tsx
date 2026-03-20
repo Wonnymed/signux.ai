@@ -127,8 +127,8 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   const { cleanContent: c2, followups } = !isUser ? parseFollowups(c1) : { cleanContent: c1, followups: [] as string[] };
 
   // Centralized metadata parser
-  const { cleanContent: c3, metadata } = !isUser ? parseSignuxMetadata(c2) : { cleanContent: c2, metadata: { domains: [], domainCount: 0, blindspots: [], depth: 0, verification: null, worklog: null, vote: null, sentiment: null, sources: [], followups: [], timeline: [], competitive: null, workflow: [], knowledgeGraph: null, financials: null } };
-  const { domains, domainCount, blindspots, depth, verification, worklog, sentiment, sources, followups: smartFollowups, competitive, workflow, knowledgeGraph, financials } = metadata;
+  const { cleanContent: c3, metadata } = !isUser ? parseSignuxMetadata(c2) : { cleanContent: c2, metadata: { domains: [], domainCount: 0, blindspots: [], depth: 0, verification: null, worklog: null, vote: null, sentiment: null, sources: [], followups: [], timeline: [], competitive: null, workflow: [], knowledgeGraph: null, financials: null, market: null, investment: null, parallel: null } };
+  const { domains, domainCount, blindspots, depth, verification, worklog, sentiment, sources, followups: smartFollowups, competitive, workflow, knowledgeGraph, financials, market, investment } = metadata;
 
   // Plan detection
   const { hasPlan, planContent, restContent } = !isUser && !isStreaming ? parsePlan(c3) : { hasPlan: false, planContent: "", restContent: c3 };
@@ -807,6 +807,51 @@ Actions must be SPECIFIC (not "research the market" but "survey 20 potential cus
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Investment verdict badge */}
+          {!isStreaming && investment && (
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 12,
+              padding: "8px 14px", borderRadius: 10, marginTop: 10,
+              background: investment.verdict === "BUY" || investment.verdict === "STRONG BUY"
+                ? "rgba(34,197,94,0.06)" : investment.verdict === "HOLD"
+                ? "rgba(245,158,11,0.06)" : "rgba(239,68,68,0.06)",
+              border: `1px solid ${investment.verdict === "BUY" || investment.verdict === "STRONG BUY"
+                ? "rgba(34,197,94,0.15)" : investment.verdict === "HOLD"
+                ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)"}`,
+            }}>
+              <span style={{
+                fontSize: 14, fontWeight: 800, fontFamily: "var(--font-brand)",
+                color: investment.verdict.includes("BUY") ? "#22c55e" : investment.verdict === "HOLD" ? "#f59e0b" : "#ef4444",
+              }}>
+                {investment.verdict}
+              </span>
+              <div style={{ display: "flex", gap: 10, fontSize: 11, color: "var(--text-secondary)" }}>
+                {investment.roi_expected && <span>ROI: <b>{investment.roi_expected}</b></span>}
+                {investment.risk_score > 0 && <span>Risk: <b>{investment.risk_score}/10</b></span>}
+                {investment.payback_months > 0 && <span>Payback: <b>{investment.payback_months}mo</b></span>}
+              </div>
+            </div>
+          )}
+
+          {/* Market analysis badge */}
+          {!isStreaming && market && (
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 10,
+              padding: "8px 14px", borderRadius: 10, marginTop: 10,
+              background: "rgba(139,92,246,0.06)",
+              border: "1px solid rgba(139,92,246,0.15)",
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "var(--font-brand)", color: "#8B5CF6" }}>
+                {market.country}
+              </span>
+              <div style={{ display: "flex", gap: 10, fontSize: 11, color: "var(--text-secondary)" }}>
+                <span>Risk: <b style={{ color: market.risk_level === "low" ? "#22c55e" : market.risk_level === "high" || market.risk_level === "very_high" ? "#ef4444" : "#f59e0b" }}>{market.risk_level}</b></span>
+                {market.ease_of_entry > 0 && <span>Entry: <b>{market.ease_of_entry}/10</b></span>}
+                {market.market_size && <span>Market: <b>{market.market_size}</b></span>}
+              </div>
             </div>
           )}
 

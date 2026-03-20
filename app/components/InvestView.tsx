@@ -1,6 +1,9 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { TrendingUp, ArrowDown, Wand2, Loader2, Lock } from "lucide-react";
+import {
+  TrendingUp, ArrowDown, Wand2, Loader2, Lock,
+  FileText, Target, PieChart, ShieldCheck, BarChart3,
+} from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { getProfile } from "../lib/profile";
@@ -10,63 +13,52 @@ import type { Message, Mode } from "../lib/types";
 import { useEnhance } from "../lib/useEnhance";
 import { signuxFetch } from "../lib/api-client";
 
-/* ═══ Constants ═══ */
-const PURPLE = "#A855F7";
+const BLUE = "#3B82F6";
 
-const CAPABILITIES = [
-  "Expected value", "Kelly criterion", "Base rates", "Market signals",
+const INVEST_TYPES = [
+  { id: "business", label: "Business / Startup", icon: "\u{1F3E2}" },
+  { id: "realestate", label: "Real Estate", icon: "\u{1F3E0}" },
+  { id: "stock", label: "Stock / ETF", icon: "\u{1F4C8}" },
+  { id: "crypto", label: "Crypto / Web3", icon: "\u{20BF}" },
+  { id: "franchise", label: "Franchise", icon: "\u{1F3EA}" },
 ];
 
-const TEMPLATES = [
+const AMOUNT_PILLS = ["$10K", "$50K", "$100K", "$500K"];
+
+const PLACEHOLDERS: Record<string, string> = {
+  business: "I'm evaluating investing $500K in a Series A SaaS startup...",
+  realestate: "Should I buy a rental property in Austin for $350K...",
+  stock: "Analyze NVDA as a long-term hold \u2014 is it overvalued?",
+  crypto: "Is ETH still a good investment at current prices?",
+  franchise: "Is a McDonald's franchise worth the $2M investment?",
+};
+
+const ANALYSIS_TOOLS = [
   {
-    tag: "STARTUP", dotColor: PURPLE,
-    title: "Startup deal",
-    desc: "EV, dilution, comparables",
-    fill: "Evaluating a $500K angel check in a Series A fintech startup. Pre-money $8M, 20% revenue growth MoM, 18-month runway. Compare to sector base rates and estimate expected value.",
+    icon: FileText,
+    name: "Full Equity Report",
+    desc: "Wall Street-style investment analysis",
+    prompt: "Generate a professional equity research report for [INVESTMENT]. Include: Executive Summary, Investment Thesis, Key Metrics (ROI, payback, risk score), Bull Case, Bear Case, Comparable Analysis, and Verdict (STRONG BUY / BUY / HOLD / AVOID).",
   },
   {
-    tag: "PORTFOLIO", dotColor: "#22C55E",
-    title: "Portfolio",
-    desc: "Kelly sizing, correlation",
-    fill: "I have a $200K portfolio: 40% S&P 500, 30% BTC, 20% real estate REITs, 10% cash. Evaluate optimal Kelly sizing, correlation risk, and rebalancing strategy for a 5-year horizon.",
+    icon: Target,
+    name: "Risk Assessment",
+    desc: "Every risk quantified and ranked",
+    prompt: "Run a comprehensive risk assessment for investing in [INVESTMENT]. Quantify each risk: market risk, execution risk, regulatory risk, liquidity risk, concentration risk. Rate severity 1-10 and probability. Give an overall risk score.",
   },
   {
-    tag: "ACQUISITION", dotColor: "#6B8AFF",
-    title: "Acquisition",
-    desc: "DCF, integration risk",
-    fill: "Considering acquiring a $2M ARR B2B SaaS company for $8M. 70% gross margins, 15% churn, growing 25% YoY. Run a DCF analysis and evaluate integration risk vs build-vs-buy.",
+    icon: PieChart,
+    name: "Portfolio Fit",
+    desc: "Does this fit my investment strategy?",
+    prompt: "I already have [EXISTING INVESTMENTS]. Analyze whether adding [NEW INVESTMENT] improves my portfolio: diversification, correlation, risk-adjusted return, concentration risk. Recommend optimal allocation %.",
   },
   {
-    tag: "REAL ESTATE", dotColor: "#F59E0B",
-    title: "Real estate",
-    desc: "Cap rate, IRR, stress test",
-    fill: "Evaluating a $1.2M commercial property: $8,500/month rental income, 5% vacancy rate, $3,200/month operating expenses. Calculate cap rate, cash-on-cash return, and run IRR scenarios with interest rate stress tests.",
+    icon: ShieldCheck,
+    name: "Due Diligence Checklist",
+    desc: "Structured checklist before committing",
+    prompt: "Generate a comprehensive due diligence checklist for [INVESTMENT TYPE]. Cover: financials verification, legal review, market validation, team assessment, competitive position, exit scenarios, and red flags to watch.",
   },
 ];
-
-const QUANT_LABELS = ["EV", "Kelly", "Bayes", "IRR", "KL"];
-
-/* ═══ Candlestick silhouettes ═══ */
-function CandlestickBG() {
-  const sticks = Array.from({ length: 20 }, (_, i) => {
-    const height = 30 + Math.round(((i * 7 + 13) % 91));  // deterministic 30-120
-    const isGreen = i % 3 !== 0;
-    const left = 5 + (i * 4.7);
-    return { height, color: isGreen ? "rgba(34,197,94,0.06)" : "rgba(168,85,247,0.06)", left };
-  });
-
-  return (
-    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 140, pointerEvents: "none", overflow: "hidden" }}>
-      {sticks.map((s, i) => (
-        <div key={i} style={{
-          position: "absolute", bottom: 0, left: `${s.left}%`,
-          width: 3, height: s.height, borderRadius: "1px 1px 0 0",
-          background: s.color,
-        }} />
-      ))}
-    </div>
-  );
-}
 
 /* ═══ Main Component ═══ */
 export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang: string; onSetMode?: (m: Mode) => void; isLoggedIn?: boolean; tier?: string }) {
@@ -77,6 +69,7 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [showPaywall, setShowPaywall] = useState(false);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const [investType, setInvestType] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { enhance, enhancing, wasEnhanced } = useEnhance("invest");
 
@@ -233,202 +226,223 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
     const result = await enhance(input);
     if (result) setInput(result);
   };
-  const pad = isMobile ? "16px" : "24px";
 
   /* ═══ WELCOME STATE ═══ */
   if (messages.length === 0) {
     return (
-        <section style={{
-          minHeight: isMobile ? "75vh" : "85vh",
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          padding: isMobile ? "24px 16px 32px" : "40px 24px",
-          position: "relative", overflowX: "hidden",
+      <div style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
+        minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
+        padding: isMobile ? "20px 16px" : "20px 24px",
+        maxWidth: 720, margin: "0 auto", width: "100%",
+      }}>
+
+        {/* ===== HEADER COMPACTO ===== */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          marginBottom: 6,
         }}>
-          {/* BG: Candlestick silhouettes */}
-          <CandlestickBG />
-
-          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 720, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-
-            {/* Header */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: isMobile ? 8 : 12 }}>
-              {/* Icon box */}
-              <div style={{
-                width: isMobile ? 36 : 48, height: isMobile ? 36 : 48, borderRadius: isMobile ? 10 : 14,
-                border: `1px solid rgba(168,85,247,0.15)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <TrendingUp size={isMobile ? 20 : 28} color={PURPLE} />
-              </div>
-
-              {/* Title */}
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 22 : 36, color: "var(--text-primary)", letterSpacing: 2 }}>
-                  INVEST
-                </span>
-                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 300, fontSize: isMobile ? 22 : 36, color: "var(--text-primary)", opacity: 0.3, letterSpacing: 2 }}>
-                  ENGINE
-                </span>
-              </div>
-
-              {/* Subtitle */}
-              <span style={{
-                fontFamily: "var(--font-mono)", fontSize: isMobile ? 9 : 11,
-                color: `rgba(168,85,247,0.55)`, letterSpacing: 1,
-                textTransform: "uppercase",
-              }}>
-                {t("invest.subtitle")}
-              </span>
-            </div>
-
-            {/* Capability strip */}
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
-              {CAPABILITIES.map(cap => (
-                <span key={cap} style={{
-                  fontSize: 10, fontFamily: "var(--font-mono)", letterSpacing: 1.2,
-                  textTransform: "uppercase", color: "var(--text-tertiary)",
-                  padding: "4px 10px", borderRadius: 4,
-                  border: "1px solid var(--border-primary)",
-                }}>
-                  {cap}
-                </span>
-              ))}
-            </div>
-
-            {/* Input */}
-            <div style={{ width: "100%", maxWidth: 720 }}>
-              <label style={{
-                display: "flex", alignItems: "center", gap: 6,
-                fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 600,
-                letterSpacing: 1.5, textTransform: "uppercase",
-                color: "var(--text-tertiary)", marginBottom: 8,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: PURPLE, display: "inline-block" }} />
-                {t("invest.input_label")}
-              </label>
-              <div style={{
-                border: `1px solid rgba(168,85,247,0.25)`,
-                borderRadius: 12, overflow: "hidden",
-                background: "var(--bg-secondary)",
-              }}>
-                <textarea
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => {
-                    if ((e.metaKey || e.ctrlKey) && e.key === "e") { e.preventDefault(); handleEnhance(); return; }
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      send();
-                    }
-                  }}
-                  placeholder={t("invest.placeholder")}
-                  rows={3}
-                  style={{
-                    width: "100%", padding: "10px 14px", border: "none", outline: "none",
-                    background: "transparent", color: "var(--text-primary)",
-                    fontSize: 14, fontFamily: "var(--font-body)", resize: "none",
-                    lineHeight: 1.6,
-                    opacity: enhancing ? 0.5 : 1, transition: "opacity 150ms ease",
-                  }}
-                />
-                <div style={{
-                  display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8,
-                  padding: "8px 12px", borderTop: "1px solid var(--border-primary)",
-                }}>
-                  {input.trim().length >= 10 && (
-                    <button onClick={handleEnhance} disabled={enhancing} title="Enhance (⌘E)" style={{
-                      display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 50,
-                      border: "1px solid var(--card-border)", background: wasEnhanced ? "var(--accent-soft, rgba(212,175,55,0.1))" : "none",
-                      color: wasEnhanced ? "var(--accent)" : "var(--text-tertiary)", fontSize: 11,
-                      cursor: enhancing ? "wait" : "pointer", transition: "all 200ms", fontFamily: "var(--font-mono)", letterSpacing: 0.5,
-                    }}
-                      onMouseEnter={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; } }}
-                      onMouseLeave={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.borderColor = "var(--card-border)"; e.currentTarget.style.color = "var(--text-tertiary)"; } }}
-                    >
-                      {enhancing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 size={12} />}
-                      {wasEnhanced ? "Enhanced" : "Enhance"}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => send()}
-                    disabled={!input.trim() || loading}
-                    style={{
-                      background: PURPLE, color: "var(--text-inverse)",
-                      border: "none", borderRadius: 8,
-                      padding: "8px 20px", fontSize: 12, fontWeight: 700,
-                      fontFamily: "var(--font-brand)", letterSpacing: 1.5,
-                      textTransform: "uppercase", cursor: input.trim() ? "pointer" : "default",
-                      opacity: input.trim() ? 1 : 0.4,
-                      transition: "opacity 0.15s",
-                    }}
-                  >
-                    {t("invest.cta")}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Template cards — 2x2 grid */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-              gap: 8, width: "100%",
-            }}>
-              {TEMPLATES.map(tpl => (
-                <button
-                  key={tpl.tag}
-                  onClick={() => { setInput(tpl.fill); }}
-                  style={{
-                    background: "var(--bg-secondary)", border: "1px solid var(--border-primary)",
-                    borderRadius: 10, padding: "10px 12px",
-                    textAlign: "left", cursor: "pointer",
-                    transition: "border-color 0.15s, background 0.15s",
-                    display: "flex", flexDirection: "column", gap: 6,
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(168,85,247,0.3)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-primary)"; }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: tpl.dotColor }} />
-                    <span style={{
-                      fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 700,
-                      letterSpacing: 1.2, textTransform: "uppercase",
-                      color: tpl.dotColor,
-                    }}>
-                      {tpl.tag}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600, lineHeight: 1.3 }}>
-                    {tpl.title}
-                  </span>
-                  <span style={{ fontSize: 12, color: "var(--text-tertiary)", lineHeight: 1.3 }}>
-                    {tpl.desc}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Quant strip */}
-            <div style={{ display: "flex", justifyContent: "center", gap: isMobile ? 16 : 28 }}>
-              {QUANT_LABELS.map(label => (
-                <span key={label} style={{
-                  fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: 14,
-                  letterSpacing: 1.5, color: "var(--text-tertiary)", opacity: 0.5,
-                }}>
-                  {label}
-                </span>
-              ))}
-            </div>
-
-            {/* Disclaimer */}
-            <p style={{
-              fontSize: 11, color: "var(--text-tertiary)", textAlign: "center",
-              fontFamily: "var(--font-mono)", letterSpacing: 0.3, maxWidth: 500,
-            }}>
-              {t("invest.disclaimer")}
-            </p>
+          <div style={{
+            width: 26, height: 26, borderRadius: 8,
+            background: "rgba(59,130,246,0.1)",
+            border: "1px solid rgba(59,130,246,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <TrendingUp size={13} style={{ color: BLUE }} />
           </div>
-        </section>
+          <span style={{
+            fontFamily: "var(--font-brand)", fontSize: 15, fontWeight: 700,
+            letterSpacing: 3, color: "var(--text-primary)",
+          }}>
+            INVEST
+          </span>
+        </div>
+        <p style={{
+          textAlign: "center", fontSize: 13, color: "var(--text-tertiary)",
+          marginBottom: 20,
+        }}>
+          Get the real numbers — AI-powered investment analysis
+        </p>
+
+        {/* ===== INVESTMENT TYPE SELECTOR ===== */}
+        <div className="invest-type-pills" style={{
+          display: "flex", gap: 6, marginBottom: 16,
+          flexWrap: isMobile ? "nowrap" : "wrap",
+          justifyContent: isMobile ? "flex-start" : "center",
+          overflowX: isMobile ? "auto" : undefined,
+          WebkitOverflowScrolling: "touch" as any,
+          scrollbarWidth: "none" as any,
+          paddingBottom: isMobile ? 4 : 0,
+          width: "100%",
+        }}>
+          {INVEST_TYPES.map((type) => (
+            <button key={type.id} onClick={() => setInvestType(type.id)} style={{
+              padding: "6px 14px", borderRadius: 50,
+              border: `1px solid ${investType === type.id ? "rgba(59,130,246,0.4)" : "var(--border-secondary)"}`,
+              background: investType === type.id ? "rgba(59,130,246,0.08)" : "transparent",
+              color: investType === type.id ? BLUE : "var(--text-secondary)",
+              fontSize: 11, cursor: "pointer", transition: "all 150ms",
+              display: "flex", alignItems: "center", gap: 5,
+              whiteSpace: "nowrap", flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 12 }}>{type.icon}</span> {type.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ===== INPUT PRINCIPAL ===== */}
+        <div style={{ width: "100%", marginBottom: 16 }}>
+          <div style={{
+            borderRadius: 14,
+            border: `1px solid rgba(59,130,246,0.2)`,
+            background: "var(--card-bg)", overflow: "hidden",
+          }}>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "e") { e.preventDefault(); handleEnhance(); return; }
+                if (e.key === "Enter" && !e.shiftKey && input.trim()) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={PLACEHOLDERS[investType || ""] || "Describe the investment you're evaluating..."}
+              rows={isMobile ? 2 : 3}
+              style={{
+                width: "100%", padding: "14px 16px 6px",
+                background: "transparent", border: "none",
+                color: "var(--text-primary)", fontSize: 14,
+                lineHeight: 1.6, resize: "none", outline: "none",
+                fontFamily: "var(--font-body)",
+              }}
+            />
+            <div style={{
+              display: "flex", alignItems: "center", padding: "6px 12px 8px", gap: 6,
+            }}>
+              {/* Quick amount pills */}
+              <div className="invest-amount-pills" style={{
+                display: "flex", gap: 4,
+                overflowX: isMobile ? "auto" : undefined,
+                scrollbarWidth: "none" as any,
+              }}>
+                {AMOUNT_PILLS.map((amt) => (
+                  <button key={amt} onClick={() => {
+                    setInput(prev => prev ? `${prev} (budget: ${amt})` : `I have ${amt} to invest`);
+                  }} style={{
+                    padding: "3px 8px", borderRadius: 4,
+                    border: "1px solid var(--border-secondary)",
+                    background: "transparent",
+                    color: "var(--text-tertiary)", fontSize: 10,
+                    cursor: "pointer", fontFamily: "var(--font-mono)",
+                    transition: "all 150ms", whiteSpace: "nowrap", flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.3)"; e.currentTarget.style.color = BLUE; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-secondary)"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
+                  >
+                    {amt}
+                  </button>
+                ))}
+              </div>
+
+              {input.trim().length >= 10 && (
+                <button onClick={handleEnhance} disabled={enhancing} title="Enhance (\u2318E)" style={{
+                  display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 50,
+                  border: "1px solid var(--border-secondary)",
+                  background: wasEnhanced ? "rgba(59,130,246,0.08)" : "transparent",
+                  color: wasEnhanced ? BLUE : "var(--text-tertiary)", fontSize: 11,
+                  cursor: enhancing ? "wait" : "pointer", transition: "all 200ms",
+                  fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                }}>
+                  {enhancing ? <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 size={11} />}
+                  {wasEnhanced ? "Enhanced" : "Enhance"}
+                </button>
+              )}
+
+              <div style={{ flex: 1 }} />
+
+              <button
+                onClick={() => send()}
+                disabled={!input.trim()}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "7px 18px", borderRadius: 50,
+                  background: input.trim() ? BLUE : "rgba(255,255,255,0.04)",
+                  color: input.trim() ? "#fff" : "var(--text-tertiary)",
+                  fontSize: 12, fontWeight: 700, border: "none",
+                  cursor: input.trim() ? "pointer" : "default",
+                  opacity: input.trim() ? 1 : 0.4,
+                  transition: "all 300ms ease",
+                }}
+              >
+                <BarChart3 size={12} /> Analyze
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== ANALYSIS TOOLS ===== */}
+        <div style={{ width: "100%" }}>
+          <span style={{
+            fontSize: 10, color: "var(--text-tertiary)",
+            fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}>
+            Analysis tools
+          </span>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: 8, marginTop: 8,
+          }}>
+            {ANALYSIS_TOOLS.map((tool, i) => {
+              const Icon = tool.icon;
+              return (
+                <button key={i} onClick={() => setInput(tool.prompt)}
+                  className="interactive-card"
+                  style={{
+                    display: "flex", flexDirection: "column",
+                    padding: "14px 16px", borderRadius: 12,
+                    border: "1px solid var(--border-secondary)",
+                    background: "var(--card-bg)", textAlign: "left",
+                    cursor: "pointer", gap: 8,
+                    transition: "border-color 150ms",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(59,130,246,0.25)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
+                >
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 8,
+                    background: "rgba(59,130,246,0.08)",
+                    border: "1px solid rgba(59,130,246,0.15)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: BLUE,
+                  }}>
+                    <Icon size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 2 }}>
+                      {tool.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.4 }}>
+                      {tool.desc}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ===== DISCLAIMER ===== */}
+        <p style={{
+          textAlign: "center", fontSize: 10,
+          color: "var(--text-tertiary)", opacity: 0.3,
+          marginTop: 20,
+        }}>
+          Not financial advice. Always consult a qualified financial advisor before investing.
+        </p>
+      </div>
     );
   }
 
@@ -443,7 +457,18 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
           position: "relative", userSelect: "none", WebkitUserSelect: "none" as any,
         }}
       >
-        <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", paddingTop: 20, paddingBottom: 32 }}>
+        {/* Mode breadcrumb */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          padding: isMobile ? "8px 16px" : "8px 24px",
+          fontSize: 10, color: "var(--text-tertiary)",
+          fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+        }}>
+          <TrendingUp size={10} style={{ color: BLUE }} />
+          INVEST
+        </div>
+
+        <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", paddingTop: 4, paddingBottom: 32 }}>
           {messages.map((m, i) => (
             <MessageBlock
               key={i}
@@ -506,7 +531,7 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
           zIndex: 100,
         }}>
           <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
-            <Lock size={32} style={{ color: "#A855F7", marginBottom: 16 }} />
+            <Lock size={32} style={{ color: BLUE, marginBottom: 16 }} />
             <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
               Unlock Invest intelligence
             </div>
@@ -515,10 +540,10 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
             </div>
             <a href="/pricing" style={{
               display: "inline-flex", padding: "12px 28px", borderRadius: 50,
-              background: "#A855F7", color: "#fff", fontWeight: 600,
+              background: BLUE, color: "#fff", fontWeight: 600,
               fontSize: 14, textDecoration: "none",
             }}>
-              {"Upgrade now →"}
+              {"Upgrade now \u2192"}
             </a>
             <button onClick={() => setShowPaywall(false)} style={{
               display: "block", margin: "12px auto 0", background: "none",

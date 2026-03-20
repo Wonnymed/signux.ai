@@ -1,6 +1,9 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Globe, ArrowUp, ArrowDown, Wand2, Loader2, Lock } from "lucide-react";
+import {
+  Globe, ArrowDown, Wand2, Loader2, Lock,
+  MapPin, Scale, Languages, Building2, Plane,
+} from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { getProfile } from "../lib/profile";
@@ -10,42 +13,45 @@ import type { Message, Mode } from "../lib/types";
 import { useEnhance } from "../lib/useEnhance";
 import { signuxFetch } from "../lib/api-client";
 
-/* ═══ Constants ═══ */
-const GREEN = "#22C55E";
+const PURPLE = "#8B5CF6";
 
-const CAPABILITIES = [
-  "Jurisdictions", "Tax structures", "Compliance", "Trade routes", "Crypto frameworks",
+const REGIONS = [
+  { region: "North America", emoji: "\u{1F1FA}\u{1F1F8}", value: "north-america" },
+  { region: "Europe", emoji: "\u{1F1EA}\u{1F1FA}", value: "europe" },
+  { region: "Latin America", emoji: "\u{1F1E7}\u{1F1F7}", value: "latam" },
+  { region: "East Asia", emoji: "\u{1F1F0}\u{1F1F7}", value: "east-asia" },
+  { region: "South Asia", emoji: "\u{1F1EE}\u{1F1F3}", value: "south-asia" },
+  { region: "Middle East", emoji: "\u{1F1E6}\u{1F1EA}", value: "middle-east" },
+  { region: "Africa", emoji: "\u{1F1F3}\u{1F1EC}", value: "africa" },
+  { region: "Oceania", emoji: "\u{1F1E6}\u{1F1FA}", value: "oceania" },
 ];
 
-const SCENARIOS = [
+const ANALYSIS_TOOLS = [
   {
-    tag: "IMPORT/EXPORT", dotColor: GREEN,
-    title: "HK trading, Shenzhen supply, multi-market",
-    fill: "I'm setting up a Hong Kong trading company to source electronics from Shenzhen factories and distribute to Brazil, US, and EU markets. Need to understand HS codes, duties, Incoterms, and optimal logistics routes.",
+    icon: MapPin,
+    name: "Market Entry Strategy",
+    desc: "Full playbook to enter a new market",
+    prompt: "Create a complete market entry strategy for my business expanding to [REGION]. Cover: market size, regulations, competition, cultural considerations, pricing, distribution, and timeline.",
   },
   {
-    tag: "STRUCTURE", dotColor: "#6B8AFF",
-    title: "Offshore holding with IP optimization",
-    fill: "I run a SaaS company with $500K ARR. I want to set up an offshore holding to optimize IP licensing and reduce my effective tax rate. Currently based in Brazil, serving global clients.",
+    icon: Scale,
+    name: "Regulatory Scan",
+    desc: "Laws, taxes, and compliance requirements",
+    prompt: "What are the key regulatory requirements, taxes, import duties, and compliance rules for operating a business in [COUNTRY]? Include: business registration, labor laws, data privacy, and industry-specific regulations.",
   },
   {
-    tag: "CRYPTO", dotColor: "#F59E0B",
-    title: "Multi-jurisdiction crypto compliance",
-    fill: "I operate a crypto exchange serving users in Brazil, Portugal, and UAE. Need to understand MiCA compliance for EU, CVM rules for Brazil, VARA requirements for Dubai, and Travel Rule obligations.",
+    icon: Languages,
+    name: "Cultural Intelligence",
+    desc: "How to adapt your business to local culture",
+    prompt: "Give me a cultural intelligence briefing for doing business in [COUNTRY/REGION]. Cover: communication styles, negotiation norms, business etiquette, consumer behavior, marketing taboos, and local partnerships.",
+  },
+  {
+    icon: Building2,
+    name: "Competitive Landscape",
+    desc: "Who are the local players and how to win",
+    prompt: "Map the competitive landscape for [INDUSTRY] in [COUNTRY]. Who are the top local competitors? What are their strengths, weaknesses, and market share? Where are the gaps I can exploit?",
   },
 ];
-
-/* ═══ Intersection Node (pulsing) ═══ */
-function IntersectionNode({ top, left }: { top: string; left: string }) {
-  return (
-    <div style={{
-      position: "absolute", top, left, width: 4, height: 4,
-      borderRadius: "50%", background: `rgba(34,197,94,0.2)`,
-      animation: "pulse 3s ease-in-out infinite",
-      boxShadow: `0 0 8px rgba(34,197,94,0.15)`,
-    }} />
-  );
-}
 
 /* ═══ Main Component ═══ */
 export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { lang: string; onSetMode?: (m: Mode) => void; isLoggedIn?: boolean; tier?: string }) {
@@ -56,6 +62,7 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [showPaywall, setShowPaywall] = useState(false);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { enhance, enhancing, wasEnhanced } = useEnhance("globalops");
 
@@ -212,221 +219,205 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
     const result = await enhance(input);
     if (result) setInput(result);
   };
-  const pad = isMobile ? "16px" : "24px";
 
   /* ═══ WELCOME STATE ═══ */
   if (messages.length === 0) {
     return (
-        <section style={{
-          minHeight: isMobile ? "75vh" : "85vh",
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          padding: isMobile ? "24px 16px 32px" : "40px 24px",
-          position: "relative", overflowY: "visible", overflowX: "hidden",
+      <div style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
+        minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
+        padding: isMobile ? "20px 16px" : "20px 24px",
+        maxWidth: 720, margin: "0 auto", width: "100%",
+      }}>
+
+        {/* ===== HEADER COMPACTO ===== */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          marginBottom: 6,
         }}>
-
-          {/* BG: Meridian lines */}
-          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-            {/* 3 vertical */}
-            {[25, 50, 75].map(pct => (
-              <div key={`v${pct}`} style={{
-                position: "absolute", top: 0, bottom: 0, left: `${pct}%`,
-                width: 1, background: `rgba(34,197,94,0.06)`,
-              }} />
-            ))}
-            {/* 2 horizontal */}
-            {[33, 66].map(pct => (
-              <div key={`h${pct}`} style={{
-                position: "absolute", left: 0, right: 0, top: `${pct}%`,
-                height: 1, background: `rgba(34,197,94,0.06)`,
-              }} />
-            ))}
-            {/* 5 intersection nodes */}
-            <IntersectionNode top="33%" left="25%" />
-            <IntersectionNode top="33%" left="75%" />
-            <IntersectionNode top="66%" left="50%" />
-            <IntersectionNode top="66%" left="25%" />
-            <IntersectionNode top="33%" left="50%" />
-
-            {/* Radial gradients */}
-            <div style={{
-              position: "absolute", top: "20%", left: "30%",
-              width: 400, height: 400, borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(34,197,94,0.03) 0%, transparent 70%)",
-            }} />
-            <div style={{
-              position: "absolute", bottom: "10%", right: "20%",
-              width: 300, height: 300, borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(34,197,94,0.025) 0%, transparent 70%)",
-            }} />
+          <div style={{
+            width: 26, height: 26, borderRadius: 8,
+            background: "rgba(139,92,246,0.1)",
+            border: "1px solid rgba(139,92,246,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Globe size={13} style={{ color: PURPLE }} />
           </div>
+          <span style={{
+            fontFamily: "var(--font-brand)", fontSize: 15, fontWeight: 700,
+            letterSpacing: 3, color: "var(--text-primary)",
+          }}>
+            GLOBAL OPS
+          </span>
+        </div>
+        <p style={{
+          textAlign: "center", fontSize: 13, color: "var(--text-tertiary)",
+          marginBottom: 20,
+        }}>
+          Expand anywhere — understand any market before you enter
+        </p>
 
-          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 720, display: "flex", flexDirection: "column", alignItems: "center", gap: 32 }}>
-
-            {/* Header */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: isMobile ? 10 : 16 }}>
-              {/* Icon ring */}
-              <div style={{
-                width: isMobile ? 44 : 64, height: isMobile ? 44 : 64, borderRadius: "50%",
-                border: `1px solid rgba(34,197,94,0.15)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Globe size={isMobile ? 20 : 28} color={GREEN} />
-              </div>
-
-              {/* Title */}
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 700, fontSize: isMobile ? 24 : 42, color: "var(--text-primary)", letterSpacing: 2 }}>
-                  GLOBAL
-                </span>
-                <span style={{ fontFamily: "var(--font-brand)", fontWeight: 300, fontSize: isMobile ? 24 : 42, color: "var(--text-primary)", opacity: 0.3, letterSpacing: 2 }}>
-                  OPS
-                </span>
-              </div>
-
-              {/* Subtitle */}
-              <span style={{
-                fontFamily: "var(--font-mono)", fontSize: isMobile ? 9 : 11,
-                color: `rgba(34,197,94,0.55)`, letterSpacing: 1,
-                textTransform: "uppercase",
-              }}>
-                {t("globalops.subtitle")}
-              </span>
-            </div>
-
-            {/* Capability strip */}
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
-              {CAPABILITIES.map(cap => (
-                <span key={cap} style={{
-                  fontSize: 10, fontFamily: "var(--font-mono)", letterSpacing: 1.2,
-                  textTransform: "uppercase", color: "var(--text-tertiary)",
-                  padding: "4px 10px", borderRadius: 4,
-                  border: "1px solid var(--border-primary)",
-                }}>
-                  {cap}
-                </span>
-              ))}
-            </div>
-
-            {/* Input */}
-            <div style={{ width: "100%", maxWidth: 720 }}>
-              <label style={{
-                display: "flex", alignItems: "center", gap: 6,
-                fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 600,
-                letterSpacing: 1.5, textTransform: "uppercase",
-                color: "var(--text-tertiary)", marginBottom: 8,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: GREEN, display: "inline-block" }} />
-                {t("globalops.input_label")}
-              </label>
-              <div style={{
-                border: `1px solid rgba(34,197,94,0.25)`,
-                borderRadius: 12, overflow: "hidden",
-                background: "var(--bg-secondary)",
-              }}>
-                <textarea
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => {
-                    if ((e.metaKey || e.ctrlKey) && e.key === "e") { e.preventDefault(); handleEnhance(); return; }
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      send();
-                    }
-                  }}
-                  placeholder={t("globalops.placeholder")}
-                  rows={3}
-                  style={{
-                    width: "100%", padding: "14px 16px", border: "none", outline: "none",
-                    background: "transparent", color: "var(--text-primary)",
-                    fontSize: 14, fontFamily: "var(--font-body)", resize: "none",
-                    lineHeight: 1.6,
-                    opacity: enhancing ? 0.5 : 1, transition: "opacity 150ms ease",
-                  }}
-                />
-                <div style={{
-                  display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8,
-                  padding: "8px 12px", borderTop: "1px solid var(--border-primary)",
-                }}>
-                  {input.trim().length >= 10 && (
-                    <button onClick={handleEnhance} disabled={enhancing} title="Enhance (⌘E)" style={{
-                      display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 50,
-                      border: "1px solid var(--card-border)", background: wasEnhanced ? "var(--accent-soft, rgba(212,175,55,0.1))" : "none",
-                      color: wasEnhanced ? "var(--accent)" : "var(--text-tertiary)", fontSize: 11,
-                      cursor: enhancing ? "wait" : "pointer", transition: "all 200ms", fontFamily: "var(--font-mono)", letterSpacing: 0.5,
-                    }}
-                      onMouseEnter={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; } }}
-                      onMouseLeave={e => { if (!enhancing && !wasEnhanced) { e.currentTarget.style.borderColor = "var(--card-border)"; e.currentTarget.style.color = "var(--text-tertiary)"; } }}
-                    >
-                      {enhancing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 size={12} />}
-                      {wasEnhanced ? "Enhanced" : "Enhance"}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => send()}
-                    disabled={!input.trim() || loading}
-                    style={{
-                      background: GREEN, color: "#000",
-                      border: "none", borderRadius: 8,
-                      padding: "8px 20px", fontSize: 12, fontWeight: 700,
-                      fontFamily: "var(--font-brand)", letterSpacing: 1.5,
-                      textTransform: "uppercase", cursor: input.trim() ? "pointer" : "default",
-                      opacity: input.trim() ? 1 : 0.4,
-                      transition: "opacity 0.15s",
-                    }}
-                  >
-                    {t("globalops.cta")}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Scenario cards */}
+        {/* ===== INPUT PRINCIPAL ===== */}
+        <div style={{ width: "100%", marginBottom: 16 }}>
+          <div style={{
+            borderRadius: 14,
+            border: `1px solid rgba(139,92,246,0.2)`,
+            background: "var(--card-bg)", overflow: "hidden",
+          }}>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "e") { e.preventDefault(); handleEnhance(); return; }
+                if (e.key === "Enter" && !e.shiftKey && input.trim()) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder="I want to expand my SaaS business to South Korea..."
+              rows={isMobile ? 2 : 3}
+              style={{
+                width: "100%", padding: "14px 16px 6px",
+                background: "transparent", border: "none",
+                color: "var(--text-primary)", fontSize: 14,
+                lineHeight: 1.6, resize: "none", outline: "none",
+                fontFamily: "var(--font-body)",
+              }}
+            />
             <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
-              gap: 12, width: "100%",
+              display: "flex", alignItems: "center", padding: "6px 12px 8px", gap: 6,
             }}>
-              {SCENARIOS.map(s => (
-                <button
-                  key={s.tag}
-                  onClick={() => { setInput(s.fill); }}
-                  style={{
-                    background: "var(--bg-secondary)", border: "1px solid var(--border-primary)",
-                    borderRadius: 10, padding: "14px 16px",
-                    textAlign: "left", cursor: "pointer",
-                    transition: "border-color 0.15s, background 0.15s",
-                    display: "flex", flexDirection: "column", gap: 8,
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(34,197,94,0.3)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-primary)"; }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dotColor }} />
-                    <span style={{
-                      fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 700,
-                      letterSpacing: 1.2, textTransform: "uppercase",
-                      color: s.dotColor,
-                    }}>
-                      {s.tag}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                    {s.title}
-                  </span>
+              {input.trim().length >= 10 && (
+                <button onClick={handleEnhance} disabled={enhancing} title="Enhance (\u2318E)" style={{
+                  display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 50,
+                  border: "1px solid var(--border-secondary)",
+                  background: wasEnhanced ? "rgba(139,92,246,0.08)" : "transparent",
+                  color: wasEnhanced ? PURPLE : "var(--text-tertiary)", fontSize: 11,
+                  cursor: enhancing ? "wait" : "pointer", transition: "all 200ms",
+                  fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+                }}>
+                  {enhancing ? <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 size={11} />}
+                  {wasEnhanced ? "Enhanced" : "Enhance"}
                 </button>
-              ))}
+              )}
+              <div style={{ flex: 1 }} />
+              <button
+                onClick={() => send()}
+                disabled={!input.trim()}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "7px 18px", borderRadius: 50,
+                  background: input.trim() ? PURPLE : "rgba(255,255,255,0.04)",
+                  color: input.trim() ? "#fff" : "var(--text-tertiary)",
+                  fontSize: 12, fontWeight: 700, border: "none",
+                  cursor: input.trim() ? "pointer" : "default",
+                  opacity: input.trim() ? 1 : 0.4,
+                  transition: "all 300ms ease",
+                }}
+              >
+                <Plane size={12} /> Analyze market
+              </button>
             </div>
-
-            {/* Disclaimer */}
-            <p style={{
-              fontSize: 11, color: "var(--text-tertiary)", textAlign: "center",
-              fontFamily: "var(--font-mono)", letterSpacing: 0.3, maxWidth: 500,
-            }}>
-              {t("globalops.disclaimer")}
-            </p>
           </div>
-        </section>
+        </div>
+
+        {/* ===== REGION QUICK SELECT ===== */}
+        <div style={{ width: "100%", marginBottom: 20 }}>
+          <span style={{
+            fontSize: 10, color: "var(--text-tertiary)",
+            fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}>
+            Quick region select
+          </span>
+          <div className="globalops-region-pills" style={{
+            display: "flex", gap: 6, marginTop: 8,
+            flexWrap: isMobile ? "nowrap" : "wrap",
+            overflowX: isMobile ? "auto" : undefined,
+            WebkitOverflowScrolling: "touch" as any,
+            scrollbarWidth: "none" as any,
+            paddingBottom: isMobile ? 4 : 0,
+          }}>
+            {REGIONS.map((r) => (
+              <button key={r.value} onClick={() => {
+                setSelectedRegion(r.value);
+                if (!input.trim()) setInput(`I want to expand my business to ${r.region}`);
+              }} style={{
+                padding: "6px 12px", borderRadius: 50,
+                border: `1px solid ${selectedRegion === r.value ? "rgba(139,92,246,0.4)" : "var(--border-secondary)"}`,
+                background: selectedRegion === r.value ? "rgba(139,92,246,0.08)" : "transparent",
+                color: selectedRegion === r.value ? PURPLE : "var(--text-secondary)",
+                fontSize: 11, cursor: "pointer", transition: "all 150ms",
+                whiteSpace: "nowrap", flexShrink: 0,
+              }}>
+                {r.emoji} {r.region}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ===== ANALYSIS CATEGORIES ===== */}
+        <div style={{ width: "100%" }}>
+          <span style={{
+            fontSize: 10, color: "var(--text-tertiary)",
+            fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}>
+            Or choose an analysis type
+          </span>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: 8, marginTop: 8,
+          }}>
+            {ANALYSIS_TOOLS.map((tool, i) => {
+              const Icon = tool.icon;
+              return (
+                <button key={i} onClick={() => setInput(tool.prompt)}
+                  className="interactive-card"
+                  style={{
+                    display: "flex", flexDirection: "column",
+                    padding: "14px 16px", borderRadius: 12,
+                    border: "1px solid var(--border-secondary)",
+                    background: "var(--card-bg)", textAlign: "left",
+                    cursor: "pointer", gap: 8,
+                    transition: "border-color 150ms",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(139,92,246,0.25)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
+                >
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 8,
+                    background: "rgba(139,92,246,0.08)",
+                    border: "1px solid rgba(139,92,246,0.15)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: PURPLE,
+                  }}>
+                    <Icon size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 2 }}>
+                      {tool.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.4 }}>
+                      {tool.desc}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ===== DISCLAIMER ===== */}
+        <p style={{
+          textAlign: "center", fontSize: 10,
+          color: "var(--text-tertiary)", opacity: 0.3,
+          marginTop: 20,
+        }}>
+          Always verify international regulations with qualified legal professionals.
+        </p>
+      </div>
     );
   }
 
@@ -441,7 +432,18 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
           position: "relative", userSelect: "none", WebkitUserSelect: "none" as any,
         }}
       >
-        <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", paddingTop: 20, paddingBottom: 32 }}>
+        {/* Mode breadcrumb */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          padding: isMobile ? "8px 16px" : "8px 24px",
+          fontSize: 10, color: "var(--text-tertiary)",
+          fontFamily: "var(--font-mono)", letterSpacing: 0.5,
+        }}>
+          <Globe size={10} style={{ color: PURPLE }} />
+          GLOBAL OPS
+        </div>
+
+        <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", paddingTop: 4, paddingBottom: 32 }}>
           {messages.map((m, i) => (
             <MessageBlock
               key={i}
@@ -504,19 +506,19 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
           zIndex: 100,
         }}>
           <div style={{ textAlign: "center", padding: 32, maxWidth: 400 }}>
-            <Lock size={32} style={{ color: "#22C55E", marginBottom: 16 }} />
+            <Lock size={32} style={{ color: PURPLE, marginBottom: 16 }} />
             <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
               Unlock Global Ops intelligence
             </div>
             <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.6 }}>
-              Jurisdiction-specific guidance, tax optimization, and compliance intel. Pro gets 5 analyses/month. Max gets unlimited.
+              Market entry strategies, regulatory scans, and cultural intelligence for 100+ countries.
             </div>
             <a href="/pricing" style={{
               display: "inline-flex", padding: "12px 28px", borderRadius: 50,
-              background: "#22C55E", color: "#000", fontWeight: 600,
+              background: PURPLE, color: "#fff", fontWeight: 600,
               fontSize: 14, textDecoration: "none",
             }}>
-              {"Upgrade now →"}
+              {"Upgrade now \u2192"}
             </a>
             <button onClick={() => setShowPaywall(false)} style={{
               display: "block", margin: "12px auto 0", background: "none",

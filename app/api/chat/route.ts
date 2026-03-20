@@ -502,7 +502,15 @@ Only add on substantive responses, not greetings.
 8. WORK LOG — After verification, add a hidden reasoning trace:
 <!-- signux_worklog: {"steps": [{"action": "Consulted knowledge domain", "detail": "game theory — competitive response patterns"}, {"action": "Applied framework", "detail": "Nash equilibrium analysis for 3-player market"}], "sources_count": 3, "domains_used": 4, "reasoning_steps": 6} -->
 List the ACTUAL reasoning steps you took, not generic descriptions. Be specific about what knowledge you applied. Include the real count of sources, domains, and reasoning steps.
-Only add on substantive responses, not greetings.`;
+Only add on substantive responses, not greetings.
+
+9. MARKET METADATA — When analyzing a specific country or region, add:
+<!-- signux_market: {"country": "South Korea", "risk_level": "medium", "ease_of_entry": 6, "market_size": "$2.3B"} -->
+- country: The primary country/region analyzed
+- risk_level: "low", "medium", "high", or "very_high"
+- ease_of_entry: 1-10 scale (10 = easiest)
+- market_size: Estimated addressable market size
+Only add when a specific market is being analyzed, not for general questions.`;
 }
 
 function buildInvestSystemPrompt(): string {
@@ -712,7 +720,16 @@ Only add on substantive responses, not greetings.
 8. WORK LOG — After verification, add a hidden reasoning trace:
 <!-- signux_worklog: {"steps": [{"action": "Consulted knowledge domain", "detail": "game theory — competitive response patterns"}, {"action": "Applied framework", "detail": "Nash equilibrium analysis for 3-player market"}], "sources_count": 3, "domains_used": 4, "reasoning_steps": 6} -->
 List the ACTUAL reasoning steps you took, not generic descriptions. Be specific about what knowledge you applied. Include the real count of sources, domains, and reasoning steps.
-Only add on substantive responses, not greetings.`;
+Only add on substantive responses, not greetings.
+
+9. INVESTMENT METADATA — When analyzing a specific investment, add:
+<!-- signux_investment: {"verdict": "BUY", "confidence": 72, "roi_expected": "23%", "risk_score": 6, "payback_months": 18} -->
+- verdict: "STRONG BUY", "BUY", "HOLD", "AVOID", or "STRONG AVOID"
+- confidence: 0-100 percentage
+- roi_expected: Expected return as string (e.g. "23%", "~15-20%")
+- risk_score: 1-10 scale (10 = highest risk)
+- payback_months: Estimated months to break even (use 0 if N/A)
+Only add when a specific investment is being evaluated, not for general questions.`;
 }
 
 /* ═══ SPECIALIZED TOOL COMMANDS ═══ */

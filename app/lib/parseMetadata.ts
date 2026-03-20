@@ -80,6 +80,21 @@ export type SignuxParallel = {
   universes: Array<{ id: string; name: string; probability: number; revenue: string; outcome: string }>;
 };
 
+export type SignuxMarket = {
+  country: string;
+  risk_level: string;
+  ease_of_entry: number;
+  market_size: string;
+};
+
+export type SignuxInvestment = {
+  verdict: string;
+  confidence: number;
+  roi_expected: string;
+  risk_score: number;
+  payback_months: number;
+};
+
 export interface SignuxMetadata {
   domains: string[];
   domainCount: number;
@@ -97,6 +112,8 @@ export interface SignuxMetadata {
   knowledgeGraph: SignuxKnowledgeGraph | null;
   financials: SignuxFinancials | null;
   parallel: SignuxParallel | null;
+  market: SignuxMarket | null;
+  investment: SignuxInvestment | null;
 }
 
 export function parseSignuxMetadata(content: string): { cleanContent: string; metadata: SignuxMetadata } {
@@ -195,8 +212,20 @@ export function parseSignuxMetadata(content: string): { cleanContent: string; me
   try { if (parallelMatch) parallel = JSON.parse(parallelMatch[1]); } catch {}
   clean = clean.replace(/<!--\s*signux_parallel:\s*\{[\s\S]*?\}\s*-->/g, "");
 
+  // Parse market (Global Ops)
+  const marketMatch = clean.match(/<!--\s*signux_market:\s*(\{[\s\S]*?\})\s*-->/);
+  let market: SignuxMarket | null = null;
+  try { if (marketMatch) market = JSON.parse(marketMatch[1]); } catch {}
+  clean = clean.replace(/<!--\s*signux_market:\s*\{[\s\S]*?\}\s*-->/g, "");
+
+  // Parse investment (Invest)
+  const investmentMatch = clean.match(/<!--\s*signux_investment:\s*(\{[\s\S]*?\})\s*-->/);
+  let investment: SignuxInvestment | null = null;
+  try { if (investmentMatch) investment = JSON.parse(investmentMatch[1]); } catch {}
+  clean = clean.replace(/<!--\s*signux_investment:\s*\{[\s\S]*?\}\s*-->/g, "");
+
   return {
     cleanContent: clean.trim(),
-    metadata: { domains, domainCount, blindspots, depth, verification, worklog, vote, sentiment, sources, followups, timeline, competitive, workflow, knowledgeGraph, financials, parallel },
+    metadata: { domains, domainCount, blindspots, depth, verification, worklog, vote, sentiment, sources, followups, timeline, competitive, workflow, knowledgeGraph, financials, parallel, market, investment },
   };
 }

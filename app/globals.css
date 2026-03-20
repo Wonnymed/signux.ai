@@ -1494,3 +1494,10 @@ textarea, input, button {
   transition: opacity 200ms ease;
   pointer-events: none;
 }
+
+/* ═══ Global Ops & Invest — scrollable pills ═══ */
+.globalops-region-pills::-webkit-scrollbar,
+.invest-type-pills::-webkit-scrollbar,
+.invest-amount-pills::-webkit-scrollbar {
+  display: none;
+}
