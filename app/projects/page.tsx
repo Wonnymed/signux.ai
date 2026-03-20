@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Folder, Plus, Search, ArrowLeft } from "lucide-react";
+import { Folder, Plus, Search, ArrowLeft, Lock } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { useProjects } from "../lib/useProjects";
 import { useIsMobile } from "../lib/useIsMobile";
@@ -62,6 +62,52 @@ export default function ProjectsPage() {
           margin: "0 auto",
           padding: isMobile ? "32px 20px 0" : "48px 32px 0",
         }}>
+          {/* Auth gate — guests see sign-in prompt */}
+          {!authUser ? (
+            <div style={{
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              padding: "100px 20px",
+              borderRadius: 16,
+              border: "1px dashed var(--border-secondary)",
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 16,
+                background: "rgba(212,175,55,0.06)",
+                border: "1px solid rgba(212,175,55,0.12)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 20,
+              }}>
+                <Lock size={24} strokeWidth={1.5} style={{ color: "var(--accent)" }} />
+              </div>
+              <h3 style={{
+                fontSize: 20, fontWeight: 600, color: "var(--text-primary)",
+                marginBottom: 8, marginTop: 0,
+              }}>Sign in to use Projects</h3>
+              <p style={{
+                fontSize: 13, color: "var(--text-tertiary)",
+                marginBottom: 24, textAlign: "center", maxWidth: 340,
+              }}>
+                Organize your analyses, simulations, and intel reports into projects. Sign in to get started.
+              </p>
+              <button
+                onClick={() => { window.location.href = "/login"; }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "12px 28px", borderRadius: 10,
+                  background: "var(--accent)",
+                  border: "none", cursor: "pointer",
+                  fontSize: 14, fontWeight: 600, color: "#000",
+                  transition: "all 150ms",
+                }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 20px rgba(212,175,55,0.25)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+              >
+                Sign in
+              </button>
+            </div>
+          ) : (
+            <>
           {/* Header */}
           <div style={{ marginBottom: 32 }}>
             <div style={{
@@ -248,6 +294,8 @@ export default function ProjectsPage() {
                 </div>
               ))}
             </div>
+          )}
+            </>
           )}
         </div>
       </main>

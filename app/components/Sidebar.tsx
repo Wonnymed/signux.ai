@@ -783,7 +783,7 @@ export default function Sidebar({
             </a>
           )}
 
-          {/* BUG 5 FIX: Upgrade to Pro card — shown for free users */}
+          {/* Upgrade to Pro card — shown for free users */}
           {showUpgrade && (
             <div
               onClick={() => router.push("/pricing")}
@@ -794,13 +794,27 @@ export default function Sidebar({
                 background: "rgba(212,175,55,0.04)",
                 border: "1px solid rgba(212,175,55,0.1)",
                 cursor: "pointer",
-                transition: "background 150ms",
+                transition: "all 150ms",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(212,175,55,0.08)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(212,175,55,0.04)"}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.08)"; e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.04)"; e.currentTarget.style.borderColor = "rgba(212,175,55,0.1)"; }}
             >
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#D4AF37" }}>Upgrade to Pro</div>
-              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>Unlock all modes & tools</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#D4AF37" }}>Upgrade to Pro</div>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>Unlock all modes & tools</div>
+              </div>
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "rgba(212,175,55,0.08)",
+                border: "1px solid rgba(212,175,55,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <Zap size={14} style={{ color: "#D4AF37" }} />
+              </div>
             </div>
           )}
 
