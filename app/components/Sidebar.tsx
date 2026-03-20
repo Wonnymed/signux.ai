@@ -521,17 +521,18 @@ export default function Sidebar({
       )}
 
       <aside ref={sidebarRef} style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        height: "100vh",
         width: sidebarWidth,
-        minWidth: sidebarWidth,
-        flexShrink: 0,
+        zIndex: 45,
         background: "var(--bg-sidebar)",
         borderRight: "1px solid var(--sidebar-border)",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        transition: "width 200ms ease, min-width 200ms ease",
-        position: "relative",
-        zIndex: 45,
+        transition: "width 200ms ease",
       }}>
         {open ? renderExpandedContent() : renderCollapsedContent()}
       </aside>

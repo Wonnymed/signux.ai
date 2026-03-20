@@ -1030,6 +1030,8 @@ function ChatPage() {
         background: "var(--bg-primary)", minWidth: 0, minHeight: 0,
         overflowY: "auto", overflowX: "hidden",
         paddingTop: isMobile ? 52 : 0,
+        marginLeft: isMobile ? 0 : (sidebarOpen ? 260 : 56),
+        transition: "margin-left 200ms ease",
       }}>
         {/* Launchpad check-in reminder */}
         {showCheckinReminder && (

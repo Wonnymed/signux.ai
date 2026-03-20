@@ -54,6 +54,8 @@ export default function ProjectsPage() {
         color: "var(--text-primary)",
         minWidth: 0,
         overflowY: "auto",
+        marginLeft: isMobile ? 0 : (sidebarOpen ? 260 : 56),
+        transition: "margin-left 200ms ease",
       }}>
         <div style={{
           maxWidth: 900,
