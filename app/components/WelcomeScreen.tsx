@@ -1,6 +1,6 @@
 "use client";
-import { Search, Swords, Zap, Shield, ChevronDown } from "lucide-react";
-import { t } from "../lib/i18n";
+import { Zap, Shield, Rocket, Globe, TrendingUp, ChevronDown, ArrowUp, Paperclip } from "lucide-react";
+import { useRef } from "react";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
@@ -26,80 +26,79 @@ type WelcomeScreenProps = {
   lang?: string;
 };
 
-const PROMPTS = [
-  {
-    text: "Is this deal legit? Evaluate a partnership offer",
-    tags: "deal · red flags · due diligence",
-    icon: <Search size={13} />,
-  },
-  {
-    text: "How will competitors react if I launch this?",
-    tags: "war game · predictions · strategy",
-    icon: <Swords size={13} />,
-  },
-  {
-    text: "Test my business idea — will it work?",
-    tags: "simulation · viability · risks",
-    icon: <Zap size={13} />,
-  },
-  {
-    text: "What's the biggest threat to my business right now?",
-    tags: "threats · radar · protection",
-    icon: <Shield size={13} />,
-  },
+const MODE_ICONS: { mode: Mode; icon: typeof Zap; color: string; tooltip: string }[] = [
+  { mode: "simulate", icon: Zap, color: "#D4AF37", tooltip: "Simulate" },
+  { mode: "intel", icon: Shield, color: "#EF4444", tooltip: "Intel" },
+  { mode: "launchpad", icon: Rocket, color: "#14B8A6", tooltip: "Launchpad" },
+  { mode: "globalops", icon: Globe, color: "#8B5CF6", tooltip: "Global Ops" },
+  { mode: "invest", icon: TrendingUp, color: "#3B82F6", tooltip: "Invest" },
 ];
 
 export default function WelcomeScreen({
   input, setInput, onSend, loading, attachments, onAttachmentsChange,
-  onToast, lang,
+  onToast, onSwitchMode,
 }: WelcomeScreenProps) {
   const isMobile = useIsMobile();
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
       justifyContent: "center",
       minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
       padding: isMobile ? "0 16px" : "0 24px",
-      maxWidth: 680,
+      maxWidth: 720,
       margin: "0 auto",
       width: "100%",
+      position: "relative",
     }}>
 
-      {/* ===== LOGO — minimal, subtle ===== */}
-      {!isMobile && (
+      {/* ===== Spacer top (40/60 split) ===== */}
+      <div style={{ flex: 0.4 }} />
+
+      {/* ===== 1. LOGO GRANDE ===== */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: isMobile ? 8 : 10,
+        marginBottom: isMobile ? 36 : 48,
+      }}>
+        <SignuxIcon size={isMobile ? 44 : 64} />
         <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          marginBottom: 32,
-          opacity: 0.4,
+          display: "flex",
+          alignItems: "baseline",
+          gap: 8,
         }}>
-          <SignuxIcon size={18} />
           <span style={{
             fontFamily: "var(--font-brand)",
-            fontSize: 11, fontWeight: 700,
-            letterSpacing: 4,
-            color: "var(--text-tertiary)",
+            fontSize: isMobile ? 28 : 40,
+            fontWeight: 800,
+            letterSpacing: 8,
+            color: "var(--text-primary)",
           }}>
-            SIGNUX AI
+            SIGNUX
+          </span>
+          <span style={{
+            fontFamily: "var(--font-brand)",
+            fontSize: isMobile ? 28 : 40,
+            fontWeight: 300,
+            letterSpacing: 8,
+            color: "var(--text-tertiary)",
+            opacity: 0.3,
+          }}>
+            AI
           </span>
         </div>
-      )}
+      </div>
 
-      {/* ===== QUESTION — actionable h1 ===== */}
-      <h1 style={{
-        fontSize: isMobile ? 22 : 26, fontWeight: 600,
-        color: "var(--text-primary)",
-        textAlign: "center",
-        marginBottom: isMobile ? 18 : 24,
-        lineHeight: 1.3,
-        fontFamily: "var(--font-brand)",
-        marginTop: isMobile ? 0 : undefined,
+      {/* ===== 2. INPUT ===== */}
+      <div style={{
+        width: "100%",
+        maxWidth: 600,
+        marginBottom: 20,
       }}>
-        What decision are you facing?
-      </h1>
-
-      {/* ===== INPUT — the HERO ===== */}
-      <div style={{ width: "100%", marginBottom: isMobile ? 16 : 20 }}>
         <ChatInput
           value={input}
           onChange={setInput}
@@ -110,76 +109,77 @@ export default function WelcomeScreen({
           attachments={attachments}
           onAttachmentsChange={onAttachmentsChange}
           onToast={onToast}
-          placeholder="I'm thinking about launching a coffee franchise in 3 cities with $200K..."
+          placeholder="Ask anything about your business..."
         />
       </div>
 
-      {/* ===== PROMPT SUGGESTIONS ===== */}
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{
-          fontSize: 10, color: "var(--text-tertiary)",
-          fontFamily: "var(--font-mono)",
-          letterSpacing: 0.5, textTransform: "uppercase",
-          textAlign: "center", marginBottom: 2,
-        }}>
-          Or try one of these
-        </span>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-          gap: 8,
-        }}>
-          {PROMPTS.map((prompt, i) => (
-            <button
-              key={i}
-              onClick={() => setInput(prompt.text)}
-              className="interactive-card"
-              style={{
-                display: "flex", flexDirection: "column",
-                padding: "12px 14px", borderRadius: 10,
-                border: "1px solid var(--border-secondary)",
-                background: "var(--card-bg)",
-                textAlign: "left", cursor: "pointer",
-                gap: 6,
-              }}
-            >
-              <div style={{
-                display: "flex", alignItems: "flex-start", gap: 8,
-              }}>
-                <div style={{
-                  color: "var(--text-tertiary)",
-                  marginTop: 1,
-                  flexShrink: 0,
-                }}>
-                  {prompt.icon}
-                </div>
-                <span style={{
-                  fontSize: 13, color: "var(--text-primary)",
-                  lineHeight: 1.4,
-                }}>
-                  {prompt.text}
-                </span>
-              </div>
-              <span style={{
-                fontSize: 10, color: "var(--text-tertiary)",
-                fontFamily: "var(--font-mono)",
-                letterSpacing: 0.3, opacity: 0.6,
-              }}>
-                {prompt.tags}
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* ===== 3. MODE ICONS ===== */}
+      <div style={{
+        display: "flex",
+        gap: isMobile ? 8 : 10,
+        marginBottom: 32,
+      }}>
+        {MODE_ICONS.map(({ mode, icon: Icon, color, tooltip }) => (
+          <button
+            key={mode}
+            onClick={() => onSwitchMode?.(mode)}
+            data-tooltip={tooltip}
+            className="tooltip-bottom"
+            style={{
+              width: isMobile ? 38 : 42,
+              height: isMobile ? 38 : 42,
+              borderRadius: 12,
+              border: "1px solid var(--border-secondary)",
+              background: "transparent",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+              position: "relative",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = `${color}50`;
+              e.currentTarget.style.background = `${color}0A`;
+              e.currentTarget.style.transform = "translateY(-3px)";
+              e.currentTarget.style.boxShadow = `0 6px 16px ${color}15`;
+              const icon = e.currentTarget.querySelector("svg");
+              if (icon) (icon as HTMLElement).style.color = color;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border-secondary)";
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+              const icon = e.currentTarget.querySelector("svg");
+              if (icon) (icon as HTMLElement).style.color = "var(--text-tertiary)";
+            }}
+          >
+            <Icon
+              size={isMobile ? 16 : 18}
+              strokeWidth={1.5}
+              style={{ color: "var(--text-tertiary)", transition: "color 200ms" }}
+            />
+          </button>
+        ))}
       </div>
 
-      {/* ===== TRUST + SCROLL ===== */}
+      {/* ===== Spacer bottom (60%) ===== */}
+      <div style={{ flex: 0.6 }} />
+
+      {/* ===== 4. TRUST + SCROLL ===== */}
       <div style={{
-        display: "flex", flexDirection: "column", alignItems: "center",
-        gap: 12, marginTop: 20,
+        position: "absolute",
+        bottom: 20,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 10,
       }}>
         <span style={{
-          fontSize: 11, color: "var(--text-tertiary)", opacity: 0.5,
+          fontSize: 11,
+          color: "var(--text-tertiary)",
+          opacity: 0.3,
         }}>
           Free to start · No credit card required
         </span>
@@ -187,14 +187,15 @@ export default function WelcomeScreen({
         <button onClick={() => {
           document.getElementById("landing-start")?.scrollIntoView({ behavior: "smooth" });
         }} style={{
-          width: 32, height: 32, borderRadius: "50%",
+          width: 28, height: 28, borderRadius: "50%",
           border: "1px solid var(--border-secondary)",
           background: "transparent",
           display: "flex", alignItems: "center", justifyContent: "center",
           cursor: "pointer", color: "var(--text-tertiary)",
+          opacity: 0.25,
           animation: "bounce 2.5s ease-in-out infinite",
         }}>
-          <ChevronDown size={14} />
+          <ChevronDown size={12} />
         </button>
       </div>
     </div>
