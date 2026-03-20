@@ -489,14 +489,14 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             {/* Title */}
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 0 }}>
               <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 24 : 30, fontWeight: 700,
-                letterSpacing: 8, color: "var(--text-primary)",
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 700,
+                letterSpacing: 3, color: "var(--text-primary)",
               }}>
                 SIMULATE
               </span>
               <span style={{
-                fontFamily: "var(--font-brand)", fontSize: isMobile ? 24 : 30, fontWeight: 300,
-                letterSpacing: 4, color: "var(--text-tertiary)", marginLeft: 8,
+                fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 300,
+                letterSpacing: 2, color: "var(--text-tertiary)", marginLeft: 8,
               }}>
                 ENGINE
               </span>
@@ -504,7 +504,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
 
             {/* Subtitle */}
             <div style={{
-              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 3,
+              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5,
               textTransform: "uppercase" as const, color: "rgba(212,175,55,0.6)",
               marginTop: 6,
             }}>

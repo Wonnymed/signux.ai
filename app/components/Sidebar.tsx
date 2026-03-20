@@ -752,7 +752,7 @@ export default function Sidebar({
         </button>
 
         {/* New conversation */}
-        <button onClick={handleNew} title={t("sidebar.new_chat")} style={{ width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "none", cursor: "pointer", borderRadius: "var(--radius-sm)", color: "var(--text-secondary)", marginBottom: 4 }}
+        <button onClick={handleNew} data-tooltip={t("sidebar.new_chat")} style={{ width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "none", cursor: "pointer", borderRadius: "var(--radius-sm)", color: "var(--text-secondary)", marginBottom: 4 }}
           onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <SquarePen size={iconSize} strokeWidth={iconSW} />
         </button>
@@ -762,7 +762,7 @@ export default function Sidebar({
         {/* Mode icons */}
         {MODES.map(({ key, icon: Icon, label, color }, idx) => (
           <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <button onClick={() => handleMode(key)} title={t(label)} style={{
+            <button onClick={() => handleMode(key)} data-tooltip={t(label)} style={{
               width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center",
               border: "none", cursor: "pointer", borderRadius: "var(--radius-sm)", marginBottom: 2,
               background: mode === key ? "var(--bg-hover)" : "none",
@@ -783,7 +783,7 @@ export default function Sidebar({
         <div style={{ flex: 1 }} />
 
         {/* Bottom icons */}
-        <button onClick={handleSettings} title={t("sidebar.settings")} style={{ width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "none", cursor: "pointer", borderRadius: "var(--radius-sm)", color: "var(--text-tertiary)", marginBottom: 4 }}
+        <button onClick={handleSettings} data-tooltip={t("sidebar.settings")} style={{ width: iconBtnSize, height: iconBtnSize, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "none", cursor: "pointer", borderRadius: "var(--radius-sm)", color: "var(--text-tertiary)", marginBottom: 4 }}
           onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <Settings size={iconSize} strokeWidth={iconSW} />
         </button>

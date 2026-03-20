@@ -19,6 +19,13 @@ export default function InstallPrompt() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
+  // Auto-dismiss after 5 seconds
+  useEffect(() => {
+    if (!show) return;
+    const timer = setTimeout(() => setShow(false), 5000);
+    return () => clearTimeout(timer);
+  }, [show]);
+
   const install = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();

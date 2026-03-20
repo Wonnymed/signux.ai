@@ -427,12 +427,12 @@ export default function LaunchpadView({ lang, userId, onSetMode, isLoggedIn, tie
 
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center" }}>
                 <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 700,
-                  letterSpacing: 8, color: "var(--text-primary)",
+                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 700,
+                  letterSpacing: 3, color: "var(--text-primary)",
                 }}>LAUNCH</span>
                 <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 28 : 36, fontWeight: 300,
-                  letterSpacing: 4, color: "var(--text-tertiary)", marginLeft: 8,
+                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 300,
+                  letterSpacing: 2, color: "var(--text-tertiary)", marginLeft: 8,
                 }}>PAD</span>
               </div>
 

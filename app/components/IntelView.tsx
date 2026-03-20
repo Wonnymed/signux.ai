@@ -196,7 +196,7 @@ export default function IntelView({ lang, onContinueInChat, onSetMode, isLoggedI
 
       <h1 style={{
         fontFamily: "var(--font-brand)", fontWeight: 700,
-        fontSize: isMobile ? 22 : 36, letterSpacing: isMobile ? 3 : 6, color: "var(--text-primary)",
+        fontSize: isMobile ? 20 : 28, letterSpacing: 3, color: "var(--text-primary)",
         marginBottom: 4, textAlign: "center",
       }}>
         <span style={{ color: "#DC2626" }}>INTEL</span>
@@ -224,20 +224,21 @@ export default function IntelView({ lang, onContinueInChat, onSetMode, isLoggedI
 
       {/* Tools grid — responsive */}
       <div style={{
-        display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr",
+        display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(200px, 1fr))",
         gap: isMobile ? 8 : 10, width: "100%", maxWidth: 680, marginBottom: 12,
       }}>
         {TOOLS.map(tool => (
           <button
             key={tool.id}
             onClick={() => setActiveTool(tool.id)}
+            className="interactive-card"
             style={{
               display: "flex", flexDirection: "column", gap: isMobile ? 6 : 8,
               padding: isMobile ? "12px 10px" : "16px 14px", borderRadius: isMobile ? 10 : 12,
               border: `1px solid ${tool.color}18`,
               background: `${tool.color}06`,
-              cursor: "pointer", textAlign: "left",
-              transition: "all 200ms", minHeight: 44,
+              textAlign: "left",
+              minHeight: 44,
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.borderColor = `${tool.color}40`;

@@ -686,6 +686,7 @@ export default function ChatInput({
           <button
             onClick={onSend}
             disabled={!canSend}
+            className={canSend ? "btn-primary-glow" : undefined}
             style={{
               width: sendSize,
               height: sendSize,
@@ -696,9 +697,11 @@ export default function ChatInput({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "all 0.15s",
+              transition: "all 0.2s",
               color: canSend ? "var(--text-inverse)" : "var(--text-tertiary)",
               flexShrink: 0,
+              transform: canSend ? "scale(1)" : "scale(0.92)",
+              boxShadow: canSend ? "0 0 12px rgba(212,175,55,0.2)" : "none",
             }}
           >
             <ArrowUp size={16} />

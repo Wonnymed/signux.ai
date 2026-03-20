@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Search, Swords, Rocket, Shield, TrendingUp } from "lucide-react";
 
 export type Template = {
   id: string;
@@ -10,10 +11,18 @@ export type Template = {
   tool?: string;
 };
 
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  "Due Diligence": <Search size={13} />,
+  "Competition": <Swords size={13} />,
+  "Launch": <Rocket size={13} />,
+  "Risk & Protection": <Shield size={13} />,
+  "Growth": <TrendingUp size={13} />,
+};
+
 const TEMPLATES: { category: string; icon: string; templates: Template[] }[] = [
   {
     category: "Due Diligence",
-    icon: "\uD83D\uDD0D",
+    icon: "",
     templates: [
       {
         id: "dd-partnership",
@@ -34,7 +43,7 @@ const TEMPLATES: { category: string; icon: string; templates: Template[] }[] = [
   },
   {
     category: "Competition",
-    icon: "\u2694\uFE0F",
+    icon: "",
     templates: [
       {
         id: "comp-response",
@@ -55,7 +64,7 @@ const TEMPLATES: { category: string; icon: string; templates: Template[] }[] = [
   },
   {
     category: "Launch",
-    icon: "\uD83D\uDE80",
+    icon: "",
     templates: [
       {
         id: "launch-validate",
@@ -75,7 +84,7 @@ const TEMPLATES: { category: string; icon: string; templates: Template[] }[] = [
   },
   {
     category: "Risk & Protection",
-    icon: "\uD83D\uDEE1\uFE0F",
+    icon: "",
     templates: [
       {
         id: "risk-threat",
@@ -97,7 +106,7 @@ const TEMPLATES: { category: string; icon: string; templates: Template[] }[] = [
   },
   {
     category: "Growth",
-    icon: "\uD83D\uDCC8",
+    icon: "",
     templates: [
       {
         id: "growth-market",
@@ -140,7 +149,7 @@ export default function TemplateLibrary({ onSelectTemplate }: { onSelectTemplate
           onMouseEnter={e => { if (selectedCategory !== cat.category) e.currentTarget.style.borderColor = "var(--accent)"; }}
           onMouseLeave={e => { if (selectedCategory !== cat.category) e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
           >
-            {cat.icon} {cat.category}
+            {CATEGORY_ICONS[cat.category] || null} {cat.category}
           </button>
         ))}
       </div>
@@ -148,10 +157,9 @@ export default function TemplateLibrary({ onSelectTemplate }: { onSelectTemplate
       {selectedCategory && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, animation: "fadeIn 0.15s ease" }}>
           {TEMPLATES.find(c => c.category === selectedCategory)?.templates.map((t) => (
-            <button key={t.id} onClick={() => onSelectTemplate(t)} style={{
+            <button key={t.id} onClick={() => onSelectTemplate(t)} className="interactive-card" style={{
               textAlign: "left", padding: "10px 14px", borderRadius: 10,
               border: "1px solid var(--border-secondary)", background: "var(--card-bg)",
-              cursor: "pointer", transition: "all 150ms",
             }}
             onMouseEnter={e => {
               e.currentTarget.style.borderColor = "var(--accent)";
