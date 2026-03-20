@@ -1,11 +1,13 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Rocket, ChevronRight, ChevronLeft, Check, Shield, AlertTriangle, Target, TrendingUp, Brain, Zap, Copy, RotateCcw, FileText, Calendar, DollarSign, Users, ChevronDown, ChevronUp, X, Wand2, Loader2, Lock } from "lucide-react";
+import { Rocket, ChevronRight, ChevronLeft, Check, Shield, AlertTriangle, Target, TrendingUp, Brain, Zap, Copy, RotateCcw, FileText, Calendar, DollarSign, Users, ChevronDown, ChevronUp, X, Wand2, Loader2, Lock, Plus } from "lucide-react";
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { useEnhance } from "../lib/useEnhance";
 import type { Mode } from "../lib/types";
 import { signuxFetch } from "../lib/api-client";
+import MarkdownRenderer from "./MarkdownRenderer";
+import LoadingOracle from "./LoadingOracle";
 
 /* ═══ Types ═══ */
 type BusinessIdea = {
@@ -154,6 +156,118 @@ export default function LaunchpadView({ lang, userId, onSetMode, isLoggedIn, tie
   // UI
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // New welcome state
+  const [selectedStage, setSelectedStage] = useState("idea");
+  const [ideaDescription, setIdeaDescription] = useState("");
+  const [showContext, setShowContext] = useState(false);
+  const [ideaBudget, setIdeaBudget] = useState("");
+  const [ideaLocation, setIdeaLocation] = useState("");
+  const [ideaSkills, setIdeaSkills] = useState("");
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState("");
+
+  const handleValidate = async () => {
+    if (!ideaDescription.trim()) return;
+    if (!isLoggedIn) { window.location.href = "/signup"; return; }
+    if (tier === "free") { setShowPaywall(true); return; }
+
+    const contextParts: string[] = [];
+    if (ideaBudget) contextParts.push(`Budget: ${ideaBudget}`);
+    if (ideaLocation) contextParts.push(`Location: ${ideaLocation}`);
+    if (ideaSkills) contextParts.push(`Skills/background: ${ideaSkills}`);
+
+    const stageContext: Record<string, string> = {
+      idea: "This person has NO business yet — they're at the idea stage. Focus on: is this viable? What's the first step?",
+      early: "This person JUST STARTED — they're in early stage. Focus on: what's working, what to fix, how to get first customers.",
+      growing: "This person has a business and wants to GROW. Focus on: scaling strategies, bottlenecks, next revenue milestone.",
+    };
+
+    const prompt = `LAUNCHPAD VALIDATION — Quick business viability check.
+
+USER'S STAGE: ${selectedStage}
+${stageContext[selectedStage]}
+
+THEIR IDEA/BUSINESS: ${ideaDescription}
+${contextParts.length > 0 ? `ADDITIONAL CONTEXT: ${contextParts.join(" · ")}` : ""}
+
+Analyze this as a Launchpad validation. Structure your response EXACTLY like this:
+
+## 🚀 Quick Viability Check
+
+### Score: X/10
+[One sentence verdict — will this work?]
+
+### ✅ Why it could work (3 reasons)
+1. **[Reason]** — [1 sentence]
+2. **[Reason]** — [1 sentence]
+3. **[Reason]** — [1 sentence]
+
+### ⚠️ Watch out for (3 risks)
+1. **[Risk]** — [1 sentence]
+2. **[Risk]** — [1 sentence]
+3. **[Risk]** — [1 sentence]
+
+### 💰 First Revenue Path
+How to make your first $1,000:
+1. [Step 1 — specific action this week]
+2. [Step 2 — specific action next week]
+3. [Step 3 — specific action month 1]
+
+### 📊 Key Numbers to Know
+| Metric | Estimate | Source |
+|---|---|---|
+| Market size | $X | [reasoning] |
+| Startup cost | $X | [reasoning] |
+| Time to first sale | X weeks | [reasoning] |
+| Break-even | X months | [reasoning] |
+
+### 🎯 Your Next Step (do THIS today)
+[One specific, actionable step the user can take RIGHT NOW]
+
+### 📅 90-Day Roadmap
+**Week 1-2: Validate** — [specific validation actions]
+**Week 3-4: Build MVP** — [specific build actions]
+**Month 2: First customers** — [specific acquisition actions]
+**Month 3: Optimize & grow** — [specific growth actions]
+
+---
+*Want deeper analysis? Try the full Discovery flow or run a Simulation.*`;
+
+    setValidating(true);
+    setValidationResult("");
+    try {
+      const res = await signuxFetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], profile: null }),
+      });
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let buffer = "";
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.type === "text") {
+                fullText += data.text;
+                setValidationResult(fullText);
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+    setValidating(false);
+  };
 
   const startDiscovery = (persona?: string) => {
     if (persona === "scale") {
@@ -389,192 +503,344 @@ export default function LaunchpadView({ lang, userId, onSetMode, isLoggedIn, tie
 
   /* ═══ WELCOME STATE ═══ */
   if (phase === "welcome") {
-    const personas = [
-      { tag: "CAREER CHANGE", color: TEAL, desc: "I have skills but no business idea yet", persona: "career" },
-      { tag: "SIDE PROJECT", color: "#f59e0b", desc: "I have an idea and want to validate it", persona: "side" },
-      { tag: "SCALE UP", color: "#3b82f6", desc: "I already started but need structure to grow", persona: "scale" },
+    const stages = [
+      { id: "idea", label: "Idea stage" },
+      { id: "early", label: "Early stage" },
+      { id: "growing", label: "Growth stage" },
     ];
 
-    return (
+    const quickIdeas = [
+      "Online course on my expertise",
+      "Local food delivery service",
+      "SaaS tool for small businesses",
+      "Freelance consulting agency",
+      "E-commerce niche store",
+      "Mobile app for fitness",
+    ];
+
+    // Show validation result if available
+    if (validationResult || validating) {
+      return (
         <section style={{
-          minHeight: isMobile ? "75vh" : "85vh",
           display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          padding: isMobile ? "24px 16px 32px" : "32px 24px 40px",
-          position: "relative", overflow: "hidden",
+          padding: isMobile ? "12px 16px 24px" : "16px 24px 32px",
+          flex: 1, overflowY: "auto",
         }}>
-          {TRAJECTORY_LINES.map((line, i) => (
-            <div key={`tl-${i}`} style={{
-              position: "absolute", left: line.left, width: 2,
-              height: line.height, pointerEvents: "none",
-              background: `linear-gradient(to top, ${tealAlpha(0.3)}, transparent)`,
-              animation: `moveUp ${line.dur}s linear infinite`,
-              animationDelay: `${line.delay}s`,
-            }} />
-          ))}
+          {/* Compact header */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            marginBottom: 16, paddingTop: isMobile ? 8 : 12,
+          }}>
+            <button onClick={() => { setValidationResult(""); setValidating(false); }} style={{
+              display: "flex", alignItems: "center", gap: 4,
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 13, color: "var(--text-tertiary)",
+            }}>
+              <ChevronLeft size={16} /> Back
+            </button>
+          </div>
 
-          <div style={{ maxWidth: 720, width: "100%", position: "relative", zIndex: 1 }}>
-            <div style={{ textAlign: "center", marginBottom: 24, animation: "fadeIn 0.4s ease-out" }}>
-              <div style={{
-                width: isMobile ? 36 : 48, height: isMobile ? 36 : 48, borderRadius: isMobile ? 10 : 12,
-                border: `1px solid ${tealAlpha(0.15)}`,
-                background: tealAlpha(0.04),
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 16px",
-              }}>
-                <Rocket size={isMobile ? 18 : 22} style={{ color: TEAL }} />
-              </div>
+          {validating && !validationResult && <LoadingOracle mode="launchpad" />}
 
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center" }}>
-                <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 700,
-                  letterSpacing: 3, color: "var(--text-primary)",
-                }}>LAUNCH</span>
-                <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 28, fontWeight: 300,
-                  letterSpacing: 2, color: "var(--text-tertiary)", marginLeft: 8,
-                }}>PAD</span>
-              </div>
-
-              <div style={{
-                fontFamily: "var(--font-mono)", fontSize: isMobile ? 9 : 11, letterSpacing: isMobile ? 1 : 3,
-                textTransform: "uppercase", color: tealAlpha(0.6), marginTop: isMobile ? 8 : 12,
-              }}>
-                {t("launchpad.subtitle")}
-              </div>
-
-              <div style={{
-                width: 48, height: 1,
-                background: `linear-gradient(90deg, transparent, ${TEAL}, transparent)`,
-                margin: "20px auto 0",
-              }} />
+          {validationResult && (
+            <div style={{ maxWidth: 700, margin: "0 auto", width: "100%" }}>
+              <MarkdownRenderer content={validationResult} />
             </div>
+          )}
 
+          {!validating && validationResult && (
+            <div style={{
+              display: "flex", gap: 8, justifyContent: "center",
+              marginTop: 20, paddingBottom: 20,
+            }}>
+              <button onClick={() => { setValidationResult(""); }} style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 50,
+                border: "1px solid var(--border-secondary)",
+                background: "transparent", color: "var(--text-secondary)",
+                fontSize: 12, cursor: "pointer",
+              }}>
+                <RotateCcw size={12} /> Validate another idea
+              </button>
+              <button onClick={() => startDiscovery()} style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 50,
+                background: TEAL, color: "#000",
+                fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+              }}>
+                <Rocket size={12} /> Full Discovery flow →
+              </button>
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    return (
+      <section style={{
+        display: "flex", flexDirection: "column",
+        padding: isMobile ? "12px 16px 24px" : "16px 24px 32px",
+      }}>
+
+        {/* ── COMPACT HEADER ── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 8, paddingTop: isMobile ? 8 : 20, paddingBottom: 4,
+        }}>
+          <div style={{
+            width: 26, height: 26, borderRadius: 8,
+            background: tealAlpha(0.08),
+            border: `1px solid ${tealAlpha(0.15)}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Rocket size={13} style={{ color: TEAL }} />
+          </div>
+          <span style={{
+            fontFamily: "var(--font-brand)", fontSize: 15, fontWeight: 700,
+            letterSpacing: 3, color: "var(--text-primary)",
+          }}>
+            LAUNCHPAD
+          </span>
+        </div>
+        <p style={{
+          textAlign: "center", fontSize: 13, color: "var(--text-tertiary)",
+          marginBottom: isMobile ? 14 : 20,
+        }}>
+          Validate your business idea in 60 seconds
+        </p>
+
+        {/* ── STAGE PILLS ── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 6, marginBottom: 16,
+          flexWrap: isMobile ? "nowrap" : "wrap",
+          overflowX: isMobile ? "auto" : undefined,
+          scrollbarWidth: "none" as const,
+        }}>
+          <span style={{ fontSize: 11, color: "var(--text-tertiary)", flexShrink: 0 }}>
+            I&apos;m at the:
+          </span>
+          {stages.map(stage => (
+            <button
+              key={stage.id}
+              onClick={() => setSelectedStage(stage.id)}
+              style={{
+                padding: "6px 14px", borderRadius: 50,
+                border: `1px solid ${selectedStage === stage.id ? tealAlpha(0.4) : "var(--border-secondary)"}`,
+                background: selectedStage === stage.id ? tealAlpha(0.08) : "transparent",
+                color: selectedStage === stage.id ? TEAL : "var(--text-secondary)",
+                fontSize: 12, fontWeight: selectedStage === stage.id ? 600 : 400,
+                cursor: "pointer", transition: "all 150ms",
+                whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              {stage.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── MAIN INPUT ── */}
+        <div style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
+          <div style={{
+            borderRadius: 14,
+            border: ideaDescription.trim()
+              ? `1px solid ${tealAlpha(0.25)}`
+              : "1px solid var(--border-secondary)",
+            background: "var(--card-bg)",
+            overflow: "hidden",
+            transition: "border-color 200ms, box-shadow 200ms",
+            boxShadow: ideaDescription.trim() ? `0 0 20px ${tealAlpha(0.04)}` : "none",
+          }}>
+            <textarea
+              value={ideaDescription}
+              onChange={(e) => setIdeaDescription(e.target.value)}
+              placeholder={
+                selectedStage === "idea" ? "I want to start a business that..."
+                : selectedStage === "early" ? "I just launched a business that does..."
+                : "My business does X and I want to grow by..."
+              }
+              rows={isMobile ? 3 : 4}
+              style={{
+                width: "100%", padding: "16px 18px 8px",
+                background: "transparent", border: "none",
+                color: "var(--text-primary)", fontSize: 14,
+                lineHeight: 1.6, resize: "none", outline: "none",
+                fontFamily: "var(--font-body)",
+              }}
+            />
+
+            {/* Bottom bar */}
             <div style={{
               display: "flex", alignItems: "center",
-              justifyContent: isMobile ? "flex-start" : "center",
-              gap: 0, marginBottom: 20, animation: "fadeIn 0.5s ease-out",
-              overflowX: "auto", WebkitOverflowScrolling: "touch",
-              padding: isMobile ? "0 4px 6px" : "0 8px",
-              scrollSnapType: isMobile ? "x mandatory" : undefined,
-              scrollbarWidth: "none",
+              padding: "6px 12px 8px", gap: 8,
             }}>
-              {JOURNEY_STEPS.map((step, i) => (
-                <div key={step} style={{
-                  display: "flex", alignItems: "center",
-                  flex: isMobile ? "0 0 auto" : undefined,
-                  scrollSnapAlign: isMobile ? "center" : undefined,
-                }}>
-                  {i > 0 && <div style={{ width: isMobile ? 10 : 24, height: 1, background: tealAlpha(0.15), flexShrink: 0 }} />}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: isMobile ? 4 : 6 }}>
-                    <div style={{
-                      width: isMobile ? 24 : 28, height: isMobile ? 24 : 28, borderRadius: "50%",
-                      border: i === 0 ? `1px solid ${tealAlpha(0.4)}` : "1px solid var(--border-secondary)",
-                      background: i === 0 ? tealAlpha(0.15) : "transparent",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontFamily: "var(--font-mono)", fontSize: isMobile ? 9 : 10, fontWeight: 600,
-                      color: i === 0 ? TEAL : "var(--text-tertiary)",
-                    }}>
-                      {i + 1}
-                    </div>
-                    <span style={{
-                      fontFamily: "var(--font-mono)", fontSize: isMobile ? 7 : 9, letterSpacing: 1,
-                      textTransform: "uppercase",
-                      color: i === 0 ? tealAlpha(0.7) : "var(--text-tertiary)",
-                      whiteSpace: "nowrap",
-                    }}>
-                      {step}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+              <button onClick={() => setShowContext(!showContext)} style={{
+                display: "flex", alignItems: "center", gap: 4,
+                padding: "5px 10px", borderRadius: 6,
+                border: "1px solid var(--border-secondary)",
+                background: showContext ? tealAlpha(0.06) : "transparent",
+                color: showContext ? TEAL : "var(--text-tertiary)",
+                fontSize: 11, cursor: "pointer",
+              }}>
+                <Plus size={11} /> Add details
+              </button>
 
-            <div style={{
-              textAlign: "center", maxWidth: 520, margin: "0 auto 40px",
-              fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.6,
-              animation: "fadeIn 0.55s ease-out",
-            }}>
-              {t("launchpad.central_text")}
-            </div>
+              <div style={{ flex: 1 }} />
 
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-              gap: 10, marginBottom: 32,
-              animation: "fadeIn 0.6s ease-out",
-            }}>
-              {personas.map(p => {
-                const r = parseInt(p.color.slice(1, 3), 16);
-                const g = parseInt(p.color.slice(3, 5), 16);
-                const b = parseInt(p.color.slice(5, 7), 16);
-                const rgba = (a: number) => `rgba(${r},${g},${b},${a})`;
-                return (
-                  <button
-                    key={p.tag}
-                    onClick={() => startDiscovery(p.persona)}
-                    style={{
-                      background: "var(--card-bg)",
-                      border: "1px solid var(--card-border)",
-                      borderRadius: 10, padding: "16px",
-                      cursor: "pointer", transition: "all 200ms",
-                      textAlign: "left", borderLeft: "2px solid transparent",
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = rgba(0.2);
-                      e.currentTarget.style.borderLeftColor = p.color;
-                      e.currentTarget.style.background = rgba(0.03);
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = "var(--card-border)";
-                      e.currentTarget.style.borderLeftColor = "transparent";
-                      e.currentTarget.style.background = "var(--card-bg)";
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                      <div style={{ width: 4, height: 4, borderRadius: "50%", background: p.color }} />
-                      <span style={{
-                        fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: 1,
-                        textTransform: "uppercase", color: "var(--text-secondary)",
-                      }}>{p.tag}</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.5 }}>
-                      {p.desc}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div style={{ textAlign: "center", animation: "fadeIn 0.8s ease-out" }}>
               <button
-                onClick={() => startDiscovery()}
+                onClick={handleValidate}
+                disabled={!ideaDescription.trim() || validating}
                 style={{
-                  display: "inline-flex", alignItems: "center", gap: 10,
-                  background: TEAL, color: "var(--text-inverse)", border: "none", borderRadius: 50,
-                  padding: "14px 36px",
-                  fontFamily: "var(--font-brand)", fontWeight: 600, fontSize: 14,
-                  letterSpacing: 2, textTransform: "uppercase",
-                  cursor: "pointer", transition: "all 200ms",
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.filter = "brightness(1.15)";
-                  e.currentTarget.style.boxShadow = `0 0 30px ${tealAlpha(0.25)}`;
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.filter = "none";
-                  e.currentTarget.style.boxShadow = "none";
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "8px 20px", borderRadius: 50,
+                  background: ideaDescription.trim() && !validating ? TEAL : "rgba(255,255,255,0.05)",
+                  color: ideaDescription.trim() && !validating ? "#000" : "var(--text-tertiary)",
+                  fontSize: 13, fontWeight: 700, border: "none",
+                  cursor: ideaDescription.trim() && !validating ? "pointer" : "default",
+                  opacity: ideaDescription.trim() && !validating ? 1 : 0.4,
+                  transition: "all 300ms ease",
+                  whiteSpace: "nowrap",
                 }}
               >
-                <Rocket size={16} />
-                {t("launchpad.cta")}
+                <Zap size={13} />
+                {validating ? "Validating..." : "Validate idea"}
               </button>
-              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 16 }}>
-                {t("launchpad.disclaimer")}
+            </div>
+
+            {/* Expandable context fields */}
+            {showContext && (
+              <div style={{
+                padding: "10px 14px", borderTop: "1px solid var(--border-secondary)",
+                display: "flex", flexDirection: "column", gap: 8,
+              }}>
+                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 8 }}>
+                  <input
+                    placeholder="Budget (e.g. $10K, $50K)"
+                    value={ideaBudget}
+                    onChange={(e) => setIdeaBudget(e.target.value)}
+                    style={{
+                      flex: 1, padding: "8px 10px", borderRadius: 8,
+                      border: "1px solid var(--border-secondary)",
+                      background: "var(--bg-secondary)", color: "var(--text-primary)",
+                      fontSize: 12, outline: "none",
+                    }}
+                  />
+                  <input
+                    placeholder="Location (e.g. São Paulo, Online)"
+                    value={ideaLocation}
+                    onChange={(e) => setIdeaLocation(e.target.value)}
+                    style={{
+                      flex: 1, padding: "8px 10px", borderRadius: 8,
+                      border: "1px solid var(--border-secondary)",
+                      background: "var(--bg-secondary)", color: "var(--text-primary)",
+                      fontSize: 12, outline: "none",
+                    }}
+                  />
+                </div>
+                <input
+                  placeholder="Your skills or background (e.g. marketing, coding, chef)"
+                  value={ideaSkills}
+                  onChange={(e) => setIdeaSkills(e.target.value)}
+                  style={{
+                    width: "100%", padding: "8px 10px", borderRadius: 8,
+                    border: "1px solid var(--border-secondary)",
+                    background: "var(--bg-secondary)", color: "var(--text-primary)",
+                    fontSize: 12, outline: "none",
+                  }}
+                />
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── QUICK IDEAS ── */}
+        <div style={{
+          maxWidth: 640, margin: "10px auto 0", width: "100%",
+          display: "flex", alignItems: "center", gap: 6,
+          flexWrap: isMobile ? "nowrap" : "wrap",
+          justifyContent: "center",
+          overflowX: isMobile ? "auto" : undefined,
+          WebkitOverflowScrolling: isMobile ? "touch" : undefined,
+          scrollbarWidth: "none" as const,
+          paddingBottom: isMobile ? 4 : 0,
+        }}>
+          <span style={{ fontSize: 10, color: "var(--text-tertiary)", flexShrink: 0 }}>
+            Popular:
+          </span>
+          {quickIdeas.map((idea, i) => (
+            <button key={i} onClick={() => setIdeaDescription(idea)} style={{
+              padding: "4px 10px", borderRadius: 50,
+              border: "1px solid var(--border-secondary)",
+              background: "transparent", color: "var(--text-secondary)",
+              fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
+              transition: "all 150ms", flexShrink: 0,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = tealAlpha(0.3); e.currentTarget.style.color = TEAL; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-secondary)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            >
+              {idea}
+            </button>
+          ))}
+        </div>
+
+        {/* ── FULL DISCOVERY LINK ── */}
+        <div style={{
+          maxWidth: 640, margin: "12px auto 0", width: "100%",
+          textAlign: "center",
+        }}>
+          <button onClick={() => startDiscovery()} style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "5px 12px", borderRadius: 50,
+            border: `1px dashed ${tealAlpha(0.2)}`,
+            background: "transparent",
+            color: "var(--text-tertiary)", fontSize: 10,
+            cursor: "pointer",
+          }}>
+            <Rocket size={10} style={{ color: TEAL }} />
+            Or take the full guided Discovery flow
+          </button>
+        </div>
+
+        {/* ── DISCLAIMER ── */}
+        <p style={{
+          textAlign: "center", fontSize: 10,
+          color: "var(--text-tertiary)", opacity: 0.3,
+          marginTop: 20, paddingBottom: 20,
+        }}>
+          Validation takes 60-90 seconds. Always verify with market research.
+        </p>
+
+        {/* Paywall modal */}
+        {showPaywall && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 999,
+            background: "rgba(0,0,0,0.6)", display: "flex",
+            alignItems: "center", justifyContent: "center",
+          }} onClick={() => setShowPaywall(false)}>
+            <div onClick={e => e.stopPropagation()} style={{
+              background: "var(--bg-primary)", borderRadius: 16,
+              padding: 32, maxWidth: 400, width: "90%",
+              border: "1px solid var(--border-secondary)",
+              textAlign: "center",
+            }}>
+              <Lock size={32} style={{ color: TEAL, marginBottom: 12 }} />
+              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: "var(--text-primary)" }}>
+                Upgrade to Pro
+              </h3>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>
+                Launchpad validation requires a Pro plan.
+              </p>
+              <button onClick={() => { window.location.href = "/pricing"; }} style={{
+                padding: "10px 24px", borderRadius: 50,
+                background: TEAL, color: "#000",
+                fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
+              }}>
+                View Plans
+              </button>
             </div>
           </div>
-        </section>
+        )}
+      </section>
     );
   }
 
