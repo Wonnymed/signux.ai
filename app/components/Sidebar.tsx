@@ -1,13 +1,12 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
-import { MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2, Flame, FolderOpen, Plus, ChevronDown, X, Upload, Eye, LayoutDashboard } from "lucide-react";
+import { MessageSquare, Zap, Shield, Rocket, Globe, TrendingUp, Settings, LogIn, LogOut, Trash2, FolderOpen, Plus, ChevronDown, X, Upload, LayoutDashboard } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
-import { t, getLanguage, setLanguage as setLang, ALL_LANGUAGES } from "../lib/i18n";
+import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
 import type { AuthUser } from "../lib/auth";
 import type { Conversation } from "../lib/database-client";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
-import { updateStreak } from "../lib/streak";
 import type { Project } from "../lib/useProjects";
 
 type SidebarProps = {
@@ -29,13 +28,11 @@ type SidebarProps = {
   activeConversationId?: string | null;
   onLoadConversation?: (id: string) => void;
   onDeleteConversation?: (id: string) => void;
-  /* Projects */
   projects?: Project[];
   activeProject?: Project | null;
   onSelectProject?: (id: string | null) => void;
   onCreateProject?: (name: string) => void;
   onOpenKnowledge?: () => void;
-  /* Tier & Usage */
   tier?: string;
   usage?: { simulations_month: number; researches_month: number; globalops_month: number; invest_month: number };
   limits?: { simulate_monthly: number; research_monthly: number; globalops_monthly: number; invest_monthly: number };
@@ -137,11 +134,7 @@ function SidebarIconButton({ icon, tooltip, active, activeColor, onClick, isPrim
           animation: "tooltipFadeIn 150ms ease-out forwards",
           pointerEvents: "none",
         }}>
-          <span style={{
-            fontSize: 12,
-            fontWeight: 500,
-            color: "var(--text-primary)",
-          }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)" }}>
             {tooltip}
           </span>
         </div>
@@ -186,7 +179,7 @@ function SidebarLogoButton({ onClick }: { onClick: () => void }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          cursor: "pointer",
+          cursor: "default",
           border: "none",
           padding: 0,
           position: "relative",
@@ -254,6 +247,112 @@ function SidebarLogoButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+/* ═══ Profile Popover — Dashboard, Settings, Sign out ═══ */
+function ProfilePopover({ authUser, userInitials, displayName, tier, onOpenSettings, onSignOut, onClose }: {
+  authUser?: AuthUser | null;
+  userInitials: string;
+  displayName: string;
+  tier?: string;
+  onOpenSettings: () => void;
+  onSignOut?: () => void;
+  onClose: () => void;
+}) {
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  const menuItem = (icon: React.ReactNode, label: string, onClick: () => void, color?: string) => (
+    <button
+      onClick={() => { onClick(); onClose(); }}
+      style={{
+        display: "flex", alignItems: "center", gap: 10,
+        width: "100%", padding: "8px 12px", border: "none",
+        borderRadius: 8, background: "transparent",
+        cursor: "pointer", color: color || "var(--text-secondary)",
+        fontSize: 13, textAlign: "left",
+        transition: "background 150ms",
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+
+  return (
+    <div
+      ref={popoverRef}
+      style={{
+        position: "absolute",
+        bottom: "calc(100% + 8px)",
+        left: 0,
+        width: 220,
+        padding: 6,
+        borderRadius: 12,
+        background: "var(--card-bg, #252322)",
+        border: "1px solid var(--border-secondary)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        zIndex: 300,
+        animation: "tooltipFadeIn 150ms ease-out forwards",
+      }}
+    >
+      {/* User info header */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "10px 12px 8px",
+      }}>
+        {authUser?.avatar ? (
+          <img src={authUser.avatar} alt={displayName} width={32} height={32}
+            style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
+        ) : (
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%",
+            background: "var(--bg-tertiary)", color: "var(--text-primary)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, fontWeight: 600, flexShrink: 0,
+          }}>
+            {userInitials}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {displayName}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+            {tier === "max" || tier === "founding" ? (
+              <span style={{ color: "#A855F7" }}>Max plan</span>
+            ) : tier === "pro" ? (
+              <span style={{ color: "#D4AF37" }}>Pro plan</span>
+            ) : (
+              "Free plan"
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 8px" }} />
+
+      {/* Menu items */}
+      {menuItem(<LayoutDashboard size={15} strokeWidth={1.5} />, "Dashboard", () => { window.location.href = "/dashboard"; })}
+      {menuItem(<Settings size={15} strokeWidth={1.5} />, "Settings", onOpenSettings)}
+
+      {onSignOut && (
+        <>
+          <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 8px" }} />
+          {menuItem(<LogOut size={15} strokeWidth={1.5} />, "Sign out", onSignOut, "var(--text-tertiary)")}
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ═══ Date Grouping ═══ */
 function groupByDate(convs: Conversation[]) {
   const now = new Date();
@@ -288,7 +387,7 @@ function ConversationItem({ conv, isActive, onLoad, onDelete }: {
 }) {
   const [hovering, setHovering] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const title = conv.title || "New conversation";
+  const title = conv.title || "New chat";
 
   if (confirmDelete) {
     return (
@@ -340,7 +439,7 @@ function ConversationItem({ conv, isActive, onLoad, onDelete }: {
           onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            width: 44, height: 44, borderRadius: "var(--radius-xs)",
+            width: 28, height: 28, borderRadius: "var(--radius-xs)",
             color: "var(--text-tertiary)", flexShrink: 0,
             transition: "color 0.15s",
           }}
@@ -367,7 +466,6 @@ export default function Sidebar({
 
   const handleMode = (m: Mode) => { setMode(m); if (open) onClose(); };
   const handleNew = () => { onNewConversation(); if (open) onClose(); };
-  const handleSettings = () => { onOpenSettings(); if (open) onClose(); };
   const toggleSidebar = () => { if (open) onClose(); else onOpen(); };
 
   /* ═══ Project Selector State ═══ */
@@ -376,7 +474,6 @@ export default function Sidebar({
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
   const projectDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!projectDropdownOpen) return;
     const handler = (e: MouseEvent) => {
@@ -388,6 +485,9 @@ export default function Sidebar({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [projectDropdownOpen]);
+
+  /* ═══ Profile Popover State ═══ */
+  const [profilePopoverOpen, setProfilePopoverOpen] = useState(false);
 
   /* ═══ Decision Follow-up Badge ═══ */
   const [pendingDecisions, setPendingDecisions] = useState(0);
@@ -410,29 +510,6 @@ export default function Sidebar({
     checkDecisions();
   }, [userId]);
 
-  /* ═══ Active Watches ═══ */
-  const [activeWatches, setActiveWatches] = useState(0);
-
-  useEffect(() => {
-    if (!userId) { setActiveWatches(0); return; }
-    const checkWatches = async () => {
-      try {
-        const res = await fetch(`/api/watch?userId=${userId}`);
-        const data = await res.json();
-        if (data.count) setActiveWatches(data.count);
-      } catch {}
-    };
-    checkWatches();
-  }, [userId]);
-
-  /* ═══ Streak Counter ═══ */
-  const [streak, setStreak] = useState(0);
-
-  useEffect(() => {
-    const { streak: s } = updateStreak();
-    setStreak(s);
-  }, []);
-
   // Click outside to close (mobile + desktop expanded)
   useEffect(() => {
     if (!open) return;
@@ -443,7 +520,7 @@ export default function Sidebar({
     return () => document.removeEventListener("mousedown", handler);
   }, [open, onClose]);
 
-  // Escape to close sidebar (both mobile and desktop)
+  // Escape to close sidebar
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -454,7 +531,7 @@ export default function Sidebar({
   const iconSize = 18;
   const iconSW = 1.5;
 
-  // Mobile overlay style
+  // Mobile overlay
   if (isMobile) {
     return (
       <>
@@ -472,7 +549,7 @@ export default function Sidebar({
     );
   }
 
-  // Desktop: single sidebar that changes width between collapsed (56px) and expanded (260px)
+  // Desktop: single sidebar, collapsed 56px / expanded 260px
   const sidebarWidth = open ? 260 : 56;
 
   return (
@@ -491,11 +568,11 @@ export default function Sidebar({
     </aside>
   );
 
-  // ═══ EXPANDED (full sidebar with text) ═══
+  // ═══ EXPANDED ═══
   function renderExpandedContent() {
     return (
       <>
-        {/* Header: S logo + SIGNUX AI + toggle right */}
+        {/* Header */}
         <div style={{ padding: "12px 12px 12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <SignuxIcon variant="gold" size={24} />
@@ -515,7 +592,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* New conversation */}
+        {/* New chat */}
         <div style={{ padding: "0 8px 8px" }}>
           <button onClick={handleNew} style={{
             display: "flex", alignItems: "center", gap: 10, width: "100%",
@@ -527,12 +604,12 @@ export default function Sidebar({
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(212,175,55,0.05)"; e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}>
             <Plus size={16} strokeWidth={2} />
-            <span>{t("sidebar.new_chat")}</span>
+            <span>New chat</span>
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)", marginLeft: "auto" }}>⌘K</span>
           </button>
         </div>
 
-        {/* Project selector */}
+        {/* Projects selector */}
         {isLoggedIn && (
           <div style={{ padding: "0 8px 8px", position: "relative" }} ref={projectDropdownRef}>
             <button
@@ -549,12 +626,11 @@ export default function Sidebar({
             >
               <FolderOpen size={14} style={{ color: activeProject?.color || "var(--text-tertiary)", flexShrink: 0 }} />
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
-                {activeProject ? activeProject.name : "All conversations"}
+                {activeProject ? activeProject.name : "Projects"}
               </span>
               <ChevronDown size={12} style={{ flexShrink: 0, opacity: 0.5, transform: projectDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
             </button>
 
-            {/* Dropdown */}
             {projectDropdownOpen && (
               <div style={{
                 position: "absolute", top: "100%", left: 8, right: 8,
@@ -563,7 +639,6 @@ export default function Sidebar({
                 boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                 maxHeight: 280, overflowY: "auto",
               }}>
-                {/* All conversations option */}
                 <button
                   onClick={() => { onSelectProject?.(null); setProjectDropdownOpen(false); }}
                   style={{
@@ -575,14 +650,13 @@ export default function Sidebar({
                   onMouseLeave={e => { if (activeProject) e.currentTarget.style.background = "transparent"; }}
                 >
                   <MessageSquare size={13} style={{ opacity: 0.5 }} />
-                  <span>All conversations</span>
+                  <span>All chats</span>
                 </button>
 
                 {projects.length > 0 && (
                   <div style={{ height: 1, background: "var(--border-secondary)", margin: "2px 0" }} />
                 )}
 
-                {/* Project list */}
                 {projects.filter(p => !p.archived).map(p => (
                   <button
                     key={p.id}
@@ -606,7 +680,6 @@ export default function Sidebar({
 
                 <div style={{ height: 1, background: "var(--border-secondary)", margin: "2px 0" }} />
 
-                {/* New project */}
                 {showNewProjectInput ? (
                   <div style={{ padding: "8px 12px", display: "flex", gap: 6 }}>
                     <input
@@ -675,7 +748,6 @@ export default function Sidebar({
                 <Icon size={16} strokeWidth={1.5} style={{ color: mode === key ? (color || "var(--accent)") : undefined }} />
                 <span style={{ flex: 1 }}>{t(label)}</span>
               </button>
-              {/* Divider after launchpad (index 3) */}
               {idx === 3 && (
                 <div style={{ height: 1, width: "calc(100% - 16px)", background: "var(--border-secondary)", margin: "4px 8px" }} />
               )}
@@ -710,13 +782,6 @@ export default function Sidebar({
                 </div>
               </div>
             ))}
-            <a href="/pricing" style={{
-              display: "block", padding: "6px 12px", marginTop: 4,
-              fontSize: 10, color: "#A855F7", textDecoration: "none",
-              fontWeight: 600, letterSpacing: 0.5,
-            }}>
-              Remove all limits →
-            </a>
           </div>
         )}
 
@@ -735,12 +800,10 @@ export default function Sidebar({
               {onOpenKnowledge && (
                 <button
                   onClick={onOpenKnowledge}
-                  title="Knowledge Base"
                   style={{
                     background: "none", border: "none", cursor: "pointer",
                     color: activeProject.color || "var(--accent)", padding: 2,
-                    opacity: 0.7, fontSize: 10, fontWeight: 500,
-                    transition: "opacity 150ms",
+                    opacity: 0.7, transition: "opacity 150ms",
                   }}
                   onMouseEnter={e => e.currentTarget.style.opacity = "1"}
                   onMouseLeave={e => e.currentTarget.style.opacity = "0.7"}
@@ -785,48 +848,13 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Bottom */}
-        <div style={{ borderTop: "1px solid var(--border-secondary)", padding: 8 }}>
-          {/* Language selector */}
-          <div style={{
-            display: "flex", gap: 4, padding: "6px 12px", margin: "4px 0",
-          }}>
-            {ALL_LANGUAGES.slice(0, 2).map(lang => {
-              const currentLang = getLanguage();
-              const isActive = currentLang === lang.code;
-              return (
-                <button key={lang.code} onClick={() => { setLang(lang.code); window.location.reload(); }} style={{
-                  padding: "3px 8px", borderRadius: 4,
-                  background: isActive ? "rgba(212,175,55,0.1)" : "transparent",
-                  border: isActive ? "1px solid rgba(212,175,55,0.2)" : "1px solid transparent",
-                  color: isActive ? "var(--accent)" : "var(--text-tertiary)",
-                  fontSize: 10, fontWeight: 600, cursor: "pointer",
-                }}>
-                  {lang.code === "en" ? "EN" : "PT"}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Streak counter */}
-          {streak >= 2 && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", margin: "4px 8px",
-              fontSize: 11, color: "var(--text-tertiary)",
-            }}>
-              <Flame size={12} style={{
-                color: streak >= 7 ? "#ef4444" : streak >= 3 ? "#f59e0b" : "var(--text-tertiary)",
-              }} />
-              <span>{streak}-day streak</span>
-            </div>
-          )}
-
+        {/* Bottom — profile only */}
+        <div style={{ borderTop: "1px solid var(--border-secondary)", padding: 8, position: "relative" }}>
           {/* Decision follow-up badge */}
           {pendingDecisions > 0 && (
             <a href="/decisions" style={{
               display: "flex", alignItems: "center", gap: 8,
-              padding: "8px 12px", margin: "4px 8px",
+              padding: "8px 12px", margin: "0 0 4px",
               borderRadius: 8, background: "rgba(168,85,247,0.06)",
               border: "1px solid rgba(168,85,247,0.12)",
               fontSize: 12, color: "var(--mode-inv, #A855F7)",
@@ -844,79 +872,59 @@ export default function Sidebar({
             </a>
           )}
 
-          {/* Active watches badge */}
-          {activeWatches > 0 && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "8px 12px", margin: "4px 8px",
-              borderRadius: 8, background: "rgba(34,197,94,0.06)",
-              border: "1px solid rgba(34,197,94,0.12)",
-              fontSize: 12, color: "#22c55e",
-            }}>
-              <Eye size={13} style={{ color: "#22c55e" }} />
-              <span>{activeWatches} active watch{activeWatches > 1 ? "es" : ""}</span>
-            </div>
-          )}
-
-          {/* Dashboard */}
-          {isLoggedIn && (
-            <a href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none", background: "none", borderRadius: "var(--radius-xs)", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left", textDecoration: "none" }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)"} onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
-              <LayoutDashboard size={16} strokeWidth={1.5} /> <span>{t("sidebar.dashboard")}</span>
-            </a>
-          )}
-
-          {/* Settings */}
-          <button onClick={handleSettings} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none", background: "none", borderRadius: "var(--radius-xs)", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left" }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <Settings size={16} strokeWidth={1.5} /> <span>{t("sidebar.settings")}</span>
-          </button>
-
-          {/* User profile when logged in */}
+          {/* Profile row — click opens popover */}
           {isLoggedIn && displayName ? (
-            <div style={{ marginTop: 4 }}>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 12px", borderRadius: "var(--radius-xs)",
-              }}>
+            <div style={{ position: "relative" }}>
+              {profilePopoverOpen && (
+                <ProfilePopover
+                  authUser={authUser}
+                  userInitials={userInitials}
+                  displayName={displayName}
+                  tier={tier}
+                  onOpenSettings={() => { onOpenSettings(); onClose(); }}
+                  onSignOut={onSignOut ? () => { onSignOut(); onClose(); } : undefined}
+                  onClose={() => setProfilePopoverOpen(false)}
+                />
+              )}
+              <button
+                onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  width: "100%", padding: "8px 10px", border: "none",
+                  borderRadius: 8, background: profilePopoverOpen ? "rgba(255,255,255,0.04)" : "transparent",
+                  cursor: "pointer", transition: "background 150ms",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                onMouseLeave={e => { if (!profilePopoverOpen) e.currentTarget.style.background = "transparent"; }}
+              >
                 {authUser?.avatar ? (
-                  <img src={authUser.avatar} alt={displayName} width={36} height={36} style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
+                  <img src={authUser.avatar} alt={displayName} width={28} height={28}
+                    style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
                 ) : (
                   <div style={{
-                    width: 36, height: 36, borderRadius: "50%",
+                    width: 28, height: 28, borderRadius: "50%",
                     background: "var(--bg-tertiary)", color: "var(--text-primary)",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 14, fontWeight: 600, flexShrink: 0,
+                    fontSize: 11, fontWeight: 600, flexShrink: 0,
                   }}>
                     {userInitials}
                   </div>
                 )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {displayName}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                    {tier === "max" || tier === "founding" ? (
-                      <span style={{ color: "#A855F7" }}>Max plan</span>
-                    ) : tier === "pro" ? (
-                      <span style={{ color: "#D4AF37" }}>Pro plan</span>
-                    ) : (
-                      "Free plan"
-                    )}
-                  </div>
-                </div>
-              </div>
-              {onSignOut && (
-                <button onClick={() => { onSignOut(); onClose(); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none", background: "none", borderRadius: "var(--radius-xs)", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left", marginTop: 2 }}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <LogOut size={16} strokeWidth={1.5} /> <span>{t("auth.sign_out")}</span>
-                </button>
-              )}
+                <span style={{ fontSize: 13, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, textAlign: "left" }}>
+                  {displayName}
+                </span>
+              </button>
             </div>
           ) : !isLoggedIn ? (
-            <button onClick={() => { window.location.href = "/login"; }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none", background: "none", borderRadius: "var(--radius-xs)", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left", marginTop: 2 }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-              <LogIn size={16} strokeWidth={1.5} /> <span>{t("auth.sign_in")}</span>
+            <button onClick={() => { window.location.href = "/login"; }} style={{
+              display: "flex", alignItems: "center", gap: 10, width: "100%",
+              padding: "8px 10px", border: "none", background: "transparent",
+              borderRadius: 8, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left",
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+              <LogIn size={16} strokeWidth={1.5} />
+              <span>{t("auth.sign_in")}</span>
             </button>
           ) : null}
         </div>
@@ -924,7 +932,7 @@ export default function Sidebar({
     );
   }
 
-  // ═══ COLLAPSED (icons only — Okara pixel-perfect) ═══
+  // ═══ COLLAPSED ═══
   function renderCollapsedContent() {
     return (
       <div style={{
@@ -937,22 +945,20 @@ export default function Sidebar({
         {/* Logo — hover swaps to expand icon, click opens sidebar */}
         <SidebarLogoButton onClick={toggleSidebar} />
 
-        {/* 16px gap between logo and new chat */}
         <div style={{ height: 16 }} />
 
-        {/* New conversation — Plus icon, isPrimary */}
+        {/* New chat */}
         <SidebarIconButton
           icon={<Plus size={iconSize} strokeWidth={2} />}
-          tooltip={t("sidebar.new_chat")}
+          tooltip="New chat"
           onClick={handleNew}
           isPrimary
-          suppressTooltip={open}
         />
 
         {/* Separator */}
         <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
 
-        {/* Mode buttons — gap 4px */}
+        {/* Mode buttons */}
         <div style={{
           display: "flex",
           flexDirection: "column",
@@ -960,7 +966,6 @@ export default function Sidebar({
           gap: 4,
           flex: 1,
         }}>
-          {/* Mode buttons */}
           {MODES.map(({ key, icon: Icon, label, color }, idx) => (
             <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <SidebarIconButton
@@ -969,9 +974,7 @@ export default function Sidebar({
                 active={mode === key}
                 activeColor={color || "var(--accent)"}
                 onClick={() => handleMode(key)}
-                suppressTooltip={open}
               />
-              {/* Separator after launchpad (index 3) */}
               {idx === 3 && (
                 <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "6px 0", opacity: 0.5 }} />
               )}
@@ -982,21 +985,20 @@ export default function Sidebar({
         {/* Separator */}
         <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
 
-        {/* Bottom buttons — gap 4px */}
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 4,
-        }}>
-          <SidebarIconButton
-            icon={<Settings size={iconSize} strokeWidth={iconSW} />}
-            tooltip={t("sidebar.settings")}
-            onClick={handleSettings}
-            suppressTooltip={open}
-          />
-
-          {/* User avatar or login icon */}
+        {/* Bottom — avatar only */}
+        <div style={{ position: "relative" }}>
+          {/* Profile popover for collapsed state */}
+          {profilePopoverOpen && isLoggedIn && (
+            <ProfilePopover
+              authUser={authUser}
+              userInitials={userInitials}
+              displayName={displayName}
+              tier={tier}
+              onOpenSettings={onOpenSettings}
+              onSignOut={onSignOut}
+              onClose={() => setProfilePopoverOpen(false)}
+            />
+          )}
           {isLoggedIn ? (
             <SidebarIconButton
               icon={
@@ -1009,15 +1011,13 @@ export default function Sidebar({
                 )
               }
               tooltip={displayName || "Profile"}
-              onClick={toggleSidebar}
-              suppressTooltip={open}
+              onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
             />
           ) : (
             <SidebarIconButton
               icon={<LogIn size={iconSize} strokeWidth={iconSW} />}
               tooltip={t("auth.sign_in")}
               onClick={() => { window.location.href = "/login"; }}
-              suppressTooltip={open}
             />
           )}
         </div>
