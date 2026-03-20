@@ -190,7 +190,7 @@ export default function SettingsModal({ onClose, onLanguageChange, onNameChange,
         onClick={onClose}
         style={{
           position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.6)",
+          background: "rgba(10,9,8,0.6)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           zIndex: 100,
