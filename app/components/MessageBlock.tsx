@@ -146,8 +146,8 @@ export default function MessageBlock({ message, index, isLast, loading, searchin
   }, [decision, isStreaming]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pad = isMobile ? "8px 12px" : "8px 24px";
-  const userMaxWidth = isMobile ? "85%" : "70%";
-  const aiMaxWidth = isMobile ? "90%" : "75%";
+  const userMaxWidth = "90%";
+  const aiMaxWidth = "100%";
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(message.content);
@@ -329,12 +329,12 @@ Actions must be SPECIFIC (not "research the market" but "survey 20 potential cus
 
             {/* Bubble */}
             <div style={{
-              padding: "12px 16px",
-              borderRadius: "18px 18px 4px 18px",
-              background: "var(--accent)",
-              color: "#000",
-              fontSize: 15,
-              lineHeight: 1.6,
+              padding: "10px 16px",
+              borderRadius: "24px 24px 8px 24px",
+              background: "#141414",
+              color: "#fcfcfc",
+              fontSize: 16,
+              lineHeight: "24px",
               wordBreak: "break-word",
               whiteSpace: "pre-wrap",
               userSelect: "text",
@@ -385,17 +385,17 @@ Actions must be SPECIFIC (not "research the market" but "survey 20 potential cus
         </div>
 
         {/* Message column */}
-        <div style={{ maxWidth: aiMaxWidth, minWidth: 0 }}>
-          {/* Bubble */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Content — no bubble, transparent bg (Grok style) */}
           <div
             className={!isStreaming && confidenceLevel === "HIGH" ? "confidence-glow-high" : !isStreaming && confidenceLevel === "MEDIUM" ? "confidence-glow-medium" : !isStreaming && confidenceLevel === "LOW" ? "confidence-glow-low" : undefined}
             style={{
-            padding: "12px 16px",
-            borderRadius: "4px 18px 18px 18px",
-            background: "var(--bg-secondary)",
-            color: "var(--text-primary)",
-            fontSize: 15,
-            lineHeight: 1.7,
+            padding: "10px 0",
+            borderRadius: 0,
+            background: "transparent",
+            color: "#fcfcfc",
+            fontSize: 16,
+            lineHeight: "24px",
             wordBreak: "break-word",
             userSelect: "text",
             WebkitUserSelect: "text" as any,

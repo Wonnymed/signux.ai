@@ -842,7 +842,7 @@ textarea, input, button {
 /* ═══ Input Glow ═══ */
 .input-glow {
   border: 1px solid var(--border-primary);
-  border-radius: 50px;
+  border-radius: 9999px;
   background: var(--bg-primary);
   transition: box-shadow 300ms ease, border-color 200ms ease;
   box-shadow: 0 0 0 1px rgba(212,175,55,0.0);

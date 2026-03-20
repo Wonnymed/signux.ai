@@ -393,7 +393,7 @@ export default function ChatInput({
 
   return (
     <div
-      style={{ width: "100%", maxWidth: 740, margin: "0 auto", position: "relative" }}
+      style={{ width: "100%", maxWidth: 768, margin: "0 auto", position: "relative" }}
 
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -431,7 +431,7 @@ export default function ChatInput({
       {dragging && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 10,
-          background: "var(--bg-primary)", borderRadius: 50,
+          background: "var(--bg-primary)", borderRadius: 9999,
           border: "2px dashed var(--accent)", display: "flex",
           alignItems: "center", justifyContent: "center",
           color: "var(--accent)", fontSize: 14, fontWeight: 500,
@@ -446,7 +446,7 @@ export default function ChatInput({
         className={`input-glow${glowActive ? " focused" : ""}`}
         style={{
           overflow: "hidden",
-          padding: "10px 16px 8px 16px",
+          padding: "12px 16px 8px 16px",
           ...(isListening ? { borderColor: "var(--error)", boxShadow: "none" } : {}),
           ...(attachments.length > 0 ? { borderRadius: "var(--radius-lg)" } : {}),
         }}
@@ -562,9 +562,9 @@ export default function ChatInput({
             background: "transparent",
             border: "none",
             color: "var(--text-primary)",
-            fontSize: 15,
+            fontSize: 16,
             outline: "none",
-            lineHeight: 1.5,
+            lineHeight: "24px",
             minHeight: 22,
             maxHeight: 120,
             opacity: enhancing ? 0.5 : 1,
