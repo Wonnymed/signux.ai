@@ -261,16 +261,30 @@ export default function Sidebar({
     );
   }
 
-  // Desktop: expanded or collapsed
-  const width = open ? 280 : 56;
+  // Desktop: always icon-only 56px rail + overlay panel when open
   return (
-    <aside ref={sidebarRef} style={{
-      width, minWidth: width, transition: "width 200ms ease, min-width 200ms ease",
-      background: "var(--bg-primary)", borderRight: "1px solid var(--border-secondary)",
-      display: "flex", flexDirection: "column", overflow: "hidden", flexShrink: 0,
-    }}>
-      {open ? renderExpandedContent() : renderCollapsedContent()}
-    </aside>
+    <>
+      <aside style={{
+        width: 56, minWidth: 56, flexShrink: 0,
+        background: "var(--bg-primary)", borderRight: "1px solid var(--border-secondary)",
+        display: "flex", flexDirection: "column", overflow: "hidden",
+      }}>
+        {renderCollapsedContent()}
+      </aside>
+      {open && (
+        <>
+          <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.2)", zIndex: 199 }} />
+          <aside ref={sidebarRef} style={{
+            position: "fixed", top: 0, left: 56, bottom: 0, width: 280, zIndex: 200,
+            background: "var(--bg-primary)", borderRight: "1px solid var(--border-secondary)",
+            display: "flex", flexDirection: "column",
+            animation: "slideInLeft 0.15s ease-out",
+          }}>
+            {renderExpandedContent()}
+          </aside>
+        </>
+      )}
+    </>
   );
 
   // ═══ EXPANDED (full sidebar with text) ═══
