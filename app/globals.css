@@ -13,6 +13,7 @@
   --bg-message-user: #F3F1EE;
   --bg-message-ai: #FAF9F7;
   --bg-sidebar: #F5F4F2;
+  --sidebar-border: #E8E4DE;
   --bg-input: #FFFFFF;
   --bg-hover: #ECEAE6;
   --bg-active: #E5E2DC;
@@ -107,6 +108,7 @@
     --bg-message-user: #211F1E;
     --bg-message-ai: #1A1918;
     --bg-sidebar: #121110;
+    --sidebar-border: #2A2725;
     --bg-input: #252322;
     --bg-hover: #2A2826;
     --bg-active: #353230;
@@ -167,6 +169,7 @@
   --bg-message-user: #F3F1EE;
   --bg-message-ai: #FAF9F7;
   --bg-sidebar: #F5F4F2;
+  --sidebar-border: #E8E4DE;
   --bg-input: #FFFFFF;
   --bg-hover: #ECEAE6;
   --bg-active: #E5E2DC;
@@ -222,6 +225,7 @@
   --bg-message-user: #211F1E;
   --bg-message-ai: #1A1918;
   --bg-sidebar: #121110;
+  --sidebar-border: #2A2725;
   --bg-input: #252322;
   --bg-hover: #2A2826;
   --bg-active: #353230;

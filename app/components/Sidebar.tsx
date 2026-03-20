@@ -350,7 +350,7 @@ export default function Sidebar({
           position: "fixed", top: 0, left: 0, bottom: 0, width: 280, zIndex: 200,
           transform: open ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 250ms ease",
-          background: "var(--bg-sidebar)", borderRight: "1px solid var(--border-secondary)",
+          background: "var(--bg-sidebar)", borderRight: "1px solid var(--sidebar-border)",
           display: "flex", flexDirection: "column",
         }}>
           {renderExpandedContent()}
@@ -364,7 +364,7 @@ export default function Sidebar({
     <>
       <aside style={{
         width: 56, minWidth: 56, flexShrink: 0,
-        background: "var(--bg-sidebar)", borderRight: "1px solid var(--border-secondary)",
+        background: "var(--bg-sidebar)", borderRight: "1px solid var(--sidebar-border)",
         display: "flex", flexDirection: "column", overflow: "hidden",
       }}>
         {renderCollapsedContent()}
@@ -374,7 +374,7 @@ export default function Sidebar({
           <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(10,9,8,0.3)", zIndex: 199 }} />
           <aside ref={sidebarRef} style={{
             position: "fixed", top: 0, left: 56, bottom: 0, width: 260, zIndex: 200,
-            background: "var(--bg-sidebar)", borderRight: "1px solid var(--border-secondary)",
+            background: "var(--bg-sidebar)", borderRight: "1px solid var(--sidebar-border)",
             display: "flex", flexDirection: "column",
             animation: "slideInLeft 0.15s ease-out",
           }}>
