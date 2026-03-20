@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { GitBranch, Loader2, RotateCcw, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
+import { GitBranch, RotateCcw, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
 import { signuxFetch } from "../lib/api-client";
+import LoadingOracle from "./LoadingOracle";
 
 type CausalLink = { from: string; to: string; confidence: string; evidence: string };
 type Confounder = { variable: string; impact: string; how_to_test: string };
@@ -124,13 +125,7 @@ export default function CausalMap({ lang }: { lang: string }) {
   const reset = () => { setResult(null); setSituation(""); setError(""); };
 
   if (loading) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, gap: 16 }}>
-        <Loader2 size={28} style={{ color: "#6366F1", animation: "spin 1s linear infinite" }} />
-        <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Mapping causal relationships...</div>
-        <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Checking confounders & base rates</div>
-      </div>
-    );
+    return <LoadingOracle mode="intel" />;
   }
 
   if (result) {

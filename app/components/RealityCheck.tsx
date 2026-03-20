@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { CircleSlash, TrendingUp, TrendingDown, Minus, ArrowRight, Loader2, RotateCcw, Share2 } from "lucide-react";
+import { CircleSlash, TrendingUp, TrendingDown, Minus, ArrowRight, RotateCcw, Share2 } from "lucide-react";
 import { signuxFetch } from "../lib/api-client";
+import LoadingOracle from "./LoadingOracle";
 
 type RCResult = {
   verdict: "GO" | "CAUTION" | "STOP";
@@ -160,12 +161,7 @@ export default function RealityCheck({ lang }: { lang: string }) {
       )}
 
       {/* Loading */}
-      {loading && (
-        <div style={{ textAlign: "center", padding: 32 }}>
-          <Loader2 size={24} style={{ color: "#ef4444", animation: "spin 1s linear infinite", marginBottom: 12 }} />
-          <div style={{ fontSize: 13, color: "var(--text-tertiary)" }}>Searching for real data...</div>
-        </div>
-      )}
+      {loading && <LoadingOracle mode="intel" />}
 
       {/* Result */}
       {result && !loading && (

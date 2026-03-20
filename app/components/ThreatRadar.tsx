@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Shield, AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Shield, AlertTriangle, TrendingUp, TrendingDown, Minus, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { signuxFetch } from "../lib/api-client";
+import LoadingOracle from "./LoadingOracle";
 
 type ThreatAxis = {
   name: string;
@@ -145,13 +146,7 @@ export default function ThreatRadar({ lang }: { lang: string }) {
   const reset = () => { setResult(null); setDescription(""); setError(""); setExpandedAxis(null); };
 
   if (loading) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, gap: 16 }}>
-        <Loader2 size={28} style={{ color: "#ef4444", animation: "spin 1s linear infinite" }} />
-        <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Scanning threat landscape...</div>
-        <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Searching current data across 5 axes</div>
-      </div>
-    );
+    return <LoadingOracle mode="intel" />;
   }
 
   if (result) {

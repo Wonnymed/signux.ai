@@ -1,7 +1,8 @@
 "use client";
 import { useState, useRef } from "react";
-import { Scan, AlertTriangle, CheckCircle, XCircle, HelpCircle, Loader2, RotateCcw, Upload, FileText, X } from "lucide-react";
+import { Scan, AlertTriangle, CheckCircle, XCircle, HelpCircle, RotateCcw, Upload, FileText, X } from "lucide-react";
 import { signuxFetch } from "../lib/api-client";
+import LoadingOracle from "./LoadingOracle";
 
 type VerifiedClaim = {
   claim: string;
@@ -101,13 +102,7 @@ export default function DealXRay({ lang }: { lang: string }) {
   const reset = () => { setResult(null); setDescription(""); setError(""); removeFile(); };
 
   if (loading) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, gap: 16 }}>
-        <Loader2 size={28} style={{ color: "#f59e0b", animation: "spin 1s linear infinite" }} />
-        <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Analyzing deal...</div>
-        <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Verifying claims & detecting red flags</div>
-      </div>
-    );
+    return <LoadingOracle mode="intel" />;
   }
 
   if (result) {

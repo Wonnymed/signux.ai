@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Map, ChevronDown, ChevronUp, Loader2, RotateCcw, ShieldAlert, Sparkles, TrendingDown, Zap } from "lucide-react";
+import { Map, ChevronDown, ChevronUp, RotateCcw, ShieldAlert, Sparkles, TrendingDown, Zap } from "lucide-react";
 import { signuxFetch } from "../lib/api-client";
+import LoadingOracle from "./LoadingOracle";
 
 type TimelineEvent = { month: number; event: string };
 
@@ -135,13 +136,7 @@ export default function ScenarioPlanner({ lang }: { lang?: string }) {
 
   /* ═══ LOADING STATE ═══ */
   if (loading) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: "80px 20px" }}>
-        <Loader2 size={32} style={{ color: "#A855F7", animation: "spin 1s linear infinite" }} />
-        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>Researching trends and generating scenarios...</p>
-        <p style={{ fontSize: 11, color: "var(--text-tertiary)" }}>This may take up to 60 seconds</p>
-      </div>
-    );
+    return <LoadingOracle mode="intel" />;
   }
 
   /* ═══ RESULT STATE ═══ */

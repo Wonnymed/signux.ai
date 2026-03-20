@@ -941,7 +941,8 @@ export default function ChatPage() {
 
       <main style={{
         flex: 1, display: "flex", flexDirection: "column",
-        background: "var(--bg-primary)", minWidth: 0, minHeight: 0, overflow: "hidden",
+        background: "var(--bg-primary)", minWidth: 0, minHeight: 0,
+        overflow: messages.length === 0 ? "auto" : "hidden",
         paddingTop: isMobile ? 52 : 0,
       }}>
         {/* Launchpad check-in reminder */}

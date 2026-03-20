@@ -73,16 +73,16 @@ export default function WelcomeScreen({
           display: "flex", alignItems: "center", gap: isMobile ? 10 : 14,
           marginBottom: isMobile ? 8 : 14,
         }}>
-          <SignuxIcon variant="gold" size={isMobile ? 28 : 40} />
+          <SignuxIcon variant="gold" size={isMobile ? 22 : 28} />
           <div style={{ display: "flex", alignItems: "baseline" }}>
             <span style={{
-              fontFamily: "var(--font-brand)", fontSize: isMobile ? 24 : 36,
+              fontFamily: "var(--font-brand)", fontSize: isMobile ? 16 : 22,
               fontWeight: 700, letterSpacing: isMobile ? 3 : 5, color: "var(--text-primary)",
             }}>
               SIGNUX
             </span>
             <span style={{
-              fontFamily: "var(--font-brand)", fontSize: isMobile ? 24 : 36,
+              fontFamily: "var(--font-brand)", fontSize: isMobile ? 16 : 22,
               fontWeight: 300, letterSpacing: isMobile ? 2 : 3,
               color: "var(--text-primary)", opacity: 0.22, marginLeft: 6,
             }}>
@@ -91,12 +91,13 @@ export default function WelcomeScreen({
           </div>
         </div>
 
-        {/* Tagline */}
+        {/* Tagline — hero element */}
         <p style={{
-          fontSize: isMobile ? 16 : 20, color: "var(--text-secondary)",
-          maxWidth: isMobile ? 280 : 440,
-          textAlign: "center", lineHeight: 1.5, marginBottom: isMobile ? 16 : 28,
+          fontSize: isMobile ? 22 : 32, color: "var(--text-primary)",
+          maxWidth: isMobile ? 300 : 500,
+          textAlign: "center", lineHeight: 1.3, marginBottom: isMobile ? 16 : 28,
           fontFamily: "var(--font-accent)", fontStyle: "italic",
+          fontWeight: 400,
         }}>
           See what happens before it happens
         </p>
@@ -140,6 +141,7 @@ export default function WelcomeScreen({
                 textAlign: "left",
                 minHeight: 44, whiteSpace: "nowrap",
                 flex: isMobile ? "0 0 auto" : undefined,
+                overflow: "hidden",
               }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = m.color; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = m.border; }}
@@ -150,10 +152,7 @@ export default function WelcomeScreen({
                 }}
               >
                 <Icon size={14} style={{ color: m.color, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>{m.label}</div>
-                  {!isMobile && <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 1 }}>{m.desc}</div>}
-                </div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>{m.label}</span>
               </button>
             );
           })}
