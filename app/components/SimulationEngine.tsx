@@ -446,8 +446,8 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     return (
       <section style={{
         display: "flex", flexDirection: "column",
-        padding: isMobile ? "12px 16px 24px" : "16px 24px 32px",
-        position: "relative", overflow: "hidden",
+        padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
+        maxWidth: 768, margin: "0 auto", width: "100%",
       }}>
 
         {/* ── COMPACT HEADER ── */}
@@ -1316,8 +1316,8 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
   };
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: 32, position: "relative" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "24px 16px 120px" : "24px 24px 120px", position: "relative" }}>
+      <div style={{ maxWidth: 768, margin: "0 auto" }}>
         {/* Header */}
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",

@@ -523,8 +523,8 @@ How to make your first $1,000:
       return (
         <section style={{
           display: "flex", flexDirection: "column",
-          padding: isMobile ? "12px 16px 24px" : "16px 24px 32px",
-          flex: 1, overflowY: "auto",
+          padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
+          maxWidth: 768, margin: "0 auto", width: "100%",
         }}>
           {/* Compact header */}
           <div style={{
@@ -579,7 +579,8 @@ How to make your first $1,000:
     return (
       <section style={{
         display: "flex", flexDirection: "column",
-        padding: isMobile ? "12px 16px 24px" : "16px 24px 32px",
+        padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
+        maxWidth: 768, margin: "0 auto", width: "100%",
       }}>
 
         {/* ── COMPACT HEADER ── */}
@@ -1007,9 +1008,9 @@ How to make your first $1,000:
     return (
       <div style={{
         flex: 1, display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        padding: isMobile ? "24px 16px 32px" : "40px 24px",
-        minHeight: "calc(100vh - 60px)",
+        alignItems: "center",
+        padding: isMobile ? "24px 16px 120px" : "40px 24px 120px",
+        maxWidth: 768, margin: "0 auto", width: "100%",
       }}>
         <div style={{ maxWidth: 560, width: "100%" }}>
           <div style={{ display: "flex", gap: 4, marginBottom: 40 }}>

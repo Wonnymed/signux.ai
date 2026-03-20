@@ -47,7 +47,7 @@ export default function WelcomeScreen({
       justifyContent: "center",
       minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
       padding: isMobile ? "0 16px" : "0 24px",
-      maxWidth: 720,
+      maxWidth: 768,
       margin: "0 auto",
       width: "100%",
       position: "relative",

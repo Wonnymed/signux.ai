@@ -231,10 +231,9 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
   if (messages.length === 0) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column", alignItems: "center",
-        minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
-        padding: isMobile ? "20px 16px" : "20px 24px",
-        maxWidth: 720, margin: "0 auto", width: "100%",
+        display: "flex", flexDirection: "column",
+        padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
+        maxWidth: 768, margin: "0 auto", width: "100%",
       }}>
 
         {/* ===== HEADER COMPACTO ===== */}
@@ -468,7 +467,7 @@ export default function InvestView({ lang, onSetMode, isLoggedIn, tier }: { lang
           INVEST
         </div>
 
-        <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", paddingTop: 4, paddingBottom: 32 }}>
+        <div style={{ width: "100%", maxWidth: 768, margin: "0 auto", padding: "4px 24px 120px" }}>
           {messages.map((m, i) => (
             <MessageBlock
               key={i}

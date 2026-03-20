@@ -1001,7 +1001,7 @@ export default function ChatPage() {
       <main style={{
         flex: 1, display: "flex", flexDirection: "column",
         background: "var(--bg-primary)", minWidth: 0, minHeight: 0,
-        overflow: messages.length === 0 ? "auto" : "hidden",
+        overflow: "hidden",
         paddingTop: isMobile ? 52 : 0,
       }}>
         {/* Launchpad check-in reminder */}
@@ -1114,7 +1114,7 @@ export default function ChatPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.15 }}
-              style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+              style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}
             >
               {showOnboarding && messages.length === 0 ? (
                 <Onboarding

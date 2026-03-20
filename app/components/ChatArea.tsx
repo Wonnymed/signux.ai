@@ -115,7 +115,7 @@ export default function ChatArea({
         onScroll={handleScroll}
         style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", position: "relative", userSelect: "none", WebkitUserSelect: "none" as any, zIndex: 2 }}
       >
-        <div style={{ width: "100%", maxWidth: 768, margin: "0 auto", paddingTop: 20, paddingBottom: 32 }}>
+        <div style={{ width: "100%", maxWidth: 768, margin: "0 auto", padding: "20px 24px 120px" }}>
           {messages.map((m, i) => (
             <div key={i}>
               <MessageBlock
@@ -159,16 +159,22 @@ export default function ChatArea({
       {/* Fixed input at bottom */}
       <div style={{
         flexShrink: 0,
-        background: "var(--bg-primary)",
         position: "relative",
+        display: "flex",
+        justifyContent: "center",
       }}>
         <div style={{
           position: "absolute",
-          top: -32, left: 0, right: 0, height: 32,
+          top: -40, left: 0, right: 0, height: 40,
           background: "linear-gradient(to bottom, transparent, var(--bg-primary))",
           pointerEvents: "none",
         }} />
-        <div style={{ padding: isMobile ? "8px 12px 16px" : "12px 24px 16px", paddingBottom: "calc(16px + var(--safe-bottom, 0px))" }}>
+        <div style={{
+          width: "100%", maxWidth: 768,
+          padding: isMobile ? "8px 16px 20px" : "12px 24px 20px",
+          paddingBottom: "calc(20px + var(--safe-bottom, 0px))",
+          background: "var(--bg-primary)",
+        }}>
           {loading && onStop && (
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
               <button onClick={onStop} style={{

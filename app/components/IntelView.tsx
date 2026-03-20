@@ -175,9 +175,8 @@ export default function IntelView({ lang, onContinueInChat, onSetMode, isLoggedI
   return (
     <div style={{
       display: "flex", flexDirection: "column",
-      padding: isMobile ? "12px 16px" : "16px 20px",
-      maxWidth: 800, margin: "0 auto", width: "100%",
-      overflowY: "auto", flex: 1,
+      padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
+      maxWidth: 768, margin: "0 auto", width: "100%",
     }}>
 
       {/* ═══ COMPACT HEADER ═══ */}
