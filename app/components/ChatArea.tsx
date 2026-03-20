@@ -80,28 +80,32 @@ export default function ChatArea({
   /* Welcome state */
   if (messages.length === 0) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-        <WelcomeScreen
-          profileName={profileName}
-          input={input}
-          setInput={setInput}
-          onSend={onSend}
-          loading={loading}
-          attachments={attachments}
-          onAttachmentsChange={onAttachmentsChange}
-          onToast={onToast}
-          onSwitchToSimulate={onSwitchToSimulate}
-          onSwitchToResearch={onSwitchToResearch}
-          onSwitchMode={onSwitchMode}
-          onOpenThreatRadar={onOpenThreatRadar}
-          onOpenDealXRay={onOpenDealXRay}
-          onOpenWarGame={onOpenWarGame}
-          onOpenCausalMap={onOpenCausalMap}
-          onOpenScenarios={onOpenScenarios}
-          lang={lang}
-        />
-        <LandingSections />
-      </div>
+      <>
+        <div className="temporal-grid" />
+        <div className="prediction-horizon" />
+        <div style={{ flexShrink: 0 }}>
+          <WelcomeScreen
+            profileName={profileName}
+            input={input}
+            setInput={setInput}
+            onSend={onSend}
+            loading={loading}
+            attachments={attachments}
+            onAttachmentsChange={onAttachmentsChange}
+            onToast={onToast}
+            onSwitchToSimulate={onSwitchToSimulate}
+            onSwitchToResearch={onSwitchToResearch}
+            onSwitchMode={onSwitchMode}
+            onOpenThreatRadar={onOpenThreatRadar}
+            onOpenDealXRay={onOpenDealXRay}
+            onOpenWarGame={onOpenWarGame}
+            onOpenCausalMap={onOpenCausalMap}
+            onOpenScenarios={onOpenScenarios}
+            lang={lang}
+          />
+          <LandingSections />
+        </div>
+      </>
     );
   }
 
