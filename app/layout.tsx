@@ -47,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var p=localStorage.getItem("signux_profile");var t=p?JSON.parse(p).theme:null;if(!t||t==="dark"){document.documentElement.setAttribute("data-theme","dark");document.documentElement.style.colorScheme="dark"}else if(t==="light"){document.documentElement.setAttribute("data-theme","light");document.documentElement.style.colorScheme="light"}}catch(e){}})()` }} />
         {children}
         <ServiceWorkerRegister />
         <InstallPrompt />

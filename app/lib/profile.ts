@@ -26,7 +26,7 @@ export function getProfile(): UserProfile | null {
 }
 
 export function updateProfile(updates: Partial<UserProfile>) {
-  const current = getProfile() || { name: "", email: "", taxResidence: "", language: "en", operations: [], structures: [], monthlyVolume: "", languages: [], interests: [], history: [], aboutYou: "", customInstructions: "", memoryEnabled: true, referenceHistory: true, theme: "auto" as const, webSearchEnabled: true };
+  const current = getProfile() || { name: "", email: "", taxResidence: "", language: "en", operations: [], structures: [], monthlyVolume: "", languages: [], interests: [], history: [], aboutYou: "", customInstructions: "", memoryEnabled: true, referenceHistory: true, theme: "dark" as const, webSearchEnabled: true };
   const updated = { ...current, ...updates };
   localStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
   return updated;

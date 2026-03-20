@@ -41,11 +41,11 @@ import { useProjects } from "../lib/useProjects";
 
 const ProjectKnowledge = dynamic(() => import("../components/ProjectKnowledge"), { ssr: false });
 
-const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false });
-const IntelView = dynamic(() => import("../components/IntelView"), { ssr: false });
-const LaunchpadView = dynamic(() => import("../components/LaunchpadView"), { ssr: false });
-const GlobalOpsView = dynamic(() => import("../components/GlobalOpsView"), { ssr: false });
-const InvestView = dynamic(() => import("../components/InvestView"), { ssr: false });
+const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
+const IntelView = dynamic(() => import("../components/IntelView"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
+const LaunchpadView = dynamic(() => import("../components/LaunchpadView"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
+const GlobalOpsView = dynamic(() => import("../components/GlobalOpsView"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
+const InvestView = dynamic(() => import("../components/InvestView"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
 const ThreatRadar = dynamic(() => import("../components/ThreatRadar"), { ssr: false });
 const DealXRay = dynamic(() => import("../components/DealXRay"), { ssr: false });
 const WarGame = dynamic(() => import("../components/WarGame"), { ssr: false });
@@ -263,6 +263,10 @@ export default function ChatPage() {
     setSeenModes(prev => new Set([...prev, newMode]));
   }, [seenModes]);
 
+  const handleTransitionComplete = useCallback(() => {
+    setModeTransitioning(false);
+  }, []);
+
   useEffect(() => {
     try {
       sessionStorage.setItem("signux_seen_modes", JSON.stringify([...seenModes]));
@@ -279,6 +283,20 @@ export default function ChatPage() {
       const userLang = (profile.language as Language) || "en";
       setLang(userLang);
       setLanguage(userLang);
+    }
+
+    // Apply saved theme (default dark)
+    const savedTheme = profile?.theme || "dark";
+    const root = document.documentElement;
+    if (savedTheme === "light") {
+      root.style.colorScheme = "light";
+      root.setAttribute("data-theme", "light");
+    } else if (savedTheme === "dark") {
+      root.style.colorScheme = "dark";
+      root.setAttribute("data-theme", "dark");
+    } else {
+      root.style.colorScheme = "";
+      root.removeAttribute("data-theme");
     }
 
     setReady(true);
@@ -842,7 +860,7 @@ export default function ChatPage() {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <OfflineBanner />
-      <ModeTransition mode={mode} isTransitioning={modeTransitioning} onComplete={() => setModeTransitioning(false)} />
+      <ModeTransition mode={mode} isTransitioning={modeTransitioning} onComplete={handleTransitionComplete} />
 
       {/* ═══ Mobile header: hamburger + auth ═══ */}
       {isMobile && (

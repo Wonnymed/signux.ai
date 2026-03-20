@@ -83,7 +83,7 @@ export default function SettingsModal({ onClose, onLanguageChange, onNameChange,
   const profile = getProfile();
   const [tab, setTab] = useState<Tab>("general");
   const [lang, setLang] = useState<Language>((profile?.language as Language) || "en");
-  const [theme, setTheme] = useState<"auto" | "light" | "dark">(profile?.theme || "auto");
+  const [theme, setTheme] = useState<"auto" | "light" | "dark">(profile?.theme || "dark");
   const [webSearch, setWebSearch] = useState(profile?.webSearchEnabled !== false);
   const [aboutYou, setAboutYou] = useState(profile?.aboutYou || "");
   const [customInstructions, setCustomInstructions] = useState(profile?.customInstructions || "");
