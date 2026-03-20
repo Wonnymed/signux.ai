@@ -224,37 +224,60 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
   if (messages.length === 0) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column",
-        padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
-        maxWidth: "clamp(600px, 52vw, 820px)", margin: "0 auto", width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
+        padding: isMobile ? "0 20px 120px" : "0 32px 120px",
+        paddingTop: isMobile ? "8vh" : "clamp(60px, 12vh, 140px)",
+        width: "100%",
+        position: "relative",
       }}>
-
-        {/* ===== HEADER COMPACTO ===== */}
+        {/* ===== HERO HEADER — matches WelcomeScreen ===== */}
         <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          marginBottom: 6,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: isMobile ? 8 : 12,
+          marginBottom: isMobile ? 16 : 24,
         }}>
           <div style={{
-            width: 26, height: 26, borderRadius: 8,
-            background: "rgba(139,92,246,0.1)",
-            border: "1px solid rgba(139,92,246,0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            width: isMobile ? 44 : 72,
+            height: isMobile ? 44 : 72,
+            borderRadius: isMobile ? 14 : 20,
+            background: "rgba(16,185,129,0.06)",
+            border: "1px solid rgba(16,185,129,0.12)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}>
-            <Globe size={13} style={{ color: PURPLE }} />
+            <Globe size={isMobile ? 22 : 36} style={{ color: "#10B981" }} />
           </div>
           <span style={{
-            fontFamily: "var(--font-brand)", fontSize: 15, fontWeight: 700,
-            letterSpacing: 3, color: "var(--text-primary)",
+            fontFamily: "var(--font-brand)",
+            fontSize: isMobile ? 28 : "clamp(32px, 3vw, 48px)",
+            fontWeight: 800,
+            letterSpacing: "clamp(6px, 0.6vw, 10px)",
+            color: "var(--text-primary)",
           }}>
             GLOBAL OPS
           </span>
         </div>
         <p style={{
-          textAlign: "center", fontSize: 13, color: "var(--text-tertiary)",
-          marginBottom: 20,
+          textAlign: "center",
+          fontSize: 14,
+          color: "var(--text-tertiary)",
+          marginBottom: isMobile ? "clamp(24px, 4vh, 40px)" : "clamp(32px, 6vh, 60px)",
+          maxWidth: 500,
         }}>
           Expand anywhere — understand any market before you enter
         </p>
+
+        <div style={{
+          width: "100%",
+          maxWidth: isMobile ? 680 : "clamp(600px, 52vw, 820px)",
+        }}>
 
         {/* ===== INPUT PRINCIPAL ===== */}
         <div style={{ width: "100%", marginBottom: 16 }}>
@@ -419,6 +442,7 @@ export default function GlobalOpsView({ lang, onSetMode, isLoggedIn, tier }: { l
         }}>
           Always verify international regulations with qualified legal professionals.
         </p>
+        </div>
       </div>
     );
   }

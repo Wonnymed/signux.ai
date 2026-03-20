@@ -174,40 +174,62 @@ export default function IntelView({ lang, onContinueInChat, onSetMode, isLoggedI
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column",
-      padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
-      maxWidth: "clamp(600px, 52vw, 820px)", margin: "0 auto", width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "flex-start",
+      minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
+      padding: isMobile ? "0 20px 120px" : "0 32px 120px",
+      paddingTop: isMobile ? "8vh" : "clamp(60px, 12vh, 140px)",
+      width: "100%",
+      position: "relative",
     }}>
-
-      {/* ═══ COMPACT HEADER ═══ */}
+      {/* ═══ HERO HEADER — matches WelcomeScreen ═══ */}
       <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center",
-        gap: 10, marginBottom: 6, paddingTop: isMobile ? 8 : 16,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: isMobile ? 8 : 12,
+        marginBottom: isMobile ? 16 : 24,
       }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 8,
-          background: "rgba(239,68,68,0.1)",
-          border: "1px solid rgba(239,68,68,0.2)",
-          display: "flex", alignItems: "center", justifyContent: "center",
+          width: isMobile ? 44 : 72,
+          height: isMobile ? 44 : 72,
+          borderRadius: isMobile ? 14 : 20,
+          background: "rgba(239,68,68,0.06)",
+          border: "1px solid rgba(239,68,68,0.12)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}>
-          <Shield size={14} style={{ color: "#ef4444" }} />
+          <Shield size={isMobile ? 22 : 36} style={{ color: "#EF4444" }} />
         </div>
         <span style={{
-          fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 700,
-          letterSpacing: 3, color: "var(--text-primary)",
+          fontFamily: "var(--font-brand)",
+          fontSize: isMobile ? 28 : "clamp(32px, 3vw, 48px)",
+          fontWeight: 800,
+          letterSpacing: "clamp(6px, 0.6vw, 10px)",
+          color: "var(--text-primary)",
         }}>
           INTEL ENGINE
         </span>
       </div>
       <p style={{
-        textAlign: "center", fontSize: 13, color: "var(--text-tertiary)",
-        marginBottom: isMobile ? 16 : 20,
+        textAlign: "center",
+        fontSize: 14,
+        color: "var(--text-tertiary)",
+        marginBottom: isMobile ? "clamp(24px, 4vh, 40px)" : "clamp(32px, 6vh, 60px)",
+        maxWidth: 500,
       }}>
         Know what others don&apos;t — specialized intelligence tools
       </p>
 
       {/* ═══ UNIVERSAL INPUT ═══ */}
-      <div style={{ margin: `0 auto ${isMobile ? 20 : 28}px`, width: "100%" }}>
+      <div style={{
+        width: "100%",
+        maxWidth: isMobile ? 680 : "clamp(600px, 52vw, 820px)",
+        marginBottom: isMobile ? 20 : 28,
+      }}>
         <div style={{
           display: "flex", alignItems: "center",
           padding: "12px 16px", borderRadius: 12,
@@ -255,6 +277,11 @@ export default function IntelView({ lang, onContinueInChat, onSetMode, isLoggedI
           <span>&quot;How will competitors react?&quot;</span>
         </div>
       </div>
+
+      <div style={{
+        width: "100%",
+        maxWidth: isMobile ? 680 : "clamp(600px, 52vw, 820px)",
+      }}>
 
       {/* ═══ CATEGORY: DEFENSE — Protect & Detect ═══ */}
       <div style={{ marginBottom: isMobile ? 20 : 24 }}>
@@ -409,6 +436,7 @@ export default function IntelView({ lang, onContinueInChat, onSetMode, isLoggedI
       }}>
         Always verify critical decisions with qualified professionals.
       </p>
+      </div>
     </div>
   );
 }

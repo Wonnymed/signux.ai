@@ -445,37 +445,61 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
 
     return (
       <section style={{
-        display: "flex", flexDirection: "column",
-        padding: isMobile ? "24px 16px 120px" : "24px 24px 120px",
-        maxWidth: "clamp(600px, 52vw, 820px)", margin: "0 auto", width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
+        padding: isMobile ? "0 20px 120px" : "0 32px 120px",
+        paddingTop: isMobile ? "8vh" : "clamp(60px, 12vh, 140px)",
+        width: "100%",
+        position: "relative",
       }}>
 
-        {/* ── COMPACT HEADER ── */}
+        {/* ── HERO HEADER — matches WelcomeScreen ── */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 8, paddingTop: isMobile ? 8 : 20, paddingBottom: 4,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: isMobile ? 8 : 12,
+          marginBottom: isMobile ? 16 : 24,
         }}>
           <div style={{
-            width: 26, height: 26, borderRadius: 8,
-            background: "rgba(212,175,55,0.08)",
-            border: "1px solid rgba(212,175,55,0.15)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            width: isMobile ? 44 : 72,
+            height: isMobile ? 44 : 72,
+            borderRadius: isMobile ? 14 : 20,
+            background: "rgba(212,175,55,0.06)",
+            border: "1px solid rgba(212,175,55,0.12)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}>
-            <Zap size={13} style={{ color: "var(--accent)" }} />
+            <Zap size={isMobile ? 22 : 36} style={{ color: "#D4AF37" }} />
           </div>
           <span style={{
-            fontFamily: "var(--font-brand)", fontSize: 15, fontWeight: 700,
-            letterSpacing: 3, color: "var(--text-primary)",
+            fontFamily: "var(--font-brand)",
+            fontSize: isMobile ? 28 : "clamp(32px, 3vw, 48px)",
+            fontWeight: 800,
+            letterSpacing: "clamp(6px, 0.6vw, 10px)",
+            color: "var(--text-primary)",
           }}>
             SIMULATE
           </span>
         </div>
         <p style={{
-          textAlign: "center", fontSize: 13, color: "var(--text-tertiary)",
-          marginBottom: isMobile ? 14 : 16,
+          textAlign: "center",
+          fontSize: 14,
+          color: "var(--text-tertiary)",
+          marginBottom: isMobile ? "clamp(24px, 4vh, 40px)" : "clamp(32px, 6vh, 60px)",
+          maxWidth: 500,
         }}>
           Describe any scenario — see what happens before it happens
         </p>
+
+        <div style={{
+          width: "100%",
+          maxWidth: isMobile ? 680 : "clamp(600px, 52vw, 820px)",
+        }}>
 
         {/* ── MAIN INPUT CONTAINER ── */}
         {!compareMode && (
@@ -894,6 +918,8 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
         }}>
           Simulations take 60-120s. Always verify with qualified professionals.
         </p>
+
+        </div>
 
         {/* Paywall modal */}
         {showPaywall && (
