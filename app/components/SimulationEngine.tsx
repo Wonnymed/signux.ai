@@ -2075,6 +2075,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                 evolution={engineEvolution}
                 activeRound={activeRound}
                 onSelectRound={setActiveRound}
+                onAgentClick={(id) => setExpandedAgent(id)}
                 isMobile={isMobile}
               />
             </div>
