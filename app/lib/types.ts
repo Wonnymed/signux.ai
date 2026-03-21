@@ -68,6 +68,7 @@ export type SimResult = {
   universes?: UniverseData[];
   verdict?: VerdictData;
   metadata?: { agents_count?: number; rounds?: number; total_interactions?: number };
+  engineData?: { done: boolean };
 };
 
 export type Mode = "chat" | "simulate" | "intel" | "launchpad" | "globalops" | "invest";

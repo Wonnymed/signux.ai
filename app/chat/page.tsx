@@ -219,6 +219,14 @@ function ChatPage() {
   const [simStreamingUniverses, setSimStreamingUniverses] = useState<(any | null)[]>([null, null, null]);
   const [simStreamingVerdict, setSimStreamingVerdict] = useState<any | null>(null);
 
+  // 10x10 Engine state
+  const [engineAgents, setEngineAgents] = useState<any[]>([]);
+  const [engineRounds, setEngineRounds] = useState<any[]>([]);
+  const [engineCurrentRound, setEngineCurrentRound] = useState<{ round: number; label: string; model: string } | null>(null);
+  const [engineVerdict, setEngineVerdict] = useState<any | null>(null);
+  const [engineEvolution, setEngineEvolution] = useState<any[]>([]);
+  const [engineDone, setEngineDone] = useState(false);
+
   /* Auth */
   const { user: authUser, loading: authLoading, signOut: authSignOut } = useAuth();
 
@@ -761,11 +769,20 @@ function ChatPage() {
     setSimStartTime(Date.now());
     setSimStreamingUniverses([null, null, null]);
     setSimStreamingVerdict(null);
+    // Reset 10x10 engine state
+    setEngineAgents([]);
+    setEngineRounds([]);
+    setEngineCurrentRound(null);
+    setEngineVerdict(null);
+    setEngineEvolution([]);
+    setEngineDone(false);
+
     try {
-      const res = await signuxFetch("/api/simulate", {
+      // Use the 10x10 adversarial engine
+      const res = await signuxFetch("/api/simulate/engine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario: sc, context: getProfile() }),
+        body: JSON.stringify({ scenario: sc, lang: lang || "en" }),
       });
       if (!res.body) throw new Error("No stream");
       const reader = res.body.getReader();
@@ -781,23 +798,37 @@ function ChatPage() {
           if (!line.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.type === "stage") setSimStage(data.stage === -1 ? 0 : data.stage + 1);
-            else if (data.type === "stage_done" && data.totalAgents) setSimTotalAgents(data.totalAgents);
-            else if (data.type === "agent_start") setSimLiveAgents(prev => [...prev, { name: data.agentName, role: data.role, category: data.category, done: false }]);
-            else if (data.type === "agent_done") {
-                setSimLiveAgents(prev => prev.map(a => a.name === data.agentName && !a.done ? { ...a, done: true } : a));
-                setSimAgentMessages(prev => [...prev, data]);
-              }
-            else if (data.type === "universe_ready") {
-                setSimStreamingUniverses(prev => {
-                  const updated = [...prev];
-                  updated[data.index] = data.data;
-                  return updated;
-                });
-              }
-            else if (data.type === "verdict_ready") setSimStreamingVerdict(data.data);
-            else if (data.type === "complete") setSimResult(data.result);
-            else if (data.type === "error") setSimResult({ error: data.error || "Simulation error." });
+            if (data.type === "agents") {
+              setEngineAgents(data.agents);
+              setSimTotalAgents(data.agents.length);
+              setSimStage(1);
+            } else if (data.type === "round_start") {
+              setEngineCurrentRound({ round: data.round, label: data.label, model: data.model });
+              setSimStage(Math.min(1 + data.round, 7));
+            } else if (data.type === "round_complete") {
+              setEngineRounds(prev => [...prev, { round: data.round, label: data.label, agents: data.agents }]);
+              setEngineCurrentRound(null);
+              // Update live agents progress
+              setSimLiveAgents(data.agents.map((a: any) => ({ name: a.name, role: a.agentId, category: a.agentId, done: true })));
+              setSimAgentMessages(prev => [...prev, ...data.agents.map((a: any) => ({ agentId: a.agentId, agentName: a.name, content: a.text, round: data.round }))]);
+            } else if (data.type === "verdict") {
+              setEngineVerdict(data);
+              setSimStage(7);
+            } else if (data.type === "evolution") {
+              setEngineEvolution(data.agents);
+            } else if (data.type === "done") {
+              setEngineDone(true);
+              // Build a simResult for the result view
+              setSimResult({
+                report: "",
+                metadata: { agents_count: data.totalAgents, rounds: data.totalRounds, total_interactions: data.totalCalls },
+                stages: { agents: [] },
+                simulation: [],
+                engineData: { done: true },
+              });
+            } else if (data.type === "error") {
+              setSimResult({ error: data.error || "Engine error." });
+            }
           } catch {}
         }
       }
@@ -1115,6 +1146,12 @@ function ChatPage() {
                 tier={tier}
                 streamingUniverses={simStreamingUniverses}
                 streamingVerdict={simStreamingVerdict}
+                engineAgents={engineAgents}
+                engineRounds={engineRounds}
+                engineCurrentRound={engineCurrentRound}
+                engineVerdict={engineVerdict}
+                engineEvolution={engineEvolution}
+                engineDone={engineDone}
               />
             </motion.div>
           ) : mode === "launchpad" ? (
