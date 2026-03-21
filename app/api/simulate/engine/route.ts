@@ -216,6 +216,26 @@ export async function POST(req: NextRequest) {
   };
   const userLang = langMap[lang] || "English";
 
+  // Fetch previous simulations for agent memory
+  let memoryContext = "";
+  if (userId) {
+    try {
+      const { data: prevSims } = await supabaseAdmin
+        .from("simulations")
+        .select("scenario, verdict")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (prevSims && prevSims.length > 0) {
+        const lines = prevSims.map(s =>
+          `- "${s.scenario}" → Verdict: ${s.verdict?.verdict || "N/A"}, Viability: ${s.verdict?.viability || "N/A"}/10`
+        );
+        memoryContext = `\n\nUSER'S PREVIOUS SIMULATIONS (you remember these — reference if relevant):\n${lines.join("\n")}`;
+      }
+    } catch {}
+  }
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -291,7 +311,7 @@ export async function POST(req: NextRequest) {
               .map(t => `[Round ${t.round}] You said: "${t.text}" (sentiment: ${t.sentiment})`)
               .join("\n");
 
-            const userMsg = `SCENARIO: "${scenario}"
+            const userMsg = `SCENARIO: "${scenario}"${memoryContext}
 ${prevContext}
 ${lastRoundFull}
 

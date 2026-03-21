@@ -126,6 +126,19 @@ export default function AgentCard({ agent, index, expanded, onToggle }: AgentCar
             CHANGED
           </span>
         ) : null}
+        {!agent.failed && /previous simulation|last time|earlier scenario|prior analysis|your .* simulation/i.test(agent.text) && (
+          <span style={{
+            fontSize: 8,
+            padding: "1px 5px",
+            borderRadius: 3,
+            background: "rgba(139,92,246,0.1)",
+            color: "#8B5CF6",
+            fontWeight: 600,
+            flexShrink: 0,
+          }}>
+            MEMORY
+          </span>
+        )}
       </div>
 
       {/* Text */}
