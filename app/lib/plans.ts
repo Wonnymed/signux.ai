@@ -19,7 +19,7 @@ export const MODE_TIER_REQUIREMENT: Record<string, Tier> = {
 export const TIER_LIMITS = {
   free: {
     chat_daily: 5,
-    simulate_monthly: 1,
+    simulate_monthly: 3,
     research_monthly: 0,
     globalops_monthly: 0,
     invest_monthly: 0,

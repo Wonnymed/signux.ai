@@ -116,6 +116,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [agentFilter, setAgentFilter] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   // 10x10 Canvas state
   const [activeRound, setActiveRound] = useState(1);
@@ -457,8 +458,12 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     ];
 
     const handleRun = () => {
-      if (!isLoggedIn) { window.location.href = "/signup"; return; }
-      if (tier === "free") { setShowPaywall(true); return; }
+      if (!isLoggedIn) {
+        // Guest: allow 1 free simulation, then show auth gate
+        const guestUsed = typeof window !== "undefined" && localStorage.getItem("signux-guest-simulation");
+        if (guestUsed) { setShowAuthGate(true); return; }
+        if (typeof window !== "undefined") localStorage.setItem("signux-guest-simulation", "true");
+      } else if (tier === "free") { setShowPaywall(true); return; }
       const activeTeam = customAgents.filter(a => a.active);
       const teamPrefix = activeTeam.length !== DEFAULT_ROLES.length || activeTeam.some(a => !DEFAULT_ROLES.find(d => d.id === a.id))
         ? `\n\nSPECIALIST TEAM FOR THIS SIMULATION:\n${activeTeam.map(a => `- ${a.name}`).join("\n")}\n\nRun the debate with ONLY these specialists. Each should contribute from their specific expertise.`
@@ -471,7 +476,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
 
     const handleCompare = () => {
       if (!scenarioA.trim() || !scenarioB.trim()) return;
-      if (!isLoggedIn) { window.location.href = "/signup"; return; }
+      if (!isLoggedIn) { setShowAuthGate(true); return; }
       if (tier === "free") { setShowPaywall(true); return; }
       const comparisonPrompt = `COMPARE TWO SCENARIOS SIDE BY SIDE:\n\nSCENARIO A: ${scenarioA}\n\nSCENARIO B: ${scenarioB}\n\nAnalyze BOTH scenarios using the same criteria. Then provide a clear comparison:\n\n## Scenario A: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## Scenario B: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## ⚖️ Head-to-Head Comparison\n\n| Criteria | Scenario A | Scenario B | Winner |\n|---|---|---|---|\n| Viability Score | X/10 | X/10 | A/B |\n| Risk Level | Low/Med/High | Low/Med/High | A/B |\n| Expected ROI | X% | X% | A/B |\n| Time to Results | X months | X months | A/B |\n| Capital Required | $X | $X | A/B |\n| Competition | Low/Med/High | Low/Med/High | A/B |\n\n## 🏆 Verdict\n**Winner: Scenario [A/B]** — [1 paragraph explaining why, acknowledging trade-offs]\n\n## 🤔 Consider This\n- If your priority is [X], choose Scenario A because...\n- If your priority is [Y], choose Scenario B because...\n- A hybrid approach might be: [suggestion combining best of both]`;
       setSimScenario(comparisonPrompt);
@@ -975,25 +980,27 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           </div>
         )}
 
-        {/* ── DEMO — subtle chip ── */}
-        {!isLoggedIn && (
-          <div style={{
-            margin: "8px auto 0", width: "100%",
-            textAlign: "center",
-          }}>
-            <button onClick={runDemoSimulation} style={{
-              display: "inline-flex", alignItems: "center", gap: 5,
-              padding: "5px 12px", borderRadius: 50,
-              border: "1px dashed rgba(212,175,55,0.2)",
-              background: "transparent",
-              color: "var(--text-tertiary)", fontSize: 10,
-              cursor: "pointer",
-            }}>
-              <Play size={10} style={{ color: "var(--accent)" }} />
-              See a demo simulation
-            </button>
-          </div>
-        )}
+        {/* ── DEMO — subtle chip (always visible) ── */}
+        <div style={{
+          margin: "8px auto 0", width: "100%",
+          textAlign: "center",
+        }}>
+          <button onClick={runDemoSimulation} style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "5px 12px", borderRadius: 50,
+            border: "1px dashed rgba(212,175,55,0.2)",
+            background: "transparent",
+            color: "var(--text-tertiary)", fontSize: 10,
+            cursor: "pointer",
+            transition: "opacity 200ms",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.color = "var(--accent)"; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
+          >
+            <Play size={10} style={{ color: "var(--accent)" }} />
+            See a demo simulation
+          </button>
+        </div>
 
         {/* ── DISCLAIMER ── */}
         <p style={{
@@ -1024,7 +1031,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                 Upgrade to Pro
               </h3>
               <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>
-                Simulations require a Pro plan. Upgrade to unlock unlimited predictions.
+                You've used all your free simulations this month. Upgrade to Pro for 20/month.
               </p>
               <button onClick={() => { window.location.href = "/pricing"; }} style={{
                 padding: "10px 24px", borderRadius: 50,
@@ -1032,6 +1039,50 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                 fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
               }}>
                 View Plans
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Auth gate modal (instead of redirect) */}
+        {showAuthGate && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+          }} onClick={() => setShowAuthGate(false)}>
+            <div onClick={e => e.stopPropagation()} style={{
+              maxWidth: 380, padding: "32px 28px", borderRadius: 16,
+              background: "var(--card-bg)", border: "1px solid var(--border-secondary)",
+              textAlign: "center",
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>&#9889;</div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, margin: "0 0 8px" }}>
+                Sign up to unlock simulations
+              </h3>
+              <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 20, lineHeight: 1.5 }}>
+                Create a free account to run AI-powered business simulations with 10 expert agents debating your scenario.
+              </p>
+              <button
+                onClick={() => { if (typeof window !== "undefined") window.location.href = "/signup"; }}
+                style={{
+                  width: "100%", padding: "12px", borderRadius: 10,
+                  background: "#D4AF37", border: "none", color: "#000",
+                  fontSize: 14, fontWeight: 700, cursor: "pointer",
+                  marginBottom: 10,
+                }}
+              >
+                Create free account
+              </button>
+              <button
+                onClick={() => setShowAuthGate(false)}
+                style={{
+                  width: "100%", padding: "10px", borderRadius: 10,
+                  background: "transparent", border: "1px solid var(--border-secondary)",
+                  color: "var(--text-tertiary)", fontSize: 13, cursor: "pointer",
+                }}
+              >
+                Maybe later
               </button>
             </div>
           </div>
