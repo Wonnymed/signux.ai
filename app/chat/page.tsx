@@ -822,7 +822,7 @@ function ChatPage() {
               setEngineCurrentRound(null);
               // Update live agents progress
               setSimLiveAgents(data.agents.map((a: any) => ({ name: a.name, role: a.agentId, category: a.agentId, done: true })));
-              setSimAgentMessages(prev => [...prev, ...data.agents.map((a: any) => ({ agentId: a.agentId, agentName: a.name, content: a.text, round: data.round }))]);
+              setSimAgentMessages(prev => [...prev, ...data.agents.map((a: any) => ({ agentId: a.agentId, agentName: String(a.name ?? ""), content: typeof a.text === "string" ? a.text : String(a.text ?? ""), round: data.round }))]);
             } else if (data.type === "agent_failed") {
               // Mark failed agent in the current round's data
               setEngineRounds(prev => {

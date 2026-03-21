@@ -359,8 +359,8 @@ Respond ONLY in this JSON format (no markdown, no backticks):
                   avatar: agent.avatar,
                   color: agent.color,
                   round: roundNum,
-                  text: parsed.text,
-                  sentiment: parsed.sentiment || "neutral",
+                  text: typeof parsed.text === "string" ? parsed.text : String(parsed.text ?? ""),
+                  sentiment: typeof parsed.sentiment === "string" ? parsed.sentiment : "neutral",
                   confidence: typeof parsed.confidence === "number" ? parsed.confidence : 5,
                   changedMind: !!parsed.changed_mind,
                 };
@@ -505,7 +505,7 @@ Respond ONLY in this JSON format (no markdown, no backticks):
           : 5;
         const dissents = votes
           .filter(v => v.dissent)
-          .map(v => ({ agent: v.agent, avatar: v.avatar, note: v.dissent }));
+          .map(v => ({ agent: String(v.agent), avatar: String(v.avatar), note: typeof v.dissent === "string" ? v.dissent : String(v.dissent ?? "") }));
 
         // ═══ EMERGENT PATTERNS — synthesize from all round summaries ═══
         let patternData: any = { patterns: [], verdict: "Insufficient data", viability: 5, estimatedROI: "N/A" };
@@ -544,6 +544,16 @@ Identify emergent patterns. Respond ONLY in JSON (no markdown):
           // Pattern detection failed — use defaults, don't break simulation
         }
 
+        // Sanitize pattern data — ensure all rendered fields are strings
+        const safePatterns = Array.isArray(patternData.patterns)
+          ? patternData.patterns.map((p: any) => ({
+              type: typeof p.type === "string" ? p.type : "consensus",
+              title: typeof p.title === "string" ? p.title : String(p.title ?? ""),
+              description: typeof p.description === "string" ? p.description : String(p.description ?? ""),
+              agents_involved: Array.isArray(p.agents_involved) ? p.agents_involved.map((a: any) => String(a)) : [],
+            }))
+          : [];
+
         send({
           type: "verdict",
           votes,
@@ -551,12 +561,12 @@ Identify emergent patterns. Respond ONLY in JSON (no markdown):
           stopCount,
           avgConfidence,
           dissents,
-          patterns: patternData.patterns || [],
-          verdict: patternData.verdict || "Analysis complete",
-          viability: patternData.viability || 5,
-          estimatedROI: patternData.estimatedROI || "N/A",
-          keyRisk: patternData.keyRisk || "",
-          keyOpportunity: patternData.keyOpportunity || "",
+          patterns: safePatterns,
+          verdict: typeof patternData.verdict === "string" ? patternData.verdict : String(patternData.verdict ?? "Analysis complete"),
+          viability: typeof patternData.viability === "number" ? patternData.viability : 5,
+          estimatedROI: typeof patternData.estimatedROI === "string" ? patternData.estimatedROI : "N/A",
+          keyRisk: typeof patternData.keyRisk === "string" ? patternData.keyRisk : String(patternData.keyRisk ?? ""),
+          keyOpportunity: typeof patternData.keyOpportunity === "string" ? patternData.keyOpportunity : String(patternData.keyOpportunity ?? ""),
           skippedRounds,
         });
 

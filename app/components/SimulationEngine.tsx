@@ -1641,10 +1641,10 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                       <div style={{
                         fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)",
                         whiteSpace: "pre-wrap", maxHeight: 100, overflow: "hidden",
-                        maskImage: (msg.content?.length || 0) > 250 ? "linear-gradient(to bottom, black 70%, transparent)" : undefined,
-                        WebkitMaskImage: (msg.content?.length || 0) > 250 ? "linear-gradient(to bottom, black 70%, transparent)" : undefined,
+                        maskImage: (typeof msg.content === "string" ? msg.content.length : 0) > 250 ? "linear-gradient(to bottom, black 70%, transparent)" : undefined,
+                        WebkitMaskImage: (typeof msg.content === "string" ? msg.content.length : 0) > 250 ? "linear-gradient(to bottom, black 70%, transparent)" : undefined,
                       }}>
-                        {msg.content}
+                        {typeof msg.content === "string" ? msg.content : String(msg.content ?? "")}
                       </div>
                     </motion.div>
                   );
@@ -2113,7 +2113,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                               {ei < Math.min(su.events.length, 4) - 1 && <div style={{ width: 1, flex: 1, background: "var(--border-secondary)", marginTop: 2 }} />}
                             </div>
                             <div style={{ paddingBottom: 6 }}>
-                              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>{ev.period}</div>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>{String(ev.period ?? "")}</div>
                               <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.4 }}>{typeof ev.text === "string" ? ev.text.slice(0, 80) : ""}</div>
                             </div>
                           </motion.div>
@@ -2152,7 +2152,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                         color: streamingVerdict.result === "GO" ? "#22c55e" : streamingVerdict.result === "CAUTION" ? "#f59e0b" : "#ef4444",
                       }}
                     >
-                      {streamingVerdict.result}
+                      {String(streamingVerdict.result ?? "")}
                     </motion.div>
                   </div>
                   <div style={{ width: 1, height: 36, background: "var(--border-secondary)" }} />
@@ -2161,12 +2161,12 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                     <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "var(--text-tertiary)", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>VIAB.</div>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: streamingVerdict.estimatedROI?.startsWith("-") ? "#EF4444" : "#10B981", fontFamily: "var(--font-mono)" }}>{streamingVerdict.estimatedROI}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: (typeof streamingVerdict.estimatedROI === "string" && streamingVerdict.estimatedROI.startsWith("-")) ? "#EF4444" : "#10B981", fontFamily: "var(--font-mono)" }}>{String(streamingVerdict.estimatedROI ?? "")}</div>
                     <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "var(--text-tertiary)", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>EST. ROI</div>
                   </div>
                   {streamingVerdict.reasoning && (
                     <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{streamingVerdict.reasoning}</div>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{typeof streamingVerdict.reasoning === "string" ? streamingVerdict.reasoning : String(streamingVerdict.reasoning ?? "")}</div>
                     </div>
                   )}
                 </motion.div>
@@ -2358,15 +2358,15 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               <div>
                 <div style={{
                   fontSize: 18, fontWeight: 800, fontFamily: "var(--font-mono)",
-                  color: v.estimatedROI.startsWith("-") ? "#EF4444" : "#10B981",
-                }}>{v.estimatedROI}</div>
+                  color: (typeof v.estimatedROI === "string" && v.estimatedROI.startsWith("-")) ? "#EF4444" : "#10B981",
+                }}>{String(v.estimatedROI)}</div>
                 <div style={{ fontSize: 8, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>EST. ROI</div>
               </div>
             )}
           </div>
           {v.verdict && (
             <p style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.5, margin: "0 0 10px" }}>
-              {v.verdict}
+              {typeof v.verdict === "string" ? v.verdict : String(v.verdict ?? "")}
             </p>
           )}
           {v.patterns && v.patterns.length > 0 && (
@@ -2374,7 +2374,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               <div style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)", marginBottom: 4, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>Patterns</div>
               {v.patterns.slice(0, 4).map((p: any, i: number) => (
                 <div key={i} style={{ fontSize: 10, color: "var(--text-secondary)", marginBottom: 3, lineHeight: 1.4 }}>
-                  • {p.title}
+                  • {typeof p.title === "string" ? p.title : String(p.title ?? "")}
                 </div>
               ))}
             </div>
@@ -2499,7 +2499,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   </div>
                   {(sv.dissents || []).map((d: any, i: number) => (
                     <div key={i} style={{ fontSize: 10, color: "var(--text-secondary)", marginBottom: 4, lineHeight: 1.4 }}>
-                      {d.avatar} <strong>{d.agent}:</strong> &ldquo;{d.note}&rdquo;
+                      {String(d.avatar ?? "")} <strong>{String(d.agent ?? "Agent")}:</strong> &ldquo;{typeof d.note === "string" ? d.note : String(d.note ?? "")}&rdquo;
                     </div>
                   ))}
                   {(!sv.dissents || sv.dissents.length === 0) && (
@@ -2649,7 +2649,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                         color: round.round <= 5 ? "#3B82F6" : "#8B5CF6",
                         fontFamily: "var(--font-mono)",
                       }}>Round {round.round}</span>
-                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{round.label}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{typeof round.label === "string" ? round.label : String(round.label ?? "")}</span>
                     </button>
                     {!isCollapsed && (
                       <div style={{
@@ -3115,19 +3115,19 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               fontSize: 22, fontWeight: 800, fontFamily: "var(--font-brand)", letterSpacing: 2,
               color: verdictResult === "GO" ? "#22c55e" : verdictResult === "CAUTION" ? "#f59e0b" : verdictResult === "STOP" ? "#ef4444" : "var(--text-primary)",
             }}>
-              {verdictResult}
+              {String(verdictResult)}
             </div>
           </div>
 
           <div style={{ width: 1, height: 36, background: "var(--border-secondary)" }} />
 
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>{viabilityScore}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>{String(viabilityScore)}</div>
             <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "var(--text-tertiary)", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>VIAB.</div>
           </div>
 
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: estimatedROI.startsWith("-") ? "#EF4444" : "#10B981", fontFamily: "var(--font-mono)" }}>{estimatedROI}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: (typeof estimatedROI === "string" && estimatedROI.startsWith("-")) ? "#EF4444" : "#10B981", fontFamily: "var(--font-mono)" }}>{String(estimatedROI)}</div>
             <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "var(--text-tertiary)", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>EST. ROI</div>
           </div>
 
@@ -3172,7 +3172,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   VERDICT REASONING
                 </div>
                 <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
-                  {verdictReasoning}
+                  {typeof verdictReasoning === "string" ? verdictReasoning : String(verdictReasoning ?? "")}
                 </p>
               </div>
             )}
@@ -3185,10 +3185,10 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   HOW TO STEER TOWARD BEST CASE
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {steerTowardA.map((action: string, i: number) => (
+                  {steerTowardA.map((action: any, i: number) => (
                     <div key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, display: "flex", gap: 8 }}>
                       <span style={{ color: "#10B981", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                      <span>{action}</span>
+                      <span>{typeof action === "string" ? action : String(action ?? "")}</span>
                     </div>
                   ))}
                 </div>
@@ -3203,10 +3203,10 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   HOW TO AVOID WORST CASE
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {avoidC.map((safeguard: string, i: number) => (
+                  {avoidC.map((safeguard: any, i: number) => (
                     <div key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, display: "flex", gap: 8 }}>
                       <span style={{ color: "#F59E0B", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                      <span>{safeguard}</span>
+                      <span>{typeof safeguard === "string" ? safeguard : String(safeguard ?? "")}</span>
                     </div>
                   ))}
                 </div>
@@ -3408,7 +3408,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   color: msg.role === "user" ? "#000" : "var(--text-secondary)",
                   fontSize: 13, lineHeight: 1.6, border: msg.role === "user" ? "none" : "1px solid var(--border-secondary)",
                 }}>
-                  {msg.role === "assistant" ? <MarkdownRenderer content={msg.content} /> : msg.content}
+                  {msg.role === "assistant" ? <MarkdownRenderer content={typeof msg.content === "string" ? msg.content : String(msg.content ?? "")} /> : (typeof msg.content === "string" ? msg.content : String(msg.content ?? ""))}
                 </div>
               ))}
               {agentChatLoading && (
@@ -3861,7 +3861,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                               <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{msg.role}{msg.category && ` · ${t(`sim.category.${msg.category}`)}`}</div>
                             </div>
                           </div>
-                          <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{msg.content}</div>
+                          <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{typeof msg.content === "string" ? msg.content : String(msg.content ?? "")}</div>
                         </div>
                       );
                     })}

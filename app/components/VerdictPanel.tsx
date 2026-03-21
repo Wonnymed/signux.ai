@@ -140,10 +140,10 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
               fontSize: 22,
               fontWeight: 800,
               fontFamily: "var(--font-mono)",
-              color: verdict.estimatedROI.startsWith("-") ? "#EF4444" : "#10B981",
+              color: (typeof verdict.estimatedROI === "string" && verdict.estimatedROI.startsWith("-")) ? "#EF4444" : "#10B981",
               lineHeight: 1,
             }}>
-              {verdict.estimatedROI}
+              {String(verdict.estimatedROI)}
             </div>
             <div style={{
               fontSize: 9,
@@ -232,7 +232,7 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
           lineHeight: 1.6,
           margin: "0 0 16px",
         }}>
-          {verdict.verdict}
+          {typeof verdict.verdict === "string" ? verdict.verdict : String(verdict.verdict ?? "")}
         </p>
       )}
 
@@ -264,7 +264,7 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
                 KEY RISK
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                {verdict.keyRisk}
+                {typeof verdict.keyRisk === "string" ? verdict.keyRisk : String(verdict.keyRisk ?? "")}
               </div>
             </div>
           )}
@@ -288,7 +288,7 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
                 KEY OPPORTUNITY
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                {verdict.keyOpportunity}
+                {typeof verdict.keyOpportunity === "string" ? verdict.keyOpportunity : String(verdict.keyOpportunity ?? "")}
               </div>
             </div>
           )}
