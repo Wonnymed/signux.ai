@@ -229,6 +229,12 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [customAgents, setCustomAgents] = useState<AgentRole[]>([...DEFAULT_ROLES]);
   const [showAgentCustomizer, setShowAgentCustomizer] = useState(false);
 
+  // Hooks that were previously inside conditional blocks — MUST be at top level
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [showFullReport, setShowFullReport] = useState(false);
+
   const isMobile = useIsMobile();
   const pad = isMobile ? "16px" : "24px";
   const { enhance, enhancing, wasEnhanced } = useEnhance("simulate");
@@ -476,7 +482,6 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
 
   /* ═══ WELCOME STATE ═══ */
   if (!simResult && !simulating) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const quickScenarios = [
       "Open a franchise in 3 new cities",
@@ -2778,9 +2783,6 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     return { border: "var(--success)", bg: "rgba(16,185,129,0.04)" };
   };
 
-  const [sharing, setSharing] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
-
   const shareResult = async () => {
     setSharing(true);
     try {
@@ -2896,7 +2898,6 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
       })();
 
   const winResultUni = resultUniverses.reduce((a: any, b: any) => a.probability > b.probability ? a : b);
-  const [showFullReport, setShowFullReport] = useState(false);
 
   return (
     <>
