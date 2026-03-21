@@ -989,6 +989,80 @@ function ChatPage() {
     } catch {}
   };
 
+  /* ═══ Demo Simulation (mock data, no API) ═══ */
+  const loadDemo = () => {
+    const DEMO_AGENTS = [
+      { id: "strategist", name: "The Strategist", avatar: "🎯", color: "#D4AF37" },
+      { id: "finance", name: "The CFO", avatar: "💰", color: "#10B981" },
+      { id: "risk", name: "Risk Analyst", avatar: "🛡️", color: "#EF4444" },
+      { id: "market", name: "Market Expert", avatar: "📊", color: "#3B82F6" },
+      { id: "ops", name: "Operations Lead", avatar: "⚙️", color: "#F59E0B" },
+      { id: "contrarian", name: "Devil's Advocate", avatar: "😈", color: "#EC4899" },
+      { id: "customer", name: "Customer Voice", avatar: "👥", color: "#8B5CF6" },
+      { id: "tech", name: "Tech Architect", avatar: "🔧", color: "#06B6D4" },
+      { id: "legal", name: "Legal Advisor", avatar: "⚖️", color: "#84CC16" },
+      { id: "innovator", name: "The Innovator", avatar: "💡", color: "#F97316" },
+    ];
+    const sentiments = ["optimistic", "cautious", "confident", "skeptical", "excited", "worried", "convinced", "neutral", "concerned", "optimistic"];
+    const ROUND_LABELS = ["First Impressions", "Challenge", "Data & Numbers", "Worst Case", "Best Case", "Alliances", "Cross-Examination", "Revision", "Final Arguments", "Vote"];
+    const demoRounds = ROUND_LABELS.map((label, ri) => ({
+      round: ri + 1,
+      label,
+      agents: DEMO_AGENTS.map((ag, ai) => ({
+        agentId: ag.id, name: ag.name, avatar: ag.avatar, color: ag.color,
+        text: ri === 0 ? `The premium coffee subscription market is growing at 15% annually. With $50K budget, ${ag.name === "Risk Analyst" ? "the main risk is customer acquisition cost in a saturated market. Blue Bottle and Trade Coffee have significant brand loyalty." : ag.name === "The CFO" ? "break-even at $35/month requires ~150 subscribers. CAC will be $40-60 via Instagram/TikTok. Margins are healthy at 65% after COGS." : ag.name === "Devil's Advocate" ? "remote workers are returning to offices. The target demographic is shrinking. I'm skeptical about the $35 price point competing with $15 commodity subscriptions." : "this scenario has strong fundamentals. Single-origin sourcing from Colombia and Ethiopia gives a clear differentiation story."}` : ri < 5 ? `Round ${ri + 1} analysis: ${ag.name === "Risk Analyst" ? "Logistics costs could eat 20% of margin if not optimized. Need local roasting partners." : ag.name === "The CFO" ? "Updated projections show 8-month path to profitability with 200 subscribers." : "Market dynamics continue to favor premium segment. The differentiation is viable."}` : `After reviewing all arguments, ${ag.name === "Devil's Advocate" && ri < 8 ? "I maintain concerns about market saturation, though the premium positioning mitigates some risk." : "I'm increasingly confident in the viability. The data supports a focused launch strategy."}`,
+        sentiment: ri < 3 ? sentiments[ai] : ri < 7 ? (ai % 3 === 0 ? "cautious" : "optimistic") : (ai === 5 ? "cautious" : "confident"),
+        confidence: Math.min(10, Math.max(3, 5 + ri - (ai === 5 ? 2 : 0) + (ai === 1 ? 1 : 0))),
+        changedMind: ri === 7 && ai === 5,
+      })),
+    }));
+    const demoVerdict = {
+      proceedCount: 8, stopCount: 2, avgConfidence: 7.4, viability: 7,
+      estimatedROI: "+45%",
+      verdict: "The coffee subscription service shows strong viability with a clear path to profitability within 8 months. Premium positioning and direct sourcing create meaningful differentiation. Key risk remains customer acquisition cost.",
+      keyRisk: "Customer acquisition cost in saturated premium coffee market — $40-60 CAC may extend break-even if conversion rates underperform.",
+      keyOpportunity: "Remote worker segment values convenience and quality — first-mover advantage in targeting this specific niche with locally roasted single-origin beans.",
+      votes: DEMO_AGENTS.map((ag, i) => ({
+        agent: ag.name, avatar: ag.avatar,
+        vote: i === 2 || i === 5 ? "STOP" : "PROCEED",
+        confidence: i === 5 ? 5 : i === 2 ? 6 : 7 + (i % 3),
+      })),
+      patterns: [
+        { type: "consensus", title: "Premium positioning consensus", description: "8 of 10 agents agree that premium single-origin positioning justifies the $35 price point.", agents_involved: ["The Strategist", "The CFO", "Market Expert"] },
+        { type: "emerging_risk", title: "CAC escalation risk", description: "Multiple agents flagged rising digital ad costs as a threat to unit economics.", agents_involved: ["Risk Analyst", "The CFO", "Devil's Advocate"] },
+        { type: "opportunity", title: "B2B corporate gifting", description: "Innovator and Market Expert identified corporate gifting as an untapped revenue stream.", agents_involved: ["The Innovator", "Market Expert"] },
+        { type: "blind_spot", title: "Supply chain fragility", description: "Single-origin sourcing from 2 countries creates dependency risk not fully addressed.", agents_involved: ["Operations Lead", "Risk Analyst"] },
+      ],
+      dissents: [
+        { avatar: "🛡️", agent: "Risk Analyst", note: "The $50K budget is tight for 3-city launch. I recommend starting with 1 city to validate unit economics before expanding." },
+        { avatar: "😈", agent: "Devil's Advocate", note: "We're underestimating the power of incumbents. Blue Bottle has unlimited marketing budget and existing brand loyalty." },
+      ],
+    };
+    const demoEvolution = DEMO_AGENTS.map((ag, ai) => ({
+      agentId: ag.id, name: ag.name, avatar: ag.avatar, color: ag.color,
+      arc: demoRounds.map((r) => {
+        const a = r.agents.find((x: any) => x.agentId === ag.id)!;
+        return { round: r.round, sentiment: a.sentiment, confidence: a.confidence, changedMind: a.changedMind };
+      }),
+    }));
+
+    setSimScenario("I want to launch a premium coffee subscription service targeting remote workers in major US cities. Budget: $50K. I plan to source single-origin beans from Colombia and Ethiopia, roast locally, and deliver weekly. Target price: $35/month for 2 bags.");
+    setEngineAgents(DEMO_AGENTS);
+    setEngineRounds(demoRounds);
+    setEngineCurrentRound(null);
+    setEngineVerdict(demoVerdict);
+    setEngineEvolution(demoEvolution);
+    setEngineDone(true);
+    setSimulationSaved(false);
+    setSimResult({
+      report: "",
+      metadata: { agents_count: 10, rounds: 10, total_interactions: 100 },
+      stages: { agents: [] },
+      simulation: [],
+      engineData: { done: true },
+    });
+  };
+
   /* ═══ Delete Conversation ═══ */
   const handleDeleteConversation = useCallback(async (convId: string) => {
     setConversations(prev => prev.filter(c => c.id !== convId));
@@ -1238,6 +1312,7 @@ function ChatPage() {
                 onSaveSimulation={saveSimulation}
                 simulationSaved={simulationSaved}
                 simulationUsage={{ used: usage.simulations_month, limit: limits.simulate_monthly }}
+                onLoadDemo={loadDemo}
               />
             </motion.div>
           ) : mode === "launchpad" ? (

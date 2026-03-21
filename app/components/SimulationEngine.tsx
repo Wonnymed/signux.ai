@@ -77,6 +77,7 @@ type SimulationEngineProps = {
   onSaveSimulation?: () => Promise<void>;
   simulationSaved?: boolean;
   simulationUsage?: { used: number; limit: number };
+  onLoadDemo?: () => void;
 };
 
 function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { score: number; label: string; color: string } {
@@ -101,7 +102,7 @@ function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { sco
 }
 
 export default function SimulationEngine(props: SimulationEngineProps) {
-  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang, isLoggedIn, tier, streamingUniverses, streamingVerdict, engineAgents, engineRounds, engineCurrentRound, engineVerdict, engineEvolution, engineDone, onSaveSimulation, simulationSaved, simulationUsage } = props;
+  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang, isLoggedIn, tier, streamingUniverses, streamingVerdict, engineAgents, engineRounds, engineCurrentRound, engineVerdict, engineEvolution, engineDone, onSaveSimulation, simulationSaved, simulationUsage, onLoadDemo } = props;
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -190,11 +191,13 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const DEMO_SCENARIO = "I want to launch a premium coffee subscription service targeting remote workers in major US cities. Budget: $50K. I plan to source single-origin beans from Colombia and Ethiopia, roast locally, and deliver weekly. Target price: $35/month for 2 bags. I need to evaluate: market competition (Blue Bottle, Trade Coffee), logistics, customer acquisition strategy, and break-even timeline.";
 
   const runDemoSimulation = () => {
-    if (typeof window !== "undefined" && localStorage.getItem("signux_demo_used")) return;
     setIsDemo(true);
     setSimScenario(DEMO_SCENARIO);
-    onSimulate(DEMO_SCENARIO);
-    if (typeof window !== "undefined") localStorage.setItem("signux_demo_used", "true");
+    if (onLoadDemo) {
+      onLoadDemo();
+    } else {
+      onSimulate(DEMO_SCENARIO);
+    }
   };
 
   const demoUsed = typeof window !== "undefined" && localStorage.getItem("signux_demo_used") === "true";
@@ -878,7 +881,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           gap: 12, flexWrap: "wrap",
         }}>
           <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
-            {customAgents.filter(a => a.active).length} AI specialists · 3 debate rounds
+            10 AI specialists · 10 debate rounds
           </span>
 
           <button onClick={() => setShowAgentCustomizer(!showAgentCustomizer)} style={{
@@ -973,7 +976,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
         )}
 
         {/* ── DEMO — subtle chip ── */}
-        {!isLoggedIn && !demoUsed && (
+        {!isLoggedIn && (
           <div style={{
             margin: "8px auto 0", width: "100%",
             textAlign: "center",
