@@ -49,9 +49,9 @@ export default function EvolutionTracker({
   onSelectRound, onAgentClick, isMobile, compact,
 }: Props) {
   const raw = Array.isArray(agentsProp) ? agentsProp : Array.isArray(evolution) ? evolution : [];
-  if (raw.length === 0) return null;
 
   // Normalize: accept both arc and sentimentOverRounds
+  // IMPORTANT: useMemo hooks must be called before any early return (React Rules of Hooks)
   const normalized = useMemo(() => raw.map(a => ({
     ...a,
     rounds: a.sentimentOverRounds || a.arc || [],
@@ -65,6 +65,8 @@ export default function EvolutionTracker({
       return bLast - aLast;
     });
   }, [normalized]);
+
+  if (raw.length === 0) return null;
 
   const changedCount = normalized.filter(a =>
     a.rounds.some(r => r.changedMind)
