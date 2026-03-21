@@ -48,7 +48,7 @@ export default function EvolutionTracker({
   evolution, agents: agentsProp, activeRound = 1,
   onSelectRound, onAgentClick, isMobile, compact,
 }: Props) {
-  const raw = agentsProp || evolution || [];
+  const raw = Array.isArray(agentsProp) ? agentsProp : Array.isArray(evolution) ? evolution : [];
   if (raw.length === 0) return null;
 
   // Normalize: accept both arc and sentimentOverRounds

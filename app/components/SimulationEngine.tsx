@@ -1,5 +1,6 @@
 "use client";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { Component, useState, useRef, useEffect, useMemo } from "react";
+import type { ReactNode, ErrorInfo } from "react";
 import {
   Check, AlertTriangle, Download, ChevronDown, ChevronRight,
   FileText, RotateCcw, MessageSquare, BarChart3, Network,
@@ -8,6 +9,46 @@ import {
   TrendingUp, TrendingDown, Minus, Save, FileDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+/* ═══ Error Boundary — prevents black screen on render crash ═══ */
+class SimulationErrorBoundary extends Component<
+  { children: ReactNode; onReset?: () => void },
+  { hasError: boolean; error: string }
+> {
+  state = { hasError: false, error: "" };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("SimulationEngine render error:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-primary)" }}>
+          <AlertTriangle size={48} style={{ color: "#EF4444", marginBottom: 16 }} />
+          <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+            Simulation display error
+          </h3>
+          <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 16, maxWidth: 400, margin: "0 auto 16px" }}>
+            {this.state.error || "Something went wrong rendering the simulation results."}
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: "" }); this.props.onReset?.(); }}
+            style={{
+              padding: "10px 24px", borderRadius: 8,
+              background: "var(--accent)", border: "none",
+              color: "#000", fontSize: 13, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            Back to prompt
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { t } from "../lib/i18n";
 import { useIsMobile } from "../lib/useIsMobile";
 import { useEnhance } from "../lib/useEnhance";
@@ -1635,6 +1676,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
 
         {/* 10x10 ENGINE — 4-Zone Canvas */}
         {hasEngineData ? (
+          <SimulationErrorBoundary onReset={onReset}>
           <div style={{
             flex: 1, overflowY: "auto",
             display: "flex", flexDirection: "column",
@@ -1808,6 +1850,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               </div>
             </div>
           </div>
+          </SimulationErrorBoundary>
         ) : hasStreamingUniverses ? (
           /* Streaming Universe Cards — real data arriving live */
           <div style={{
@@ -2396,6 +2439,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
     const meta = simResult.metadata || {};
 
     return (
+      <SimulationErrorBoundary onReset={onReset}>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Top bar */}
         <div style={{
@@ -2408,7 +2452,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               {t("sim.complete")}
             </div>
             <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>
-              {meta.agents_count} agents · {meta.rounds} rounds · {meta.total_interactions} interactions · {duration > 60 ? `${Math.floor(duration / 60)}m ${duration % 60}s` : `${duration}s`}
+              {String(meta.agents_count || 10)} agents · {String(meta.rounds || 10)} rounds · {String(meta.total_interactions || 100)} interactions · {duration > 60 ? `${Math.floor(duration / 60)}m ${duration % 60}s` : `${duration}s`}
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -2606,6 +2650,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           </div>
         </div>
       </div>
+      </SimulationErrorBoundary>
     );
   }
 

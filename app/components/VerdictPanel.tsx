@@ -40,7 +40,8 @@ const PATTERN_COLORS: Record<string, string> = {
 };
 
 export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
-  const isProceed = verdict.proceedCount >= 6;
+  if (!verdict || typeof verdict !== "object") return null;
+  const isProceed = (verdict.proceedCount || 0) >= 6;
   const mainColor = isProceed ? "#10B981" : "#EF4444";
 
   return (
@@ -187,7 +188,7 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
       </div>
 
       {/* Individual votes */}
-      {verdict.votes && verdict.votes.length > 0 && (
+      {verdict.votes && Array.isArray(verdict.votes) && verdict.votes.length > 0 && (
         <div style={{
           display: "flex",
           gap: 4,
@@ -345,12 +346,12 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
                       color: "var(--text-primary)",
                       marginBottom: 2,
                     }}>
-                      {p.title}
+                      {typeof p.title === "string" ? p.title : String(p.title ?? "")}
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                      {p.description}
+                      {typeof p.description === "string" ? p.description : String(p.description ?? "")}
                     </div>
-                    {p.agents_involved && p.agents_involved.length > 0 && (
+                    {p.agents_involved && Array.isArray(p.agents_involved) && p.agents_involved.length > 0 && (
                       <div style={{ marginTop: 4, display: "flex", gap: 4, flexWrap: "wrap" }}>
                         {p.agents_involved.map((a, ai) => (
                           <span key={ai} style={{
@@ -360,7 +361,7 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
                             background: "rgba(255,255,255,0.03)",
                             color: "var(--text-tertiary)",
                             border: "1px solid var(--border-secondary)",
-                          }}>{a}</span>
+                          }}>{typeof a === "string" ? a : String(a)}</span>
                         ))}
                       </div>
                     )}
@@ -400,9 +401,9 @@ export default function VerdictPanel({ verdict, isMobile }: VerdictPanelProps) {
                 lineHeight: 1.5,
               }}
             >
-              <span style={{ marginRight: 4 }}>{d.avatar}</span>
-              <strong style={{ color: "var(--text-primary)" }}>{d.agent}:</strong>{" "}
-              &ldquo;{d.note}&rdquo;
+              <span style={{ marginRight: 4 }}>{typeof d.avatar === "string" ? d.avatar : ""}</span>
+              <strong style={{ color: "var(--text-primary)" }}>{typeof d.agent === "string" ? d.agent : "Agent"}:</strong>{" "}
+              &ldquo;{typeof d.note === "string" ? d.note : String(d.note ?? "")}&rdquo;
             </div>
           ))}
         </div>

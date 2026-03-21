@@ -98,7 +98,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
               fontSize: 10,
               color: "var(--text-tertiary)",
             }}>
-              {agent.sentiment} · {agent.confidence}/10
+              {String(agent.sentiment || "neutral")} · {String(agent.confidence ?? 5)}/10
             </span>
           </div>
         </div>
@@ -127,7 +127,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
             CHANGED
           </span>
         ) : null}
-        {!agent.failed && /previous simulation|last time|earlier scenario|prior analysis|your .* simulation/i.test(agent.text) && (
+        {!agent.failed && typeof agent.text === "string" && /previous simulation|last time|earlier scenario|prior analysis|your .* simulation/i.test(agent.text) && (
           <span style={{
             fontSize: 8,
             padding: "1px 5px",
@@ -157,7 +157,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
               overflow: "hidden",
             }),
       }}>
-        {agent.text}
+        {typeof agent.text === "string" ? agent.text : String(agent.text ?? "")}
       </p>
     </motion.div>
   );
