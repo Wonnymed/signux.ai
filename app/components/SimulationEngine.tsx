@@ -118,7 +118,6 @@ type SimulationEngineProps = {
   onSaveSimulation?: () => Promise<void>;
   simulationSaved?: boolean;
   simulationUsage?: { used: number; limit: number };
-  onLoadDemo?: () => void;
   tokenStatus?: { available: number; monthlyTotal: number; monthlyUsed: number; plan: string; daysUntilReset: number; features: any; costs: Record<string, number> };
   onConsumeTokens?: (action: string, metadata?: Record<string, any>) => Promise<boolean>;
   onRefreshTokens?: () => void;
@@ -146,7 +145,7 @@ function calculateRiskScore(agents: SimAgent[], messages: AgentMessage[]): { sco
 }
 
 export default function SimulationEngine(props: SimulationEngineProps) {
-  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang, isLoggedIn, tier, streamingUniverses, streamingVerdict, engineAgents, engineRounds, engineCurrentRound, engineVerdict, engineEvolution, engineDone, onSaveSimulation, simulationSaved, simulationUsage, onLoadDemo, tokenStatus, onConsumeTokens, onRefreshTokens } = props;
+  const { simulating, simResult, simScenario, setSimScenario, simStage, simLiveAgents, simTotalAgents, simStartTime, onSimulate, onReset, simStarting, simAgentMessages, onSetMode, lang, isLoggedIn, tier, streamingUniverses, streamingVerdict, engineAgents, engineRounds, engineCurrentRound, engineVerdict, engineEvolution, engineDone, onSaveSimulation, simulationSaved, simulationUsage, tokenStatus, onConsumeTokens, onRefreshTokens } = props;
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -162,6 +161,7 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [showTokenLimit, setShowTokenLimit] = useState(false);
+  const [showVideoDemo, setShowVideoDemo] = useState(false);
 
   // 10x10 Canvas state
   const [activeRound, setActiveRound] = useState(1);
@@ -180,7 +180,6 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const [godEyeRunning, setGodEyeRunning] = useState(false);
   const [godEyeResults, setGodEyeResults] = useState<GodEyeResult[]>([]);
   const [injectionHistory, setInjectionHistory] = useState<InjectionEntry[]>([]);
-  const [isDemo, setIsDemo] = useState(false);
 
   // Seed Material state
   const [seedMaterial, setSeedMaterial] = useState("");
@@ -233,20 +232,6 @@ export default function SimulationEngine(props: SimulationEngineProps) {
   const isMobile = useIsMobile();
   const pad = isMobile ? "16px" : "24px";
   const { enhance, enhancing, wasEnhanced } = useEnhance("simulate");
-
-  const DEMO_SCENARIO = "I want to launch a premium coffee subscription service targeting remote workers in major US cities. Budget: $50K. I plan to source single-origin beans from Colombia and Ethiopia, roast locally, and deliver weekly. Target price: $35/month for 2 bags. I need to evaluate: market competition (Blue Bottle, Trade Coffee), logistics, customer acquisition strategy, and break-even timeline.";
-
-  const runDemoSimulation = () => {
-    setIsDemo(true);
-    setSimScenario(DEMO_SCENARIO);
-    if (onLoadDemo) {
-      onLoadDemo();
-    } else {
-      onSimulate(DEMO_SCENARIO);
-    }
-  };
-
-  const demoUsed = typeof window !== "undefined" && localStorage.getItem("signux_demo_used") === "true";
 
   const handleEnhance = async () => {
     const result = await enhance(simScenario);
@@ -1052,26 +1037,25 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           </div>
         )}
 
-        {/* ── DEMO — subtle chip (always visible) ── */}
-        <div style={{
-          margin: "8px auto 0", width: "100%",
-          textAlign: "center",
-        }}>
-          <button onClick={runDemoSimulation} style={{
+        {/* ── WATCH DEMO — video modal trigger ── */}
+        <div style={{ margin: "8px auto 0", width: "100%", textAlign: "center" }}>
+          <button onClick={() => setShowVideoDemo(true)} style={{
             display: "inline-flex", alignItems: "center", gap: 5,
             padding: "5px 12px", borderRadius: 50,
             border: "1px dashed rgba(212,175,55,0.2)",
             background: "transparent",
             color: "var(--text-tertiary)", fontSize: 10,
-            cursor: "pointer",
-            transition: "opacity 200ms",
+            cursor: "pointer", transition: "all 200ms",
           }}
             onMouseEnter={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.color = "var(--accent)"; }}
             onMouseLeave={e => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
           >
             <Play size={10} style={{ color: "var(--accent)" }} />
-            See a demo simulation
+            Watch a demo simulation
           </button>
+          <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 4, opacity: 0.5 }}>
+            See how 10 AI experts analyze a real business scenario
+          </div>
         </div>
 
         {/* ── DISCLAIMER ── */}
@@ -1210,6 +1194,103 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               }}>
                 Maybe later
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Video Demo Modal */}
+        {showVideoDemo && (
+          <div
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)",
+            }}
+            onClick={e => { if (e.target === e.currentTarget) setShowVideoDemo(false); }}
+          >
+            <div style={{
+              width: "90vw", maxWidth: 960, position: "relative",
+              borderRadius: 16, overflow: "hidden", background: "#000",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,55,0.1)",
+            }}>
+              {/* Close button */}
+              <button
+                onClick={() => setShowVideoDemo(false)}
+                style={{
+                  position: "absolute", top: 12, right: 12, zIndex: 10,
+                  width: 32, height: 32, borderRadius: 8,
+                  background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.1)",
+                  color: "#fff", fontSize: 16, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <X size={16} />
+              </button>
+
+              {/* Header overlay */}
+              <div style={{
+                padding: "16px 20px", position: "absolute", top: 0, left: 0, right: 0, zIndex: 5,
+                background: "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%)",
+                pointerEvents: "none",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#D4AF37" }} />
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)",
+                    fontFamily: "var(--font-mono)", textTransform: "uppercase" as const, letterSpacing: 1,
+                  }}>
+                    Signux Simulate — Demo
+                  </span>
+                </div>
+              </div>
+
+              {/* Video area — placeholder until real video is recorded */}
+              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                <div style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                  background: "#0A0908", gap: 16,
+                }}>
+                  <div style={{
+                    width: 64, height: 64, borderRadius: "50%",
+                    background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.2)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Play size={28} style={{ color: "#D4AF37", marginLeft: 3 }} />
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: "#F3F0EC", margin: "0 0 6px" }}>
+                      Demo video coming soon
+                    </h3>
+                    <p style={{ fontSize: 13, color: "rgba(243,240,236,0.4)", margin: 0 }}>
+                      10 AI agents debating a real business scenario in real-time
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                padding: "12px 20px", background: "#0A0908",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}>
+                <div style={{ fontSize: 12, color: "rgba(243,240,236,0.4)" }}>
+                  10 agents · 10 rounds · Real simulation result
+                </div>
+                <button
+                  onClick={() => {
+                    setShowVideoDemo(false);
+                    setTimeout(() => document.querySelector("textarea")?.focus(), 100);
+                  }}
+                  style={{
+                    padding: "6px 14px", borderRadius: 8,
+                    background: "#D4AF37", border: "none",
+                    color: "#000", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  Try it yourself →
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -3944,33 +4025,6 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           </div>
         )}
 
-      {/* Demo CTA */}
-      {isDemo && !isLoggedIn && (
-        <div style={{
-          padding: 24, borderRadius: 14, textAlign: "center",
-          background: "var(--mode-sim-bg)", border: "1px solid var(--mode-sim-border)",
-          marginTop: 24,
-        }}>
-          <div style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
-            Now simulate YOUR business
-          </div>
-          <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
-            Sign up free to run unlimited custom simulations
-          </div>
-          <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/signup"; }} style={{
-            padding: "12px 32px", borderRadius: 50,
-            background: "var(--accent)", color: "var(--text-inverse)",
-            fontWeight: 600, fontSize: 14, border: "none", cursor: "pointer",
-            fontFamily: "var(--font-brand)", letterSpacing: 1,
-            transition: "all 200ms",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.1)"; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
-          >
-            Sign up free
-          </button>
-        </div>
-      )}
       </div>
 
       {/* God's Eye Modal */}
