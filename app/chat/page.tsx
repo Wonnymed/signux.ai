@@ -1360,7 +1360,7 @@ function ChatPage() {
                   {usage.chat_today} of {limits.chat_daily} free messages today
                   <span
                     onClick={() => window.location.href = "/pricing"}
-                    style={{ color: "var(--accent)", cursor: "pointer", marginLeft: 8, fontWeight: 600 }}
+                    style={{ color: "var(--accent)", cursor: "pointer", marginLeft: 8 }}
                   >
                     Upgrade
                   </span>

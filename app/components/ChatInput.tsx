@@ -431,14 +431,11 @@ export default function ChatInput({
       {/* ═══ Composer Shell ═══ */}
       <div
         style={{
-          borderRadius: radius,
-          border: `1px solid ${focused ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.08)"}`,
+          borderRadius: "var(--radius-lg)",
+          border: `1px solid ${focused ? "var(--accent-border, rgba(200,168,78,0.12))" : "var(--border-primary)"}`,
           background: "var(--card-bg)",
-          boxShadow: focused
-            ? "0 0 0 1px rgba(255,255,255,0.06), 0 2px 24px rgba(255,255,255,0.03)"
-            : "0 0 0 1px rgba(255,255,255,0.03), 0 2px 12px rgba(0,0,0,0.06)",
-          transition: "border-color 200ms ease, box-shadow 200ms ease",
-          ...(isListening ? { borderColor: "var(--error)", boxShadow: "none" } : {}),
+          transition: "border-color 200ms ease",
+          ...(isListening ? { borderColor: "var(--error)" } : {}),
         }}
       >
         {/* Listening bar */}

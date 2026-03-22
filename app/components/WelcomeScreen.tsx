@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Zap, Shield, Rocket, Globe, TrendingUp } from "lucide-react";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
@@ -26,12 +25,12 @@ type WelcomeScreenProps = {
   lang?: string;
 };
 
-const MODE_ICONS: { mode: Mode; icon: typeof Zap; color: string; tooltip: string }[] = [
-  { mode: "simulate", icon: Zap, color: "#C8A84E", tooltip: "Simulate" },
-  { mode: "intel", icon: Shield, color: "#EF4444", tooltip: "Intel" },
-  { mode: "launchpad", icon: Rocket, color: "#3B82F6", tooltip: "Launchpad" },
-  { mode: "globalops", icon: Globe, color: "#10B981", tooltip: "Global Ops" },
-  { mode: "invest", icon: TrendingUp, color: "#8B5CF6", tooltip: "Invest" },
+const MODE_PILLS: { mode: Mode; label: string }[] = [
+  { mode: "simulate", label: "Simulate" },
+  { mode: "intel", label: "Intel" },
+  { mode: "launchpad", label: "Launchpad" },
+  { mode: "globalops", label: "Global Ops" },
+  { mode: "invest", label: "Invest" },
 ];
 
 export default function WelcomeScreen({
@@ -71,24 +70,23 @@ export default function WelcomeScreen({
         gap: isMobile ? 8 : 12,
         marginBottom: isMobile ? "clamp(40px, 8vh, 80px)" : "clamp(60px, 12vh, 160px)",
       }}>
-        <SignuxIcon size={isMobile ? 44 : 72} />
+        <SignuxIcon size={isMobile ? 40 : 48} variant="gold" />
         <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
           <span style={{
             fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 28 : "clamp(32px, 3vw, 48px)",
-            fontWeight: 800,
-            letterSpacing: "clamp(6px, 0.6vw, 10px)",
+            fontSize: isMobile ? 28 : 36,
+            fontWeight: 300,
+            letterSpacing: 8,
             color: "var(--text-primary)",
           }}>
             SIGNUX
           </span>
           <span style={{
             fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 28 : "clamp(32px, 3vw, 48px)",
+            fontSize: isMobile ? 28 : 36,
             fontWeight: 300,
-            letterSpacing: "clamp(6px, 0.6vw, 10px)",
+            letterSpacing: 8,
             color: "var(--text-tertiary)",
-            opacity: 0.3,
           }}>
             AI
           </span>
@@ -115,53 +113,41 @@ export default function WelcomeScreen({
         />
       </div>
 
-      {/* Mode icons */}
+      {/* Mode pills — text only, no emojis, no colors */}
       <div style={{
         display: "flex",
-        gap: isMobile ? 10 : "clamp(8px, 0.8vw, 14px)",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        gap: 8,
         marginBottom: 32,
       }}>
-        {MODE_ICONS.map(({ mode, icon: Icon, color, tooltip }) => (
+        {MODE_PILLS.map(({ mode, label }) => (
           <button
             key={mode}
             onClick={() => onSwitchMode?.(mode)}
-            data-tooltip={tooltip}
-            className="tooltip-bottom"
             style={{
-              width: isMobile ? 44 : 42,
-              height: isMobile ? 44 : 42,
-              borderRadius: 12,
-              border: `1px solid ${color}30`,
-              background: `${color}08`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--border-primary)",
+              background: "transparent",
+              color: "var(--text-tertiary)",
+              fontSize: 12,
               cursor: "pointer",
-              transition: "all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-              position: "relative",
+              transition: "all 150ms ease",
+              whiteSpace: "nowrap",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = `${color}60`;
-              e.currentTarget.style.background = `${color}12`;
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = `0 4px 14px ${color}18`;
-              const icon = e.currentTarget.querySelector("svg");
-              if (icon) (icon as HTMLElement).style.color = color;
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.color = "var(--text-secondary)";
+              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = `${color}30`;
-              e.currentTarget.style.background = `${color}08`;
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-              const icon = e.currentTarget.querySelector("svg");
-              if (icon) (icon as HTMLElement).style.color = `${color}80`;
+              e.currentTarget.style.borderColor = "var(--border-primary)";
+              e.currentTarget.style.color = "var(--text-tertiary)";
+              e.currentTarget.style.background = "transparent";
             }}
           >
-            <Icon
-              size={isMobile ? 16 : 18}
-              strokeWidth={1.5}
-              style={{ color: `${color}80`, transition: "color 200ms" }}
-            />
+            {label}
           </button>
         ))}
       </div>

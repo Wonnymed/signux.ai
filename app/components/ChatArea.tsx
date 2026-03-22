@@ -83,8 +83,6 @@ export default function ChatArea({
   if (messages.length === 0) {
     return (
       <>
-        <div className="temporal-grid" />
-        <div className="prediction-horizon" />
         <div style={{ flexShrink: 0 }}>
           <WelcomeScreen
             profileName={profileName}
@@ -114,9 +112,6 @@ export default function ChatArea({
   /* ═══ Conversation state ═══ */
   return (
     <>
-      <div className="temporal-grid" />
-      <div className="prediction-horizon" />
-
       {/* Scrollable messages area */}
       <div
         ref={areaRef}
