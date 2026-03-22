@@ -30,7 +30,7 @@ export default function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOu
         {user.avatar ? (
           <img src={user.avatar} alt={user.name} width={32} height={32} style={{ borderRadius: "50%", objectFit: "cover" }} referrerPolicy="no-referrer" />
         ) : (
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)" }}>{user.initials}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>{user.initials}</span>
         )}
       </button>
 
@@ -45,7 +45,7 @@ export default function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOu
             {user.avatar ? (
               <img src={user.avatar} alt="" width={36} height={36} style={{ borderRadius: "50%", objectFit: "cover" }} referrerPolicy="no-referrer" />
             ) : (
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "var(--accent)" }}>{user.initials}</div>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>{user.initials}</div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>

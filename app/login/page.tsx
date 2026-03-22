@@ -40,93 +40,70 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#0F0E0D",
+      background: "var(--bg-primary)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       padding: 24,
     }}>
-      {/* Subtle radial glow behind the card */}
-      <div style={{
-        position: "fixed",
-        top: "40%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: 600,
-        height: 600,
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%)",
-        pointerEvents: "none",
-      }} />
-
       <div style={{
         width: "100%",
         maxWidth: 400,
-        position: "relative",
-        zIndex: 1,
+        padding: 40,
+        borderRadius: 16,
+        background: "var(--bg-card)",
+        border: "1px solid var(--border-primary)",
       }}>
         {/* Logo */}
         <div style={{
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          marginBottom: 40,
+          justifyContent: "center",
+          gap: 8,
+          marginBottom: 32,
         }}>
-          <SignuxIcon size={48} />
-          <div style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: 6,
-            marginTop: 12,
-          }}>
-            <span style={{
-              fontFamily: "var(--font-brand)",
-              fontSize: 28,
-              fontWeight: 800,
-              letterSpacing: 6,
-              color: "#EDEDEF",
-            }}>SIGNUX</span>
-            <span style={{
-              fontFamily: "var(--font-brand)",
-              fontSize: 28,
-              fontWeight: 300,
-              letterSpacing: 6,
-              color: "rgba(237,237,239,0.25)",
-            }}>AI</span>
-          </div>
+          <SignuxIcon size={24} variant="gold" />
+          <span style={{
+            fontFamily: "var(--font-brand)",
+            fontSize: 14,
+            fontWeight: 600,
+            letterSpacing: 4,
+            color: "var(--text-primary)",
+          }}>SIGNUX</span>
+          <span style={{
+            fontFamily: "var(--font-brand)",
+            fontSize: 14,
+            fontWeight: 300,
+            letterSpacing: 4,
+            color: "var(--text-tertiary)",
+          }}>AI</span>
         </div>
 
         {sent ? (
           /* SUCCESS STATE */
-          <div style={{
-            textAlign: "center",
-            padding: "32px 24px",
-            borderRadius: 16,
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.06)",
-          }}>
+          <div style={{ textAlign: "center" }}>
             <div style={{
               width: 48, height: 48, borderRadius: "50%",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border-primary)",
               display: "flex", alignItems: "center", justifyContent: "center",
               margin: "0 auto 16px",
-              fontSize: 22,
+              fontSize: 20, color: "var(--text-tertiary)",
             }}>
-              <span role="img" aria-label="email">&#9993;</span>
+              &#9993;
             </div>
             <h2 style={{
-              fontSize: 20, fontWeight: 700, color: "#EDEDEF",
+              fontSize: 20, fontWeight: 500, color: "var(--text-primary)",
               marginBottom: 8,
             }}>Check your email</h2>
             <p style={{
-              fontSize: 14, color: "rgba(237,237,239,0.5)",
+              fontSize: 14, color: "var(--text-tertiary)",
               lineHeight: 1.6,
             }}>
-              We sent a sign-in link to <strong style={{ color: "#C8A84E" }}>{email}</strong>
+              We sent a sign-in link to <strong style={{ color: "var(--accent)" }}>{email}</strong>
             </p>
             <p style={{
-              fontSize: 12, color: "rgba(237,237,239,0.3)",
+              fontSize: 12, color: "var(--text-tertiary)",
               marginTop: 16,
             }}>
               Didn&apos;t receive it?{" "}
@@ -134,7 +111,7 @@ export default function LoginPage() {
                 onClick={() => { setSent(false); setEmail(""); }}
                 style={{
                   background: "none", border: "none", cursor: "pointer",
-                  color: "#C8A84E", fontSize: 12, textDecoration: "underline",
+                  color: "var(--accent)", fontSize: 12, textDecoration: "underline",
                 }}
               >Try again</button>
             </p>
@@ -142,13 +119,13 @@ export default function LoginPage() {
         ) : (
           <>
             {/* Heading */}
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ textAlign: "center", marginBottom: 28 }}>
               <h1 style={{
-                fontSize: 22, fontWeight: 700, color: "#EDEDEF",
+                fontSize: 20, fontWeight: 500, color: "var(--text-primary)",
                 marginBottom: 6,
               }}>Welcome back</h1>
               <p style={{
-                fontSize: 14, color: "rgba(237,237,239,0.4)",
+                fontSize: 13, color: "var(--text-tertiary)",
               }}>Sign in to continue where you left off.</p>
             </div>
 
@@ -157,28 +134,28 @@ export default function LoginPage() {
               onClick={handleGoogle}
               style={{
                 width: "100%",
-                padding: "13px 0",
-                borderRadius: 12,
-                background: "#09090B",
-                border: "1px solid rgba(237,237,239,0.08)",
-                color: "#EDEDEF",
+                padding: "12px 0",
+                borderRadius: 10,
+                background: "transparent",
+                border: "1px solid var(--border-primary)",
+                color: "var(--text-primary)",
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 10,
-                transition: "all 200ms ease",
-                marginBottom: 24,
+                transition: "all 150ms",
+                marginBottom: 20,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(237,237,239,0.15)";
-                e.currentTarget.style.background = "#222120";
+                e.currentTarget.style.borderColor = "var(--border-hover)";
+                e.currentTarget.style.background = "var(--bg-secondary)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(237,237,239,0.08)";
-                e.currentTarget.style.background = "#09090B";
+                e.currentTarget.style.borderColor = "var(--border-primary)";
+                e.currentTarget.style.background = "transparent";
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -195,11 +172,11 @@ export default function LoginPage() {
               display: "flex",
               alignItems: "center",
               gap: 16,
-              marginBottom: 24,
+              marginBottom: 20,
             }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(237,237,239,0.06)" }} />
-              <span style={{ fontSize: 12, color: "rgba(237,237,239,0.25)", fontFamily: "var(--font-mono)" }}>or</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(237,237,239,0.06)" }} />
+              <div style={{ flex: 1, height: 1, background: "var(--border-primary)" }} />
+              <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>or</span>
+              <div style={{ flex: 1, height: 1, background: "var(--border-primary)" }} />
             </div>
 
             {/* Email form */}
@@ -212,31 +189,29 @@ export default function LoginPage() {
                 required
                 style={{
                   width: "100%",
-                  padding: "13px 16px",
-                  borderRadius: 12,
-                  background: "#09090B",
-                  border: "1px solid rgba(237,237,239,0.08)",
-                  color: "#EDEDEF",
+                  padding: "12px 16px",
+                  borderRadius: 10,
+                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border-primary)",
+                  color: "var(--text-primary)",
                   fontSize: 14,
                   outline: "none",
                   fontFamily: "var(--font-body)",
-                  transition: "border-color 200ms ease, box-shadow 200ms ease",
+                  transition: "border-color 150ms",
                   marginBottom: 12,
                   boxSizing: "border-box",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(200,168,78,0.35)";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(200,168,78,0.06)";
+                  e.currentTarget.style.borderColor = "var(--accent-border)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(237,237,239,0.08)";
-                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.borderColor = "var(--border-primary)";
                 }}
               />
 
               {error && (
                 <p style={{
-                  fontSize: 12, color: "#EF4444",
+                  fontSize: 12, color: "var(--error)",
                   marginBottom: 12, padding: "0 4px",
                 }}>{error}</p>
               )}
@@ -246,22 +221,15 @@ export default function LoginPage() {
                 disabled={loading}
                 style={{
                   width: "100%",
-                  padding: "13px 0",
-                  borderRadius: 12,
-                  background: loading ? "rgba(200,168,78,0.3)" : "#C8A84E",
+                  padding: "12px 0",
+                  borderRadius: 10,
+                  background: loading ? "rgba(200,168,78,0.3)" : "var(--accent)",
                   border: "none",
-                  color: "#000",
+                  color: "#09090B",
                   fontSize: 14,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   cursor: loading ? "wait" : "pointer",
-                  transition: "all 200ms ease",
-                  letterSpacing: 0.3,
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) e.currentTarget.style.boxShadow = "0 0 20px rgba(200,168,78,0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "none";
+                  transition: "all 150ms",
                 }}
               >
                 {loading ? "Sending..." : "Continue with email"}
@@ -271,39 +239,28 @@ export default function LoginPage() {
             {/* Footer links */}
             <div style={{
               textAlign: "center",
-              marginTop: 28,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
+              marginTop: 24,
             }}>
-              <p style={{ fontSize: 13, color: "rgba(237,237,239,0.35)" }}>
+              <p style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
                 Don&apos;t have an account?{" "}
-                <a
-                  href="/signup"
-                  style={{
-                    color: "#C8A84E",
-                    textDecoration: "none",
-                    fontWeight: 600,
-                    transition: "opacity 200ms",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.75"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                >Sign up free</a>
+                <a href="/signup" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>
+                  Sign up free
+                </a>
               </p>
             </div>
 
             {/* Terms */}
             <p style={{
               textAlign: "center",
-              fontSize: 11,
-              color: "rgba(237,237,239,0.15)",
-              marginTop: 32,
+              fontSize: 10,
+              color: "var(--text-tertiary)",
+              marginTop: 24,
               lineHeight: 1.6,
             }}>
               By continuing, you agree to our{" "}
-              <a href="/terms" style={{ color: "rgba(237,237,239,0.25)", textDecoration: "underline" }}>Terms</a>{" "}
+              <a href="/terms" style={{ color: "var(--text-tertiary)", textDecoration: "underline" }}>Terms</a>{" "}
               and{" "}
-              <a href="/terms" style={{ color: "rgba(237,237,239,0.25)", textDecoration: "underline" }}>Privacy Policy</a>
+              <a href="/terms" style={{ color: "var(--text-tertiary)", textDecoration: "underline" }}>Privacy Policy</a>
             </p>
           </>
         )}

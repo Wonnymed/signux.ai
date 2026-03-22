@@ -1044,7 +1044,7 @@ function ChatPage() {
                 style={{
                   padding: "8px 14px", borderRadius: 50, minHeight: 44,
                   background: "transparent",
-                  border: "1px solid var(--border-secondary)",
+                  border: "1px solid var(--border-primary)",
                   color: "var(--text-secondary)",
                   fontSize: 12, fontWeight: 500, cursor: "pointer",
                 }}
@@ -1057,8 +1057,8 @@ function ChatPage() {
                   padding: "8px 14px", borderRadius: 50, minHeight: 44,
                   background: "var(--accent)",
                   border: "none",
-                  color: "#000",
-                  fontSize: 12, fontWeight: 700, cursor: "pointer",
+                  color: "#09090B",
+                  fontSize: 12, fontWeight: 600, cursor: "pointer",
                 }}
               >
                 Start free
@@ -1070,7 +1070,7 @@ function ChatPage() {
               {authUser.avatar ? (
                 <img src={authUser.avatar} alt={authUser.name} width={32} height={32} style={{ borderRadius: "50%", objectFit: "cover" }} referrerPolicy="no-referrer" />
               ) : (
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(212,175,55,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "var(--accent)" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>
                   {authUser.initials}
                 </div>
               )}
@@ -1090,13 +1090,13 @@ function ChatPage() {
             style={{
               padding: "7px 16px", borderRadius: 50,
               background: "transparent",
-              border: "1px solid var(--border-secondary)",
+              border: "1px solid var(--border-primary)",
               color: "var(--text-secondary)",
               fontSize: 13, fontWeight: 500, cursor: "pointer",
               transition: "all 150ms",
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-primary)"; e.currentTarget.style.color = "var(--text-primary)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-secondary)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-primary)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
           >
             Log in
           </button>
@@ -1106,13 +1106,10 @@ function ChatPage() {
               padding: "7px 18px", borderRadius: 50,
               background: "var(--accent)",
               border: "none",
-              color: "#000",
-              fontSize: 13, fontWeight: 700, cursor: "pointer",
+              color: "#09090B",
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
               transition: "all 150ms",
-              boxShadow: "none",
             }}
-            onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 16px rgba(212,175,55,0.2)"; }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
           >
             Start free
           </button>
