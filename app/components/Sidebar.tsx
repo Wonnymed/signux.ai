@@ -47,7 +47,7 @@ type SidebarProps = {
   tokenStatus?: { available: number; monthlyTotal: number; plan: string };
 };
 
-const ICON_IDLE = "#6B6B6B";
+const ICON_IDLE = "#52525B";
 const ICON_ACTIVE = "#EDEDEF";
 
 const MODES: { key: Mode; icon: any; label: string; color: string }[] = [
