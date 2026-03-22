@@ -574,7 +574,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             color: "var(--text-tertiary)",
             marginTop: 8,
           }}>
-            See the future before it happens
+            Pressure-test a decision before you commit.
           </p>
         </div>
 
@@ -742,7 +742,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   ) : (
                     <Play size={13} fill={simScenario.trim() && !simStarting ? "#09090B" : "var(--text-tertiary)"} />
                   )}
-                  {simStarting ? "Starting..." : "SIMULATE FUTURE"}
+                  {simStarting ? "Starting..." : "Run Simulation"}
                 </button>
               </div>
 
@@ -1654,7 +1654,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             fontSize: 11, fontWeight: 400, letterSpacing: 2,
             color: "var(--accent)", fontFamily: "var(--font-mono)",
           }}>
-            SIMULATION RUNNING
+            RUNNING STRUCTURED DECISION SIMULATION
           </span>
           <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
             {doneAgents}/{simTotalAgents || 10} agents
@@ -2125,7 +2125,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
           </div>
         )}
 
-        {/* Footer bar — actions */}
+        {/* Footer bar — ghost style */}
         <div
           style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
@@ -2138,18 +2138,16 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             zIndex: 10,
           }}
         >
-          {/* What if? — accent */}
           <button onClick={() => setGodEyeOpen(!godEyeOpen)} style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "7px 16px", borderRadius: 50, fontSize: 12,
-            border: "1px solid var(--accent-border)",
-            background: "transparent", color: "var(--accent)",
-            fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap",
+            border: "1px solid var(--border-primary)",
+            background: "transparent", color: "var(--text-secondary)",
+            cursor: "pointer", whiteSpace: "nowrap",
           }}>
             <Eye size={12} /> What if?
           </button>
 
-          {/* New simulation */}
           <button onClick={onReset} style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "7px 16px", borderRadius: 50, fontSize: 12,
@@ -2162,19 +2160,17 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
 
           <div style={{ flex: 1 }} />
 
-          {/* Save */}
           <button onClick={() => onSaveSimulation?.()} disabled={simulationSaved} style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "7px 14px", borderRadius: 50, fontSize: 12,
             border: "1px solid var(--border-primary)",
             background: "transparent",
-            color: simulationSaved ? "var(--positive, #3ECF8E)" : "var(--text-tertiary)",
+            color: simulationSaved ? "var(--positive, #3ECF8E)" : "var(--text-secondary)",
             cursor: simulationSaved ? "default" : "pointer", whiteSpace: "nowrap",
           }}>
             {simulationSaved ? <Check size={12} /> : <Save size={12} />} {simulationSaved ? "Saved" : "Save"}
           </button>
 
-          {/* Export PDF */}
           <button onClick={() => {
             import("../lib/exportPdf").then(({ exportSimulationPdf }) => {
               exportSimulationPdf({ scenario: simScenario, rounds: engineRounds || [], verdict: engineVerdict, evolution: engineEvolution || [] });
@@ -2183,29 +2179,10 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             display: "flex", alignItems: "center", gap: 6,
             padding: "7px 14px", borderRadius: 50, fontSize: 12,
             border: "1px solid var(--border-primary)",
-            background: "transparent", color: "var(--text-tertiary)",
+            background: "transparent", color: "var(--text-secondary)",
             cursor: "pointer", whiteSpace: "nowrap",
           }}>
             <FileDown size={12} /> Export PDF
-          </button>
-
-          {/* Compare A vs B */}
-          <button onClick={() => {
-            setCompareSnapshot({
-              scenario: simScenario,
-              rounds: engineRounds || [],
-              verdict: engineVerdict,
-              evolution: engineEvolution || [],
-            });
-            onReset();
-          }} style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "7px 14px", borderRadius: 50, fontSize: 12,
-            border: "1px solid var(--border-primary)",
-            background: "transparent", color: "var(--text-tertiary)",
-            cursor: "pointer", whiteSpace: "nowrap",
-          }}>
-            <Columns size={12} /> Compare A vs B
           </button>
         </div>
       </div>
@@ -2469,9 +2446,9 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             <button onClick={() => setGodEyeOpen(true)} style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "7px 16px", borderRadius: 50, fontSize: 12,
-              border: "1px solid var(--accent-border)",
-              background: "transparent", color: "var(--accent)",
-              fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap",
+              border: "1px solid var(--border-primary)",
+              background: "transparent", color: "var(--text-secondary)",
+              cursor: "pointer", whiteSpace: "nowrap",
             }}>
               <Eye size={12} /> What if?
             </button>
@@ -2483,6 +2460,29 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
               cursor: "pointer", whiteSpace: "nowrap",
             }}>
               <RotateCcw size={12} /> New simulation
+            </button>
+            <button onClick={() => onSaveSimulation?.()} disabled={simulationSaved} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "7px 14px", borderRadius: 50, fontSize: 12,
+              border: "1px solid var(--border-primary)",
+              background: "transparent",
+              color: simulationSaved ? "var(--positive, #3ECF8E)" : "var(--text-secondary)",
+              cursor: simulationSaved ? "default" : "pointer", whiteSpace: "nowrap",
+            }}>
+              {simulationSaved ? <Check size={12} /> : <Save size={12} />} {simulationSaved ? "Saved" : "Save"}
+            </button>
+            <button onClick={() => {
+              import("../lib/exportPdf").then(({ exportSimulationPdf }) => {
+                exportSimulationPdf({ scenario: simScenario, rounds: engineRounds || [], verdict: engineVerdict, evolution: engineEvolution || [] });
+              });
+            }} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "7px 14px", borderRadius: 50, fontSize: 12,
+              border: "1px solid var(--border-primary)",
+              background: "transparent", color: "var(--text-secondary)",
+              cursor: "pointer", whiteSpace: "nowrap",
+            }}>
+              <FileDown size={12} /> Export PDF
             </button>
           </div>
         </div>
@@ -3659,7 +3659,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                       background: u.color, margin: "0 auto 8px",
                     }} />
                     <div style={{ fontSize: 11, fontWeight: 600, color: u.color }}>{u.label}</div>
-                    <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 4 }}>Simulating...</div>
+                    <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 4 }}>Running structured decision simulation...</div>
                   </div>
                 ))}
               </div>

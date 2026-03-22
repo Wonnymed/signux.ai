@@ -2,16 +2,16 @@
 import { motion } from "framer-motion";
 
 const ROUND_LABELS = [
-  "First Impressions",
-  "Challenge",
-  "Data & Numbers",
-  "Worst Case",
-  "Best Case",
-  "Alliances",
-  "Cross-Examination",
-  "Revision",
-  "Final Arguments",
-  "Vote",
+  "Framing the decision",
+  "Anchoring the outside view",
+  "Testing financial viability",
+  "Checking regulation & entry",
+  "Mapping the execution path",
+  "Simulating competitive attack",
+  "Testing strategic coherence",
+  "Reading regime & timing",
+  "Finding best intervention",
+  "Final synthesis & vote",
 ];
 
 type RoundTimelineProps = {
