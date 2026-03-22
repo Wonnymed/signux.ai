@@ -5,8 +5,13 @@ import { useIsMobile } from "../lib/useIsMobile";
 import { ENGINES } from "../lib/engines";
 import { signuxFetch } from "../lib/api-client";
 import type { EngineResponse } from "../lib/types";
+import MarkdownResult from "./MarkdownResult";
 
 const ENGINE = ENGINES.compete;
+
+function isFallbackResponse(r: any): boolean {
+  return r?.notes?.some?.((n: string) => n.includes("structured parsing failed"));
+}
 
 const THREAT_COLORS: Record<string, { color: string; bg: string; border: string }> = {
   low:    { color: "var(--positive)", bg: "rgba(62,207,142,0.06)",  border: "rgba(62,207,142,0.12)" },
@@ -189,6 +194,28 @@ export default function CompeteEngine({ lang }: { lang?: string }) {
   }
 
   /* ═══ RESULT VIEW ═══ */
+
+  if (isFallbackResponse(result)) {
+    return (
+      <div ref={resultRef} style={{
+        maxWidth: 720, margin: "0 auto", padding: isMobile ? "24px 16px 80px" : "40px 32px 80px",
+        animation: "fadeInUp 0.3s ease-out",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <button onClick={handleReset} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 12px", borderRadius: 6, border: "1px solid var(--border-primary)",
+            background: "transparent", color: "var(--text-tertiary)", fontSize: 12, cursor: "pointer",
+          }}>
+            <ArrowRight size={12} style={{ transform: "rotate(180deg)" }} />
+            New analysis
+          </button>
+        </div>
+        <MarkdownResult content={result.executive_summary} />
+      </div>
+    );
+  }
+
   const competitors = result.competitive_set || [];
   const response = result.likely_response;
   const flank = result.weakest_flank;

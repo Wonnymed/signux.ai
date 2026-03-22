@@ -5,8 +5,13 @@ import { useIsMobile } from "../lib/useIsMobile";
 import { ENGINES } from "../lib/engines";
 import { signuxFetch } from "../lib/api-client";
 import type { EngineResponse } from "../lib/types";
+import MarkdownResult from "./MarkdownResult";
 
 const ENGINE = ENGINES.hire;
+
+function isFallbackResponse(r: any): boolean {
+  return r?.notes?.some?.((n: string) => n.includes("structured parsing failed"));
+}
 
 const REC_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   hire_now:          { label: "Hire Now",           color: "var(--positive)", bg: "rgba(62,207,142,0.08)",  border: "rgba(62,207,142,0.2)" },
@@ -258,6 +263,28 @@ export default function HireEngine({ lang }: { lang?: string }) {
   }
 
   /* ═══ RESULT VIEW ═══ */
+
+  if (isFallbackResponse(result)) {
+    return (
+      <div ref={resultRef} style={{
+        maxWidth: 720, margin: "0 auto", padding: isMobile ? "24px 16px 80px" : "40px 32px 80px",
+        animation: "fadeInUp 0.3s ease-out",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <button onClick={handleReset} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 12px", borderRadius: 6, border: "1px solid var(--border-primary)",
+            background: "transparent", color: "var(--text-tertiary)", fontSize: 12, cursor: "pointer",
+          }}>
+            <ArrowRight size={12} style={{ transform: "rotate(180deg)" }} />
+            New evaluation
+          </button>
+        </div>
+        <MarkdownResult content={result.executive_summary} />
+      </div>
+    );
+  }
+
   const rec = REC_CONFIG[result.recommendation || ""] || REC_CONFIG.interview_further;
   const scores = result.scores;
   const redFlags = result.red_flags || [];

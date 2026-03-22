@@ -5,8 +5,13 @@ import { useIsMobile } from "../lib/useIsMobile";
 import { ENGINES } from "../lib/engines";
 import { signuxFetch } from "../lib/api-client";
 import type { EngineResponse } from "../lib/types";
+import MarkdownResult from "./MarkdownResult";
 
 const ENGINE = ENGINES.build;
+
+function isFallbackResponse(r: any): boolean {
+  return r?.notes?.some?.((n: string) => n.includes("structured parsing failed"));
+}
 
 const STAGE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
   idea: { bg: "rgba(168,85,247,0.08)", color: "#A855F7", border: "rgba(168,85,247,0.2)" },
@@ -230,6 +235,29 @@ export default function BuildEngine({ lang }: { lang?: string }) {
   }
 
   /* ═══ RESULT VIEW ═══ */
+
+  /* Fallback: if structured parsing failed, render as markdown */
+  if (isFallbackResponse(result)) {
+    return (
+      <div ref={resultRef} style={{
+        maxWidth: 720, margin: "0 auto", padding: isMobile ? "24px 16px 80px" : "40px 32px 80px",
+        animation: "fadeInUp 0.3s ease-out",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <button onClick={handleReset} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 12px", borderRadius: 6, border: "1px solid var(--border-primary)",
+            background: "transparent", color: "var(--text-tertiary)", fontSize: 12, cursor: "pointer",
+          }}>
+            <ArrowRight size={12} style={{ transform: "rotate(180deg)" }} />
+            New plan
+          </button>
+        </div>
+        <MarkdownResult content={result.executive_summary} />
+      </div>
+    );
+  }
+
   const stage = result.current_stage || "idea";
   const stageColor = STAGE_COLORS[stage] || STAGE_COLORS.idea;
   const bottleneck = result.main_bottleneck;
