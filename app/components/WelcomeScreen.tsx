@@ -99,15 +99,25 @@ export default function WelcomeScreen({
 
       {/* Headline */}
       <h1 style={{
-        fontSize: 20,
-        fontWeight: 400,
+        fontSize: isMobile ? 28 : 36,
+        fontWeight: 300,
         color: "var(--text-primary)",
+        margin: 0,
+        marginBottom: 10,
+        textAlign: "center",
+        lineHeight: 1.25,
+      }}>
+        Chatbots answer. Consultants analyze. Signux decides.
+      </h1>
+      <p style={{
+        fontSize: 14,
+        color: "var(--text-secondary)",
         margin: 0,
         marginBottom: isMobile ? 20 : 28,
         textAlign: "center",
       }}>
-        What are you trying to decide?
-      </h1>
+        10 specialist agents. 10 adversarial rounds. One structured decision.
+      </p>
 
       {/* Composer */}
       <div style={{
@@ -125,7 +135,7 @@ export default function WelcomeScreen({
           attachments={attachments}
           onAttachmentsChange={onAttachmentsChange}
           onToast={onToast}
-          placeholder="Ask anything about your business..."
+          placeholder="What decision are you trying to make?"
         />
       </div>
 
@@ -214,7 +224,7 @@ export default function WelcomeScreen({
           maxWidth: 400,
           lineHeight: 1.5,
         }}>
-          Six engines. One decision layer.
+          Six engines. One decision layer. Free to start.
         </span>
         <button
           onClick={() => {
