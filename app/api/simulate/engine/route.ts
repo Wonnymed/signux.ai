@@ -16,7 +16,7 @@ const supabaseAdmin = createClient(
    RESILIENCE UTILITIES
    ═══════════════════════════════════════════════════════════ */
 
-async function withTimeout<T>(fn: () => Promise<T>, ms = 15000): Promise<T> {
+async function withTimeout<T>(fn: () => Promise<T>, ms = 60000): Promise<T> {
   return Promise.race([
     fn(),
     new Promise<T>((_, reject) =>
@@ -25,20 +25,40 @@ async function withTimeout<T>(fn: () => Promise<T>, ms = 15000): Promise<T> {
   ]);
 }
 
+const RETRY_DELAYS = [2000, 5000, 10000]; // 3 retries with backoff
+
 async function withRetry<T>(
   fn: () => Promise<T>,
-  retries = 1,
-  delayMs = 1000
+  retries = 3,
+  delays: number[] = RETRY_DELAYS
 ): Promise<T> {
   for (let i = 0; i <= retries; i++) {
     try {
       return await fn();
-    } catch (err) {
+    } catch (err: any) {
       if (i === retries) throw err;
-      await new Promise((r) => setTimeout(r, delayMs));
+      const delay = delays[Math.min(i, delays.length - 1)];
+      console.log(`[ENGINE] Retry ${i + 1}/${retries} after ${delay}ms — ${err?.message || "unknown error"}`);
+      await new Promise((r) => setTimeout(r, delay));
     }
   }
   throw new Error("Unreachable");
+}
+
+/** Run promises in batches with delay between batches to avoid rate limits */
+async function runInBatches<T>(
+  fns: (() => Promise<T>)[],
+  batchSize = 3,
+  delayMs = 800
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < fns.length; i += batchSize) {
+    if (i > 0) await new Promise(r => setTimeout(r, delayMs));
+    const batch = fns.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fn => fn()));
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -192,15 +212,17 @@ const ROUND_LABELS = [
    ═══════════════════════════════════════════════════════════ */
 
 export async function POST(req: NextRequest) {
-  console.log("ENGINE ENV CHECK:", {
+  // 8. API Key check
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error("[ENGINE] ANTHROPIC_API_KEY not configured");
+    return NextResponse.json({ error: "API key not configured" }, { status: 500 });
+  }
+
+  console.log("[ENGINE] Request received", {
     hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
     hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
     hasClientToken: !!process.env.NEXT_PUBLIC_CLIENT_TOKEN,
-    clientTokenLength: process.env.NEXT_PUBLIC_CLIENT_TOKEN?.length || 0,
-    receivedHeader: req.headers.get("x-signux-client")?.substring(0, 10) + "...",
-    expectedTokenStart: process.env.NEXT_PUBLIC_CLIENT_TOKEN?.substring(0, 10) + "...",
-    match: req.headers.get("x-signux-client") === process.env.NEXT_PUBLIC_CLIENT_TOKEN,
   });
 
   const tokenError = verifyClientToken(req);
@@ -299,8 +321,9 @@ export async function POST(req: NextRequest) {
           const useDeep = roundNum > 5 && tier !== "free";
           const model = useDeep ? "claude-sonnet-4-20250514" : "claude-haiku-4-5-20251001";
           const maxTokens = useDeep ? 400 : 250;
-          const agentTimeoutMs = useDeep ? 20000 : 15000;
+          const agentTimeoutMs = 60000; // 60s timeout for long-context calls
 
+          console.log(`[ENGINE] Round ${roundNum}/10 starting — ${ROUND_LABELS[round]} (${useDeep ? "sonnet" : "haiku"})`);
           send({
             type: "round_start",
             round: roundNum,
@@ -322,8 +345,8 @@ export async function POST(req: NextRequest) {
                 .join("\n")}`
             : "";
 
-          // Run all 10 agents IN PARALLEL for this round — each with retry + timeout
-          const agentPromises = AGENTS.map(async (agent): Promise<TranscriptEntry> => {
+          // Run agents in batches of 3 with 800ms delay to avoid rate limits
+          const agentFactories = AGENTS.map((agent, agentIdx) => async (): Promise<TranscriptEntry> => {
             const agentPrevious = transcript
               .filter(t => t.agentId === agent.id && !t.failed)
               .map(t => `[Round ${t.round}] You said: "${t.text}" (sentiment: ${t.sentiment})`)
@@ -343,7 +366,7 @@ Respond ONLY in this JSON format (no markdown, no backticks):
 {"text": "<your response, 2-4 sentences max>", "sentiment": "<one of: confident, optimistic, cautious, worried, skeptical, convinced, contrarian, neutral, excited, concerned>", "confidence": <number 1-10>, "changed_mind": <true or false>}`;
 
             try {
-              // withRetry wraps withTimeout — 1 retry after 1s delay
+              // withRetry wraps withTimeout — 3 retries with 2s/5s/10s backoff
               const res = await withRetry(
                 () =>
                   withTimeout(
@@ -356,8 +379,8 @@ Respond ONLY in this JSON format (no markdown, no backticks):
                       }),
                     agentTimeoutMs
                   ),
-                1,
-                1000
+                3,
+                RETRY_DELAYS
               );
 
               const raw = (res.content[0] as any)?.text || "";
@@ -371,6 +394,7 @@ Respond ONLY in this JSON format (no markdown, no backticks):
               }
 
               if (parsed && parsed.text) {
+                console.log(`[ENGINE] Round ${roundNum}/10 - Agent ${agent.name} complete (${agentIdx + 1}/10)`);
                 return {
                   agentId: agent.id,
                   name: agent.name,
@@ -397,27 +421,25 @@ Respond ONLY in this JSON format (no markdown, no backticks):
                 changedMind: false,
               };
             } catch (err: any) {
-              // Both attempts failed — mark agent as failed this round
-              const reason =
-                err?.message === "Timeout"
-                  ? "(Agent timed out this round)"
-                  : "(Agent unavailable this round)";
+              // All 3 retries failed — use fallback, don't stop the simulation
+              console.warn(`[ENGINE] Round ${roundNum} - Agent ${agent.name} FAILED after 3 retries: ${err?.message}`);
 
               send({
                 type: "agent_failed",
                 round: roundNum,
                 agentId: agent.id,
                 agentName: agent.name,
-                reason,
+                reason: err?.message || "unavailable",
               });
 
+              // Graceful fallback — agent defers to colleagues
               return {
                 agentId: agent.id,
                 name: agent.name,
                 avatar: agent.avatar,
                 color: agent.color,
                 round: roundNum,
-                text: reason,
+                text: "I defer to my colleagues on this round.",
                 sentiment: "neutral",
                 confidence: 5,
                 changedMind: false,
@@ -426,13 +448,14 @@ Respond ONLY in this JSON format (no markdown, no backticks):
             }
           });
 
-          const roundResults = await Promise.all(agentPromises);
+          const roundResults = await runInBatches(agentFactories, 3, 800);
 
           // Count failures in this round
           const failedCount = roundResults.filter(r => r.failed).length;
 
           if (failedCount > 3) {
             // More than 3 agents failed — skip round, signal to frontend
+            console.warn(`[ENGINE] Round ${roundNum}/10 SKIPPED — ${failedCount}/10 agents failed`);
             send({
               type: "round_skipped",
               round: roundNum,
@@ -440,6 +463,7 @@ Respond ONLY in this JSON format (no markdown, no backticks):
               failedCount,
               reason: `${failedCount}/10 agents failed — round skipped`,
             });
+            send({ type: "error", message: `Round ${roundNum} skipped: ${failedCount}/10 agents failed, continuing...`, recoverable: true });
             skippedRounds.push(roundNum);
 
             // Still add successful results to transcript
@@ -458,6 +482,7 @@ Respond ONLY in this JSON format (no markdown, no backticks):
               agents: roundResults,
               failedCount,
             });
+            console.log(`[ENGINE] Round ${roundNum}/10 complete (${failedCount} failures)`);
           }
 
           // Summarize this round for context compression (1 cheap Haiku call)
@@ -481,10 +506,10 @@ Respond ONLY in this JSON format (no markdown, no backticks):
                             },
                           ],
                         }),
-                      10000
+                      30000
                     ),
-                  1,
-                  500
+                  3,
+                  RETRY_DELAYS
                 );
                 roundSummaries.push(
                   `Round ${roundNum}: ${(summaryRes.content[0] as any)?.text || ""}`
@@ -526,7 +551,8 @@ Respond ONLY in this JSON format (no markdown, no backticks):
           .map(v => ({ agent: String(v.agent), avatar: String(v.avatar), note: typeof v.dissent === "string" ? v.dissent : String(v.dissent ?? "") }));
 
         // ═══ EMERGENT PATTERNS — synthesize from all round summaries ═══
-        let patternData: any = { patterns: [], verdict: "Insufficient data", viability: 5, estimatedROI: "N/A" };
+        console.log("[ENGINE] All 10 rounds complete. Generating verdict...");
+        let patternData: any = null;
         try {
           const patternsRes = await withRetry(
             () =>
@@ -550,16 +576,31 @@ Identify emergent patterns. Respond ONLY in JSON (no markdown):
 {"patterns": [{"type": "consensus|emerging_risk|blind_spot|opportunity|tension", "title": "<3-5 word title>", "description": "<1-2 sentence pattern>", "agents_involved": ["<agent names>"]}], "verdict": "<2-sentence recommended action>", "viability": <1-10>, "estimatedROI": "<e.g. +45% or -15%>", "keyRisk": "<single biggest risk>", "keyOpportunity": "<single biggest opportunity>"}`,
                     }],
                   }),
-                20000
+                60000
               ),
-            1,
-            1000
+            3,
+            RETRY_DELAYS
           );
           const raw = (patternsRes.content[0] as any)?.text || "";
           const m = raw.replace(/```json\n?|```\n?/g, "").match(/\{[\s\S]*\}/);
           if (m) patternData = JSON.parse(m[0]);
-        } catch {
-          // Pattern detection failed — use defaults, don't break simulation
+        } catch (verdictErr: any) {
+          console.warn("[ENGINE] Verdict generation failed:", verdictErr?.message);
+          send({ type: "error", message: "Verdict analysis failed, using vote-based fallback", recoverable: true });
+        }
+
+        // 7. VERDICT FALLBACK — if verdict call failed, build from votes
+        if (!patternData) {
+          const majority = proceedCount >= stopCount ? "PROCEED" : "STOP";
+          patternData = {
+            patterns: [],
+            verdict: `${majority} recommended based on ${proceedCount}-${stopCount} vote. ${dissents.length > 0 ? `Key concern: ${dissents[0]?.note?.slice(0, 100) || "See dissent notes."}` : "No major dissent."}`,
+            viability: Math.round(avgConfidence),
+            estimatedROI: "N/A",
+            keyRisk: dissents.length > 0 ? (dissents[0]?.note?.slice(0, 120) || "See dissent notes") : "No major risks identified",
+            keyOpportunity: "See agent analysis above",
+          };
+          console.log("[ENGINE] Using vote-based fallback verdict");
         }
 
         // Sanitize pattern data — ensure all rendered fields are strings
