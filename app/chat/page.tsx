@@ -51,7 +51,7 @@ const CompeteView = dynamic(() => import("../components/IntelView"), { ssr: fals
 const BuildView = dynamic(() => import("../components/BuildEngine"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
 const GrowView = dynamic(() => import("../components/GrowEngine"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
 const ProtectView = dynamic(() => import("../components/GlobalOpsView"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
-const HireView = dynamic(() => import("../components/InvestView"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
+const HireView = dynamic(() => import("../components/HireEngine"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
 const ThreatRadar = dynamic(() => import("../components/ThreatRadar"), { ssr: false });
 const DealXRay = dynamic(() => import("../components/DealXRay"), { ssr: false });
 const WarGame = dynamic(() => import("../components/WarGame"), { ssr: false });
