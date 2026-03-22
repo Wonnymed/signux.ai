@@ -2765,7 +2765,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "simulate",
-          title: scenario?.slice(0, 200),
+          title: simScenario?.slice(0, 200),
           content: reportText,
           metadata: {
             viability_score: meta.viability_score,

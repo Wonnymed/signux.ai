@@ -485,7 +485,6 @@ Respond ONLY in this JSON format (no markdown, no backticks):
               return {
                 agentId: agent.id,
                 name: agent.name,
-                avatar: agent.avatar,
                 color: agent.color,
                 round: roundNum,
                 text: raw.slice(0, 500),
@@ -509,7 +508,6 @@ Respond ONLY in this JSON format (no markdown, no backticks):
               return {
                 agentId: agent.id,
                 name: agent.name,
-                avatar: agent.avatar,
                 color: agent.color,
                 round: roundNum,
                 text: "I defer to my colleagues on this round.",
