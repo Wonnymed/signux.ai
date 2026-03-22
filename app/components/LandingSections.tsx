@@ -944,93 +944,197 @@ export default function LandingSections() {
       </section>
 
       {/* ═══ 8. PRICING + CTA ═══ */}
-      <section style={{ ...sp, background: "var(--mk-card)" }}>
+      <section id="pricing" style={{
+        ...sp, background: "#FAFAF7",
+        padding: isMobile ? "76px 16px" : "104px 24px",
+      }}>
         <Fade>
-          <div style={{ textAlign: "center" }}>
-            <div style={LABEL}>Pricing</div>
-            <h2 style={{ ...H2, fontSize: isMobile ? 26 : 36, color: "var(--mk-text)" }}>
-              Simple pricing. Powerful intelligence.
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: isMobile ? 32 : 40 }}>
+            <div style={{
+              fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 2,
+              textTransform: "uppercase", fontWeight: 600, color: "#B8941F", marginBottom: 14,
+            }}>
+              PRICING
+            </div>
+            <h2 style={{
+              fontFamily: "var(--font-brand)", fontWeight: 300,
+              lineHeight: 1.18, fontSize: isMobile ? 24 : 34,
+              color: "#111111", maxWidth: 760, margin: "0 auto", marginBottom: 16,
+            }}>
+              Simple pricing. Serious capability.
             </h2>
-            <p style={{ ...BODY, marginBottom: 48 }}>
-              Start free. Upgrade when you need more.
+            <p style={{
+              fontSize: 16, lineHeight: 1.6, color: "#5B5B5B",
+              maxWidth: 760, margin: "0 auto",
+            }}>
+              Start free. Upgrade when you need more depth, usage, and control.
             </p>
-          </div>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-            gap: 20, maxWidth: 600, margin: "0 auto 48px",
-          }}>
-            {/* Pro */}
-            <div style={{
-              ...CARD, border: "2px solid var(--mk-accent)",
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--mk-accent)", marginBottom: 8, fontFamily: "var(--font-mono)", letterSpacing: 1 }}>PRO</div>
-              <div style={{ marginBottom: 16 }}>
-                <span style={{ fontSize: 36, fontWeight: 700, color: "var(--mk-text)" }}>$29</span>
-                <span style={{ fontSize: 14, color: "var(--mk-text-secondary)" }}>/month</span>
-              </div>
-              {["All 6 engines", "20 simulations/month", "10 deep researches", "Priority response times"].map(f => (
-                <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <Check size={14} color="#22863a" />
-                  <span style={{ fontSize: 13, color: "var(--mk-text-secondary)" }}>{f}</span>
-                </div>
-              ))}
-              <Link href="/pricing" style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                marginTop: 20, padding: "12px 24px", borderRadius: 8,
-                background: "var(--mk-accent)", color: "#FFFFFF", fontWeight: 600,
-                fontSize: 14, textDecoration: "none",
-              }}>
-                Get Pro <ArrowRight size={14} />
-              </Link>
-            </div>
-            {/* Max */}
-            <div style={{
-              ...CARD, border: "2px solid #6E4AE2",
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#6E4AE2", marginBottom: 8, fontFamily: "var(--font-mono)", letterSpacing: 1 }}>MAX</div>
-              <div style={{ marginBottom: 16 }}>
-                <span style={{ fontSize: 36, fontWeight: 700, color: "var(--mk-text)" }}>$99</span>
-                <span style={{ fontSize: 14, color: "var(--mk-text-secondary)" }}>/month</span>
-              </div>
-              {["Everything unlimited", "Most powerful AI model", "New features first", "Priority support"].map(f => (
-                <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <Check size={14} color="#6E4AE2" />
-                  <span style={{ fontSize: 13, color: "var(--mk-text-secondary)" }}>{f}</span>
-                </div>
-              ))}
-              <Link href="/pricing" style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                marginTop: 20, padding: "12px 24px", borderRadius: 8,
-                background: "#6E4AE2", color: "#FFFFFF", fontWeight: 600,
-                fontSize: 14, textDecoration: "none",
-              }}>
-                Get Max <ArrowRight size={14} />
-              </Link>
-            </div>
           </div>
 
-          {/* Final CTA */}
-          <div style={{ textAlign: "center", paddingTop: 24 }}>
-            <h3 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 600, color: "var(--mk-text)", marginBottom: 12, fontFamily: "var(--font-brand)" }}>
-              Stop guessing. Start knowing.
+          {/* Pricing grid */}
+          {(() => {
+            const plans = [
+              {
+                name: "Free", price: "$0", period: "",
+                support: "For first-time users",
+                features: ["Access the core experience", "Limited usage", "Basic outputs"],
+                cta: "Start free", featured: false, note: "",
+              },
+              {
+                name: "Pro", price: "$29", period: "/ month",
+                support: "For focused individual use",
+                features: ["All six engines", "PDF export", "Save and reload simulations", "Higher usage limits", "Priority email support"],
+                cta: "Get Pro", featured: false, note: "",
+              },
+              {
+                name: "Max", price: "$99", period: "/ month",
+                support: "For operators and advanced users",
+                features: ["Everything in Pro", "More monthly usage", "Advanced simulations", "Custom agent configurations", "Priority support"],
+                cta: "Get Max", featured: true, note: "Most popular",
+              },
+            ];
+
+            return (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+                gap: 20,
+              }}>
+                {plans.map((plan) => (
+                  <div key={plan.name} style={{
+                    background: "#FFFFFF",
+                    border: plan.featured ? "2px solid #1F3A5F" : "1px solid #E8E8E3",
+                    borderRadius: 16, padding: isMobile ? 24 : 32,
+                    boxShadow: "0 4px 18px rgba(0,0,0,0.04)",
+                    display: "flex", flexDirection: "column",
+                    position: "relative",
+                  }}>
+                    {plan.note && (
+                      <span style={{
+                        position: "absolute", top: 16, right: 16,
+                        fontSize: 11, fontWeight: 600, color: "#FFFFFF",
+                        background: "#1F3A5F", borderRadius: 999,
+                        padding: "5px 10px",
+                      }}>
+                        {plan.note}
+                      </span>
+                    )}
+                    <div style={{ fontSize: 18, fontWeight: 600, color: "#111111" }}>
+                      {plan.name}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", marginTop: 12 }}>
+                      <span style={{
+                        fontSize: isMobile ? 34 : 40, fontWeight: 300, color: "#111111",
+                      }}>
+                        {plan.price}
+                      </span>
+                      {plan.period && (
+                        <span style={{ fontSize: 15, color: "#5B5B5B", marginLeft: 4 }}>
+                          {plan.period}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 14, color: "#5B5B5B", marginTop: 10, lineHeight: 1.6 }}>
+                      {plan.support}
+                    </div>
+                    <div style={{
+                      display: "flex", flexDirection: "column", gap: 10,
+                      marginTop: 20, flex: 1,
+                    }}>
+                      {plan.features.map((f) => (
+                        <div key={f} style={{
+                          display: "flex", alignItems: "center", gap: 10,
+                          fontSize: 14, lineHeight: 1.75, color: "#333333",
+                        }}>
+                          <Check size={14} color="#1F3A5F" strokeWidth={2} style={{ flexShrink: 0 }} />
+                          {f}
+                        </div>
+                      ))}
+                    </div>
+                    <Link href="/signup" style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      marginTop: 24, padding: "14px 24px", borderRadius: 10,
+                      background: plan.featured ? "#111111" : "#1F3A5F",
+                      color: "#FFFFFF", fontWeight: 600, fontSize: 15,
+                      textDecoration: "none",
+                      transition: "opacity 150ms ease",
+                    }}>
+                      {plan.cta}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* Footnote */}
+          <div style={{
+            fontSize: 12, color: "#8A8A84", fontStyle: "italic",
+            marginTop: 16, textAlign: "center",
+          }}>
+            Pricing can evolve with product depth and usage over time.
+          </div>
+
+          {/* Final CTA panel */}
+          <div style={{
+            background: "#1F3A5F", borderRadius: 22,
+            padding: isMobile ? "48px 24px" : "72px 48px",
+            marginTop: 52, textAlign: "center",
+          }}>
+            <div style={{
+              fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 2,
+              textTransform: "uppercase", fontWeight: 600,
+              color: "rgba(255,255,255,0.65)",
+            }}>
+              START
+            </div>
+            <h3 style={{
+              fontFamily: "var(--font-brand)", fontWeight: 300,
+              lineHeight: 1.18, fontSize: isMobile ? 24 : 34,
+              color: "#FFFFFF", maxWidth: 760, margin: "12px auto 0",
+            }}>
+              Stop guessing. Start deciding better.
             </h3>
-            <p style={{ fontSize: 15, color: "var(--mk-text-secondary)", marginBottom: 24 }}>
-              Describe your next decision. See what Signux finds in 30 seconds.
+            <p style={{
+              fontSize: 16, lineHeight: 1.6,
+              color: "rgba(255,255,255,0.78)",
+              maxWidth: 620, margin: "16px auto 0",
+            }}>
+              See what Signux surfaces in under a minute.
             </p>
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              style={{
+            <div style={{
+              display: "flex", flexWrap: "wrap",
+              justifyContent: "center", gap: 12, marginTop: 28,
+            }}>
+              <Link href="/signup" style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "14px 36px", borderRadius: 8,
-                background: "var(--mk-accent)", color: "#FFFFFF", fontWeight: 600,
-                fontSize: 15, border: "none", cursor: "pointer",
-                fontFamily: "var(--font-brand)", letterSpacing: 0.5,
-              }}
-            >
-              Start free <ArrowRight size={16} />
-            </button>
-            <div style={{ fontSize: 12, color: "var(--mk-text-tertiary)", marginTop: 12 }}>
+                padding: "14px 36px", borderRadius: 10,
+                background: "#FFFFFF", color: "#1F3A5F", fontWeight: 600,
+                fontSize: 15, textDecoration: "none",
+              }}>
+                Start free <ArrowRight size={15} />
+              </Link>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("demo");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "14px 36px", borderRadius: 10,
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  color: "#FFFFFF", fontWeight: 500,
+                  fontSize: 15, cursor: "pointer",
+                }}
+              >
+                Watch demo
+              </button>
+            </div>
+            <div style={{
+              fontSize: 12, color: "rgba(255,255,255,0.58)", marginTop: 16,
+            }}>
               No credit card required
             </div>
           </div>
