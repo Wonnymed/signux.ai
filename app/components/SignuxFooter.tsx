@@ -3,28 +3,17 @@ import Link from "next/link";
 import { SignuxIcon } from "./SignuxIcon";
 import { useIsMobile } from "../lib/useIsMobile";
 import type { Mode } from "../lib/types";
+import { ENGINES, type EngineId } from "../lib/engines";
 
-const MODE_MAP: Record<string, Mode> = {
-  "Chat": "chat",
-  "Simulate": "simulate",
-  "Compete": "compete",
-  "Build": "build",
-  "Protect": "protect",
-  "Hire": "hire",
-  "Grow": "grow",
-};
-
-type FooterLink = { text: string; href?: string; mode?: string; badge?: string };
+type FooterLink = { text: string; href?: string; mode?: Mode; badge?: string };
 
 const FOOTER_COLS: { header: string; links: FooterLink[] }[] = [
   { header: "PRODUCT", links: [
-    { text: "Chat", mode: "Chat" },
-    { text: "Simulate", mode: "Simulate" },
-    { text: "Compete", mode: "Compete" },
-    { text: "Build", mode: "Build" },
-    { text: "Protect", mode: "Protect" },
-    { text: "Hire", mode: "Hire" },
-    { text: "Grow", mode: "Grow" },
+    { text: "Chat", mode: "chat" },
+    ...(Object.keys(ENGINES) as EngineId[]).map((id) => ({
+      text: ENGINES[id].name,
+      mode: id as Mode,
+    })),
     { text: "Pricing", href: "/pricing" },
   ]},
   { header: "LEARN", links: [
@@ -78,7 +67,7 @@ export default function SignuxFooter({ onSetMode }: { onSetMode?: (m: Mode) => v
               {col.header}
             </div>
             {col.links.map((link, i) => {
-              const mode = link.mode ? MODE_MAP[link.mode] : undefined;
+              const mode = link.mode;
               const isLink = !!link.href;
 
               if (isLink) {

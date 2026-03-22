@@ -73,6 +73,20 @@ export type SimResult = {
 
 export type Mode = "chat" | "simulate" | "compete" | "build" | "grow" | "hire" | "protect";
 
+export interface EngineResponse {
+  engine: string;
+  title: string;
+  executive_summary: string;
+  confidence: "low" | "medium" | "high";
+  status: "clear" | "promising" | "fragile" | "blocked" | "mixed";
+  main_recommendation: string;
+  key_risks: string[];
+  key_opportunities: string[];
+  next_actions: string[];
+  notes: string[];
+  [key: string]: any;
+}
+
 export const AGENT_CATEGORY_COLORS: Record<string, { bg: string; color: string; border: string }> = {
   supply: { bg: "rgba(59,130,246,0.08)", color: "#3B82F6", border: "rgba(59,130,246,0.25)" },
   logistics: { bg: "rgba(16,185,129,0.08)", color: "#10B981", border: "rgba(16,185,129,0.25)" },

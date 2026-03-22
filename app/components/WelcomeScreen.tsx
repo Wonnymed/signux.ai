@@ -4,6 +4,7 @@ import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
 import type { Mode } from "../lib/types";
+import { ENGINES, type EngineId } from "../lib/engines";
 
 type WelcomeScreenProps = {
   profileName: string;
@@ -25,14 +26,10 @@ type WelcomeScreenProps = {
   lang?: string;
 };
 
-const MODE_PILLS: { mode: Mode; label: string }[] = [
-  { mode: "simulate", label: "Simulate" },
-  { mode: "build", label: "Build" },
-  { mode: "grow", label: "Grow" },
-  { mode: "hire", label: "Hire" },
-  { mode: "protect", label: "Protect" },
-  { mode: "compete", label: "Compete" },
-];
+const MODE_PILLS = (Object.keys(ENGINES) as EngineId[]).map((id) => ({
+  mode: id as Mode,
+  label: ENGINES[id].name,
+}));
 
 export default function WelcomeScreen({
   input, setInput, onSend, loading, attachments, onAttachmentsChange,

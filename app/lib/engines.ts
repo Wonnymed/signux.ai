@@ -1,0 +1,73 @@
+import type { Mode } from "./types";
+
+export const ENGINES = {
+  simulate: {
+    id: "simulate",
+    name: "Simulate",
+    subtitle: "Pressure-test a decision before you commit.",
+    question: "Should I do this?",
+    cta: "Run Simulation",
+    placeholder: "Describe the decision you want to pressure-test...",
+    icon: "Zap",
+    color: "#C8A84E",
+    chips: ["10 expert agents", "10 structured rounds", "Success probability", "Key disagreement", "Best next action"],
+  },
+  build: {
+    id: "build",
+    name: "Build",
+    subtitle: "Turn an idea into an executable plan.",
+    question: "How do I build this?",
+    cta: "Build Plan",
+    placeholder: "Describe what you want to build, launch, or execute...",
+    icon: "Hammer",
+    color: "#3ECF8E",
+    chips: ["Execution roadmap", "30/60/90-day plan", "Bottleneck detection", "Resource sequencing", "Fastest path to proof"],
+  },
+  grow: {
+    id: "grow",
+    name: "Grow",
+    subtitle: "Find the fastest path to better revenue.",
+    question: "How do I grow this?",
+    cta: "Find Growth Levers",
+    placeholder: "Describe the business, current traction, and growth challenge...",
+    icon: "TrendingUp",
+    color: "#6E9AFF",
+    chips: ["Growth levers", "Revenue bottlenecks", "Channel prioritization", "Pricing opportunities", "Experiment roadmap"],
+  },
+  hire: {
+    id: "hire",
+    name: "Hire",
+    subtitle: "Decide who to hire, and when.",
+    question: "Should I hire this person or role now?",
+    cta: "Evaluate Hire",
+    placeholder: "Paste the role, candidate, or hiring decision you want to assess...",
+    icon: "UserCheck",
+    color: "#F9A8D4",
+    chips: ["Candidate-role fit", "Red flag detection", "Timing of hire", "ROI of the role", "Interview focus points"],
+  },
+  protect: {
+    id: "protect",
+    name: "Protect",
+    subtitle: "Find what could break the business next.",
+    question: "What could kill this?",
+    cta: "Scan Risks",
+    placeholder: "Describe the business, decision, or operation you want to stress-test...",
+    icon: "Shield",
+    color: "#F75B5B",
+    chips: ["Threat scan", "Downside mapping", "Compliance exposure", "Fragility detection", "Mitigation actions"],
+  },
+  compete: {
+    id: "compete",
+    name: "Compete",
+    subtitle: "See how rivals move, and where you can win.",
+    question: "How do I beat this market?",
+    cta: "Map Competitors",
+    placeholder: "Describe your market, competitors, and the position you want to win...",
+    icon: "Swords",
+    color: "#FDBA74",
+    chips: ["Competitor mapping", "Response simulation", "Weakness detection", "Positioning gaps", "Counter-move strategy"],
+  },
+} as const;
+
+export type EngineId = keyof typeof ENGINES;
+export type EngineConfig = (typeof ENGINES)[EngineId];

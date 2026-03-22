@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getProfile } from "../lib/profile";
 import { t, Language, setLanguage } from "../lib/i18n";
 import type { Message, Toast, Attachment, SimAgent, SimResult, Mode } from "../lib/types";
+import { ENGINES, type EngineId } from "../lib/engines";
 import { Check, AlertTriangle, Info, WifiOff, Square, Menu } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
@@ -258,7 +259,7 @@ function ChatPage() {
   /* Read mode from URL query param (e.g. /chat?mode=simulate from /projects navigation) */
   useEffect(() => {
     const modeParam = searchParams.get("mode");
-    const validModes = ["chat", "simulate", "compete", "build", "protect", "hire", "grow"];
+    const validModes: string[] = ["chat", ...Object.keys(ENGINES)];
     if (modeParam && validModes.includes(modeParam)) {
       setMode(modeParam as Mode);
       // Clean URL without reload
@@ -501,7 +502,7 @@ function ChatPage() {
         e.preventDefault();
         setActiveTool(null);
         setMode(prev => {
-          const cycle: Mode[] = ["chat", "simulate", "compete", "build", "protect", "hire", "grow"];
+          const cycle: Mode[] = ["chat", ...(Object.keys(ENGINES) as EngineId[])];
           const idx = cycle.indexOf(prev);
           return cycle[(idx + 1) % cycle.length];
         });

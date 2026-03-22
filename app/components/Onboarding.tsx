@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Rocket, Search, Zap, TrendingUp, Globe, MessageSquare, ChevronRight, Shield } from "lucide-react";
+import { Rocket, Search, Zap, TrendingUp, Globe, MessageSquare, ChevronRight, Shield, Hammer, UserCheck, Swords } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import type { Mode } from "../lib/types";
+import { ENGINES } from "../lib/engines";
 import { updateProfile } from "../lib/profile";
 
 type OnboardingProps = {
@@ -11,12 +12,12 @@ type OnboardingProps = {
 };
 
 const GOALS = [
-  { label: "I'm starting a business", icon: Rocket, mode: "build" as Mode, color: "#14B8A6", challenge: "validation" },
-  { label: "I need to make a decision", icon: Zap, mode: "simulate" as Mode, color: "#D4AF37", challenge: "decision" },
-  { label: "I'm researching a market", icon: Search, mode: "compete" as Mode, color: "#DC2626", challenge: "research" },
-  { label: "I'm evaluating an investment", icon: TrendingUp, mode: "hire" as Mode, color: "#A855F7", challenge: "evaluation" },
-  { label: "I operate internationally", icon: Globe, mode: "protect" as Mode, color: "#22C55E", challenge: "expansion" },
-  { label: "Beating competitors", icon: Shield, mode: "compete" as Mode, color: "#DC2626", challenge: "competition" },
+  { label: "I'm starting a business", icon: Hammer, mode: "build" as Mode, color: ENGINES.build.color, challenge: "validation" },
+  { label: "I need to make a decision", icon: Zap, mode: "simulate" as Mode, color: ENGINES.simulate.color, challenge: "decision" },
+  { label: "I'm researching a market", icon: Swords, mode: "compete" as Mode, color: ENGINES.compete.color, challenge: "research" },
+  { label: "I want to grow revenue", icon: TrendingUp, mode: "grow" as Mode, color: ENGINES.grow.color, challenge: "growth" },
+  { label: "I'm evaluating a hire", icon: UserCheck, mode: "hire" as Mode, color: ENGINES.hire.color, challenge: "evaluation" },
+  { label: "I need to protect my business", icon: Shield, mode: "protect" as Mode, color: ENGINES.protect.color, challenge: "protection" },
   { label: "Just exploring", icon: MessageSquare, mode: "chat" as Mode, color: "var(--text-tertiary)", challenge: "exploring" },
 ];
 
@@ -37,30 +38,26 @@ const LEVELS = [
 ];
 
 const MODE_DESCRIPTIONS: Record<string, string> = {
-  build: "Build will find the right business for your skills, validate it, and build a 90-day blueprint.",
-  simulate: "Simulate will stress-test your decision with AI agents debating from every angle.",
-  compete: "Compete will search multiple sources and compile a structured report with citations.",
-  hire: "Hire will evaluate your deal with quantitative formulas — expected value, Kelly, Bayesian updates.",
-  protect: "Protect will analyze cross-border structures, compliance, and tax optimization across multiple jurisdictions.",
+  ...Object.fromEntries(
+    Object.entries(ENGINES).map(([id, e]) => [id, e.subtitle])
+  ),
   chat: "Chat is your open canvas — ask anything about business, strategy, or operations.",
 };
 
 const MODE_LABELS: Record<string, string> = {
-  build: "Build",
-  simulate: "Simulate",
-  compete: "Compete",
-  hire: "Hire",
-  protect: "Protect",
+  ...Object.fromEntries(
+    Object.entries(ENGINES).map(([id, e]) => [id, e.name])
+  ),
   chat: "Chat",
 };
 
 const CHALLENGE_SUGGESTIONS: Record<string, string> = {
   validation: "I have a business idea I want to test. Can you simulate whether it will work?",
   decision: "I need to make an important business decision. Help me analyze all angles.",
-  research: "I need deep research on my market. What should I know?",
-  evaluation: "I need to evaluate a deal. Can you help me spot red flags?",
-  competition: "Who are my biggest threats and how should I respond?",
-  expansion: "I want to expand to a new market. What should I know?",
+  research: "I need deep research on my market and competitors. What should I know?",
+  growth: "I need to grow revenue faster. What are my best levers?",
+  evaluation: "I'm evaluating a hire. Can you help me assess timing and fit?",
+  protection: "What are the biggest risks to my business right now?",
   exploring: "",
 };
 

@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 const LOADING_MESSAGES: Record<string, string[]> = {
   chat: ["Thinking...", "Consulting domains...", "Formulating response..."],
   simulate: ["Building simulation...", "Assembling specialists...", "Running debate rounds...", "Generating report..."],
-  intel: ["Scanning intelligence...", "Cross-referencing sources...", "Analyzing patterns..."],
-  invest: ["Analyzing markets...", "Evaluating fundamentals...", "Building report..."],
-  launchpad: ["Evaluating opportunity...", "Building framework...", "Preparing roadmap..."],
-  globalops: ["Scanning global markets...", "Evaluating regulations...", "Mapping opportunities..."],
+  build: ["Evaluating opportunity...", "Building framework...", "Preparing roadmap..."],
+  grow: ["Analyzing growth levers...", "Mapping revenue paths...", "Building strategy..."],
+  hire: ["Evaluating candidates...", "Assessing fit...", "Building report..."],
+  protect: ["Scanning risks...", "Evaluating exposure...", "Mapping threats..."],
+  compete: ["Scanning competitors...", "Cross-referencing sources...", "Analyzing patterns..."],
   research: ["Searching sources...", "Cross-referencing data...", "Synthesizing findings..."],
 };
 

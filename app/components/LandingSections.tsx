@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Zap, Search, Rocket, Globe, TrendingUp, Wrench, CircleSlash, Copy, Users, Shield, Scan, Swords, GitBranch, Map, Target, Crown, Check, ArrowRight } from "lucide-react";
+import { Zap, Search, Rocket, Globe, TrendingUp, Wrench, CircleSlash, Copy, Users, Shield, Scan, Swords, GitBranch, Map, Target, Crown, Check, ArrowRight, Hammer, UserCheck } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import SignuxFooter from "./SignuxFooter";
+import { ENGINES } from "../lib/engines";
 
 /* ═══ Fade-in on scroll ═══ */
 function useFadeIn() {
@@ -52,39 +53,46 @@ function Divider() {
 /* ═══ Mode data ═══ */
 const MODE_SECTIONS = [
   {
-    icon: Zap, color: "#D4AF37", name: "Simulate", textOnColor: "#000",
+    icon: Zap, color: ENGINES.simulate.color, name: ENGINES.simulate.name, textOnColor: "#000",
     title: "Know if your idea will work — before you spend a dollar",
-    desc: "Describe any business scenario. AI specialists will debate it from every angle — finding the risks you can't see, the competitors you forgot, and the numbers that actually matter. Like seeing the future of your business before it happens.",
-    features: ["Predict outcomes", "Find hidden risks", "Stress-test anything", "See the future first"],
+    desc: "Describe any business scenario. AI specialists will debate it from every angle — finding the risks you can't see, the competitors you forgot, and the numbers that actually matter.",
+    features: ENGINES.simulate.chips.slice(0, 4),
     preview: SimulatePreview,
   },
   {
-    icon: Shield, color: "#DC2626", name: "Intel", textOnColor: "#fff",
-    title: "See what others miss. Know what others don't.",
-    desc: "Is that partnership offer legit? How will competitors react? What's the real risk nobody is talking about? Specialized tools that analyze deals, detect lies, simulate competition, and prepare you for what's coming.",
-    features: ["Predict competitor moves", "Catch lies in deals", "Map threats before they hit", "Prepare for anything"],
-    preview: IntelPreview,
-  },
-  {
-    icon: Rocket, color: "#14B8A6", name: "Launchpad", textOnColor: "#000",
+    icon: Hammer, color: ENGINES.build.color, name: ENGINES.build.name, textOnColor: "#000",
     title: "Your first $1,000 in 90 days",
-    desc: "Tell us what you're good at and how much you can invest. We'll find the best business for you, predict if it will work before you start, create your 90-day plan, and check in every week. Like a co-founder who already knows what's coming.",
-    features: ["Find your best business", "AI-tested before you start", "90-day plan", "Weekly check-ins", "Adapts as you grow"],
+    desc: "Tell us what you're good at and how much you can invest. We'll find the best business for you, predict if it will work, and create your 90-day plan.",
+    features: ENGINES.build.chips.slice(0, 4),
     preview: LaunchpadPreview,
   },
   {
-    icon: Globe, color: "#22C55E", name: "Global Ops", textOnColor: "#000",
-    title: "Expand anywhere. Know the rules before you break them.",
-    desc: "Setting up in a new country? Importing from Asia? Need a tax-efficient structure? Get specific guidance for your exact situation — the steps, the costs, the risks, and what others got wrong before you.",
-    features: ["Any jurisdiction", "Tax optimization", "Import/export", "Crypto compliance", "Step-by-step guidance"],
+    icon: TrendingUp, color: ENGINES.grow.color, name: ENGINES.grow.name, textOnColor: "#fff",
+    title: "Find the fastest path to better revenue",
+    desc: "Map your growth levers, identify revenue bottlenecks, prioritize channels, and build an experiment roadmap. The strategy your business needs right now.",
+    features: ENGINES.grow.chips.slice(0, 4),
+    preview: InvestPreview,
+  },
+  {
+    icon: UserCheck, color: ENGINES.hire.color, name: ENGINES.hire.name, textOnColor: "#000",
+    title: "Decide who to hire, and when",
+    desc: "Evaluate candidates, assess role timing, detect red flags, and get interview focus points. The same rigor hedge funds use for portfolio decisions, applied to your team.",
+    features: ENGINES.hire.chips.slice(0, 4),
     preview: GlobalOpsPreview,
   },
   {
-    icon: TrendingUp, color: "#A855F7", name: "Invest", textOnColor: "#fff",
-    title: "Should you invest? Get the real numbers.",
-    desc: "Paste a deal, describe an opportunity, or evaluate a startup. Get the real math — expected value, risk scores, and an honest verdict. The same frameworks hedge funds use, in plain language. Know the answer before you wire the money.",
-    features: ["Expected value", "Risk scores", "Honest verdict", "Plain language", "Stress testing"],
-    preview: InvestPreview,
+    icon: Shield, color: ENGINES.protect.color, name: ENGINES.protect.name, textOnColor: "#fff",
+    title: "Find what could break your business next",
+    desc: "Scan threats, map downside scenarios, check compliance exposure, and detect fragility. Know the risks before they become problems.",
+    features: ENGINES.protect.chips.slice(0, 4),
+    preview: IntelPreview,
+  },
+  {
+    icon: Swords, color: ENGINES.compete.color, name: ENGINES.compete.name, textOnColor: "#000",
+    title: "See how rivals move, and where you can win",
+    desc: "Map competitors, simulate their responses, detect weaknesses, and find positioning gaps. Your competitive intelligence engine.",
+    features: ENGINES.compete.chips.slice(0, 4),
+    preview: IntelPreview,
   },
 ];
 

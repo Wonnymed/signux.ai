@@ -10,6 +10,7 @@ import {
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
 import type { Mode } from "../lib/types";
+import { ENGINES, type EngineId } from "../lib/engines";
 import type { AuthUser } from "../lib/auth";
 import type { Conversation } from "../lib/database-client";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
@@ -50,14 +51,18 @@ type SidebarProps = {
 const ICON_IDLE = "#52525B";
 const ICON_ACTIVE = "#EDEDEF";
 
+const ICON_MAP: Record<string, any> = {
+  Zap, Hammer, TrendingUp, UserCheck, Shield, Swords,
+};
+
 const MODES: { key: Mode; icon: any; label: string; color: string }[] = [
   { key: "chat", icon: MessageSquare, label: "sidebar.mode_chat", color: ICON_IDLE },
-  { key: "simulate", icon: Zap, label: "sidebar.mode_simulate", color: ICON_IDLE },
-  { key: "build", icon: Hammer, label: "sidebar.mode_build", color: ICON_IDLE },
-  { key: "grow", icon: TrendingUp, label: "sidebar.mode_grow", color: ICON_IDLE },
-  { key: "hire", icon: UserCheck, label: "sidebar.mode_hire", color: ICON_IDLE },
-  { key: "protect", icon: Shield, label: "sidebar.mode_protect", color: ICON_IDLE },
-  { key: "compete", icon: Swords, label: "sidebar.mode_compete", color: ICON_IDLE },
+  ...(Object.keys(ENGINES) as EngineId[]).map((id) => ({
+    key: id as Mode,
+    icon: ICON_MAP[ENGINES[id].icon] || Zap,
+    label: `sidebar.mode_${id}`,
+    color: ICON_IDLE,
+  })),
 ];
 
 /* ═══ Portal-based Sidebar Tooltip — renders in <body>, outside overflow:hidden ═══ */
