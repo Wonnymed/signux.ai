@@ -7,10 +7,10 @@ import { getProfile } from "../lib/profile";
 import { t, Language, setLanguage } from "../lib/i18n";
 import type { Message, Toast, Attachment, SimAgent, SimResult, Mode } from "../lib/types";
 import { ENGINES, type EngineId } from "../lib/engines";
-import { Check, AlertTriangle, Info, WifiOff, Square, Menu } from "lucide-react";
+import { Check, AlertTriangle, Info, WifiOff, Square } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
-import UserMenu from "../components/UserMenu";
+import TopBar from "../components/TopBar";
 import { useAuth } from "../lib/auth";
 import { getUser, createUser, updateUser } from "../lib/database";
 import {
@@ -1019,106 +1019,16 @@ function ChatPage() {
       <OfflineBanner />
       <ModeTransition mode={mode} isTransitioning={modeTransitioning} onComplete={handleTransitionComplete} />
 
-      {/* ═══ Mobile header: hamburger + auth ═══ */}
+      {/* ═══ Mobile header ═══ */}
       {isMobile && (
-        <header style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 12px", height: 52,
-          background: "var(--bg-primary)",
-          borderBottom: "1px solid var(--border-secondary)",
-        }}>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            style={{
-              width: 44, height: 44, borderRadius: 10,
-              background: "transparent", border: "none",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "var(--text-secondary)",
-            }}
-          >
-            <Menu size={18} />
-          </button>
-          {!authUser ? (
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <button
-                onClick={() => { window.location.href = "/login"; }}
-                style={{
-                  padding: "8px 14px", borderRadius: 50, minHeight: 44,
-                  background: "transparent",
-                  border: "1px solid var(--border-primary)",
-                  color: "var(--text-secondary)",
-                  fontSize: 12, fontWeight: 500, cursor: "pointer",
-                }}
-              >
-                Log in
-              </button>
-              <button
-                onClick={() => { window.location.href = "/signup"; }}
-                style={{
-                  padding: "8px 14px", borderRadius: 50, minHeight: 44,
-                  background: "var(--accent)",
-                  border: "none",
-                  color: "#09090B",
-                  fontSize: 12, fontWeight: 600, cursor: "pointer",
-                }}
-              >
-                Start free
-              </button>
-            </div>
-          ) : (
-            <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-              onClick={() => setSidebarOpen(true)}>
-              {authUser.avatar ? (
-                <img src={authUser.avatar} alt={authUser.name} width={32} height={32} style={{ borderRadius: "50%", objectFit: "cover" }} referrerPolicy="no-referrer" />
-              ) : (
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>
-                  {authUser.initials}
-                </div>
-              )}
-            </div>
-          )}
-        </header>
-      )}
-
-      {/* ═══ Desktop: auth floating top-right (no header bar) ═══ */}
-      {!isMobile && !authUser && (
-        <div style={{
-          position: "fixed", top: 12, right: 20,
-          display: "flex", gap: 8, zIndex: 40,
-        }}>
-          <button
-            onClick={() => { window.location.href = "/login"; }}
-            style={{
-              padding: "7px 16px", borderRadius: 50,
-              background: "transparent",
-              border: "1px solid var(--border-primary)",
-              color: "var(--text-secondary)",
-              fontSize: 13, fontWeight: 500, cursor: "pointer",
-              transition: "all 150ms",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-primary)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-          >
-            Log in
-          </button>
-          <button
-            onClick={() => { window.location.href = "/signup"; }}
-            style={{
-              padding: "7px 18px", borderRadius: 50,
-              background: "var(--accent)",
-              border: "none",
-              color: "#09090B",
-              fontSize: 13, fontWeight: 600, cursor: "pointer",
-              transition: "all 150ms",
-            }}
-          >
-            Start free
-          </button>
-        </div>
-      )}
-      {!isMobile && authUser && (
-        <UserMenu user={authUser} onSignOut={authSignOut} />
+        <TopBar
+          mode={mode}
+          isMobile={true}
+          authUser={authUser}
+          onOpenSidebar={() => setSidebarOpen(true)}
+          onNewConversation={onNewConversation}
+          sidebarOpen={sidebarOpen}
+        />
       )}
 
       <Sidebar
@@ -1159,10 +1069,22 @@ function ChatPage() {
         flex: 1, display: "flex", flexDirection: "column",
         background: "var(--bg-primary)", minWidth: 0, minHeight: 0,
         overflowY: "auto", overflowX: "hidden",
-        paddingTop: isMobile ? 52 : 0,
+        paddingTop: isMobile ? 48 : 0,
         marginLeft: isMobile ? 0 : (sidebarOpen ? 260 : 56),
         transition: "margin-left 200ms ease",
       }}>
+        {/* ═══ Desktop top bar — context + actions ═══ */}
+        {!isMobile && (
+          <TopBar
+            mode={mode}
+            isMobile={false}
+            authUser={authUser}
+            onOpenSidebar={() => setSidebarOpen(true)}
+            onNewConversation={onNewConversation}
+            tokenStatus={{ available: tokens.available, monthlyTotal: tokens.monthlyTotal, plan: tokens.plan }}
+            sidebarOpen={sidebarOpen}
+          />
+        )}
         {/* Launchpad check-in reminder */}
         {showCheckinReminder && (
           <div
