@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
 import { ArrowLeft } from "lucide-react";
+import { PageShell, PageHeader, EmptyState } from "../components/PageShell";
 
 type Decision = {
   id: string;
@@ -57,32 +58,38 @@ export default function DecisionsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px" }}>
-      <a href="/chat" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--text-tertiary)", marginBottom: 24, textDecoration: "none" }}>
-        <ArrowLeft size={12} /> Back to Signux
-      </a>
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: "var(--text-primary)" }}>
+      <PageShell type="workspace">
+        <a href="/chat" style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          color: "#52525B", fontSize: 12, textDecoration: "none",
+          marginBottom: 20, transition: "color 180ms ease-out",
+        }}
+          onMouseEnter={e => e.currentTarget.style.color = "#A1A1AA"}
+          onMouseLeave={e => e.currentTarget.style.color = "#52525B"}
+        >
+          <ArrowLeft size={13} strokeWidth={1.5} /> Back to Signux
+        </a>
 
-      <h1 style={{ fontFamily: "var(--font-brand)", fontSize: 28, fontWeight: 700, color: "var(--text-primary)", letterSpacing: 2, marginBottom: 8 }}>
-        Decision Journal
-      </h1>
-      <p style={{ fontSize: 14, color: "var(--text-tertiary)", marginBottom: 32 }}>
-        Track your decisions and learn from outcomes over time.
-      </p>
+        <PageHeader
+          eyebrow="Workspace"
+          title="Decision Journal"
+          subtitle="Track your decisions and learn from outcomes over time."
+        />
 
       {!user && !authLoading && (
-        <div style={{ textAlign: "center", padding: 40, color: "var(--text-tertiary)", fontSize: 14 }}>
-          Sign in to see your decision journal.
-        </div>
+        <EmptyState title="Sign in required" description="Sign in to see your decision journal." />
       )}
 
       {loading && user && (
-        <div style={{ textAlign: "center", padding: 40, color: "var(--text-tertiary)", fontSize: 13 }}>Loading...</div>
+        <div style={{ textAlign: "center", padding: 40, color: "#52525B", fontSize: 13 }}>Loading...</div>
       )}
 
       {!loading && user && decisions.length === 0 && (
-        <div style={{ textAlign: "center", padding: 40, color: "var(--text-tertiary)", fontSize: 14 }}>
-          No decisions tracked yet. Signux automatically tracks important decisions from your conversations.
-        </div>
+        <EmptyState
+          title="No decisions tracked yet"
+          description="Signux automatically tracks important decisions from your conversations."
+        />
       )}
 
       {/* Pending follow-ups */}
@@ -156,6 +163,7 @@ export default function DecisionsPage() {
           })}
         </>
       )}
+    </PageShell>
     </div>
   );
 }

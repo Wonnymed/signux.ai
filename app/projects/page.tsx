@@ -6,6 +6,7 @@ import { useAuth } from "../lib/auth";
 import { useProjects } from "../lib/useProjects";
 import { useIsMobile } from "../lib/useIsMobile";
 import Sidebar from "../components/Sidebar";
+import { PageHeader, EmptyState } from "../components/PageShell";
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -58,9 +59,9 @@ export default function ProjectsPage() {
         transition: "margin-left 200ms ease",
       }}>
         <div style={{
-          maxWidth: 900,
+          maxWidth: 860,
           margin: "0 auto",
-          padding: isMobile ? "32px 20px 0" : "48px 32px 0",
+          padding: isMobile ? "24px 16px 64px" : "40px 32px 80px",
         }}>
           {/* Auth gate — guests see sign-in prompt */}
           {!authUser ? (
@@ -108,39 +109,29 @@ export default function ProjectsPage() {
             </div>
           ) : (
             <>
-          {/* Header */}
-          <div style={{ marginBottom: 32 }}>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}>
-              <h1 style={{
-                fontSize: 28,
-                fontWeight: 700,
-                fontFamily: "var(--font-brand)",
-                letterSpacing: 1,
-                margin: 0,
-              }}>Projects</h1>
-
+          <PageHeader
+            eyebrow="Workspace"
+            title="Projects"
+            subtitle="Organize your analyses and simulations."
+            actions={
               <button
                 onClick={() => setShowNewInput(true)}
                 style={{
                   display: "flex", alignItems: "center", gap: 6,
-                  padding: "8px 16px", borderRadius: 8,
-                  background: "var(--accent)",
+                  padding: "7px 14px", borderRadius: 7,
+                  background: "rgba(255,255,255,0.08)",
                   border: "none", cursor: "pointer",
-                  fontSize: 13, fontWeight: 600, color: "#000",
-                  transition: "all 150ms",
+                  fontSize: 12.5, fontWeight: 500, color: "#E4E4E7",
+                  transition: "background 180ms ease-out",
                 }}
-                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(255,255,255,0.1)"}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
               >
-                <Plus size={14} />
+                <Plus size={14} strokeWidth={1.5} />
                 New Project
               </button>
-            </div>
-          </div>
+            }
+          />
 
           {/* New project inline input */}
           {showNewInput && (

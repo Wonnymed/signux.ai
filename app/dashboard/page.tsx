@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { LayoutDashboard, Zap, Shield, Eye, FileText, Link2, ArrowLeft, Target } from "lucide-react";
+import { Zap, Shield, Eye, FileText, Link2, ArrowLeft, Target } from "lucide-react";
 import { useIsMobile } from "../lib/useIsMobile";
+import { PageShell, PageHeader, SectionCard, EmptyState } from "../components/PageShell";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,56 +85,52 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "var(--bg-primary)",
-      color: "var(--text-primary)", padding: isMobile ? 16 : 24,
-    }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* Back link */}
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: "var(--text-primary)" }}>
+      <PageShell type="system">
         <a href="/chat" style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          color: "var(--text-tertiary)", fontSize: 12, textDecoration: "none",
-          marginBottom: 20,
-        }}>
-          <ArrowLeft size={14} /> Back to chat
+          display: "inline-flex", alignItems: "center", gap: 5,
+          color: "#52525B", fontSize: 12, textDecoration: "none",
+          marginBottom: 20, transition: "color 180ms ease-out",
+        }}
+          onMouseEnter={e => e.currentTarget.style.color = "#A1A1AA"}
+          onMouseLeave={e => e.currentTarget.style.color = "#52525B"}
+        >
+          <ArrowLeft size={13} strokeWidth={1.5} /> Back to Signux
         </a>
 
-        <h1 style={{
-          fontFamily: "var(--font-brand)", fontSize: isMobile ? 20 : 24, fontWeight: 700,
-          marginBottom: 4, display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <LayoutDashboard size={22} style={{ color: "var(--text-secondary)" }} />
-          Intelligence Dashboard
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 24 }}>
-          Your decision intelligence at a glance
-        </p>
+        <PageHeader
+          eyebrow="Usage"
+          title="Intelligence Dashboard"
+          subtitle="Your decision intelligence at a glance"
+        />
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: 40, color: "var(--text-tertiary)" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: 40, color: "#52525B", fontSize: 13 }}>Loading...</div>
         ) : (
           <>
             {/* Stats grid */}
             <div style={{
               display: "grid",
               gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(5, 1fr)",
-              gap: 12, marginBottom: 32,
+              gap: 10, marginBottom: 28,
             }}>
               {STAT_CARDS.map((stat, i) => {
                 const Icon = stat.icon;
                 return (
                   <div key={i} style={{
-                    padding: "16px 14px", borderRadius: 12,
-                    border: "1px solid var(--border-secondary)",
-                    background: "var(--card-bg)",
+                    padding: "14px 16px", borderRadius: 10,
+                    border: "1px solid #27272A",
+                    background: "rgba(255,255,255,0.015)",
                   }}>
                     <div style={{
-                      display: "flex", alignItems: "center", gap: 6,
-                      fontSize: 10, color: "var(--text-tertiary)", marginBottom: 6,
+                      display: "flex", alignItems: "center", gap: 5,
+                      fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 500,
+                      letterSpacing: 0.8, color: "#52525B", marginBottom: 8,
+                      textTransform: "uppercase",
                     }}>
-                      <Icon size={12} style={{ color: stat.color }} /> {stat.label}
+                      <Icon size={12} strokeWidth={1.5} style={{ color: stat.color }} /> {stat.label}
                     </div>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: stat.color }}>
+                    <div style={{ fontSize: 24, fontWeight: 600, color: "#E4E4E7" }}>
                       {stat.value}
                     </div>
                   </div>
@@ -212,20 +209,19 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent activity */}
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
+            <h2 style={{
+              fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 500,
+              letterSpacing: 1.6, color: "#52525B", textTransform: "uppercase",
+              marginBottom: 12,
+            }}>
               Recent Activity
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {recentActivity.length === 0 ? (
-                <div style={{
-                  padding: 32, textAlign: "center", color: "var(--text-tertiary)",
-                  border: "1px dashed var(--border-secondary)", borderRadius: 12,
-                }}>
-                  <div style={{ fontSize: 14, marginBottom: 8 }}>No activity yet</div>
-                  <a href="/chat" style={{ color: "var(--accent)", fontSize: 13, textDecoration: "none" }}>
-                    Start your first analysis →
-                  </a>
-                </div>
+                <EmptyState
+                  title="No activity yet"
+                  description="Run your first simulation or analysis to see results here."
+                />
               ) : (
                 recentActivity.map((item) => (
                   <div key={item.id} style={{
@@ -262,7 +258,7 @@ export default function DashboardPage() {
             </div>
           </>
         )}
-      </div>
+      </PageShell>
     </div>
   );
 }
