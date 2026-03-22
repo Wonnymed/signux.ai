@@ -224,50 +224,118 @@ export default function LandingSections() {
       </section>
 
       {/* ═══ 2. SIX ENGINES ═══ */}
-      <section id="engines" style={{ ...sp, background: "var(--mk-card)" }}>
+      <section id="engines" style={{ ...sp, background: "#FAFAF7" }}>
         <Fade>
-          <div style={{ textAlign: "center" }}>
-            <div style={LABEL}>Six engines</div>
-            <h2 style={{ ...H2, fontSize: isMobile ? 26 : 36, color: "var(--mk-text)" }}>
-              One question. The right engine.
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: isMobile ? 36 : 48 }}>
+            <div style={{
+              fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 2,
+              textTransform: "uppercase", fontWeight: 600, color: "#B8941F", marginBottom: 14,
+            }}>
+              ENGINES
+            </div>
+            <h2 style={{
+              fontFamily: "var(--font-brand)", fontWeight: 300,
+              lineHeight: 1.18, fontSize: isMobile ? 24 : 34,
+              color: "#111111", maxWidth: 760, margin: "0 auto", marginBottom: 16,
+            }}>
+              Six engines. Every major business decision covered.
             </h2>
-            <p style={BODY}>
-              Each engine is purpose-built for a specific business decision. Not generic chat — specialized intelligence.
+            <p style={{
+              fontSize: 16, lineHeight: 1.6, color: "#5B5B5B",
+              maxWidth: 760, margin: "0 auto",
+            }}>
+              Each engine answers a question founders, operators, and investors face every week.
             </p>
           </div>
+
+          {/* Engine grid */}
           <div style={{
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
-            gap: 14,
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+            gap: 20,
           }}>
-            {ENGINES_LIST.map((engine) => {
-              const Icon = ICON_MAP[engine.icon] || Zap;
-              return (
-                <div key={engine.id} style={{
+            {([
+              { num: "01", name: "Simulate", question: "Should I do this?", desc: "Pressure-test a decision before you commit.", chips: ["10 agents", "10 rounds"] },
+              { num: "02", name: "Build", question: "How do I build this?", desc: "Turn an idea into an executable plan.", chips: ["Roadmap", "Execution"] },
+              { num: "03", name: "Grow", question: "How do I grow this?", desc: "Find the fastest path to better revenue.", chips: ["Channels", "Levers"] },
+              { num: "04", name: "Hire", question: "Should I hire this person?", desc: "Decide who to hire, and when.", chips: ["Fit", "Timing"] },
+              { num: "05", name: "Protect", question: "What could kill this?", desc: "Find what could break the business next.", chips: ["Risk", "Fragility"] },
+              { num: "06", name: "Compete", question: "How do I beat them?", desc: "See how rivals move, and where you can win.", chips: ["Rivals", "Moat"] },
+            ] as const).map((engine) => (
+              <div
+                key={engine.num}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                style={{
                   ...CARD,
-                  display: "flex", flexDirection: "column", gap: 12,
+                  cursor: "pointer",
+                  display: "flex", flexDirection: "column",
+                  transition: "border-color 200ms ease, box-shadow 200ms ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#D0D0C8";
+                  e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.06)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#E8E8E3";
+                  e.currentTarget.style.boxShadow = "0 4px 18px rgba(0,0,0,0.04)";
+                }}
+              >
+                {/* Micro-label */}
+                <span style={{
+                  fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 1.5,
+                  color: "#5B5B5B",
                 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: `${engine.color}10`, display: "flex",
-                    alignItems: "center", justifyContent: "center",
-                  }}>
-                    <Icon size={18} color={engine.color} strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: "var(--mk-text)", marginBottom: 4 }}>
-                      {engine.name}
-                    </div>
-                    <div style={{ fontSize: 13, color: "var(--mk-text-secondary)", lineHeight: 1.5 }}>
-                      {engine.subtitle}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--mk-text-tertiary)", fontStyle: "italic" }}>
-                    &ldquo;{engine.question}&rdquo;
-                  </div>
+                  ENGINE {engine.num}
+                </span>
+
+                {/* Engine name */}
+                <div style={{
+                  fontSize: 19, fontWeight: 600, color: "#111111", marginTop: 12,
+                }}>
+                  {engine.name}
                 </div>
-              );
-            })}
+
+                {/* Central question */}
+                <div style={{
+                  fontSize: 16, fontWeight: 500, color: "#1F3A5F", marginTop: 8,
+                }}>
+                  {engine.question}
+                </div>
+
+                {/* Description */}
+                <div style={{
+                  fontSize: 14, lineHeight: 1.65, color: "#5B5B5B", marginTop: 10,
+                }}>
+                  {engine.desc}
+                </div>
+
+                {/* Chips */}
+                <div style={{
+                  display: "flex", gap: 8, marginTop: 18,
+                }}>
+                  {engine.chips.map((chip) => (
+                    <span key={chip} style={{
+                      fontSize: 11, color: "#5B5B5B",
+                      border: "1px solid #E8E8E3", background: "#F8F8F5",
+                      borderRadius: 100, padding: "4px 12px",
+                    }}>
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom line + micro CTA */}
+          <div style={{ textAlign: "center", marginTop: 28 }}>
+            <div style={{ fontSize: 14, color: "#5B5B5B", fontStyle: "italic" }}>
+              One interface. Six decision engines.
+            </div>
+            <div style={{ fontSize: 13, color: "#1F3A5F", marginTop: 8 }}>
+              Ask Signux and it routes you to the right engine.
+            </div>
           </div>
         </Fade>
       </section>
