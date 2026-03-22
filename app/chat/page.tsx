@@ -42,8 +42,6 @@ import { createSupabaseBrowser } from "../lib/supabase-browser";
 import { signuxFetch } from "../lib/api-client";
 import { useProjects } from "../lib/useProjects";
 
-const TokenCounter = dynamic(() => import("../components/TokenCounter"), { ssr: false });
-
 const ProjectKnowledge = dynamic(() => import("../components/ProjectKnowledge"), { ssr: false });
 
 const SimulationEngine = dynamic(() => import("../components/SimulationEngine"), { ssr: false, loading: () => <div style={{ flex: 1 }} /> });
@@ -1307,20 +1305,6 @@ function ChatPage() {
               </div>
               ) : (
               <>
-              {tier === "free" && isLoggedIn && limits.chat_daily < Infinity && (
-                <div style={{
-                  fontSize: 11, color: "var(--text-tertiary)", textAlign: "center",
-                  padding: "6px 0 0",
-                }}>
-                  {usage.chat_today} of {limits.chat_daily} free messages today
-                  <span
-                    onClick={() => window.location.href = "/pricing"}
-                    style={{ color: "var(--accent)", cursor: "pointer", marginLeft: 8 }}
-                  >
-                    Upgrade
-                  </span>
-                </div>
-              )}
               <ChatArea
                 messages={messages}
                 loading={loading}

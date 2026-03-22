@@ -29,8 +29,8 @@ export default function TopBar({
   mode, isMobile, authUser, onOpenSidebar, onNewConversation,
   tokenStatus, sidebarOpen,
 }: TopBarProps) {
-  const engineName = ENGINES[mode as EngineId]?.name || mode;
-  const engineSubtitle = ENGINES[mode as EngineId]?.subtitle || "";
+  const engineName = ENGINES[mode as EngineId]?.name || (mode === "chat" ? "Home" : mode);
+  const engineSubtitle = ENGINES[mode as EngineId]?.subtitle || (mode === "chat" ? "Your AI business advisor." : "");
 
   if (isMobile) {
     return <MobileTopBar
@@ -103,7 +103,7 @@ function DesktopTopBar({
       </div>
 
       {/* RIGHT — Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {/* Token counter */}
         {tokenStatus && authUser && (
           <div style={{
@@ -154,7 +154,7 @@ function DesktopTopBar({
 
         {/* Auth buttons — not logged in */}
         {!authUser && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button
               onClick={() => { window.location.href = "/login"; }}
               onMouseEnter={() => setLoginHovered(true)}
@@ -250,7 +250,7 @@ function MobileTopBar({
 
       {/* RIGHT — auth or avatar */}
       {!authUser ? (
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button
             onClick={() => { window.location.href = "/login"; }}
             style={{
