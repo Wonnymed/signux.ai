@@ -14,6 +14,43 @@ type AgentData = {
   failed?: boolean;
 };
 
+/* Per-agent name colors — subtle personality, no background pollution */
+const AGENT_NAME_COLORS: Record<string, string> = {
+  strategist: "#A8A29E",
+  strategy: "#A8A29E",
+  finance: "#7DD3FC",
+  financial: "#7DD3FC",
+  operator: "#FCD34D",
+  operations: "#FCD34D",
+  execution: "#FCD34D",
+  market: "#6EE7B7",
+  risk: "#FCA5A5",
+  innovator: "#C4B5FD",
+  innovation: "#C4B5FD",
+  devil: "#FDBA74",
+  adversary: "#FDBA74",
+  competitive: "#FDBA74",
+  global: "#5EEAD4",
+  human: "#F9A8D4",
+  customer: "#F9A8D4",
+  futurist: "#A5B4FC",
+  base: "#A8A29E",
+  demand: "#6EE7B7",
+  regulatory: "#FCA5A5",
+  regime: "#FCA5A5",
+  intervention: "#C4B5FD",
+  decision: "#A5B4FC",
+  unit: "#7DD3FC",
+};
+
+function getAgentNameColor(name: string, fallbackColor: string): string {
+  const lower = (name || "").toLowerCase();
+  for (const [key, color] of Object.entries(AGENT_NAME_COLORS)) {
+    if (lower.includes(key)) return color;
+  }
+  return fallbackColor;
+}
+
 const SENTIMENT_COLORS: Record<string, string> = {
   confident: "#10B981",
   optimistic: "#22c55e",
@@ -25,6 +62,9 @@ const SENTIMENT_COLORS: Record<string, string> = {
   worried: "#EF4444",
   concerned: "#EF4444",
   contrarian: "#EC4899",
+  positive: "#10B981",
+  negative: "#EF4444",
+  warning: "#F59E0B",
 };
 
 export function sentimentColor(s: string) {
@@ -40,6 +80,8 @@ type AgentCardProps = {
 };
 
 export default function AgentCard({ agent, index, expanded, onToggle, isMobile }: AgentCardProps) {
+  const nameColor = getAgentNameColor(agent.name, agent.color);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -48,21 +90,13 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
       onClick={onToggle}
       style={{
         padding: isMobile ? "10px 12px" : "12px 14px",
-        borderRadius: 12,
-        background: "var(--card-bg)",
-        border: agent.failed
-          ? "1px solid rgba(107,114,128,0.2)"
-          : agent.changedMind
-            ? "1px solid rgba(255,255,255,0.2)"
-            : `1px solid ${agent.color}18`,
+        borderRadius: 10,
+        background: "var(--bg-card)",
+        border: "1px solid var(--border-primary)",
         cursor: "pointer",
-        transition: "border-color 200ms, box-shadow 200ms",
+        transition: "border-color 200ms",
         overflow: "hidden",
         opacity: agent.failed ? 0.5 : 1,
-      }}
-      whileHover={{
-        borderColor: `${agent.color}40`,
-        boxShadow: `0 0 12px ${agent.color}10`,
       }}
     >
       {/* Header */}
@@ -72,18 +106,11 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
         gap: 8,
         marginBottom: 6,
       }}>
-        <div style={{
-          width: 10,
-          height: 10,
-          borderRadius: "50%",
-          background: agent.color,
-          flexShrink: 0,
-        }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: agent.color,
+            fontSize: 13,
+            fontWeight: 500,
+            color: nameColor,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -93,19 +120,22 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
           <div style={{
             display: "flex",
             alignItems: "center",
-            gap: 4,
+            gap: 6,
+            marginTop: 2,
           }}>
             <div style={{
               width: 6,
               height: 6,
               borderRadius: "50%",
               background: sentimentColor(agent.sentiment),
+              flexShrink: 0,
             }} />
             <span style={{
-              fontSize: 10,
-              color: "var(--text-tertiary)",
+              fontSize: 11,
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-secondary)",
             }}>
-              {String(agent.sentiment || "neutral")} · {String(agent.confidence ?? 5)}/10
+              {String(agent.confidence ?? 5)}/10
             </span>
           </div>
         </div>
@@ -126,32 +156,19 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
             fontSize: 9,
             padding: "2px 6px",
             borderRadius: 4,
-            background: "rgba(255,255,255,0.08)",
-            color: "#EDEDEF",
+            background: "rgba(255,255,255,0.06)",
+            color: "var(--text-secondary)",
             fontWeight: 600,
             flexShrink: 0,
           }}>
             CHANGED
           </span>
         ) : null}
-        {!agent.failed && typeof agent.text === "string" && /previous simulation|last time|earlier scenario|prior analysis|your .* simulation/i.test(agent.text) && (
-          <span style={{
-            fontSize: 8,
-            padding: "1px 5px",
-            borderRadius: 3,
-            background: "rgba(139,92,246,0.1)",
-            color: "#8B5CF6",
-            fontWeight: 600,
-            flexShrink: 0,
-          }}>
-            MEMORY
-          </span>
-        )}
       </div>
 
       {/* Text */}
       <p style={{
-        fontSize: isMobile ? 11 : 12,
+        fontSize: 12,
         color: "var(--text-secondary)",
         lineHeight: 1.5,
         margin: 0,
@@ -159,7 +176,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, isMobile }
           ? {}
           : {
               display: "-webkit-box",
-              WebkitLineClamp: isMobile ? 2 : 3,
+              WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical" as const,
               overflow: "hidden",
             }),

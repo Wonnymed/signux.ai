@@ -287,7 +287,7 @@ KEY RISKS: ${rawReport.slice(0, 800)}
 
 Generate 3 PARALLEL FUTURES — divergent timelines showing how this plays out under different conditions.
 
-## 🟢 UNIVERSE A — Best Case
+## UNIVERSE A — Best Case
 **Probability: X%**
 **12-month outcome:** [1 sentence]
 **How it unfolds:**
@@ -299,7 +299,7 @@ Generate 3 PARALLEL FUTURES — divergent timelines showing how this plays out u
 
 ---
 
-## 🟡 UNIVERSE B — Most Likely
+## UNIVERSE B — Most Likely
 **Probability: X%**
 **12-month outcome:** [1 sentence]
 **How it unfolds:**
@@ -311,7 +311,7 @@ Generate 3 PARALLEL FUTURES — divergent timelines showing how this plays out u
 
 ---
 
-## 🔴 UNIVERSE C — Worst Case
+## UNIVERSE C — Worst Case
 **Probability: X%**
 **12-month outcome:** [1 sentence]
 **How it unfolds:**
@@ -323,12 +323,12 @@ Generate 3 PARALLEL FUTURES — divergent timelines showing how this plays out u
 
 ---
 
-## 🎯 HOW TO STEER TOWARD UNIVERSE A
+## HOW TO STEER TOWARD UNIVERSE A
 1. [Specific action]
 2. [Specific action]
 3. [Specific action]
 
-## 🛡️ HOW TO AVOID UNIVERSE C
+## HOW TO AVOID UNIVERSE C
 1. [Specific safeguard]
 2. [Specific safeguard]
 3. [Specific safeguard]
@@ -533,7 +533,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
       if (!scenarioA.trim() || !scenarioB.trim()) return;
       if (!isLoggedIn) { setShowAuthGate(true); return; }
       if (tier === "free") { setShowPaywall(true); return; }
-      const comparisonPrompt = `COMPARE TWO SCENARIOS SIDE BY SIDE:\n\nSCENARIO A: ${scenarioA}\n\nSCENARIO B: ${scenarioB}\n\nAnalyze BOTH scenarios using the same criteria. Then provide a clear comparison:\n\n## Scenario A: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## Scenario B: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## ⚖️ Head-to-Head Comparison\n\n| Criteria | Scenario A | Scenario B | Winner |\n|---|---|---|---|\n| Viability Score | X/10 | X/10 | A/B |\n| Risk Level | Low/Med/High | Low/Med/High | A/B |\n| Expected ROI | X% | X% | A/B |\n| Time to Results | X months | X months | A/B |\n| Capital Required | $X | $X | A/B |\n| Competition | Low/Med/High | Low/Med/High | A/B |\n\n## 🏆 Verdict\n**Winner: Scenario [A/B]** — [1 paragraph explaining why, acknowledging trade-offs]\n\n## 🤔 Consider This\n- If your priority is [X], choose Scenario A because...\n- If your priority is [Y], choose Scenario B because...\n- A hybrid approach might be: [suggestion combining best of both]`;
+      const comparisonPrompt = `COMPARE TWO SCENARIOS SIDE BY SIDE:\n\nSCENARIO A: ${scenarioA}\n\nSCENARIO B: ${scenarioB}\n\nAnalyze BOTH scenarios using the same criteria. Then provide a clear comparison:\n\n## Scenario A: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## Scenario B: [Short name]\n[Brief analysis — viability, risks, potential]\n\n## Head-to-Head Comparison\n\n| Criteria | Scenario A | Scenario B | Winner |\n|---|---|---|---|\n| Viability Score | X/10 | X/10 | A/B |\n| Risk Level | Low/Med/High | Low/Med/High | A/B |\n| Expected ROI | X% | X% | A/B |\n| Time to Results | X months | X months | A/B |\n| Capital Required | $X | $X | A/B |\n| Competition | Low/Med/High | Low/Med/High | A/B |\n\n## Verdict\n**Winner: Scenario [A/B]** — [1 paragraph explaining why, acknowledging trade-offs]\n\n## Consider This\n- If your priority is [X], choose Scenario A because...\n- If your priority is [Y], choose Scenario B because...\n- A hybrid approach might be: [suggestion combining best of both]`;
       setSimScenario(comparisonPrompt);
       onSimulate(comparisonPrompt);
     };
@@ -1641,99 +1641,45 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
         flex: 1, display: "flex", flexDirection: "column",
         overflow: "hidden", position: "relative",
       }}>
-        {/* Probability particles */}
-        <div className="probability-particles">
-          {Array.from({ length: isMobile ? 6 : 12 }, (_, i) => (
-            <span key={i} style={{
-              left: `${Math.random() * 100}%`,
-              animationDuration: `${8 + Math.random() * 12}s`,
-              animationDelay: `${Math.random() * 5}s`,
-              width: `${2 + Math.random() * 3}px`,
-              height: `${2 + Math.random() * 3}px`,
-              opacity: 0.1 + Math.random() * 0.15,
-            }} />
-          ))}
-        </div>
-
-        {/* Top status bar — war-room aesthetic */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+        {/* Top status bar */}
+        <div
           style={{
             display: "flex", alignItems: "center", gap: 12,
             padding: isMobile ? "10px 16px" : "12px 24px",
-            borderBottom: "1px solid var(--border-secondary)",
-            background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%)",
+            borderBottom: "1px solid var(--border-primary)",
             flexShrink: 0,
           }}
         >
-          <motion.div
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          >
-            <Zap size={14} style={{ color: "#EDEDEF" }} />
-          </motion.div>
           <span style={{
-            fontSize: 11, fontWeight: 700, letterSpacing: 1.5,
-            color: "#EDEDEF", fontFamily: "var(--font-mono)",
+            fontSize: 11, fontWeight: 400, letterSpacing: 2,
+            color: "var(--accent)", fontFamily: "var(--font-mono)",
           }}>
             SIMULATION RUNNING
           </span>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "2px 10px", borderRadius: 50,
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}>
-            <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
-              {doneAgents}/{simTotalAgents || "?"} agents
-            </span>
-          </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "2px 10px", borderRadius: 50,
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid var(--border-secondary)",
-          }}>
-            <Clock size={10} style={{ color: "var(--text-tertiary)" }} />
-            <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
-              {elapsed}s
-            </span>
-          </div>
+          <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+            {doneAgents}/{simTotalAgents || 10} agents
+          </span>
           <div style={{ flex: 1 }} />
           <span style={{
-            fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)",
+            fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-secondary)",
           }}>
-            Stage {simStage + 1}/8
+            {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
           </span>
-          {/* Animated progress bar */}
+          {/* Progress bar */}
           <div style={{
-            width: isMobile ? 80 : 140, height: 4, borderRadius: 2,
-            background: "var(--bg-tertiary)", overflow: "hidden",
-            position: "relative",
+            width: isMobile ? 80 : 140, height: 2, borderRadius: 1,
+            background: "var(--border-primary)", overflow: "hidden",
           }}>
             <motion.div
               animate={{ width: `${progressPct}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               style={{
-                height: "100%", borderRadius: 2,
-                background: "linear-gradient(90deg, rgba(255,255,255,0.25), rgba(255,255,255,0.45))",
-                position: "relative",
-              }}
-            />
-            {/* Shimmer effect */}
-            <motion.div
-              animate={{ x: ["-100%", "200%"] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              style={{
-                position: "absolute", top: 0, width: "30%", height: "100%",
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
-                borderRadius: 2,
+                height: "100%", borderRadius: 1,
+                background: "var(--accent)",
               }}
             />
           </div>
-        </motion.div>
+        </div>
 
         {/* 10x10 ENGINE — 4-Zone Canvas */}
         {hasEngineData ? (
@@ -1778,8 +1724,8 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                             animate={{ opacity: [0.15, 0.3, 0.15] }}
                             transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
                             style={{
-                              padding: "14px", borderRadius: 12,
-                              background: "var(--card-bg)", border: "1px solid var(--border-secondary)",
+                              padding: "14px", borderRadius: 10,
+                              background: "var(--bg-card)", border: "1px solid var(--border-primary)",
                               minHeight: 80,
                             }}
                           >
@@ -1814,9 +1760,9 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.04 }}
                             style={{
-                              padding: "12px 14px", borderRadius: 12,
-                              background: "var(--card-bg)",
-                              border: `1px solid ${ag.color}12`,
+                              padding: "12px 14px", borderRadius: 10,
+                              background: "var(--bg-card)",
+                              border: "1px solid var(--border-primary)",
                               minHeight: 72,
                             }}
                           >
@@ -2810,19 +2756,6 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
   const steerTowardA = backendVerdict?.steerTowardA || [];
   const avoidC = backendVerdict?.avoidC || [];
 
-  const AGENT_EMOJI: Record<string, string> = {
-    strategy: "\uD83C\uDFAF", market: "\uD83D\uDCC8", financial: "\uD83D\uDCCA", finance: "\uD83D\uDCCA",
-    risk: "\u26A0\uFE0F", devil: "\uD83D\uDC79", operations: "\u2699\uFE0F", operation: "\u2699\uFE0F",
-    legal: "\u2696\uFE0F", lawyer: "\u2696\uFE0F", tech: "\uD83D\uDCBB", customer: "\uD83D\uDC64",
-  };
-  const getEmoji = (name: string, role?: string) => {
-    const lower = (role || name || "").toLowerCase();
-    for (const [key, emoji] of Object.entries(AGENT_EMOJI)) {
-      if (lower.includes(key)) return emoji;
-    }
-    return "\uD83E\uDD16";
-  };
-
   const sentimentDotColor = (s: string) =>
     s === "positive" ? "#10B981" : s === "negative" ? "#EF4444" : s === "warning" ? "#F59E0B" : "var(--text-tertiary)";
 
@@ -3043,7 +2976,6 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {lastMsgs.map((msg: any, mi: number) => (
                         <div key={mi} style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.4, display: "flex", gap: 6 }}>
-                          <span style={{ flexShrink: 0 }}>{getEmoji(msg.agentName, msg.role)}</span>
                           <span><strong style={{ color: "var(--text-primary)" }}>{msg.agentName}:</strong> {"\u201C"}{typeof msg.content === "string" ? msg.content.slice(0, 90) : ""}{typeof msg.content === "string" && msg.content.length > 90 ? "..." : ""}{"\u201D"}</span>
                         </div>
                       ))}
@@ -3699,17 +3631,20 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                 marginTop: 16,
               }}>
                 {[
-                  { color: "#22c55e", label: "Best Case", emoji: "\uD83D\uDFE2" },
-                  { color: "#f59e0b", label: "Most Likely", emoji: "\uD83D\uDFE1" },
-                  { color: "#ef4444", label: "Worst Case", emoji: "\uD83D\uDD34" },
+                  { color: "#22c55e", label: "Best Case" },
+                  { color: "#f59e0b", label: "Most Likely" },
+                  { color: "#ef4444", label: "Worst Case" },
                 ].map((u, i) => (
                   <div key={i} style={{
-                    padding: "16px 14px", borderRadius: 12, textAlign: "center",
-                    border: `1px solid ${u.color}22`,
-                    background: `${u.color}06`,
+                    padding: "16px 14px", borderRadius: 10, textAlign: "center",
+                    border: "1px solid var(--border-primary)",
+                    background: "var(--bg-card)",
                     animation: `pulse 1.5s ease-in-out ${i * 0.3}s infinite`,
                   }}>
-                    <div style={{ fontSize: 24, marginBottom: 6 }}>{u.emoji}</div>
+                    <div style={{
+                      width: 6, height: 6, borderRadius: "50%",
+                      background: u.color, margin: "0 auto 8px",
+                    }} />
                     <div style={{ fontSize: 11, fontWeight: 600, color: u.color }}>{u.label}</div>
                     <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 4 }}>Simulating...</div>
                   </div>

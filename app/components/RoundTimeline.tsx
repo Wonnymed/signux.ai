@@ -1,6 +1,5 @@
 "use client";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
 
 const ROUND_LABELS = [
   "First Impressions",
@@ -65,72 +64,61 @@ export default function RoundTimeline({
                 background: "none",
                 border: "none",
                 cursor: isComplete ? "pointer" : "default",
-                opacity: isComplete ? 1 : 0.3,
+                opacity: isComplete || isCurrent ? 1 : 0.4,
                 padding: isMobile ? "2px 4px" : "2px 6px",
               }}
             >
-              <motion.div
-                animate={{
-                  width: isActive ? 14 : isCurrent ? 10 : 8,
-                  height: isActive ? 14 : isCurrent ? 10 : 8,
-                }}
-                transition={{ duration: 0.2 }}
+              <div
                 style={{
+                  width: 8,
+                  height: 8,
                   borderRadius: "50%",
-                  background: isActive
-                    ? "#EDEDEF"
+                  background: isComplete
+                    ? "var(--accent)"
                     : isCurrent
                     ? "transparent"
-                    : isComplete
-                    ? (roundNum <= 5 ? "#3B82F6" : "#8B5CF6")
-                    : "var(--border-secondary)",
+                    : "var(--border-primary)",
                   border: isCurrent
-                    ? "2px solid #EDEDEF"
-                    : isActive
-                    ? "none"
+                    ? "2px solid var(--accent)"
                     : "none",
-                  boxShadow: isActive
-                    ? "0 0 10px rgba(255,255,255,0.3)"
-                    : isCurrent
-                    ? "0 0 8px rgba(255,255,255,0.2)"
+                  boxShadow: isCurrent
+                    ? "0 0 0 3px rgba(200,168,78,0.2)"
                     : "none",
                   transition: "all 200ms ease",
                   position: "relative",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  boxSizing: "border-box",
                 }}
               >
                 {isCurrent && (
                   <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                     style={{
-                      width: 6,
-                      height: 6,
+                      width: 4,
+                      height: 4,
                       borderRadius: "50%",
-                      border: "1.5px solid #EDEDEF",
-                      borderTopColor: "transparent",
+                      background: "var(--accent)",
                     }}
                   />
                 )}
-              </motion.div>
+              </div>
               <span style={{
-                fontSize: 8,
+                fontSize: 9,
                 fontFamily: "var(--font-mono)",
-                color: isActive ? "#EDEDEF" : isComplete ? "var(--text-tertiary)" : "var(--border-secondary)",
-                fontWeight: isActive ? 700 : 400,
+                color: isActive ? "var(--text-secondary)" : "var(--text-tertiary)",
+                fontWeight: isActive ? 600 : 400,
               }}>
                 {roundNum}
               </span>
             </button>
           );
         })}
-
-        {/* Connector lines between dots */}
       </div>
 
-      {/* Active round label + model badge */}
+      {/* Active round label */}
       <div style={{
         display: "flex",
         alignItems: "center",
@@ -140,38 +128,19 @@ export default function RoundTimeline({
         minHeight: 22,
       }}>
         {currentRoundLoading ? (
-          <>
-            <Loader2 size={11} style={{ color: "#EDEDEF", animation: "spin 1s linear infinite" }} />
-            <span style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: "#EDEDEF",
-              fontFamily: "var(--font-mono)",
-            }}>
-              Round {currentRoundLoading.round}: {currentRoundLoading.label}
-            </span>
-            <span style={{
-              fontSize: 8,
-              padding: "2px 6px",
-              borderRadius: 4,
-              background: currentRoundLoading.model === "sonnet" ? "rgba(139,92,246,0.1)" : "rgba(59,130,246,0.1)",
-              color: currentRoundLoading.model === "sonnet" ? "#8B5CF6" : "#3B82F6",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.1em",
-            }}>
-              {currentRoundLoading.model?.toUpperCase()}
-            </span>
-          </>
+          <span style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--text-secondary)",
+          }}>
+            Round {currentRoundLoading.round}: {currentRoundLoading.label}
+          </span>
         ) : completedRound > 0 ? (
           <span style={{
-            fontSize: 11,
-            color: "var(--text-tertiary)",
+            fontSize: 13,
+            color: "var(--text-secondary)",
           }}>
-            <span style={{ fontWeight: 600, color: activeRound <= 5 ? "#3B82F6" : "#8B5CF6" }}>
-              Round {activeRound}:
-            </span>{" "}
-            {ROUND_LABELS[activeRound - 1]}
+            Round {activeRound}: {ROUND_LABELS[activeRound - 1]}
           </span>
         ) : null}
       </div>
