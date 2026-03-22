@@ -5,6 +5,16 @@ import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
 import type { Mode } from "../lib/types";
 import { ENGINES, type EngineId } from "../lib/engines";
+import { Zap, Hammer, TrendingUp, UserCheck, Shield, Swords } from "lucide-react";
+
+const ICON_MAP: Record<string, typeof Zap> = {
+  Zap, Hammer, TrendingUp, UserCheck, Shield, Swords,
+};
+
+const ENGINE_LIST = (Object.keys(ENGINES) as EngineId[]).map((id) => ({
+  id,
+  ...ENGINES[id],
+}));
 
 type WelcomeScreenProps = {
   profileName: string;
@@ -26,17 +36,13 @@ type WelcomeScreenProps = {
   lang?: string;
 };
 
-const MODE_PILLS = (Object.keys(ENGINES) as EngineId[]).map((id) => ({
-  mode: id as Mode,
-  label: ENGINES[id].name,
-}));
-
 export default function WelcomeScreen({
   input, setInput, onSend, loading, attachments, onAttachmentsChange,
   onToast, onSwitchMode,
 }: WelcomeScreenProps) {
   const isMobile = useIsMobile();
   const [showScrollHint, setShowScrollHint] = useState(true);
+  const [hoveredEngine, setHoveredEngine] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,7 +61,7 @@ export default function WelcomeScreen({
       justifyContent: "flex-start",
       minHeight: isMobile ? "calc(100vh - 52px)" : "calc(100vh - 60px)",
       padding: isMobile ? "0 20px" : "0 32px",
-      paddingTop: isMobile ? "12vh" : "clamp(80px, 18vh, 200px)",
+      paddingTop: isMobile ? "8vh" : "clamp(60px, 12vh, 140px)",
       width: "100%",
       position: "relative",
     }}>
@@ -66,13 +72,13 @@ export default function WelcomeScreen({
         flexDirection: "column",
         alignItems: "center",
         gap: isMobile ? 8 : 12,
-        marginBottom: isMobile ? "clamp(40px, 8vh, 80px)" : "clamp(60px, 12vh, 160px)",
+        marginBottom: isMobile ? "clamp(28px, 5vh, 48px)" : "clamp(36px, 6vh, 72px)",
       }}>
-        <SignuxIcon size={isMobile ? 40 : 48} variant="gold" />
+        <SignuxIcon size={isMobile ? 36 : 44} variant="gold" />
         <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
           <span style={{
             fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 26 : 32,
+            fontSize: isMobile ? 24 : 30,
             fontWeight: 300,
             letterSpacing: 8,
             color: "var(--text-primary)",
@@ -81,7 +87,7 @@ export default function WelcomeScreen({
           </span>
           <span style={{
             fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 26 : 32,
+            fontSize: isMobile ? 24 : 30,
             fontWeight: 300,
             letterSpacing: 8,
             color: "var(--text-tertiary)",
@@ -91,11 +97,23 @@ export default function WelcomeScreen({
         </div>
       </div>
 
-      {/* Composer — viewport-proportional width */}
+      {/* Headline */}
+      <h1 style={{
+        fontSize: 20,
+        fontWeight: 400,
+        color: "var(--text-primary)",
+        margin: 0,
+        marginBottom: isMobile ? 20 : 28,
+        textAlign: "center",
+      }}>
+        What are you trying to decide?
+      </h1>
+
+      {/* Composer */}
       <div style={{
         width: "100%",
         maxWidth: isMobile ? 680 : "clamp(600px, 52vw, 820px)",
-        marginBottom: "clamp(16px, 3vh, 36px)",
+        marginBottom: isMobile ? 16 : 24,
       }}>
         <ChatInput
           value={input}
@@ -111,44 +129,88 @@ export default function WelcomeScreen({
         />
       </div>
 
-      {/* Mode pills — text only, no emojis, no colors */}
-      <div style={{
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        gap: 8,
-        marginBottom: 32,
+      {/* "Or choose an engine" label */}
+      <span style={{
+        fontSize: 12,
+        color: "var(--text-tertiary)",
+        marginBottom: 12,
+        fontFamily: "var(--font-mono)",
+        letterSpacing: 0.5,
       }}>
-        {MODE_PILLS.map(({ mode, label }) => (
-          <button
-            key={mode}
-            onClick={() => onSwitchMode?.(mode)}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "var(--radius-sm)",
-              border: "1px solid var(--border-primary)",
-              background: "transparent",
-              color: "var(--text-tertiary)",
-              fontSize: 12,
-              cursor: "pointer",
-              transition: "all 150ms ease",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--border-hover)";
-              e.currentTarget.style.color = "var(--text-secondary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border-primary)";
-              e.currentTarget.style.color = "var(--text-tertiary)";
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        Or choose an engine:
+      </span>
+
+      {/* Engine grid — 3×2 desktop, 2×3 mobile */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr",
+        gap: 10,
+        width: "100%",
+        maxWidth: isMobile ? 400 : 620,
+        marginBottom: 20,
+      }}>
+        {ENGINE_LIST.map((engine) => {
+          const Icon = ICON_MAP[engine.icon] || Zap;
+          const isHovered = hoveredEngine === engine.id;
+
+          return (
+            <button
+              key={engine.id}
+              onClick={() => onSwitchMode?.(engine.id as Mode)}
+              onMouseEnter={() => setHoveredEngine(engine.id)}
+              onMouseLeave={() => setHoveredEngine(null)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: 8,
+                padding: isMobile ? "14px 14px" : "16px 18px",
+                borderRadius: 12,
+                border: `1px solid ${isHovered ? "var(--border-hover)" : "var(--border-primary)"}`,
+                background: isHovered ? "var(--bg-tertiary)" : "var(--bg-card)",
+                cursor: "pointer",
+                transition: "all 150ms ease",
+                textAlign: "left",
+              }}
+            >
+              <Icon
+                size={20}
+                color={engine.color}
+                strokeWidth={1.5}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={{
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: "var(--text-primary)",
+                }}>
+                  {engine.name}
+                </span>
+                <span style={{
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                  lineHeight: 1.4,
+                }}>
+                  {engine.subtitle}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Scroll Hint — apenas visual, não é botão */}
+      {/* Hint text */}
+      <span style={{
+        fontSize: 11,
+        color: "var(--text-tertiary)",
+        textAlign: "center",
+        maxWidth: 400,
+        lineHeight: 1.5,
+      }}>
+        Not sure? Just type your question and Signux will route to the right engine.
+      </span>
+
+      {/* Scroll Hint */}
       <div
         style={{
           position: "absolute",
