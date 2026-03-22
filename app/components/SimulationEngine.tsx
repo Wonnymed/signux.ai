@@ -572,7 +572,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
             textAlign: "center",
             fontSize: 13,
             color: "var(--text-tertiary)",
-            margin: 0,
+            marginTop: 8,
           }}>
             See the future before it happens
           </p>
