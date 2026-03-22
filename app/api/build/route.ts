@@ -55,10 +55,28 @@ Return ONLY valid JSON in this exact format:
 CRITICAL: Return ONLY valid JSON. No markdown. No code blocks. No text before or after the JSON object. Just the raw JSON.`;
 
 function tryParseJSON(text: string): any | null {
-  const clean = text.replace(/```json\n?|```\n?/g, "").trim();
+  // Strip all markdown code fences
+  const clean = text.replace(/```(?:json)?\s*\n?/g, "").trim();
+  // 1. Try direct parse
   try { return JSON.parse(clean); } catch {}
-  const match = clean.match(/\{[\s\S]*\}/);
-  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  // 2. Extract outermost { ... }
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    const candidate = clean.slice(start, end + 1);
+    try { return JSON.parse(candidate); } catch {}
+    // 3. Try fixing truncated JSON by closing open braces/brackets
+    let fixed = candidate;
+    const opens = (fixed.match(/\{/g) || []).length;
+    const closes = (fixed.match(/\}/g) || []).length;
+    const openBrackets = (fixed.match(/\[/g) || []).length;
+    const closeBrackets = (fixed.match(/\]/g) || []).length;
+    // Remove trailing comma before adding closers
+    fixed = fixed.replace(/,\s*$/, "");
+    for (let i = 0; i < openBrackets - closeBrackets; i++) fixed += "]";
+    for (let i = 0; i < opens - closes; i++) fixed += "}";
+    try { return JSON.parse(fixed); } catch {}
+  }
   return null;
 }
 

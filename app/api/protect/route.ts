@@ -73,10 +73,20 @@ Return ONLY valid JSON in this exact format:
 CRITICAL: Return ONLY valid JSON. No markdown. No code blocks. No text before or after the JSON object. Just the raw JSON.`;
 
 function tryParseJSON(text: string): any | null {
-  const clean = text.replace(/```json\n?|```\n?/g, "").trim();
+  const clean = text.replace(/```(?:json)?\s*\n?/g, "").trim();
   try { return JSON.parse(clean); } catch {}
-  const match = clean.match(/\{[\s\S]*\}/);
-  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    const candidate = clean.slice(start, end + 1);
+    try { return JSON.parse(candidate); } catch {}
+    let fixed = candidate.replace(/,\s*$/, "");
+    const ob = (fixed.match(/\{/g) || []).length - (fixed.match(/\}/g) || []).length;
+    const ab = (fixed.match(/\[/g) || []).length - (fixed.match(/\]/g) || []).length;
+    for (let i = 0; i < ab; i++) fixed += "]";
+    for (let i = 0; i < ob; i++) fixed += "}";
+    try { return JSON.parse(fixed); } catch {}
+  }
   return null;
 }
 
