@@ -192,14 +192,32 @@ const ROUND_LABELS = [
    ═══════════════════════════════════════════════════════════ */
 
 export async function POST(req: NextRequest) {
+  console.log("ENGINE ENV CHECK:", {
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasClientToken: !!process.env.NEXT_PUBLIC_CLIENT_TOKEN,
+    clientTokenLength: process.env.NEXT_PUBLIC_CLIENT_TOKEN?.length || 0,
+    receivedHeader: req.headers.get("x-signux-client")?.substring(0, 10) + "...",
+    expectedTokenStart: process.env.NEXT_PUBLIC_CLIENT_TOKEN?.substring(0, 10) + "...",
+    match: req.headers.get("x-signux-client") === process.env.NEXT_PUBLIC_CLIENT_TOKEN,
+  });
+
   const tokenError = verifyClientToken(req);
-  if (tokenError) return tokenError;
+  if (tokenError) {
+    console.log("ENGINE AUTH FAILED: verifyClientToken returned 401");
+    return tokenError;
+  }
   const rateLimitError = applyRateLimit(req, 3, 60000);
   if (rateLimitError) return rateLimitError;
 
   const userId = await getUserFromRequest(req);
+  console.log("ENGINE USER:", { userId, hasUser: !!userId });
   const usageError = await checkUsageLimit(userId, "simulate");
-  if (usageError) return usageError;
+  if (usageError) {
+    console.log("ENGINE USAGE BLOCKED:", { userId, status: 403 });
+    return usageError;
+  }
   if (userId) incrementUsage(userId, "simulations").catch(() => {});
 
   const tier = await getTierFromRequest(req);

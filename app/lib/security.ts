@@ -19,7 +19,21 @@ export function getClientIdentifier(req: NextRequest): string {
 
 export function verifyClientToken(req: NextRequest): NextResponse | null {
   const clientToken = req.headers.get("x-signux-client");
-  if (clientToken !== process.env.NEXT_PUBLIC_CLIENT_TOKEN) {
+  const expectedToken = process.env.NEXT_PUBLIC_CLIENT_TOKEN;
+
+  if (!expectedToken) {
+    // ENV var missing — allow request but log warning
+    console.warn("WARNING: NEXT_PUBLIC_CLIENT_TOKEN not set in environment. Skipping client token verification.");
+    return null;
+  }
+
+  if (clientToken !== expectedToken) {
+    console.warn("CLIENT TOKEN MISMATCH:", {
+      received: clientToken ? clientToken.substring(0, 8) + "..." : "(empty)",
+      expected: expectedToken.substring(0, 8) + "...",
+      receivedLength: clientToken?.length || 0,
+      expectedLength: expectedToken.length,
+    });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return null;
