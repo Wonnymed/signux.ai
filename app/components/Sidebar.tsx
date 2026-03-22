@@ -6,7 +6,7 @@ import {
   MessageSquare, Zap, Swords, Hammer, TrendingUp, UserCheck, Shield,
   Settings, LogIn, LogOut, Trash2, FolderOpen, Plus, ChevronDown,
   X, Upload, LayoutDashboard, PanelLeft, Crown, Monitor, Sun, Moon,
-  BookOpen,
+  BookOpen, Clock, CreditCard, HelpCircle, BarChart3, GitCompareArrows, FlaskConical,
 } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
@@ -489,9 +489,33 @@ export default function Sidebar({
   // Close profile popover when sidebar state changes
   useEffect(() => { setProfilePopoverOpen(false); }, [open]);
 
+  // Expanded sidebar state — must be at top level (not inside render functions)
+  const [recentOpen, setRecentOpen] = useState(false);
+  const [savedOpen, setSavedOpen] = useState(false);
+
   const iconSize = 20;
   const iconSW = 1.5;
   const sidebarWidth = open ? 260 : 56;
+
+  // Shared utility item style
+  const utilItem = (icon: React.ReactNode, label: string, onClick: () => void) => (
+    <button
+      key={label}
+      onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", gap: 10,
+        width: "100%", padding: "7px 14px", border: "none",
+        borderRadius: 6, cursor: "pointer",
+        fontSize: 12, textAlign: "left", background: "transparent",
+        color: "#52525B", fontWeight: 400, transition: "all 150ms",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#52525B"; }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
 
   // Mobile overlay
   if (isMobile) {
@@ -578,23 +602,19 @@ export default function Sidebar({
   function renderExpandedContent() {
     const convList = conversations;
     const isLoading = loadingHistory || convList === undefined;
-    const showUpgrade = tier !== "pro" && tier !== "max" && tier !== "founding";
-    const [historyOpen, setHistoryOpen] = useState(false);
-    const [hoveredMode, setHoveredMode] = useState<string | null>(null);
 
     return (
       <>
-        {/* Header — logo left, close right */}
+        {/* ═══ TOP — Mark ═══ */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 12px 12px 16px", height: 56,
-          borderBottom: "1px solid var(--border-secondary)",
+          padding: "14px 14px 14px 18px", height: 56,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <SignuxIcon variant="gold" size={20} />
+            <SignuxIcon variant="gold" size={18} />
             <span style={{
-              fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700,
-              letterSpacing: 2.5, color: "var(--text-primary)",
+              fontFamily: "var(--font-brand)", fontSize: 13, fontWeight: 600,
+              letterSpacing: 3, color: "var(--text-primary)",
             }}>
               SIGNUX
             </span>
@@ -602,307 +622,263 @@ export default function Sidebar({
           <CloseButtonWithTooltip hovered={closeHovered} setHovered={setCloseHovered} onClick={onClose} />
         </div>
 
-        {/* ═══ MAIN ZONE — 6 engines ═══ */}
-        <div style={{ padding: "8px 8px 4px" }}>
-          {ENGINE_MODES.map(({ key, icon: Icon, name, subtitle }) => {
+        {/* ═══ ZONE A — DECISION ENGINES ═══ */}
+        <div style={{ padding: "4px 10px 0" }}>
+          <div style={{
+            fontSize: 9, fontFamily: "var(--font-mono)", fontWeight: 600,
+            letterSpacing: 2, color: "#3F3F46",
+            padding: "0 8px 8px", textTransform: "uppercase",
+          }}>
+            DECISION ENGINES
+          </div>
+          {ENGINE_MODES.map(({ key, icon: Icon, name }) => {
             const isActive = mode === key;
-            const isHovered = hoveredMode === key;
             return (
               <button
                 key={key}
                 onClick={() => handleMode(key)}
-                onMouseEnter={() => setHoveredMode(key)}
-                onMouseLeave={() => setHoveredMode(null)}
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
-                  width: "100%", padding: "9px 12px",
+                  width: "100%", padding: "10px 8px 10px 12px",
                   border: "none",
                   borderLeft: isActive ? "2px solid var(--accent)" : "2px solid transparent",
-                  borderRadius: "var(--radius-xs)",
+                  borderRadius: 6,
                   cursor: "pointer", fontSize: 13, textAlign: "left",
-                  background: isActive ? "var(--bg-hover)" : isHovered ? "var(--bg-hover)" : "transparent",
-                  color: isActive ? ICON_ACTIVE : ICON_IDLE,
+                  background: isActive ? "rgba(255,255,255,0.04)" : "transparent",
+                  color: isActive ? ICON_ACTIVE : "#71717A",
                   fontWeight: isActive ? 500 : 400,
-                  transition: "all 150ms",
+                  transition: "all 120ms ease",
                   marginBottom: 1,
                 }}
+                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#A1A1AA"; } }}
+                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#71717A"; } }}
               >
-                <Icon size={16} strokeWidth={1.5} style={{ color: isActive ? ICON_ACTIVE : ICON_IDLE, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ color: isActive ? ICON_ACTIVE : isHovered ? "var(--text-secondary)" : ICON_IDLE }}>
-                    {name}
-                  </span>
-                  {/* Subtitle on hover only */}
-                  {isHovered && !isActive && (
-                    <div style={{
-                      fontSize: 11, color: "var(--text-tertiary)",
-                      marginTop: 1, lineHeight: 1.3,
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {subtitle}
-                    </div>
-                  )}
-                </div>
+                <Icon size={17} strokeWidth={1.5} style={{ color: isActive ? ICON_ACTIVE : "#52525B", flexShrink: 0 }} />
+                <span>{name}</span>
               </button>
             );
           })}
         </div>
 
         {/* ═══ DIVIDER ═══ */}
-        <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 12px 4px" }} />
+        <div style={{ height: 1, background: "var(--border-secondary)", margin: "10px 18px 6px", opacity: 0.6 }} />
 
-        {/* ═══ UTILITY ZONE ═══ */}
-        <div style={{ padding: "4px 8px" }}>
-          {/* Saved / History */}
-          <button
-            onClick={() => setHistoryOpen(!historyOpen)}
-            style={{
-              display: "flex", alignItems: "center", gap: 12,
-              width: "100%", padding: "8px 12px", border: "none",
-              borderRadius: "var(--radius-xs)", cursor: "pointer",
-              fontSize: 13, textAlign: "left", background: "transparent",
-              color: ICON_IDLE, fontWeight: 400, transition: "all 150ms",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = ICON_IDLE; }}
-          >
-            <BookOpen size={16} strokeWidth={1.5} />
-            <span style={{ flex: 1 }}>Saved</span>
-            <ChevronDown size={12} style={{ opacity: 0.4, transform: historyOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 150ms" }} />
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={() => { onOpenSettings(); onClose(); }}
-            style={{
-              display: "flex", alignItems: "center", gap: 12,
-              width: "100%", padding: "8px 12px", border: "none",
-              borderRadius: "var(--radius-xs)", cursor: "pointer",
-              fontSize: 13, textAlign: "left", background: "transparent",
-              color: ICON_IDLE, fontWeight: 400, transition: "all 150ms",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = ICON_IDLE; }}
-          >
-            <Settings size={16} strokeWidth={1.5} />
-            <span style={{ flex: 1 }}>Settings</span>
-          </button>
-        </div>
-
-        {/* Theme toggle */}
-        <div style={{ padding: "2px 12px 4px" }}>
+        {/* ═══ ZONE B — WORKSPACE ═══ */}
+        <div style={{ padding: "0 10px" }}>
           <div style={{
-            display: "flex", alignItems: "center", gap: 2,
-            padding: 2, borderRadius: 8,
-            background: "var(--bg-secondary)", border: "1px solid var(--border-secondary)",
+            fontSize: 9, fontFamily: "var(--font-mono)", fontWeight: 600,
+            letterSpacing: 2, color: "#3F3F46",
+            padding: "0 8px 6px", textTransform: "uppercase",
           }}>
-            {([
-              { value: "auto" as Theme, icon: Monitor, tip: "Auto" },
-              { value: "light" as Theme, icon: Sun, tip: "Light" },
-              { value: "dark" as Theme, icon: Moon, tip: "Dark" },
-            ]).map(({ value, icon: ThIcon, tip }) => {
-              const active = theme === value;
-              return (
-                <button key={value} title={tip} onClick={() => setTheme(value)} style={{
-                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: "5px 0", border: "none", borderRadius: 6, cursor: "pointer",
-                  background: active ? "var(--bg-hover)" : "transparent",
-                  color: active ? ICON_ACTIVE : ICON_IDLE,
-                  transition: "all 150ms",
-                }}>
-                  <ThIcon size={14} strokeWidth={1.5} />
-                </button>
-              );
-            })}
+            WORKSPACE
           </div>
+
+          {/* Recent — expandable conversation history */}
+          <button
+            onClick={() => { setRecentOpen(!recentOpen); setSavedOpen(false); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              width: "100%", padding: "7px 14px", border: "none",
+              borderRadius: 6, cursor: "pointer",
+              fontSize: 12, textAlign: "left", background: "transparent",
+              color: "#52525B", fontWeight: 400, transition: "all 150ms",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#52525B"; }}
+          >
+            <Clock size={14} strokeWidth={1.5} />
+            <span style={{ flex: 1 }}>Recent</span>
+            <ChevronDown size={11} style={{ opacity: 0.3, transform: recentOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 150ms" }} />
+          </button>
+
+          {/* Saved — expandable saved simulations */}
+          <button
+            onClick={() => { setSavedOpen(!savedOpen); setRecentOpen(false); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              width: "100%", padding: "7px 14px", border: "none",
+              borderRadius: 6, cursor: "pointer",
+              fontSize: 12, textAlign: "left", background: "transparent",
+              color: "#52525B", fontWeight: 400, transition: "all 150ms",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#52525B"; }}
+          >
+            <BookOpen size={14} strokeWidth={1.5} />
+            <span style={{ flex: 1 }}>Saved</span>
+            {savedSimulations.length > 0 && (
+              <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#3F3F46" }}>{savedSimulations.length}</span>
+            )}
+            <ChevronDown size={11} style={{ opacity: 0.3, transform: savedOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 150ms" }} />
+          </button>
+
+          {utilItem(<GitCompareArrows size={14} strokeWidth={1.5} />, "Compare", () => { handleMode("simulate" as Mode); })}
+          {utilItem(<FlaskConical size={14} strokeWidth={1.5} />, "What-if", () => { handleMode("simulate" as Mode); })}
+          {utilItem(<BarChart3 size={14} strokeWidth={1.5} />, "Usage", () => { router.push("/dashboard"); onClose(); })}
+          {utilItem(<CreditCard size={14} strokeWidth={1.5} />, "Billing", () => { router.push("/pricing"); onClose(); })}
+          {utilItem(<Settings size={14} strokeWidth={1.5} />, "Settings", () => { onOpenSettings(); onClose(); })}
+          {utilItem(<HelpCircle size={14} strokeWidth={1.5} />, "Help", () => { window.open("https://github.com/anthropics/claude-code/issues", "_blank"); onClose(); })}
         </div>
 
-        {/* Token counter */}
-        {tokenStatus && (
-          <div style={{ padding: "2px 12px 4px", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{
-              fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 500,
-              color: tokenStatus.available <= 0 ? "#F75B5B" : ICON_IDLE,
-            }}>
-              {tokenStatus.available >= 1000 ? `${(tokenStatus.available / 1000).toFixed(0)}K` : tokenStatus.available} ST
-            </span>
-            {showUpgrade && (
-              <span
-                onClick={() => router.push("/pricing")}
-                style={{ fontSize: 10, color: "var(--text-tertiary)", cursor: "pointer", marginLeft: "auto" }}
-                onMouseEnter={e => e.currentTarget.style.color = "var(--text-secondary)"}
-                onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}
-              >
-                Upgrade
-              </span>
+        {/* ═══ EXPANDABLE: Recent conversations ═══ */}
+        {recentOpen && (
+          <div style={{ flex: 1, overflowY: "auto", padding: "4px 10px 0", borderTop: "1px solid var(--border-secondary)", marginTop: 4 }}>
+            {isLoading ? (
+              <HistorySkeleton />
+            ) : convList && convList.length === 0 ? (
+              <div style={{ padding: "16px 8px", fontSize: 11, color: "#3F3F46", textAlign: "center" }}>
+                No conversations yet
+              </div>
+            ) : convList ? (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {groupByDate(convList).map(group => (
+                  <div key={group.label}>
+                    <div style={{
+                      padding: "8px 12px 4px", fontSize: 10, fontWeight: 600,
+                      color: "#3F3F46", textTransform: "uppercase", letterSpacing: 0.8,
+                    }}>
+                      {group.label}
+                    </div>
+                    {group.items.map(conv => (
+                      <ConversationItem
+                        key={conv.id} conv={conv}
+                        isActive={conv.id === activeConversationId}
+                        onLoad={() => { onLoadConversation?.(conv.id); onClose(); }}
+                        onDelete={() => onDeleteConversation?.(conv.id)}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* ═══ EXPANDABLE: Saved simulations ═══ */}
+        {savedOpen && (
+          <div style={{ flex: 1, overflowY: "auto", padding: "4px 10px 0", borderTop: "1px solid var(--border-secondary)", marginTop: 4 }}>
+            {savedSimulations.length === 0 ? (
+              <div style={{ padding: "16px 8px", fontSize: 11, color: "#3F3F46", textAlign: "center" }}>
+                No saved simulations yet
+              </div>
+            ) : (
+              <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                {savedSimulations.slice(0, 20).map((sim: any) => (
+                  <div key={sim.id}
+                    onClick={() => { onLoadSimulation?.(sim.id); onClose(); }}
+                    style={{
+                      padding: "8px 12px", borderRadius: 6, cursor: "pointer",
+                      transition: "background 150ms", fontSize: 12, color: "var(--text-secondary)",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <div style={{
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      fontWeight: 500, color: "var(--text-primary)", marginBottom: 2,
+                    }}>
+                      {sim.scenario?.slice(0, 60) || "Untitled"}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#3F3F46", display: "flex", gap: 8 }}>
+                      <span>{new Date(sim.created_at).toLocaleDateString()}</span>
+                      {sim.verdict?.viability != null && (
+                        <span style={{ color: "var(--text-secondary)" }}>{sim.verdict.viability}/10</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
 
-        {/* ═══ HISTORY AREA (expandable) ═══ */}
-        {historyOpen && (
-          <>
-            <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 12px" }} />
-            <div style={{ flex: 1, overflowY: "auto", padding: "0 8px", minHeight: 100 }}>
-              {activeProject && (
-                <div style={{
-                  padding: "6px 12px", fontSize: 10, fontWeight: 600,
-                  color: activeProject.color || "var(--accent)",
-                  textTransform: "uppercase", letterSpacing: 1, opacity: 0.7,
-                  display: "flex", alignItems: "center", gap: 6,
-                }}>
-                  <span style={{ flex: 1 }}>{activeProject.name}</span>
-                  {onOpenKnowledge && (
-                    <button onClick={onOpenKnowledge} style={{
-                      background: "none", border: "none", cursor: "pointer",
-                      color: activeProject.color || "var(--accent)", padding: 2, opacity: 0.7,
-                    }}>
-                      <Upload size={11} />
-                    </button>
-                  )}
-                </div>
-              )}
-              {isLoading ? (
-                <HistorySkeleton />
-              ) : convList && convList.length === 0 ? (
-                <div style={{ padding: "16px 4px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", opacity: 0.4 }}>
-                  No saved conversations yet
-                </div>
-              ) : convList ? (
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  {groupByDate(convList).map(group => (
-                    <div key={group.label}>
-                      <div style={{
-                        padding: "10px 12px 4px", fontSize: 11, fontWeight: 600,
-                        color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 0.8,
-                      }}>
-                        {group.label}
-                      </div>
-                      {group.items.map(conv => (
-                        <ConversationItem
-                          key={conv.id} conv={conv}
-                          isActive={conv.id === activeConversationId}
-                          onLoad={() => { onLoadConversation?.(conv.id); onClose(); }}
-                          onDelete={() => onDeleteConversation?.(conv.id)}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+        {/* Spacer when nothing expanded */}
+        {!recentOpen && !savedOpen && <div style={{ flex: 1 }} />}
 
-              {/* Saved Simulations */}
-              {savedSimulations.length > 0 && (
-                <div style={{ borderTop: "1px solid var(--border-secondary)", marginTop: 4, paddingTop: 4 }}>
-                  <div style={{
-                    padding: "6px 12px", fontSize: 10, fontWeight: 600,
-                    color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 1,
-                    display: "flex", alignItems: "center", gap: 6,
-                  }}>
-                    <Zap size={10} /> Saved Simulations
-                  </div>
-                  <div style={{ maxHeight: 140, overflowY: "auto" }}>
-                    {savedSimulations.slice(0, 10).map((sim: any) => (
-                      <div key={sim.id}
-                        onClick={() => { onLoadSimulation?.(sim.id); onClose(); }}
-                        style={{
-                          padding: "8px 12px", borderRadius: 6, cursor: "pointer",
-                          transition: "background 150ms", fontSize: 12, color: "var(--text-secondary)",
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                      >
-                        <div style={{
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                          fontWeight: 500, color: "var(--text-primary)", marginBottom: 2,
-                        }}>
-                          {sim.scenario?.slice(0, 60) || "Untitled"}
-                        </div>
-                        <div style={{ fontSize: 10, color: "var(--text-tertiary)", display: "flex", gap: 8 }}>
-                          <span>{new Date(sim.created_at).toLocaleDateString()}</span>
-                          {sim.verdict?.viability != null && (
-                            <span style={{ color: "var(--text-secondary)" }}>{sim.verdict.viability}/10</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Spacer when history is closed */}
-        {!historyOpen && <div style={{ flex: 1 }} />}
-
-        {/* ═══ BOTTOM — avatar + plan badge ═══ */}
-        <div style={{ borderTop: "1px solid var(--border-secondary)", padding: 8 }}>
-          {/* Decision follow-up badge */}
-          {pendingDecisions > 0 && (
-            <a href="/decisions" style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "8px 12px", margin: "0 0 4px",
-              borderRadius: 8, background: "rgba(168,85,247,0.06)",
-              border: "1px solid rgba(168,85,247,0.12)",
-              fontSize: 12, color: "var(--mode-inv, #A855F7)",
-              textDecoration: "none", cursor: "pointer",
+        {/* ═══ BOTTOM ═══ */}
+        <div style={{ padding: "6px 10px 10px" }}>
+          {/* Theme toggle — compact */}
+          <div style={{ padding: "0 4px 6px" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 1,
+              padding: 2, borderRadius: 6,
+              background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-secondary)",
             }}>
-              <div style={{
-                width: 18, height: 18, borderRadius: "50%",
-                background: "#ef4444", color: "#fff",
-                fontSize: 10, fontWeight: 600,
-                display: "flex", alignItems: "center", justifyContent: "center",
+              {([
+                { value: "auto" as Theme, icon: Monitor, tip: "Auto" },
+                { value: "light" as Theme, icon: Sun, tip: "Light" },
+                { value: "dark" as Theme, icon: Moon, tip: "Dark" },
+              ]).map(({ value, icon: ThIcon, tip }) => {
+                const active = theme === value;
+                return (
+                  <button key={value} title={tip} onClick={() => setTheme(value)} style={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                    padding: "4px 0", border: "none", borderRadius: 4, cursor: "pointer",
+                    background: active ? "rgba(255,255,255,0.06)" : "transparent",
+                    color: active ? ICON_ACTIVE : "#3F3F46",
+                    transition: "all 120ms",
+                  }}>
+                    <ThIcon size={13} strokeWidth={1.5} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Token counter */}
+          {tokenStatus && (
+            <div style={{ padding: "0 8px 6px", display: "flex", alignItems: "center" }}>
+              <span style={{
+                fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 500,
+                color: tokenStatus.available <= 0 ? "#F75B5B" : "#52525B",
               }}>
-                {pendingDecisions}
-              </div>
-              <span>Decisions need follow-up</span>
-            </a>
+                {tokenStatus.available >= 1000 ? `${(tokenStatus.available / 1000).toFixed(1)}K` : tokenStatus.available} ST
+              </span>
+            </div>
           )}
 
-          {/* Profile row + plan badge */}
+          {/* Profile + plan badge */}
           {isLoggedIn && displayName ? (
             <button
               ref={avatarRef}
               onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
               style={{
                 display: "flex", alignItems: "center", gap: 10,
-                width: "100%", padding: "8px 10px", border: "none",
+                width: "100%", padding: "8px 8px", border: "none",
                 borderRadius: 8, background: profilePopoverOpen ? "var(--bg-hover)" : "transparent",
-                cursor: "pointer", transition: "background 150ms",
+                cursor: "pointer", transition: "background 120ms",
               }}
               onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
               onMouseLeave={e => { if (!profilePopoverOpen) e.currentTarget.style.background = "transparent"; }}
             >
               {authUser?.avatar ? (
-                <img src={authUser.avatar} alt={displayName} width={28} height={28}
+                <img src={authUser.avatar} alt={displayName} width={26} height={26}
                   style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
               ) : (
                 <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: "var(--bg-hover)", border: "1px solid var(--border-primary)",
+                  width: 26, height: 26, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-primary)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 600, color: "var(--text-primary)",
+                  fontSize: 10, fontWeight: 600, color: "var(--text-primary)",
                 }}>
                   {userInitials}
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                 <div style={{
-                  fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
+                  fontSize: 12, fontWeight: 500, color: "#A1A1AA",
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {displayName}
                 </div>
               </div>
-              {/* Plan badge tiny */}
               <span style={{
                 fontSize: 9, fontFamily: "var(--font-mono)", fontWeight: 600,
                 padding: "2px 6px", borderRadius: 50, letterSpacing: 0.5,
                 background: tier === "max" || tier === "founding" ? "rgba(168,85,247,0.08)" :
-                            tier === "pro" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
+                            tier === "pro" ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.02)",
                 color: tier === "max" || tier === "founding" ? "#A855F7" :
-                       tier === "pro" ? "var(--text-secondary)" : "var(--text-tertiary)",
+                       tier === "pro" ? "#71717A" : "#3F3F46",
               }}>
                 {tier === "max" || tier === "founding" ? "MAX" : tier === "pro" ? "PRO" : "FREE"}
               </span>
@@ -910,12 +886,12 @@ export default function Sidebar({
           ) : !isLoggedIn ? (
             <button onClick={() => { window.location.href = "/login"; }} style={{
               display: "flex", alignItems: "center", gap: 10, width: "100%",
-              padding: "8px 10px", border: "none", background: "transparent",
-              borderRadius: 8, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, textAlign: "left",
+              padding: "8px 8px", border: "none", background: "transparent",
+              borderRadius: 8, cursor: "pointer", color: "#71717A", fontSize: 12, textAlign: "left",
             }}
               onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-              <LogIn size={16} strokeWidth={1.5} />
+              <LogIn size={15} strokeWidth={1.5} />
               <span>{t("auth.sign_in")}</span>
             </button>
           ) : null}
@@ -953,7 +929,13 @@ export default function Sidebar({
         {/* ═══ DIVIDER ═══ */}
         <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
 
-        {/* ═══ UTILITY — history + settings ═══ */}
+        {/* ═══ UTILITY — workspace shortcuts ═══ */}
+        <SidebarIconButton
+          icon={<Clock size={iconSize} strokeWidth={iconSW} />}
+          tooltip="Recent"
+          modeColor={ICON_IDLE}
+          onClick={onOpen}
+        />
         <SidebarIconButton
           icon={<BookOpen size={iconSize} strokeWidth={iconSW} />}
           tooltip="Saved"
