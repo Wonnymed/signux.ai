@@ -1,13 +1,17 @@
 "use client";
+import { useState } from "react";
+import { ArrowLeft, Lock, Plus, Search } from "lucide-react";
 import { useIsMobile } from "../lib/useIsMobile";
 
 /* ═══ Zinc palette ═══ */
-const Z800 = "#27272A";
-const Z700 = "#3F3F46";
-const Z600 = "#52525B";
-const Z500 = "#71717A";
-const Z400 = "#A1A1AA";
-const Z200 = "#E4E4E7";
+export const Z950 = "#09090B";
+export const Z800 = "#27272A";
+export const Z700 = "#3F3F46";
+export const Z600 = "#52525B";
+export const Z500 = "#71717A";
+export const Z400 = "#A1A1AA";
+export const Z300 = "#D4D4D8";
+export const Z200 = "#E4E4E7";
 
 /* ═══ 3 Page Shell Types ═══
  *
@@ -46,6 +50,29 @@ export function PageShell({
         : `${noPadTop ? 0 : 40}px 32px 80px`,
     }}>
       {children}
+    </div>
+  );
+}
+
+/* ═══ FullPageShell — full viewport wrapper for standalone pages ═══ */
+export function FullPageShell({
+  type = "workspace",
+  children,
+  noPadTop,
+}: {
+  type?: ShellType;
+  children: React.ReactNode;
+  noPadTop?: boolean;
+}) {
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "var(--bg-primary)",
+      color: "var(--text-primary)",
+    }}>
+      <PageShell type={type} noPadTop={noPadTop}>
+        {children}
+      </PageShell>
     </div>
   );
 }
@@ -123,6 +150,186 @@ export function PageHeader({
   );
 }
 
+/* ═══ BackLink — consistent "back to X" link ═══ */
+export function BackLink({
+  href = "/chat",
+  label = "Back to Signux",
+}: {
+  href?: string;
+  label?: string;
+}) {
+  return (
+    <a href={href} style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 5,
+      color: Z600,
+      fontSize: 12,
+      textDecoration: "none",
+      marginBottom: 20,
+      transition: "color 180ms ease-out",
+    }}
+      onMouseEnter={e => e.currentTarget.style.color = Z400}
+      onMouseLeave={e => e.currentTarget.style.color = Z600}
+    >
+      <ArrowLeft size={13} strokeWidth={1.5} /> {label}
+    </a>
+  );
+}
+
+/* ═══ SectionLabel — consistent section heading ═══ */
+export function SectionLabel({
+  children,
+  count,
+  style,
+}: {
+  children: React.ReactNode;
+  count?: number;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <h2 style={{
+      fontSize: 11,
+      fontFamily: "var(--font-mono)",
+      fontWeight: 500,
+      letterSpacing: 1.6,
+      color: Z600,
+      textTransform: "uppercase",
+      marginBottom: 12,
+      marginTop: 0,
+      ...style,
+    }}>
+      {children}{count !== undefined ? ` (${count})` : ""}
+    </h2>
+  );
+}
+
+/* ═══ SearchInput — consistent search field ═══ */
+export function SearchInput({
+  value,
+  onChange,
+  placeholder = "Search...",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      padding: "10px 14px",
+      borderRadius: 10,
+      background: "rgba(255,255,255,0.015)",
+      border: `1px solid ${Z800}`,
+      marginBottom: 24,
+    }}>
+      <Search size={16} style={{ color: Z600 }} />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{
+          flex: 1,
+          border: "none",
+          background: "transparent",
+          color: Z200,
+          fontSize: 14,
+          outline: "none",
+          fontFamily: "var(--font-body)",
+        }}
+      />
+    </div>
+  );
+}
+
+/* ═══ AuthGate — sign-in required state ═══ */
+export function AuthGate({
+  title = "Sign in required",
+  description,
+  loginHref = "/login",
+}: {
+  title?: string;
+  description?: string;
+  loginHref?: string;
+}) {
+  return (
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "80px 24px",
+      borderRadius: 16,
+      border: `1px dashed ${Z800}`,
+    }}>
+      <div style={{
+        width: 56,
+        height: 56,
+        borderRadius: 16,
+        background: "rgba(255,255,255,0.03)",
+        border: `1px solid ${Z800}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 20,
+      }}>
+        <Lock size={24} strokeWidth={1.5} style={{ color: Z600 }} />
+      </div>
+      <h3 style={{
+        fontSize: 18,
+        fontWeight: 500,
+        color: Z200,
+        marginBottom: 8,
+        marginTop: 0,
+      }}>
+        {title}
+      </h3>
+      {description && (
+        <p style={{
+          fontSize: 13,
+          color: Z600,
+          marginBottom: 24,
+          textAlign: "center",
+          maxWidth: 340,
+          lineHeight: 1.5,
+          margin: "0 0 24px",
+        }}>
+          {description}
+        </p>
+      )}
+      <button
+        onClick={() => { window.location.href = loginHref; }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "10px 24px",
+          borderRadius: 8,
+          background: "rgba(255,255,255,0.08)",
+          border: `1px solid ${Z800}`,
+          cursor: "pointer",
+          fontSize: 13,
+          fontWeight: 500,
+          color: Z200,
+          transition: "all 180ms ease-out",
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+          e.currentTarget.style.borderColor = Z700;
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+          e.currentTarget.style.borderColor = Z800;
+        }}
+      >
+        Sign in
+      </button>
+    </div>
+  );
+}
+
 /* ═══ SectionCard — consistent card/section surface ═══ */
 export function SectionCard({
   children,
@@ -165,15 +372,37 @@ export function SectionCard({
   );
 }
 
+/* ═══ CardGrid — consistent responsive grid ═══ */
+export function CardGrid({
+  children,
+  minWidth = 280,
+}: {
+  children: React.ReactNode;
+  minWidth?: number;
+}) {
+  const isMobile = useIsMobile();
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: isMobile ? "1fr" : `repeat(auto-fill, minmax(${minWidth}px, 1fr))`,
+      gap: 12,
+    }}>
+      {children}
+    </div>
+  );
+}
+
 /* ═══ EmptyState — consistent empty state ═══ */
 export function EmptyState({
   title,
   description,
   action,
+  icon,
 }: {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  icon?: React.ReactNode;
 }) {
   return (
     <div style={{
@@ -191,10 +420,12 @@ export function EmptyState({
         display: "flex", alignItems: "center", justifyContent: "center",
         marginBottom: 16,
       }}>
-        <div style={{
-          width: 8, height: 8, borderRadius: "50%",
-          background: Z700,
-        }} />
+        {icon || (
+          <div style={{
+            width: 8, height: 8, borderRadius: "50%",
+            background: Z700,
+          }} />
+        )}
       </div>
       <span style={{
         fontSize: 14,
@@ -283,17 +514,100 @@ export function ActionButton({
   );
 }
 
-import { useState } from "react";
+/* ═══ InlineInput — consistent inline creation input ═══ */
+export function InlineInput({
+  value,
+  onChange,
+  onSubmit,
+  onCancel,
+  placeholder = "Name...",
+  submitLabel = "Create",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  placeholder?: string;
+  submitLabel?: string;
+}) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "12px 16px",
+      borderRadius: 12,
+      background: "rgba(255,255,255,0.015)",
+      border: `1px solid ${Z800}`,
+      marginBottom: 20,
+    }}>
+      <input
+        autoFocus
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === "Enter") onSubmit();
+          if (e.key === "Escape") onCancel();
+        }}
+        placeholder={placeholder}
+        style={{
+          flex: 1,
+          border: "none",
+          background: "transparent",
+          color: Z200,
+          fontSize: 14,
+          outline: "none",
+          fontFamily: "var(--font-body)",
+        }}
+      />
+      <button
+        onClick={onSubmit}
+        style={{
+          padding: "6px 14px",
+          borderRadius: 6,
+          background: "rgba(255,255,255,0.08)",
+          border: `1px solid ${Z800}`,
+          color: Z200,
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: "pointer",
+          transition: "background 180ms ease-out",
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
+        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+      >
+        {submitLabel}
+      </button>
+      <button
+        onClick={onCancel}
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: Z600,
+          padding: 4,
+          fontSize: 12,
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
 
 /* ═══ StatCard — for metrics/dashboard grids ═══ */
 export function StatCard({
   label,
   value,
   sub,
+  icon,
+  color,
 }: {
   label: string;
   value: string | number;
   sub?: string;
+  icon?: React.ReactNode;
+  color?: string;
 }) {
   return (
     <div style={{
@@ -303,14 +617,18 @@ export function StatCard({
       background: "rgba(255,255,255,0.015)",
     }}>
       <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
         fontSize: 10,
         fontFamily: "var(--font-mono)",
         fontWeight: 500,
-        letterSpacing: 1,
+        letterSpacing: 0.8,
         color: Z600,
         textTransform: "uppercase",
         marginBottom: 8,
       }}>
+        {icon}
         {label}
       </div>
       <div style={{
@@ -331,6 +649,79 @@ export function StatCard({
         </div>
       )}
     </div>
+  );
+}
+
+/* ═══ ListItem — consistent list row ═══ */
+export function ListItem({
+  children,
+  onClick,
+  badge,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        padding: "12px 16px",
+        borderRadius: 10,
+        border: `1px solid ${Z800}`,
+        background: "rgba(255,255,255,0.015)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        cursor: onClick ? "pointer" : "default",
+        transition: "background 180ms ease-out, border-color 180ms ease-out",
+        marginBottom: 6,
+      }}
+      onMouseEnter={e => {
+        if (!onClick) return;
+        e.currentTarget.style.borderColor = Z700;
+        e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+      }}
+      onMouseLeave={e => {
+        if (!onClick) return;
+        e.currentTarget.style.borderColor = Z800;
+        e.currentTarget.style.background = "rgba(255,255,255,0.015)";
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {children}
+      </div>
+      {badge && (
+        <div style={{ flexShrink: 0, marginLeft: 8 }}>
+          {badge}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══ Badge — consistent status badge ═══ */
+export function Badge({
+  children,
+  color = Z500,
+  bg = "rgba(255,255,255,0.04)",
+}: {
+  children: React.ReactNode;
+  color?: string;
+  bg?: string;
+}) {
+  return (
+    <span style={{
+      fontSize: 10,
+      padding: "2px 8px",
+      borderRadius: 4,
+      background: bg,
+      color,
+      textTransform: "capitalize",
+      fontWeight: 500,
+    }}>
+      {children}
+    </span>
   );
 }
 

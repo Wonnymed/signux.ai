@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Check, ArrowRight, Zap, Crown, Loader2, Infinity as InfinityIcon } from "lucide-react";
+import { Check, ArrowRight, Zap, Crown, Loader2 } from "lucide-react";
 import { SignuxIcon } from "../components/SignuxIcon";
+import { useIsMobile } from "../lib/useIsMobile";
+import { Z800, Z700, Z600, Z500, Z400, Z200 } from "../components/PageShell";
 
 const PLANS = [
   {
@@ -25,7 +27,7 @@ const PLANS = [
       "Challenge This",
     ],
     cta: "Start free",
-    color: "var(--text-secondary)",
+    color: Z500,
     popular: false,
     icon: null,
   },
@@ -85,6 +87,7 @@ const PLANS = [
 
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const handleUpgrade = async (planId: string) => {
     if (planId === "free") {
@@ -116,133 +119,150 @@ export default function PricingPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: "var(--text-primary)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: Z200 }}>
       {/* Nav */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "12px 24px", borderBottom: "1px solid var(--border-primary)",
+        padding: "12px 24px", borderBottom: `1px solid ${Z800}`,
       }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
           <SignuxIcon variant="gold" size={24} />
           <span style={{
             fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 600,
-            letterSpacing: 2, color: "var(--text-primary)",
+            letterSpacing: 2, color: Z200,
           }}>
             SIGNUX
           </span>
         </a>
         <a href="/chat" style={{
-          fontSize: 13, color: "var(--text-secondary)", textDecoration: "none",
-          fontFamily: "var(--font-brand)", letterSpacing: 1,
-        }}>
+          fontSize: 12, color: Z600, textDecoration: "none",
+          transition: "color 180ms ease-out",
+        }}
+          onMouseEnter={e => e.currentTarget.style.color = Z400}
+          onMouseLeave={e => e.currentTarget.style.color = Z600}
+        >
           Back to app
         </a>
       </div>
 
       {/* Header */}
-      <div style={{ textAlign: "center", padding: "60px 24px 20px" }}>
+      <div style={{
+        maxWidth: 720,
+        margin: "0 auto",
+        padding: isMobile ? "40px 16px 20px" : "60px 32px 20px",
+      }}>
+        <div style={{
+          fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 500,
+          letterSpacing: 1.6, color: Z600, textTransform: "uppercase",
+          marginBottom: 8,
+        }}>
+          Billing
+        </div>
         <h1 style={{
-          fontSize: 36, fontWeight: 700, marginBottom: 12,
-          fontFamily: "var(--font-brand)", letterSpacing: 2,
+          fontSize: isMobile ? 24 : 28, fontWeight: 500, marginBottom: 8,
+          color: Z200, letterSpacing: 0.2, lineHeight: 1.3, margin: "0 0 8px",
         }}>
           Choose how you want to grow
         </h1>
-        <p style={{ fontSize: 16, color: "var(--text-secondary)", maxWidth: 500, margin: "0 auto" }}>
+        <p style={{ fontSize: 13, color: Z500, maxWidth: 460, margin: 0, lineHeight: 1.5 }}>
           Pro gives you access to everything. Max removes all limits.
         </p>
       </div>
 
       {/* Pro vs Max comparison highlight */}
       <div style={{
-        display: "flex", justifyContent: "center", gap: 24, padding: "0 24px 40px",
+        display: "flex", justifyContent: "center", gap: 24,
+        padding: isMobile ? "16px 16px 32px" : "20px 32px 40px",
         flexWrap: "wrap",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-          <Zap size={14} style={{ color: "#C8A84E" }} />
-          <span><strong style={{ color: "#C8A84E" }}>Pro</strong> — all modes, monthly limits</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: Z500 }}>
+          <Zap size={13} style={{ color: "#C8A84E" }} />
+          <span><strong style={{ color: "#C8A84E", fontWeight: 600 }}>Pro</strong> — all modes, monthly limits</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-          <Crown size={14} style={{ color: "#A855F7" }} />
-          <span><strong style={{ color: "#A855F7" }}>Max</strong> — unlimited + exclusive features</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: Z500 }}>
+          <Crown size={13} style={{ color: "#A855F7" }} />
+          <span><strong style={{ color: "#A855F7", fontWeight: 600 }}>Max</strong> — unlimited + exclusive features</span>
         </div>
       </div>
 
       {/* Plans grid */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-        gap: 20, maxWidth: 920, margin: "0 auto",
-        padding: "0 24px 40px",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+        gap: 16, maxWidth: 920, margin: "0 auto",
+        padding: isMobile ? "0 16px 40px" : "0 32px 40px",
       }}>
         {PLANS.map(plan => {
           const Icon = plan.icon;
+          const isPro = plan.popular;
+          const isMax = plan.id === "max";
           return (
             <div key={plan.id} style={{
               position: "relative",
-              background: "var(--bg-secondary)",
-              border: plan.popular ? `2px solid ${plan.color}` : plan.id === "max" ? "1px solid rgba(168,85,247,0.3)" : "1px solid var(--border-primary)",
-              borderRadius: 16, padding: 28,
+              background: "rgba(255,255,255,0.015)",
+              border: isPro ? `1.5px solid ${plan.color}` : isMax ? `1px solid rgba(168,85,247,0.25)` : `1px solid ${Z800}`,
+              borderRadius: 14, padding: 24,
               display: "flex", flexDirection: "column",
             }}>
-              {plan.popular && (
+              {isPro && (
                 <div style={{
-                  position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                  padding: "4px 16px", borderRadius: 50,
+                  position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)",
+                  padding: "3px 14px", borderRadius: 50,
                   background: plan.color, color: "#000",
-                  fontSize: 11, fontWeight: 700, letterSpacing: 1,
-                  fontFamily: "var(--font-brand)",
+                  fontSize: 10, fontWeight: 700, letterSpacing: 1,
+                  fontFamily: "var(--font-mono)", textTransform: "uppercase",
                 }}>
-                  MOST POPULAR
+                  Most popular
                 </div>
               )}
 
-              {plan.id === "max" && (
+              {isMax && (
                 <div style={{
-                  position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                  padding: "4px 16px", borderRadius: 50,
+                  position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)",
+                  padding: "3px 14px", borderRadius: 50,
                   background: plan.color, color: "#fff",
-                  fontSize: 11, fontWeight: 700, letterSpacing: 1,
-                  fontFamily: "var(--font-brand)",
+                  fontSize: 10, fontWeight: 700, letterSpacing: 1,
+                  fontFamily: "var(--font-mono)", textTransform: "uppercase",
                 }}>
-                  NO LIMITS
+                  No limits
                 </div>
               )}
 
               {/* Plan header */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                {Icon && <Icon size={18} style={{ color: plan.color }} />}
+                {Icon && <Icon size={16} style={{ color: plan.color }} />}
                 <span style={{
-                  fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 600,
-                  letterSpacing: 1, color: plan.color,
+                  fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 600,
+                  letterSpacing: 1.2, color: plan.color, textTransform: "uppercase",
                 }}>
-                  {plan.name.toUpperCase()}
+                  {plan.name}
                 </span>
               </div>
 
               {/* Price */}
               <div style={{ marginBottom: 8 }}>
-                <span style={{ fontSize: 36, fontWeight: 700 }}>{plan.price}</span>
-                <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>{plan.period}</span>
+                <span style={{ fontSize: 32, fontWeight: 600, color: Z200 }}>{plan.price}</span>
+                <span style={{ fontSize: 13, color: Z600 }}>{plan.period}</span>
               </div>
 
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.4 }}>
+              <p style={{ fontSize: 12.5, color: Z500, marginBottom: 20, lineHeight: 1.5, margin: "0 0 20px" }}>
                 {plan.description}
               </p>
 
               {/* Features */}
               <div style={{ flex: 1, marginBottom: 24 }}>
                 {plan.features.map(f => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <Check size={14} style={{ color: plan.color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13 }}>{f}</span>
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
+                    <Check size={13} style={{ color: plan.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12.5, color: Z200 }}>{f}</span>
                   </div>
                 ))}
                 {plan.excluded.map(f => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ width: 8, height: 1, background: "var(--text-tertiary)", display: "block" }} />
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
+                    <span style={{ width: 13, height: 13, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ width: 8, height: 1, background: Z700, display: "block" }} />
                     </span>
-                    <span style={{ fontSize: 13, color: "var(--text-tertiary)" }}>{f}</span>
+                    <span style={{ fontSize: 12.5, color: Z600 }}>{f}</span>
                   </div>
                 ))}
               </div>
@@ -253,22 +273,32 @@ export default function PricingPage() {
                 disabled={loading === plan.id}
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  width: "100%", padding: "12px 24px", borderRadius: 10,
-                  background: plan.popular ? plan.color : plan.id === "max" ? plan.color : "transparent",
-                  color: plan.popular ? "#000" : plan.id === "max" ? "#fff" : "var(--text-primary)",
-                  border: (plan.popular || plan.id === "max") ? "none" : "1px solid var(--border-primary)",
-                  fontSize: 14, fontWeight: 600, cursor: loading === plan.id ? "wait" : "pointer",
-                  fontFamily: "var(--font-brand)", letterSpacing: 1,
+                  width: "100%", padding: "11px 24px", borderRadius: 8,
+                  background: isPro ? plan.color : isMax ? plan.color : "transparent",
+                  color: isPro ? "#000" : isMax ? "#fff" : Z200,
+                  border: (isPro || isMax) ? "none" : `1px solid ${Z800}`,
+                  fontSize: 13, fontWeight: 600, cursor: loading === plan.id ? "wait" : "pointer",
+                  fontFamily: "var(--font-mono)", letterSpacing: 0.5,
                   opacity: loading === plan.id ? 0.7 : 1,
-                  transition: "opacity 0.15s",
+                  transition: "opacity 180ms ease-out, background 180ms ease-out",
+                }}
+                onMouseEnter={e => {
+                  if (isPro || isMax) return;
+                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                  e.currentTarget.style.borderColor = Z700;
+                }}
+                onMouseLeave={e => {
+                  if (isPro || isMax) return;
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.borderColor = Z800;
                 }}
               >
                 {loading === plan.id ? (
-                  <Loader2 size={16} style={{ animation: "spin 0.8s linear infinite" }} />
+                  <Loader2 size={15} style={{ animation: "spin 0.8s linear infinite" }} />
                 ) : (
                   <>
                     {plan.cta}
-                    <ArrowRight size={14} />
+                    <ArrowRight size={13} />
                   </>
                 )}
               </button>
@@ -278,17 +308,17 @@ export default function PricingPage() {
       </div>
 
       {/* Feature comparison table */}
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px 80px" }}>
-        <h3 style={{
-          textAlign: "center", fontSize: 18, fontWeight: 600,
-          fontFamily: "var(--font-brand)", letterSpacing: 1, marginBottom: 24,
-          color: "var(--text-secondary)",
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: isMobile ? "0 16px 64px" : "0 32px 80px" }}>
+        <div style={{
+          fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 500,
+          letterSpacing: 1.6, color: Z600, textTransform: "uppercase",
+          marginBottom: 12, textAlign: "center",
         }}>
           Compare plans
-        </h3>
+        </div>
         <div style={{
-          background: "var(--bg-secondary)", borderRadius: 12,
-          border: "1px solid var(--border-primary)", overflow: "hidden",
+          background: "rgba(255,255,255,0.015)", borderRadius: 12,
+          border: `1px solid ${Z800}`, overflow: "hidden",
         }}>
           {[
             { feature: "Chat messages", free: "5/day", pro: "Unlimited", max: "Unlimited" },
@@ -304,12 +334,12 @@ export default function PricingPage() {
           ].map((row, i) => (
             <div key={row.feature} style={{
               display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
-              padding: "10px 16px", fontSize: 13,
-              borderBottom: i < 9 ? "1px solid var(--border-primary)" : "none",
-              background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)",
+              padding: "10px 16px", fontSize: 12.5,
+              borderBottom: i < 9 ? `1px solid ${Z800}` : "none",
+              background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
             }}>
-              <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>{row.feature}</span>
-              <span style={{ color: "var(--text-tertiary)", textAlign: "center" }}>{row.free}</span>
+              <span style={{ color: Z400, fontWeight: 500 }}>{row.feature}</span>
+              <span style={{ color: Z600, textAlign: "center" }}>{row.free}</span>
               <span style={{ color: "#C8A84E", textAlign: "center", fontWeight: 500 }}>{row.pro}</span>
               <span style={{ color: "#A855F7", textAlign: "center", fontWeight: 500 }}>{row.max}</span>
             </div>

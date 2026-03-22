@@ -2,8 +2,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
-import { ArrowLeft } from "lucide-react";
-import { PageShell, PageHeader, EmptyState } from "../components/PageShell";
+import {
+  FullPageShell, PageHeader, EmptyState, BackLink,
+  SectionLabel, ListItem, Badge, AuthGate,
+  Z800, Z700, Z600, Z500, Z200,
+} from "../components/PageShell";
 
 type Decision = {
   id: string;
@@ -58,31 +61,24 @@ export default function DecisionsPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: "var(--text-primary)" }}>
-      <PageShell type="workspace">
-        <a href="/chat" style={{
-          display: "inline-flex", alignItems: "center", gap: 5,
-          color: "#52525B", fontSize: 12, textDecoration: "none",
-          marginBottom: 20, transition: "color 180ms ease-out",
-        }}
-          onMouseEnter={e => e.currentTarget.style.color = "#A1A1AA"}
-          onMouseLeave={e => e.currentTarget.style.color = "#52525B"}
-        >
-          <ArrowLeft size={13} strokeWidth={1.5} /> Back to Signux
-        </a>
+    <FullPageShell type="workspace">
+      <BackLink />
 
-        <PageHeader
-          eyebrow="Workspace"
-          title="Decision Journal"
-          subtitle="Track your decisions and learn from outcomes over time."
-        />
+      <PageHeader
+        eyebrow="Workspace"
+        title="Decision Journal"
+        subtitle="Track your decisions and learn from outcomes over time."
+      />
 
       {!user && !authLoading && (
-        <EmptyState title="Sign in required" description="Sign in to see your decision journal." />
+        <AuthGate
+          title="Sign in to view decisions"
+          description="Sign in to see your decision journal and track outcomes."
+        />
       )}
 
       {loading && user && (
-        <div style={{ textAlign: "center", padding: 40, color: "#52525B", fontSize: 13 }}>Loading...</div>
+        <div style={{ textAlign: "center", padding: 40, color: Z600, fontSize: 13 }}>Loading...</div>
       )}
 
       {!loading && user && decisions.length === 0 && (
@@ -95,30 +91,37 @@ export default function DecisionsPage() {
       {/* Pending follow-ups */}
       {pendingFollowups.length > 0 && (
         <div style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 600, color: "#A855F7", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            Pending follow-ups ({pendingFollowups.length})
-          </h2>
+          <SectionLabel count={pendingFollowups.length} style={{ color: "#A855F7" }}>
+            Pending follow-ups
+          </SectionLabel>
           {pendingFollowups.map(d => (
-            <div key={d.id} style={{ padding: 16, borderRadius: 12, border: "1px solid rgba(168,85,247,0.12)", background: "rgba(168,85,247,0.03)", marginBottom: 8 }}>
-              <div style={{ fontSize: 14, color: "var(--text-primary)", marginBottom: 4 }}>{d.decision_summary}</div>
-              <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 4 }}>
+            <div key={d.id} style={{
+              padding: 16, borderRadius: 12,
+              border: "1px solid rgba(168,85,247,0.12)",
+              background: "rgba(168,85,247,0.03)",
+              marginBottom: 8,
+            }}>
+              <div style={{ fontSize: 14, color: Z200, marginBottom: 4 }}>{d.decision_summary}</div>
+              <div style={{ fontSize: 11, color: Z600, marginBottom: 4 }}>
                 {d.ai_recommendation}
               </div>
-              <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 10, fontFamily: "var(--font-mono)" }}>
+              <div style={{ fontSize: 10, color: Z600, marginBottom: 10, fontFamily: "var(--font-mono)" }}>
                 {new Date(d.decision_date).toLocaleDateString()} · {d.decision_category}
                 {d.ai_confidence && ` · ${d.ai_confidence} confidence`}
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 8 }}>How did this turn out?</div>
+              <div style={{ fontSize: 11, color: Z500, marginBottom: 8 }}>How did this turn out?</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {["great", "good", "neutral", "bad", "terrible"].map(outcome => (
                   <button key={outcome} onClick={() => setOutcome(d.id, outcome)} style={{
-                    padding: "4px 12px", borderRadius: 6, border: "1px solid var(--card-border)",
-                    background: "var(--card-bg)", fontSize: 11, color: "var(--text-secondary)",
-                    cursor: "pointer", textTransform: "capitalize", transition: "all 150ms",
+                    padding: "4px 12px", borderRadius: 6,
+                    border: `1px solid ${Z800}`,
+                    background: "rgba(255,255,255,0.015)",
+                    fontSize: 11, color: Z500,
+                    cursor: "pointer", textTransform: "capitalize",
+                    transition: "all 180ms ease-out",
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#A855F7"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--card-border)"; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#A855F7"; e.currentTarget.style.color = Z200; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = Z800; e.currentTarget.style.color = Z500; }}
                   >
                     {outcome}
                   </button>
@@ -132,38 +135,24 @@ export default function DecisionsPage() {
       {/* All decisions */}
       {decisions.length > 0 && (
         <>
-          <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 12 }}>
-            All decisions ({decisions.length})
-          </h2>
+          <SectionLabel count={decisions.length}>All decisions</SectionLabel>
           {decisions.map(d => {
             const oc = d.outcome ? outcomeColor(d.outcome) : null;
             return (
-              <div key={d.id} style={{
-                padding: 14, borderRadius: 10, border: "1px solid var(--card-border)",
-                background: "var(--card-bg)", marginBottom: 6,
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, color: "var(--text-primary)", marginBottom: 2 }}>{d.decision_summary}</div>
-                  <div style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
-                    {new Date(d.decision_date).toLocaleDateString()} · {d.decision_category}
-                    {d.ai_confidence && ` · ${d.ai_confidence}`}
-                  </div>
+              <ListItem
+                key={d.id}
+                badge={oc ? <Badge color={oc.color} bg={oc.bg}>{d.outcome}</Badge> : undefined}
+              >
+                <div style={{ fontSize: 13, color: Z200, marginBottom: 2 }}>{d.decision_summary}</div>
+                <div style={{ fontSize: 10, color: Z600, fontFamily: "var(--font-mono)" }}>
+                  {new Date(d.decision_date).toLocaleDateString()} · {d.decision_category}
+                  {d.ai_confidence && ` · ${d.ai_confidence}`}
                 </div>
-                {oc && (
-                  <span style={{
-                    fontSize: 10, padding: "2px 8px", borderRadius: 4, flexShrink: 0, marginLeft: 8,
-                    background: oc.bg, color: oc.color, textTransform: "capitalize",
-                  }}>
-                    {d.outcome}
-                  </span>
-                )}
-              </div>
+              </ListItem>
             );
           })}
         </>
       )}
-    </PageShell>
-    </div>
+    </FullPageShell>
   );
 }
