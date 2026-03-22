@@ -599,34 +599,157 @@ export default function LandingSections() {
       </section>
 
       {/* ═══ 5. ARCHITECTURE / MOAT ═══ */}
-      <section style={sp}>
+      <section id="architecture" style={{ ...sp, padding: isMobile ? "76px 16px" : "104px 24px" }}>
         <Fade>
-          <div style={{ textAlign: "center" }}>
-            <div style={LABEL}>Architecture</div>
-            <h2 style={{ ...H2, fontSize: isMobile ? 26 : 36, color: "var(--mk-text)" }}>
-              Purpose-built, not prompt-wrapped
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: isMobile ? 34 : 44 }}>
+            <div style={{
+              fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 2,
+              textTransform: "uppercase", fontWeight: 600, color: "#B8941F", marginBottom: 14,
+            }}>
+              ARCHITECTURE
+            </div>
+            <h2 style={{
+              fontFamily: "var(--font-brand)", fontWeight: 300,
+              lineHeight: 1.18, fontSize: isMobile ? 24 : 34,
+              color: "#111111", maxWidth: 780, margin: "0 auto", marginBottom: 16,
+            }}>
+              A simulation today. A learning system over time.
             </h2>
-            <p style={BODY}>
-              Each engine has its own system prompt, output schema, domain knowledge base, and visual result renderer. This is not a generic chatbot with different skins.
+            <p style={{
+              fontSize: 16, lineHeight: 1.6, color: "#5B5B5B",
+              maxWidth: 780, margin: "0 auto",
+            }}>
+              What creates long-term value is not only the interface. It is the decision infrastructure behind it.
             </p>
           </div>
+
+          {/* ── BLOCK 1: LIVE PRODUCT ── */}
           <div style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-            gap: 14, maxWidth: 680, margin: "0 auto",
+            background: "#FFFFFF", border: "1px solid #E8E8E3",
+            borderRadius: 16, padding: isMobile ? 22 : 28,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.04)",
           }}>
-            {[
-              { title: "Proprietary knowledge base", desc: "Months of curated business frameworks, competitive strategy, risk detection, and negotiation models." },
-              { title: "Structured JSON output", desc: "Every engine returns structured data — not paragraphs. Visual cards, scores, matrices, and action lists." },
-              { title: "Engine-specific prompt architecture", desc: "Each engine has a different system prompt optimized for its decision type. Not one-size-fits-all." },
-              { title: "Fallback-safe parsing", desc: "If the AI returns text instead of JSON, the result renders as clean markdown. The user never sees an error." },
-            ].map((item, i) => (
-              <div key={i} style={CARD}>
-                <Layers size={16} color="var(--mk-accent)" style={{ marginBottom: 10 }} />
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--mk-text)", marginBottom: 4 }}>{item.title}</div>
-                <div style={{ fontSize: 13, color: "var(--mk-text-secondary)", lineHeight: 1.6 }}>{item.desc}</div>
+            {/* Title row */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              flexWrap: "wrap", gap: 10,
+            }}>
+              <div style={{ fontSize: isMobile ? 19 : 22, fontWeight: 400, color: "#111111" }}>
+                What exists today
               </div>
-            ))}
+              <span style={{
+                fontSize: 11, fontWeight: 600, color: "#166534",
+                background: "#EEF6EE", border: "1px solid rgba(22,101,52,0.12)",
+                borderRadius: 999, padding: "5px 10px",
+              }}>
+                LIVE PRODUCT
+              </span>
+            </div>
+            <div style={{ fontSize: 14, color: "#5B5B5B", marginTop: 10, marginBottom: 24 }}>
+              The visible product layer already exists.
+            </div>
+
+            {/* 2-col content */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+              gap: 20, alignItems: "start",
+            }}>
+              {/* Left — product points */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {[
+                  "10 specialist agents",
+                  "10 structured rounds",
+                  "Probability, risk, leverage, and next action",
+                  "Visible disagreement",
+                  "Executive-ready output",
+                ].map((item) => (
+                  <div key={item} style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    fontSize: 15, lineHeight: 1.7, color: "#333333",
+                  }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: "50%",
+                      background: "#1F3A5F", flexShrink: 0, opacity: 0.45,
+                    }} />
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              {/* Right — framing panel */}
+              <div style={{
+                background: "#F8F8F5", border: "1px solid #E8E8E3",
+                borderRadius: 12, padding: 20,
+              }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "#111111", marginBottom: 8 }}>
+                  What the user experiences
+                </div>
+                <div style={{ fontSize: 14, color: "#5B5B5B", lineHeight: 1.7 }}>
+                  One business question becomes a structured decision surface in under a minute.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── BLOCK 2: COMPOUNDING LAYER ── */}
+          <div style={{
+            background: "#FFFFFF", border: "1px solid #E8E8E3",
+            borderRadius: 16, padding: isMobile ? 22 : 28,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.04)",
+            marginTop: 18,
+          }}>
+            <div style={{ fontSize: isMobile ? 19 : 22, fontWeight: 400, color: "#111111" }}>
+              What compounds over time
+            </div>
+            <div style={{ fontSize: 14, color: "#5B5B5B", marginTop: 10, marginBottom: 20 }}>
+              The long-term moat comes from the layers behind the visible product.
+            </div>
+
+            {/* 8-card grid */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+              gap: 14,
+            }}>
+              {([
+                { title: "Forecast Contracts", desc: "Turns vague questions into measurable decisions." },
+                { title: "Resolver Network", desc: "Defines how outcomes are judged against reality." },
+                { title: "Resolution Engine", desc: "Closes the loop once the decision plays out." },
+                { title: "Calibration Lab", desc: "Measures forecast quality over time." },
+                { title: "Base-Rate Factory", desc: "Brings the outside view into every decision." },
+                { title: "Agent Performance Weighting", desc: "Learns which reasoning becomes more reliable." },
+                { title: "Memory of Misses", desc: "Stores broken assumptions and repeated error patterns." },
+                { title: "Intervention Logic", desc: "Finds the move most likely to change the odds." },
+              ] as const).map((card) => (
+                <div key={card.title} style={{
+                  background: "#F8F8F5", border: "1px solid #E8E8E3",
+                  borderRadius: 10, padding: 16,
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111111" }}>
+                    {card.title}
+                  </div>
+                  <div style={{ fontSize: 12, lineHeight: 1.6, color: "#5B5B5B", marginTop: 8 }}>
+                    {card.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom framing */}
+          <div style={{
+            fontSize: 14, color: "#5B5B5B", fontStyle: "italic",
+            marginTop: 26, textAlign: "center", lineHeight: 1.6,
+          }}>
+            The visible product creates trust. The architecture creates compounding advantage.
+          </div>
+          <div style={{
+            fontSize: 13, color: "#777777",
+            marginTop: 10, textAlign: "center",
+          }}>
+            This is how Signux evolves from interface into infrastructure.
           </div>
         </Fade>
       </section>
