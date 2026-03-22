@@ -340,84 +340,136 @@ export default function LandingSections() {
         </Fade>
       </section>
 
-      {/* ═══ 3. WHY SIGNUX / COMPARISON ═══ */}
-      <section id="compare" style={sp}>
+      {/* ═══ 3. WHY SIGNUX ═══ */}
+      <section id="why-signux" style={{ ...sp, background: "#FAFAF7" }}>
         <Fade>
-          <div style={{ textAlign: "center" }}>
-            <div style={LABEL}>Why Signux</div>
-            <h2 style={{ ...H2, fontSize: isMobile ? 26 : 36, color: "var(--mk-text)" }}>
-              Not another chatbot
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: isMobile ? 32 : 40 }}>
+            <div style={{
+              fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 2,
+              textTransform: "uppercase", fontWeight: 600, color: "#B8941F", marginBottom: 14,
+            }}>
+              WHY SIGNUX
+            </div>
+            <h2 style={{
+              fontFamily: "var(--font-brand)", fontWeight: 300,
+              lineHeight: 1.18, fontSize: isMobile ? 24 : 34,
+              color: "#111111", maxWidth: 760, margin: "0 auto", marginBottom: 16,
+            }}>
+              Not another chatbot. A decision engine.
             </h2>
-            <p style={BODY}>
-              Chatbots give opinions. Signux gives structured intelligence. Each engine has its own prompt architecture, output schema, and domain knowledge base.
+            <p style={{
+              fontSize: 16, lineHeight: 1.6, color: "#5B5B5B",
+              maxWidth: 760, margin: "0 auto",
+            }}>
+              Signux is built to structure decisions, pressure-test uncertainty, and return output that is actually usable.
             </p>
           </div>
 
-          {isMobile ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                { cap: "Predict if your idea works", s: "AI simulation engine", c: "Generic opinion", co: "$5,000+" },
-                { cap: "Structured risk analysis", s: "Protect engine", c: "Bullet list", co: "$500/hr" },
-                { cap: "Competitive intelligence", s: "Compete engine", c: "Generic tips", co: "$10,000+" },
-                { cap: "Hiring evaluation", s: "Hire engine + scores", c: "Generic advice", co: "$25,000+" },
-                { cap: "Growth strategy", s: "Grow engine + levers", c: "Generic advice", co: "$5,000+" },
-                { cap: "Price", s: "Free to start", c: "$20/mo", co: "$5,000+/mo" },
-              ].map((r, i) => (
-                <div key={i} style={{ ...CARD, padding: "14px 16px" }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--mk-text)", marginBottom: 8 }}>{r.cap}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--mk-accent-gold)", fontWeight: 600 }}>Signux</span>
-                      <span style={{ color: "#22863a", fontWeight: 500 }}>{r.s}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--mk-text-tertiary)" }}>ChatGPT / Claude</span>
-                      <span style={{ color: "var(--mk-text-tertiary)" }}>{r.c}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--mk-text-tertiary)" }}>Consultant</span>
-                      <span style={{ color: "var(--mk-text-tertiary)" }}>{r.co}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--mk-border)", background: "var(--mk-card)" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--mk-border)" }}>
-                    <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: 1.5, textTransform: "uppercase", color: "var(--mk-text-tertiary)", fontWeight: 400, width: "30%" }}>Capability</th>
-                    <th style={{ padding: "14px 16px", textAlign: "center", fontWeight: 600, color: "var(--mk-accent-gold)", fontSize: 13 }}>Signux AI</th>
-                    <th style={{ padding: "14px 16px", textAlign: "center", fontWeight: 500, color: "var(--mk-text-tertiary)", fontSize: 13 }}>ChatGPT / Claude</th>
-                    <th style={{ padding: "14px 16px", textAlign: "center", fontWeight: 500, color: "var(--mk-text-tertiary)", fontSize: 13 }}>Consultant</th>
+          {/* Comparison table */}
+          <div style={{
+            background: "#FFFFFF", border: "1px solid #E8E8E3",
+            borderRadius: 16, overflow: "hidden",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.04)",
+            ...(isMobile ? { overflowX: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties : {}),
+          }}>
+            <table style={{
+              width: "100%", minWidth: isMobile ? 640 : undefined,
+              borderCollapse: "collapse", fontSize: 14,
+            }}>
+              <thead>
+                <tr style={{ background: "#F5F5F2" }}>
+                  <th style={{
+                    padding: "16px 20px", textAlign: "left", fontSize: 14,
+                    fontWeight: 600, color: "#111111", width: "28%",
+                  }}>
+                    Capability
+                  </th>
+                  <th style={{
+                    padding: "16px 20px", textAlign: "left", fontSize: 14,
+                    fontWeight: 600, color: "#111111",
+                    background: "rgba(31,58,95,0.03)",
+                    borderLeft: "2px solid rgba(31,58,95,0.10)",
+                    borderRight: "2px solid rgba(31,58,95,0.10)",
+                  }}>
+                    Signux AI
+                  </th>
+                  <th style={{
+                    padding: "16px 20px", textAlign: "left", fontSize: 14,
+                    fontWeight: 600, color: "#111111",
+                  }}>
+                    General chatbot
+                  </th>
+                  <th style={{
+                    padding: "16px 20px", textAlign: "left", fontSize: 14,
+                    fontWeight: 600, color: "#111111",
+                  }}>
+                    Traditional advisory
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  { cap: "Pressure-test a decision", s: "Structured multi-perspective simulation", c: "Single response", a: "Manual review" },
+                  { cap: "Surface key risks", s: "Built-in downside scan", c: "Depends on prompting", a: "Project-based" },
+                  { cap: "Compare options quickly", s: "Yes", c: "Partially", a: "Slow" },
+                  { cap: "Turn analysis into next action", s: "Built into the output", c: "Not consistently", a: "Depends on engagement" },
+                  { cap: "Specialized hiring / growth / risk logic", s: "Engine-specific", c: "General-purpose", a: "Separate process" },
+                  { cap: "Show disagreement explicitly", s: "Yes", c: "Usually no", a: "Depends on team dynamics" },
+                  { cap: "Improve over time through decision infrastructure", s: "Designed for this", c: "No", a: "Rarely" },
+                  { cap: "Time to first useful output", s: "Under a minute", c: "Seconds", a: "Days to weeks" },
+                ] as const).map((row, i, arr) => (
+                  <tr key={i} style={{
+                    borderTop: "1px solid #F0F0EC",
+                  }}>
+                    <td style={{
+                      padding: "16px 20px", color: "#111111", fontSize: 14,
+                      fontWeight: 500, lineHeight: 1.5,
+                    }}>
+                      {row.cap}
+                    </td>
+                    <td style={{
+                      padding: "16px 20px", color: "#1A1A1A", fontSize: 14,
+                      lineHeight: 1.5, background: "rgba(31,58,95,0.03)",
+                      borderLeft: "2px solid rgba(31,58,95,0.10)",
+                      borderRight: "2px solid rgba(31,58,95,0.10)",
+                      fontWeight: 500,
+                    }}>
+                      {row.s}
+                    </td>
+                    <td style={{
+                      padding: "16px 20px", color: "#5B5B5B", fontSize: 14,
+                      lineHeight: 1.5,
+                    }}>
+                      {row.c}
+                    </td>
+                    <td style={{
+                      padding: "16px 20px", color: "#5B5B5B", fontSize: 14,
+                      lineHeight: 1.5,
+                    }}>
+                      {row.a}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { cap: "Predict if your idea will work", s: "AI simulation", c: "Generic opinion", co: "$5,000+" },
-                    { cap: "Structured risk analysis", s: "Protect engine", c: "Bullet list", co: "$500/hr" },
-                    { cap: "Competitive intelligence", s: "Compete engine", c: "Generic tips", co: "$10,000+" },
-                    { cap: "Hiring evaluation with scores", s: "Hire engine", c: "Generic advice", co: "$25,000+" },
-                    { cap: "Growth strategy with experiments", s: "Grow engine", c: "Generic advice", co: "$5,000+" },
-                    { cap: "Execution roadmap", s: "Build engine", c: "Generic plan", co: "$50,000+" },
-                    { cap: "Price", s: "Free to start", c: "$20/mo", co: "$5,000+/mo" },
-                  ].map((row, i, arr) => (
-                    <tr key={i} style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--mk-border)" : "none" }}>
-                      <td style={{ padding: "14px 20px", color: "var(--mk-text)", fontSize: 13, fontWeight: 500 }}>{row.cap}</td>
-                      <td style={{ padding: "14px 16px", textAlign: "center" }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 6, background: "rgba(34,134,58,0.06)", border: "1px solid rgba(34,134,58,0.12)", fontSize: 12, fontWeight: 600, color: "#22863a" }}>
-                          {row.s}
-                        </span>
-                      </td>
-                      <td style={{ padding: "14px 16px", textAlign: "center", color: "var(--mk-text-tertiary)", fontSize: 12 }}>{row.c}</td>
-                      <td style={{ padding: "14px 16px", textAlign: "center", color: "var(--mk-text-tertiary)", fontSize: 12 }}>{row.co}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footnote */}
+          <div style={{
+            fontSize: 12, color: "#8A8A84", fontStyle: "italic",
+            marginTop: 14, textAlign: "center",
+          }}>
+            Illustrative product comparison for positioning purposes.
+          </div>
+
+          {/* Bottom positioning line */}
+          <div style={{
+            fontSize: 14, color: "#5B5B5B", fontStyle: "italic",
+            marginTop: 20, textAlign: "center",
+          }}>
+            Built for decisions that need more than one answer.
+          </div>
         </Fade>
       </section>
 
