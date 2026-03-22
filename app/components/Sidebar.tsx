@@ -6,6 +6,7 @@ import {
   MessageSquare, Zap, Swords, Hammer, TrendingUp, UserCheck, Shield,
   Settings, LogIn, LogOut, Trash2, FolderOpen, Plus, ChevronDown,
   X, Upload, LayoutDashboard, PanelLeft, Crown, Monitor, Sun, Moon,
+  BookOpen,
 } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
@@ -49,22 +50,21 @@ type SidebarProps = {
   tokenStatus?: { available: number; monthlyTotal: number; plan: string };
 };
 
-const ICON_IDLE = "var(--text-tertiary)";
-const ICON_ACTIVE = "var(--text-primary)";
+const ICON_IDLE = "#52525B";
+const ICON_ACTIVE = "#EDEDEF";
 
 const ICON_MAP: Record<string, any> = {
   Zap, Hammer, TrendingUp, UserCheck, Shield, Swords,
 };
 
-const MODES: { key: Mode; icon: any; label: string; color: string }[] = [
-  { key: "chat", icon: MessageSquare, label: "sidebar.mode_chat", color: ICON_IDLE },
-  ...(Object.keys(ENGINES) as EngineId[]).map((id) => ({
+/* 6 engines only — no "chat" mode. Engines are categories. */
+const ENGINE_MODES: { key: Mode; icon: any; name: string; subtitle: string }[] =
+  (Object.keys(ENGINES) as EngineId[]).map((id) => ({
     key: id as Mode,
     icon: ICON_MAP[ENGINES[id].icon] || Zap,
-    label: `sidebar.mode_${id}`,
-    color: ICON_IDLE,
-  })),
-];
+    name: ENGINES[id].name,
+    subtitle: ENGINES[id].subtitle,
+  }));
 
 /* ═══ Portal-based Sidebar Tooltip — renders in <body>, outside overflow:hidden ═══ */
 function SidebarTooltip({ show, text, anchorRef }: {
@@ -579,103 +579,118 @@ export default function Sidebar({
     const convList = conversations;
     const isLoading = loadingHistory || convList === undefined;
     const showUpgrade = tier !== "pro" && tier !== "max" && tier !== "founding";
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [hoveredMode, setHoveredMode] = useState<string | null>(null);
 
     return (
       <>
-        {/* Header — logo left, PanelLeft close button right */}
+        {/* Header — logo left, close right */}
         <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "12px 12px 12px 16px",
-          height: 56,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "12px 12px 12px 16px", height: 56,
           borderBottom: "1px solid var(--border-secondary)",
         }}>
-          {/* Logo + brand name */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <SignuxIcon variant="gold" size={20} />
             <span style={{
-              fontFamily: "var(--font-brand)",
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: 2.5,
-              color: "var(--text-primary)",
+              fontFamily: "var(--font-brand)", fontSize: 14, fontWeight: 700,
+              letterSpacing: 2.5, color: "var(--text-primary)",
             }}>
               SIGNUX
             </span>
           </div>
-
-          {/* Close button — PanelLeft icon */}
           <CloseButtonWithTooltip hovered={closeHovered} setHovered={setCloseHovered} onClick={onClose} />
         </div>
 
-        {/* New chat */}
-        <div style={{ padding: "8px 8px 8px" }}>
-          <button onClick={handleNew} style={{
-            display: "flex", alignItems: "center", gap: 10, width: "100%",
-            padding: "10px 14px", border: "1px solid var(--border-secondary)",
-            borderRadius: "var(--radius-sm)", background: "transparent",
-            cursor: "pointer", color: "var(--text-primary)", fontSize: 13,
-            transition: "all 200ms ease",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}>
-            <Plus size={16} strokeWidth={2} />
-            <span>New chat</span>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)", marginLeft: "auto" }}>⌘K</span>
-          </button>
-        </div>
-
-        {/* Projects — navigates to /projects page */}
-        <div style={{ padding: "0 8px 8px" }}>
-          <button
-            onClick={() => { router.push("/projects"); onClose(); }}
-            style={{
-              display: "flex", alignItems: "center", gap: 8, width: "100%",
-              padding: "8px 12px", border: "none",
-              borderRadius: "var(--radius-xs)", background: "transparent",
-              cursor: "pointer", color: "var(--text-secondary)", fontSize: 13,
-              transition: "all 150ms", textAlign: "left",
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-          >
-            <FolderOpen size={16} strokeWidth={1.5} style={{ color: activeProject?.color || "var(--text-tertiary)", flexShrink: 0 }} />
-            <span style={{ flex: 1 }}>Projects</span>
-            <ChevronDown size={12} style={{ flexShrink: 0, opacity: 0.3, transform: "rotate(-90deg)" }} />
-          </button>
-        </div>
-
-        <div style={{ height: 1, background: "var(--border-secondary)", margin: "0 8px 8px" }} />
-
-        {/* Mode buttons */}
-        <div style={{ padding: "0 8px 8px" }}>
-          {MODES.map(({ key, icon: Icon, label }, idx) => {
+        {/* ═══ MAIN ZONE — 6 engines ═══ */}
+        <div style={{ padding: "8px 8px 4px" }}>
+          {ENGINE_MODES.map(({ key, icon: Icon, name, subtitle }) => {
             const isActive = mode === key;
+            const isHovered = hoveredMode === key;
             return (
-            <div key={key}>
-              <button onClick={() => handleMode(key)} style={{
-                display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px",
-                border: "none", borderLeft: isActive ? "2px solid var(--accent)" : "2px solid transparent",
-                borderRadius: "var(--radius-xs)", cursor: "pointer", fontSize: 13, transition: "all 150ms", textAlign: "left",
-                background: isActive ? "var(--bg-hover)" : "none",
-                color: isActive ? ICON_ACTIVE : "var(--text-secondary)",
-                fontWeight: isActive ? 500 : 400,
-              }} onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "var(--bg-hover)"; }}
-                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
-                <Icon size={16} strokeWidth={1.5} style={{ color: isActive ? ICON_ACTIVE : ICON_IDLE }} />
-                <span style={{ flex: 1 }}>{t(label)}</span>
+              <button
+                key={key}
+                onClick={() => handleMode(key)}
+                onMouseEnter={() => setHoveredMode(key)}
+                onMouseLeave={() => setHoveredMode(null)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  width: "100%", padding: "9px 12px",
+                  border: "none",
+                  borderLeft: isActive ? "2px solid var(--accent)" : "2px solid transparent",
+                  borderRadius: "var(--radius-xs)",
+                  cursor: "pointer", fontSize: 13, textAlign: "left",
+                  background: isActive ? "var(--bg-hover)" : isHovered ? "var(--bg-hover)" : "transparent",
+                  color: isActive ? ICON_ACTIVE : ICON_IDLE,
+                  fontWeight: isActive ? 500 : 400,
+                  transition: "all 150ms",
+                  marginBottom: 1,
+                }}
+              >
+                <Icon size={16} strokeWidth={1.5} style={{ color: isActive ? ICON_ACTIVE : ICON_IDLE, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ color: isActive ? ICON_ACTIVE : isHovered ? "var(--text-secondary)" : ICON_IDLE }}>
+                    {name}
+                  </span>
+                  {/* Subtitle on hover only */}
+                  {isHovered && !isActive && (
+                    <div style={{
+                      fontSize: 11, color: "var(--text-tertiary)",
+                      marginTop: 1, lineHeight: 1.3,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>
+                      {subtitle}
+                    </div>
+                  )}
+                </div>
               </button>
-              {idx === 3 && (
-                <div style={{ height: 1, width: "calc(100% - 16px)", background: "var(--border-secondary)", margin: "4px 8px" }} />
-              )}
-            </div>
             );
           })}
         </div>
 
+        {/* ═══ DIVIDER ═══ */}
+        <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 12px 4px" }} />
+
+        {/* ═══ UTILITY ZONE ═══ */}
+        <div style={{ padding: "4px 8px" }}>
+          {/* Saved / History */}
+          <button
+            onClick={() => setHistoryOpen(!historyOpen)}
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              width: "100%", padding: "8px 12px", border: "none",
+              borderRadius: "var(--radius-xs)", cursor: "pointer",
+              fontSize: 13, textAlign: "left", background: "transparent",
+              color: ICON_IDLE, fontWeight: 400, transition: "all 150ms",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = ICON_IDLE; }}
+          >
+            <BookOpen size={16} strokeWidth={1.5} />
+            <span style={{ flex: 1 }}>Saved</span>
+            <ChevronDown size={12} style={{ opacity: 0.4, transform: historyOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 150ms" }} />
+          </button>
+
+          {/* Settings */}
+          <button
+            onClick={() => { onOpenSettings(); onClose(); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              width: "100%", padding: "8px 12px", border: "none",
+              borderRadius: "var(--radius-xs)", cursor: "pointer",
+              fontSize: 13, textAlign: "left", background: "transparent",
+              color: ICON_IDLE, fontWeight: 400, transition: "all 150ms",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = ICON_IDLE; }}
+          >
+            <Settings size={16} strokeWidth={1.5} />
+            <span style={{ flex: 1 }}>Settings</span>
+          </button>
+        </div>
+
         {/* Theme toggle */}
-        <div style={{ padding: "0 12px 4px" }}>
+        <div style={{ padding: "2px 12px 4px" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 2,
             padding: 2, borderRadius: 8,
@@ -688,18 +703,13 @@ export default function Sidebar({
             ]).map(({ value, icon: ThIcon, tip }) => {
               const active = theme === value;
               return (
-                <button
-                  key={value}
-                  title={tip}
-                  onClick={() => setTheme(value)}
-                  style={{
-                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                    padding: "5px 0", border: "none", borderRadius: 6, cursor: "pointer",
-                    background: active ? "var(--bg-hover)" : "transparent",
-                    color: active ? "var(--text-primary)" : "var(--text-tertiary)",
-                    transition: "all 150ms",
-                  }}
-                >
+                <button key={value} title={tip} onClick={() => setTheme(value)} style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "5px 0", border: "none", borderRadius: 6, cursor: "pointer",
+                  background: active ? "var(--bg-hover)" : "transparent",
+                  color: active ? ICON_ACTIVE : ICON_IDLE,
+                  transition: "all 150ms",
+                }}>
                   <ThIcon size={14} strokeWidth={1.5} />
                 </button>
               );
@@ -707,158 +717,126 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Settings button */}
-        <div style={{ padding: "0 8px 8px" }}>
-          <button
-            onClick={() => { onOpenSettings(); onClose(); }}
-            style={{
-              display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "8px 12px", border: "none",
-              borderRadius: "var(--radius-xs)", cursor: "pointer", fontSize: 13, transition: "all 0.15s", textAlign: "left",
-              background: "transparent",
-              color: "var(--text-secondary)",
-              fontWeight: 400,
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-          >
-            <Settings size={16} strokeWidth={1.5} />
-            <span style={{ flex: 1 }}>Settings</span>
-          </button>
-        </div>
-
-        {/* Usage counters for Pro users */}
-        {tier === "pro" && usage && limits && (
-          <div style={{ padding: "0 8px 8px" }}>
-            <div style={{ padding: "8px 12px", fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>
-              Usage this month
-            </div>
-            {[
-              { label: "Simulations", used: usage.simulations_month, total: limits.simulate_monthly, color: "#71717A" },
-              { label: "Research", used: usage.researches_month, total: limits.research_monthly, color: "#71717A" },
-              { label: "Protect", used: usage.protect_month, total: limits.protect_monthly, color: "#71717A" },
-              { label: "Hire", used: usage.hire_month, total: limits.hire_monthly, color: "#71717A" },
-            ].filter(u => u.total > 0 && u.total < Infinity).map(u => (
-              <div key={u.label} style={{ padding: "3px 12px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-                  <span style={{ color: "var(--text-secondary)" }}>{u.label}</span>
-                  <span style={{ color: u.used >= u.total ? "#ef4444" : "var(--text-tertiary)" }}>{u.used}/{u.total}</span>
-                </div>
-                <div style={{ height: 3, borderRadius: 2, background: "var(--border-secondary)" }}>
-                  <div style={{
-                    height: "100%", borderRadius: 2,
-                    width: `${Math.min((u.used / u.total) * 100, 100)}%`,
-                    background: u.used >= u.total ? "#ef4444" : u.color,
-                    transition: "width 300ms ease",
-                  }} />
-                </div>
-              </div>
-            ))}
+        {/* Token counter */}
+        {tokenStatus && (
+          <div style={{ padding: "2px 12px 4px", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{
+              fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 500,
+              color: tokenStatus.available <= 0 ? "#F75B5B" : ICON_IDLE,
+            }}>
+              {tokenStatus.available >= 1000 ? `${(tokenStatus.available / 1000).toFixed(0)}K` : tokenStatus.available} ST
+            </span>
+            {showUpgrade && (
+              <span
+                onClick={() => router.push("/pricing")}
+                style={{ fontSize: 10, color: "var(--text-tertiary)", cursor: "pointer", marginLeft: "auto" }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--text-secondary)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}
+              >
+                Upgrade
+              </span>
+            )}
           </div>
         )}
 
-        <div style={{ height: 1, background: "var(--border-secondary)", margin: "0 8px 8px" }} />
-
-        {/* History area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 8px", minHeight: 200 }}>
-          {activeProject && (
-            <div style={{
-              padding: "6px 12px", fontSize: 10, fontWeight: 600,
-              color: activeProject.color || "var(--accent)",
-              textTransform: "uppercase", letterSpacing: 1, opacity: 0.7,
-              display: "flex", alignItems: "center", gap: 6,
-            }}>
-              <span style={{ flex: 1 }}>{activeProject.name}</span>
-              {onOpenKnowledge && (
-                <button
-                  onClick={onOpenKnowledge}
-                  style={{
-                    background: "none", border: "none", cursor: "pointer",
-                    color: activeProject.color || "var(--accent)", padding: 2,
-                    opacity: 0.7, transition: "opacity 150ms",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = "1"}
-                  onMouseLeave={e => e.currentTarget.style.opacity = "0.7"}
-                >
-                  <Upload size={11} />
-                </button>
+        {/* ═══ HISTORY AREA (expandable) ═══ */}
+        {historyOpen && (
+          <>
+            <div style={{ height: 1, background: "var(--border-secondary)", margin: "4px 12px" }} />
+            <div style={{ flex: 1, overflowY: "auto", padding: "0 8px", minHeight: 100 }}>
+              {activeProject && (
+                <div style={{
+                  padding: "6px 12px", fontSize: 10, fontWeight: 600,
+                  color: activeProject.color || "var(--accent)",
+                  textTransform: "uppercase", letterSpacing: 1, opacity: 0.7,
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <span style={{ flex: 1 }}>{activeProject.name}</span>
+                  {onOpenKnowledge && (
+                    <button onClick={onOpenKnowledge} style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: activeProject.color || "var(--accent)", padding: 2, opacity: 0.7,
+                    }}>
+                      <Upload size={11} />
+                    </button>
+                  )}
+                </div>
               )}
-            </div>
-          )}
-          {isLoading ? (
-            <HistorySkeleton />
-          ) : convList && convList.length === 0 ? (
-            <div style={{ padding: "24px 4px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", fontStyle: "italic", opacity: 0.4 }}>
-              <MessageSquare size={12} style={{ marginBottom: 4, display: "block", margin: "0 auto 6px" }} />
-              Start a conversation
-            </div>
-          ) : convList ? (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {groupByDate(convList).map(group => (
-                <div key={group.label}>
-                  <div style={{
-                    padding: "10px 12px 4px", fontSize: 11, fontWeight: 600,
-                    color: "var(--text-tertiary)", textTransform: "uppercase",
-                    letterSpacing: 0.8,
-                  }}>
-                    {group.label}
-                  </div>
-                  {group.items.map(conv => (
-                    <ConversationItem
-                      key={conv.id}
-                      conv={conv}
-                      isActive={conv.id === activeConversationId}
-                      onLoad={() => { onLoadConversation?.(conv.id); onClose(); }}
-                      onDelete={() => onDeleteConversation?.(conv.id)}
-                    />
+              {isLoading ? (
+                <HistorySkeleton />
+              ) : convList && convList.length === 0 ? (
+                <div style={{ padding: "16px 4px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", opacity: 0.4 }}>
+                  No saved conversations yet
+                </div>
+              ) : convList ? (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {groupByDate(convList).map(group => (
+                    <div key={group.label}>
+                      <div style={{
+                        padding: "10px 12px 4px", fontSize: 11, fontWeight: 600,
+                        color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 0.8,
+                      }}>
+                        {group.label}
+                      </div>
+                      {group.items.map(conv => (
+                        <ConversationItem
+                          key={conv.id} conv={conv}
+                          isActive={conv.id === activeConversationId}
+                          onLoad={() => { onLoadConversation?.(conv.id); onClose(); }}
+                          onDelete={() => onDeleteConversation?.(conv.id)}
+                        />
+                      ))}
+                    </div>
                   ))}
                 </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+              ) : null}
 
-        {/* Saved Simulations */}
-        {savedSimulations.length > 0 && (
-          <div style={{ borderTop: "1px solid var(--border-secondary)", padding: "8px 8px 0" }}>
-            <div style={{
-              padding: "6px 12px", fontSize: 10, fontWeight: 600,
-              color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 1,
-              display: "flex", alignItems: "center", gap: 6,
-            }}>
-              <Zap size={10} /> Saved Simulations
-            </div>
-            <div style={{ maxHeight: 160, overflowY: "auto" }}>
-              {savedSimulations.slice(0, 10).map((sim: any) => (
-                <div
-                  key={sim.id}
-                  onClick={() => { onLoadSimulation?.(sim.id); onClose(); }}
-                  style={{
-                    padding: "8px 12px", borderRadius: 6, cursor: "pointer",
-                    transition: "background 150ms", fontSize: 12,
-                    color: "var(--text-secondary)",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                >
+              {/* Saved Simulations */}
+              {savedSimulations.length > 0 && (
+                <div style={{ borderTop: "1px solid var(--border-secondary)", marginTop: 4, paddingTop: 4 }}>
                   <div style={{
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    fontWeight: 500, color: "var(--text-primary)", marginBottom: 2,
+                    padding: "6px 12px", fontSize: 10, fontWeight: 600,
+                    color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: 1,
+                    display: "flex", alignItems: "center", gap: 6,
                   }}>
-                    {sim.scenario?.slice(0, 60) || "Untitled"}
+                    <Zap size={10} /> Saved Simulations
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--text-tertiary)", display: "flex", gap: 8 }}>
-                    <span>{new Date(sim.created_at).toLocaleDateString()}</span>
-                    {sim.verdict?.viability != null && (
-                      <span style={{ color: "var(--text-secondary)" }}>{sim.verdict.viability}/10</span>
-                    )}
+                  <div style={{ maxHeight: 140, overflowY: "auto" }}>
+                    {savedSimulations.slice(0, 10).map((sim: any) => (
+                      <div key={sim.id}
+                        onClick={() => { onLoadSimulation?.(sim.id); onClose(); }}
+                        style={{
+                          padding: "8px 12px", borderRadius: 6, cursor: "pointer",
+                          transition: "background 150ms", fontSize: 12, color: "var(--text-secondary)",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                      >
+                        <div style={{
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          fontWeight: 500, color: "var(--text-primary)", marginBottom: 2,
+                        }}>
+                          {sim.scenario?.slice(0, 60) || "Untitled"}
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--text-tertiary)", display: "flex", gap: 8 }}>
+                          <span>{new Date(sim.created_at).toLocaleDateString()}</span>
+                          {sim.verdict?.viability != null && (
+                            <span style={{ color: "var(--text-secondary)" }}>{sim.verdict.viability}/10</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          </div>
+          </>
         )}
 
-        {/* Bottom */}
+        {/* Spacer when history is closed */}
+        {!historyOpen && <div style={{ flex: 1 }} />}
+
+        {/* ═══ BOTTOM — avatar + plan badge ═══ */}
         <div style={{ borderTop: "1px solid var(--border-secondary)", padding: 8 }}>
           {/* Decision follow-up badge */}
           {pendingDecisions > 0 && (
@@ -882,42 +860,7 @@ export default function Sidebar({
             </a>
           )}
 
-          {/* Token counter — mono font, minimal */}
-          {tokenStatus && (
-            <div style={{
-              margin: "0 0 4px", padding: "6px 12px",
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <Zap size={12} style={{ color: tokenStatus.available <= 0 ? "#F75B5B" : "#C8A84E", flexShrink: 0 }} />
-              <span style={{
-                fontSize: 11, fontWeight: 500, fontFamily: "var(--font-mono)",
-                color: tokenStatus.available <= 0 ? "#F75B5B" : "var(--text-secondary)",
-              }}>
-                {tokenStatus.available >= 1000 ? `${(tokenStatus.available / 1000).toFixed(0)}K` : tokenStatus.available} ST
-              </span>
-            </div>
-          )}
-
-          {/* Upgrade — subtle link, not a loud card */}
-          {showUpgrade && (
-            <button
-              onClick={() => router.push("/pricing")}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                padding: "6px 12px", margin: "0 0 4px",
-                border: "none", borderRadius: 6, background: "transparent",
-                cursor: "pointer", transition: "background 150ms",
-                fontSize: 12, color: "var(--text-tertiary)", textAlign: "left",
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-            >
-              <Crown size={13} strokeWidth={1.5} style={{ color: "#C8A84E" }} />
-              <span>Upgrade to Pro</span>
-            </button>
-          )}
-
-          {/* Profile row — click opens popover */}
+          {/* Profile row + plan badge */}
           {isLoggedIn && displayName ? (
             <button
               ref={avatarRef}
@@ -945,10 +888,24 @@ export default function Sidebar({
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
                   {displayName}
                 </div>
               </div>
+              {/* Plan badge tiny */}
+              <span style={{
+                fontSize: 9, fontFamily: "var(--font-mono)", fontWeight: 600,
+                padding: "2px 6px", borderRadius: 50, letterSpacing: 0.5,
+                background: tier === "max" || tier === "founding" ? "rgba(168,85,247,0.08)" :
+                            tier === "pro" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
+                color: tier === "max" || tier === "founding" ? "#A855F7" :
+                       tier === "pro" ? "var(--text-secondary)" : "var(--text-tertiary)",
+              }}>
+                {tier === "max" || tier === "founding" ? "MAX" : tier === "pro" ? "PRO" : "FREE"}
+              </span>
             </button>
           ) : !isLoggedIn ? (
             <button onClick={() => { window.location.href = "/login"; }} style={{
@@ -971,68 +928,48 @@ export default function Sidebar({
   function renderCollapsedContent() {
     return (
       <div style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        height: "100%",
-        padding: "16px 0",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        height: "100%", padding: "16px 0",
       }}>
-        {/* Logo — hover substitutes PanelLeft icon, click opens sidebar */}
+        {/* Logo */}
         <CollapsedLogoButton onClick={onOpen} />
 
-        <div style={{ height: 16 }} />
+        <div style={{ height: 12 }} />
 
-        {/* New chat */}
-        <SidebarIconButton
-          icon={<Plus size={iconSize} strokeWidth={2} />}
-          tooltip="New chat"
-          onClick={handleNew}
-          isPrimary
-        />
-
-        {/* Separator */}
-        <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
-
-        {/* Mode buttons */}
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 8,
-          flex: 1,
-        }}>
-          {MODES.map(({ key, icon: Icon, label, color }, idx) => (
-            <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <SidebarIconButton
-                icon={<Icon size={iconSize} strokeWidth={iconSW} />}
-                tooltip={t(label)}
-                active={mode === key}
-                modeColor={color}
-                onClick={() => handleMode(key)}
-              />
-              {idx === 3 && (
-                <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "6px 0", opacity: 0.5 }} />
-              )}
-            </div>
+        {/* ═══ MAIN ZONE — 6 engine icons ═══ */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+          {ENGINE_MODES.map(({ key, icon: Icon, name }) => (
+            <SidebarIconButton
+              key={key}
+              icon={<Icon size={iconSize} strokeWidth={iconSW} />}
+              tooltip={name}
+              active={mode === key}
+              modeColor={ICON_IDLE}
+              onClick={() => handleMode(key)}
+            />
           ))}
         </div>
 
-        {/* Separator */}
+        {/* ═══ DIVIDER ═══ */}
         <div style={{ width: 24, height: 1, background: "var(--border-secondary)", margin: "8px 0", opacity: 0.5 }} />
 
-        {/* Upgrade to Pro — replaces Settings (Settings is in profile menu) */}
-        {tier !== "pro" && tier !== "max" && tier !== "founding" && (
-          <SidebarIconButton
-            icon={<Crown size={iconSize} strokeWidth={iconSW} />}
-            tooltip="Upgrade to Pro"
-            modeColor="#C8A84E"
-            onClick={() => router.push("/pricing")}
-          />
-        )}
+        {/* ═══ UTILITY — history + settings ═══ */}
+        <SidebarIconButton
+          icon={<BookOpen size={iconSize} strokeWidth={iconSW} />}
+          tooltip="Saved"
+          modeColor={ICON_IDLE}
+          onClick={onOpen}
+        />
+        <SidebarIconButton
+          icon={<Settings size={iconSize} strokeWidth={iconSW} />}
+          tooltip="Settings"
+          modeColor={ICON_IDLE}
+          onClick={() => onOpenSettings()}
+        />
 
-        <div style={{ height: 8 }} />
+        <div style={{ flex: 1 }} />
 
-        {/* Bottom — avatar */}
+        {/* ═══ BOTTOM — avatar ═══ */}
         {isLoggedIn ? (
           <SidebarIconButton
             icon={
@@ -1041,8 +978,7 @@ export default function Sidebar({
               ) : (
                 <div style={{
                   width: 28, height: 28, borderRadius: "50%",
-                  background: "var(--bg-hover)",
-                  border: "1px solid var(--border-primary)",
+                  background: "var(--bg-hover)", border: "1px solid var(--border-primary)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 11, fontWeight: 600, color: "var(--text-primary)",
                 }}>
