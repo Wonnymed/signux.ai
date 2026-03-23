@@ -22,6 +22,7 @@ const FOOTER_COLS: { header: string; links: FooterLink[] }[] = [
   ]},
   { header: "COMPANY", links: [
     { text: "About", href: "/about" },
+    { text: "Contact", href: "mailto:hello@signux.ai" },
   ]},
 ];
 
@@ -135,7 +136,7 @@ export default function SignuxFooter({ onSetMode }: { onSetMode?: (m: Mode) => v
         </div>
         <div style={{ display: "flex", gap: 16 }}>
           <Link href="/terms" style={{ fontSize: 11, color: "var(--text-tertiary)", textDecoration: "none" }}>Terms</Link>
-          <Link href="/terms" style={{ fontSize: 11, color: "var(--text-tertiary)", textDecoration: "none" }}>Privacy</Link>
+          <Link href="/privacy" style={{ fontSize: 11, color: "var(--text-tertiary)", textDecoration: "none" }}>Privacy</Link>
         </div>
       </div>
     </footer>

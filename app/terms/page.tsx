@@ -1,9 +1,5 @@
 import Link from "next/link";
 
-export const metadata = {
-  title: "Terms of Service — Signux AI",
-};
-
 export default function TermsPage() {
   return (
     <div style={{

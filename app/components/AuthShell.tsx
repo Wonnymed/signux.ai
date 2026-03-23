@@ -338,7 +338,7 @@ export function AuthShell({
             onMouseLeave={e => e.currentTarget.style.color = Z600}
           >Terms</a>
           {" "}and{" "}
-          <a href="/terms" style={{ color: Z600, textDecoration: "none" }}
+          <a href="/privacy" style={{ color: Z600, textDecoration: "none" }}
             onMouseEnter={e => e.currentTarget.style.color = Z400}
             onMouseLeave={e => e.currentTarget.style.color = Z600}
           >Privacy Policy</a>

@@ -1229,7 +1229,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                 </div>
               </div>
 
-              {/* Video area — placeholder until real video is recorded */}
+              {/* Video area */}
               <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
                 <div style={{
                   position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
@@ -1245,7 +1245,7 @@ Stay in character. Answer questions from YOUR perspective as this specialist. Be
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: "#EDEDEF", margin: "0 0 6px" }}>
-                      Demo video coming soon
+                      Try it live
                     </h3>
                     <p style={{ fontSize: 13, color: "rgba(237,237,239,0.4)", margin: 0 }}>
                       10 AI agents debating a real business scenario in real-time

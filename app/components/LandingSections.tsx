@@ -156,16 +156,18 @@ export default function LandingSections() {
               display: "flex", alignItems: "center", justifyContent: "center",
               flexDirection: "column", gap: 12,
             }}>
-              {/* Placeholder — replace with actual screenshot/video */}
-              <SignuxIcon size={28} variant="gold" />
+              <SignuxIcon size={32} variant="gold" />
               <span style={{
-                fontFamily: "var(--font-mono)", fontSize: 12, letterSpacing: 1,
-                color: "#8A8A84",
+                fontFamily: "var(--font-brand)", fontSize: 20, fontWeight: 700,
+                letterSpacing: 3, color: "#1A1A19",
               }}>
-                Live product preview
+                SIGNUX <span style={{ fontWeight: 300, opacity: 0.3, letterSpacing: 2 }}>AI</span>
               </span>
-              <span style={{ fontSize: 13, color: "#5B5B5B" }}>
-                A real Signux screenshot will appear here.
+              <span style={{
+                fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 1,
+                color: "#8A8A84", textTransform: "uppercase" as React.CSSProperties["textTransform"],
+              }}>
+                Decision Operating System
               </span>
             </div>
 
@@ -178,11 +180,11 @@ export default function LandingSections() {
                 fontSize: 12, color: "var(--mk-text-tertiary)", fontFamily: "var(--font-mono)",
                 letterSpacing: 0.3,
               }}>
-                Actual Signux simulation
+                Simulate · Build · Grow · Hire · Protect · Compete
               </span>
               <button
                 onClick={() => {
-                  const el = document.getElementById("demo");
+                  const el = document.getElementById("engines");
                   el?.scrollIntoView({ behavior: "smooth" });
                 }}
                 style={{
@@ -191,7 +193,7 @@ export default function LandingSections() {
                   padding: 0, display: "flex", alignItems: "center", gap: 4,
                 }}
               >
-                Watch demo <ArrowRight size={12} />
+                Explore engines <ArrowRight size={12} />
               </button>
             </div>
 

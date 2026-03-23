@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /chat
+Disallow: /dashboard
+Disallow: /billing
+Disallow: /saved
+Disallow: /recent
+Disallow: /compare
+Disallow: /what-if
+Disallow: /usage
+Disallow: /projects
+Disallow: /decisions
+Disallow: /onboarding
+
+Sitemap: https://signux-ai.vercel.app/sitemap.xml
