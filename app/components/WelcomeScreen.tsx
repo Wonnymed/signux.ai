@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
@@ -7,14 +7,7 @@ import type { Mode } from "../lib/types";
 import { ENGINES, type EngineId } from "../lib/engines";
 import { Zap, Hammer, TrendingUp, UserCheck, Shield, Swords, ArrowRight, RefreshCw } from "lucide-react";
 
-/* ═══ Zinc palette ═══ */
-const Z700 = "#3F3F46";
-const Z600 = "#52525B";
-const Z500 = "#71717A";
-const Z400 = "#A1A1AA";
-const Z300 = "#D4D4D8";
-const Z200 = "#E4E4E7";
-const Z800 = "#27272A";
+const GOLD = "#C8A84E";
 
 const ICON_MAP: Record<string, typeof Zap> = {
   Zap, Hammer, TrendingUp, UserCheck, Shield, Swords,
@@ -59,20 +52,10 @@ export default function WelcomeScreen({
   onToast, onSwitchMode, onRouteAndSwitch,
 }: WelcomeScreenProps) {
   const isMobile = useIsMobile();
-  const [showScrollHint, setShowScrollHint] = useState(true);
   const [hoveredEngine, setHoveredEngine] = useState<string | null>(null);
   const [routing, setRouting] = useState(false);
   const [routeResult, setRouteResult] = useState<RoutingResult | null>(null);
   const [routedQuestion, setRoutedQuestion] = useState("");
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      setShowScrollHint(scrollY < 80);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const handleAskSignux = useCallback(async () => {
     const q = input.trim();
@@ -91,7 +74,6 @@ export default function WelcomeScreen({
       const data: RoutingResult = await res.json();
       setRouteResult(data);
 
-      // High confidence: auto-route after brief display
       if (data.confidence === "high" && !data.clarification) {
         setTimeout(() => {
           onRouteAndSwitch?.(q, data.engine as Mode);
@@ -119,7 +101,6 @@ export default function WelcomeScreen({
     setRoutedQuestion("");
   };
 
-  // If we have a routing result, show the routing card
   const showRoutingState = routing || routeResult;
 
   return (
@@ -127,74 +108,38 @@ export default function WelcomeScreen({
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "flex-start",
-      minHeight: isMobile ? "calc(100vh - 48px)" : "calc(100vh - 108px)",
+      justifyContent: "center",
+      minHeight: isMobile ? "calc(100vh - 48px)" : "100vh",
       padding: isMobile ? "0 20px" : "0 32px",
-      paddingTop: isMobile ? "8vh" : "clamp(48px, 10vh, 120px)",
       width: "100%",
-      position: "relative",
     }}>
 
-      {/* Logo block */}
+      {/* ═══ HERO: Logo + Brand ═══ */}
       <div style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: isMobile ? 8 : 10,
-        marginBottom: isMobile ? "clamp(24px, 4vh, 40px)" : "clamp(28px, 5vh, 56px)",
+        gap: isMobile ? 12 : 16,
+        marginBottom: isMobile ? 32 : 40,
       }}>
-        <SignuxIcon size={isMobile ? 32 : 38} variant="gold" />
-        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-          <span style={{
-            fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 22 : 28,
-            fontWeight: 300,
-            letterSpacing: 8,
-            color: Z200,
-          }}>
-            SIGNUX
-          </span>
-          <span style={{
-            fontFamily: "var(--font-brand)",
-            fontSize: isMobile ? 22 : 28,
-            fontWeight: 300,
-            letterSpacing: 8,
-            color: Z700,
-          }}>
-            AI
-          </span>
-        </div>
+        <SignuxIcon size={isMobile ? 64 : 88} variant="gold" />
+        <span style={{
+          fontFamily: "var(--font-brand)",
+          fontSize: isMobile ? 24 : 30,
+          fontWeight: 300,
+          letterSpacing: 8,
+          color: "var(--text-primary)",
+        }}>
+          SIGNUX <span style={{ color: "var(--text-tertiary)" }}>AI</span>
+        </span>
       </div>
 
-      {/* Headline */}
-      <h1 style={{
-        fontSize: isMobile ? 26 : 34,
-        fontWeight: 300,
-        color: Z200,
-        margin: 0,
-        marginBottom: 10,
-        textAlign: "center",
-        lineHeight: 1.25,
-      }}>
-        What are you trying to decide?
-      </h1>
-      <p style={{
-        fontSize: 13.5,
-        color: Z500,
-        margin: 0,
-        marginBottom: isMobile ? 20 : 28,
-        textAlign: "center",
-        letterSpacing: 0.1,
-      }}>
-        Describe the decision. Signux routes it to the right engine.
-      </p>
-
-      {/* Composer */}
+      {/* ═══ INPUT ═══ */}
       {!showRoutingState && (
         <div style={{
           width: "100%",
-          maxWidth: isMobile ? 680 : "clamp(580px, 48vw, 760px)",
-          marginBottom: isMobile ? 16 : 24,
+          maxWidth: isMobile ? 680 : "clamp(540px, 44vw, 720px)",
+          marginBottom: isMobile ? 24 : 32,
         }}>
           <ChatInput
             value={input}
@@ -212,10 +157,7 @@ export default function WelcomeScreen({
       )}
 
       {/* ═══ ROUTING STATE ═══ */}
-      {routing && !routeResult && (
-        <RoutingLoader />
-      )}
-
+      {routing && !routeResult && <RoutingLoader />}
       {routeResult && (
         <RoutingCard
           result={routeResult}
@@ -227,27 +169,24 @@ export default function WelcomeScreen({
         />
       )}
 
-      {/* "Or choose an engine" — shown only when NOT routing */}
+      {/* ═══ ENGINE GRID ═══ */}
       {!showRoutingState && (
         <>
           <span style={{
-            fontSize: 11.5,
-            color: Z600,
-            marginBottom: 12,
-            fontFamily: "var(--font-mono)",
-            letterSpacing: 1,
+            fontSize: 12,
+            color: "var(--text-tertiary)",
+            marginBottom: 14,
+            letterSpacing: 0.3,
           }}>
             Or choose an engine directly
           </span>
 
-          {/* Engine grid */}
           <div style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr",
             gap: 8,
             width: "100%",
-            maxWidth: isMobile ? 400 : 600,
-            marginBottom: 24,
+            maxWidth: isMobile ? 400 : 560,
           }}>
             {ENGINE_LIST.map((engine) => {
               const Icon = ICON_MAP[engine.icon] || Zap;
@@ -262,13 +201,11 @@ export default function WelcomeScreen({
                   onMouseLeave={() => setHoveredEngine(null)}
                   style={{
                     display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    gap: 7,
+                    alignItems: "center",
+                    gap: 10,
                     padding: isMobile ? "12px 12px" : "14px 16px",
                     borderRadius: 10,
-                    border: `1px solid ${isHovered ? `${eColor}4D` : Z800}`,
-                    borderBottom: `2px solid ${eColor}33`,
+                    border: `1px solid ${isHovered ? `${eColor}40` : "var(--border-primary)"}`,
                     background: isHovered ? `${eColor}08` : "transparent",
                     cursor: "pointer",
                     transition: "border-color 180ms ease-out, background 180ms ease-out",
@@ -276,59 +213,14 @@ export default function WelcomeScreen({
                   }}
                 >
                   <Icon size={18} color={eColor} strokeWidth={1.5} />
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 500, color: Z200 }}>
-                      {engine.name}
-                    </span>
-                    <span style={{ fontSize: 11.5, color: Z600, lineHeight: 1.4 }}>
-                      {engine.subtitle}
-                    </span>
-                  </div>
+                  <span style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text-primary)" }}>
+                    {engine.name}
+                  </span>
                 </button>
               );
             })}
           </div>
-
-          {/* Microcopy */}
-          <span style={{
-            fontSize: 11,
-            color: Z700,
-            textAlign: "center",
-            maxWidth: 360,
-            lineHeight: 1.5,
-          }}>
-            Six engines. One decision layer.
-          </span>
         </>
-      )}
-
-      {/* Scroll Hint */}
-      {!showRoutingState && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: isMobile ? 20 : 28,
-            left: "50%",
-            transform: "translateX(-50%)",
-            opacity: showScrollHint ? 1 : 0,
-            transition: "opacity 0.5s ease",
-            pointerEvents: "none",
-          }}
-        >
-          <svg
-            width={isMobile ? 18 : 20}
-            height={isMobile ? 18 : 20}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="rgba(255,255,255,0.2)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ animation: "scrollHintBounce 2.5s ease-in-out infinite" }}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </div>
       )}
     </div>
   );
@@ -346,14 +238,14 @@ function RoutingLoader() {
     }}>
       <div style={{
         width: 32, height: 32,
-        border: `2px solid ${Z800}`,
-        borderTopColor: Z400,
+        border: "2px solid var(--border-primary)",
+        borderTopColor: "var(--text-tertiary)",
         borderRadius: "50%",
         animation: "spin 0.8s linear infinite",
       }} />
       <span style={{
         fontSize: 12.5,
-        color: Z500,
+        color: "var(--text-secondary)",
         fontFamily: "var(--font-mono)",
         letterSpacing: 0.5,
       }}>
@@ -391,8 +283,8 @@ function RoutingCard({
       maxWidth: isMobile ? 480 : 520,
       padding: isMobile ? "20px 18px" : "24px 28px",
       borderRadius: 14,
-      border: `1px solid ${Z800}`,
-      background: "rgba(255,255,255,0.015)",
+      border: "1px solid var(--border-primary)",
+      background: "var(--bg-card)",
       display: "flex",
       flexDirection: "column",
       gap: 16,
@@ -400,10 +292,10 @@ function RoutingCard({
       {/* Question echo */}
       <div style={{
         fontSize: 12,
-        color: Z600,
+        color: "var(--text-secondary)",
         padding: "8px 12px",
         borderRadius: 8,
-        background: "rgba(255,255,255,0.02)",
+        background: "var(--bg-secondary)",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
@@ -415,17 +307,17 @@ function RoutingCard({
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{
           width: 36, height: 36, borderRadius: 10,
-          background: "rgba(255,255,255,0.04)",
+          background: "var(--bg-secondary)",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
-          <Icon size={18} strokeWidth={1.5} color={Z300} />
+          <Icon size={18} strokeWidth={1.5} color="var(--text-primary)" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14.5, fontWeight: 500, color: Z200, marginBottom: 2 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 500, color: "var(--text-primary)", marginBottom: 2 }}>
             {isAutoRouting ? `Routing to ${engineData?.name}` : `Routed to ${engineData?.name}`}
           </div>
-          <div style={{ fontSize: 12, color: Z500, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
             {result.reasoning}
           </div>
         </div>
@@ -435,10 +327,10 @@ function RoutingCard({
       {result.clarification && (
         <div style={{
           fontSize: 12.5,
-          color: Z400,
+          color: "var(--text-secondary)",
           padding: "10px 14px",
           borderRadius: 8,
-          border: `1px solid ${Z800}`,
+          border: "1px solid var(--border-primary)",
           lineHeight: 1.5,
         }}>
           {result.clarification}
@@ -449,7 +341,7 @@ function RoutingCard({
       {isAutoRouting && (
         <div style={{
           display: "flex", alignItems: "center", gap: 6,
-          fontSize: 11.5, color: Z600, fontFamily: "var(--font-mono)",
+          fontSize: 11.5, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)",
         }}>
           <div style={{
             width: 6, height: 6, borderRadius: "50%",
@@ -464,7 +356,6 @@ function RoutingCard({
       {/* Actions — medium/low confidence */}
       {!isAutoRouting && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {/* Primary: Continue */}
           <button
             onClick={() => onConfirm(result.engine)}
             onMouseEnter={() => setConfirmHovered(true)}
@@ -472,9 +363,9 @@ function RoutingCard({
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "8px 16px", borderRadius: 8,
-              background: confirmHovered ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${confirmHovered ? Z600 : Z800}`,
-              color: Z200, fontSize: 12.5, fontWeight: 500,
+              background: confirmHovered ? "var(--bg-hover)" : "var(--bg-secondary)",
+              border: `1px solid ${confirmHovered ? "var(--border-hover)" : "var(--border-primary)"}`,
+              color: "var(--text-primary)", fontSize: 12.5, fontWeight: 500,
               cursor: "pointer",
               transition: "background 180ms ease-out, border-color 180ms ease-out",
             }}
@@ -483,7 +374,6 @@ function RoutingCard({
             <ArrowRight size={13} strokeWidth={1.5} />
           </button>
 
-          {/* Alternate engine */}
           {altEngineData && (
             <button
               onClick={() => onSwitch(result.alternate!)}
@@ -493,8 +383,8 @@ function RoutingCard({
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "8px 14px", borderRadius: 8,
                 background: "transparent",
-                border: `1px solid ${altHovered ? Z600 : Z800}`,
-                color: altHovered ? Z300 : Z500, fontSize: 12.5, fontWeight: 400,
+                border: `1px solid ${altHovered ? "var(--border-hover)" : "var(--border-primary)"}`,
+                color: altHovered ? "var(--text-primary)" : "var(--text-secondary)", fontSize: 12.5, fontWeight: 400,
                 cursor: "pointer",
                 transition: "border-color 180ms ease-out, color 180ms ease-out",
               }}
@@ -503,7 +393,6 @@ function RoutingCard({
             </button>
           )}
 
-          {/* Refine */}
           <button
             onClick={onRefine}
             onMouseEnter={() => setRefineHovered(true)}
@@ -513,7 +402,7 @@ function RoutingCard({
               padding: "8px 12px", borderRadius: 8,
               background: "transparent",
               border: "none",
-              color: refineHovered ? Z400 : Z600, fontSize: 12, fontWeight: 400,
+              color: refineHovered ? "var(--text-secondary)" : "var(--text-tertiary)", fontSize: 12, fontWeight: 400,
               cursor: "pointer",
               transition: "color 180ms ease-out",
             }}

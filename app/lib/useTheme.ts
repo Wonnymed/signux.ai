@@ -6,17 +6,18 @@ export type Theme = "auto" | "light" | "dark";
 function getEffectiveScheme(theme: Theme): "light" | "dark" {
   if (theme !== "auto") return theme;
   if (typeof window !== "undefined") {
-    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
-  return "dark";
+  return "light";
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>("auto");
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
     const saved = localStorage.getItem("signux-theme") as Theme | null;
     if (saved) setTheme(saved);
+    else setTheme("light");
   }, []);
 
   useEffect(() => {

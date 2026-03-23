@@ -1050,16 +1050,38 @@ function ChatPage() {
       <OfflineBanner />
       <ModeTransition mode={mode} isTransitioning={modeTransitioning} onComplete={handleTransitionComplete} />
 
-      {/* ═══ Mobile header ═══ */}
-      {isMobile && (
+      {/* ═══ Mobile header — only when NOT logged in ═══ */}
+      {isMobile && !authUser && (
         <TopBar
           mode={mode}
           isMobile={true}
           authUser={authUser}
           onOpenSidebar={() => setSidebarOpen(true)}
-          onNewConversation={onNewConversation}
           sidebarOpen={sidebarOpen}
         />
+      )}
+
+      {/* ═══ Mobile hamburger — logged-in users (no TopBar) ═══ */}
+      {isMobile && authUser && !sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          style={{
+            position: "fixed",
+            top: 10,
+            left: 10,
+            zIndex: 50,
+            width: 36, height: 36,
+            borderRadius: 8,
+            background: "var(--bg-primary)",
+            border: "1px solid var(--border-primary)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer",
+            color: "var(--text-secondary)",
+            boxShadow: "var(--shadow-sm)",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
       )}
 
       <Sidebar
@@ -1100,19 +1122,17 @@ function ChatPage() {
         flex: 1, display: "flex", flexDirection: "column",
         background: "var(--bg-primary)", minWidth: 0, minHeight: 0,
         overflowY: "auto", overflowX: "hidden",
-        paddingTop: isMobile ? 48 : 0,
+        paddingTop: (isMobile && !authUser) ? 48 : 0,
         marginLeft: isMobile ? 0 : (sidebarOpen ? 260 : 56),
         transition: "margin-left 200ms ease",
       }}>
-        {/* ═══ Desktop top bar — context + actions ═══ */}
-        {!isMobile && (
+        {/* ═══ Desktop top bar — only when NOT logged in ═══ */}
+        {!isMobile && !authUser && (
           <TopBar
             mode={mode}
             isMobile={false}
             authUser={authUser}
             onOpenSidebar={() => setSidebarOpen(true)}
-            onNewConversation={onNewConversation}
-            tokenStatus={{ available: tokens.available, monthlyTotal: tokens.monthlyTotal, plan: tokens.plan }}
             sidebarOpen={sidebarOpen}
           />
         )}

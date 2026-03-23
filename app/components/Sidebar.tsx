@@ -7,6 +7,7 @@ import {
   Settings, LogIn, LogOut, Trash2, ChevronDown,
   LayoutDashboard, PanelLeft, Monitor, Sun, Moon, Home,
   BookOpen, Clock, CreditCard, HelpCircle, BarChart3, GitCompareArrows, FlaskConical,
+  Star,
 } from "lucide-react";
 import { SignuxIcon } from "./SignuxIcon";
 import { t } from "../lib/i18n";
@@ -559,25 +560,12 @@ export default function Sidebar({
           position: "fixed", top: 0, left: 0, bottom: 0, width: 280, zIndex: 200,
           transform: open ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 250ms ease",
-          background: "var(--bg-primary)", borderRight: "1px solid var(--border-primary)",
+          background: "var(--sidebar-bg, var(--bg-primary))", borderRight: "1px solid var(--border-primary)",
           display: "flex", flexDirection: "column",
         }}>
           {renderExpandedContent()}
         </aside>
 
-        {/* Profile popover — portal */}
-        <ProfilePopover
-          anchorRef={avatarRef}
-          isOpen={profilePopoverOpen}
-          onClose={() => setProfilePopoverOpen(false)}
-          authUser={authUser}
-          userInitials={userInitials}
-          displayName={displayName}
-          tier={tier}
-          onOpenSettings={() => { onOpenSettings(); onClose(); }}
-          onSignOut={onSignOut ? () => { onSignOut(); onClose(); } : undefined}
-          sidebarWidth={280}
-        />
       </>
     );
   }
@@ -605,7 +593,7 @@ export default function Sidebar({
         height: "100vh",
         width: sidebarWidth,
         zIndex: 45,
-        background: "var(--bg-primary)",
+        background: "var(--sidebar-bg, var(--bg-primary))",
         borderRight: "1px solid var(--border-primary)",
         display: "flex",
         flexDirection: "column",
@@ -615,19 +603,6 @@ export default function Sidebar({
         {open ? renderExpandedContent() : renderCollapsedContent()}
       </aside>
 
-      {/* Profile popover — portal, outside sidebar clipping */}
-      <ProfilePopover
-        anchorRef={open ? avatarRef : avatarCollapsedRef}
-        isOpen={profilePopoverOpen}
-        onClose={() => setProfilePopoverOpen(false)}
-        authUser={authUser}
-        userInitials={userInitials}
-        displayName={displayName}
-        tier={tier}
-        onOpenSettings={() => { onOpenSettings(); if (open) onClose(); }}
-        onSignOut={onSignOut ? () => { onSignOut(); if (open) onClose(); } : undefined}
-        sidebarWidth={sidebarWidth}
-      />
     </>
   );
 
@@ -647,7 +622,7 @@ export default function Sidebar({
             <SignuxIcon variant="gold" size={17} />
             <span style={{
               fontFamily: "var(--font-brand)", fontSize: 12.5, fontWeight: 500,
-              letterSpacing: 4, color: Z200,
+              letterSpacing: 4, color: "var(--text-primary)",
             }}>
               SIGNUX
             </span>
@@ -671,15 +646,15 @@ export default function Sidebar({
                     borderRadius: 8,
                     cursor: "pointer", fontSize: 13.5, textAlign: "left",
                     background: isHomeActive ? `rgba(200,168,78,0.06)` : "transparent",
-                    color: isHomeActive ? Z200 : Z500,
+                    color: isHomeActive ? "var(--text-primary)" : "var(--text-secondary)",
                     fontWeight: isHomeActive ? 500 : 420,
                     letterSpacing: 0.1,
                     transition: "background 180ms ease-out, color 180ms ease-out",
                   }}
-                  onMouseEnter={e => { if (!isHomeActive) { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = Z400; } }}
-                  onMouseLeave={e => { if (!isHomeActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = Z500; } }}
+                  onMouseEnter={e => { if (!isHomeActive) { e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.03))"; } }}
+                  onMouseLeave={e => { if (!isHomeActive) { e.currentTarget.style.background = "transparent"; } }}
                 >
-                  <Home size={18} strokeWidth={1.5} style={{ color: isHomeActive ? SIGNUX_GOLD : Z600, flexShrink: 0, transition: "color 180ms ease-out" }} />
+                  <Home size={18} strokeWidth={1.5} style={{ color: isHomeActive ? SIGNUX_GOLD : "#9CA3AF", flexShrink: 0, transition: "color 180ms ease-out" }} />
                   <span>Home</span>
                 </button>
               );
@@ -689,17 +664,10 @@ export default function Sidebar({
 
         {/* ═══ ZONE A — DECISION ENGINES ═══ */}
         <div style={{ padding: "8px 12px 0", flexShrink: 0 }}>
-          <div style={{
-            fontSize: 9.5, fontFamily: "var(--font-mono)", fontWeight: 500,
-            letterSpacing: 1.8, color: Z700,
-            padding: "0 10px 10px", textTransform: "uppercase",
-          }}>
-            Decision Engines
-          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {ENGINE_MODES.map(({ key, icon: Icon, name }) => {
               const isActive = mode === key;
-              const engineColor = ENGINES[key as EngineId]?.color || Z400;
+              const engineColor = ENGINES[key as EngineId]?.color || "#9CA3AF";
               return (
                 <button
                   key={key}
@@ -712,15 +680,15 @@ export default function Sidebar({
                     borderRadius: 8,
                     cursor: "pointer", fontSize: 13.5, textAlign: "left",
                     background: isActive ? `${engineColor}0F` : "transparent",
-                    color: isActive ? Z200 : Z500,
+                    color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
                     fontWeight: isActive ? 500 : 420,
                     letterSpacing: 0.1,
                     transition: "background 180ms ease-out, color 180ms ease-out",
                   }}
-                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = Z400; } }}
-                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = Z500; } }}
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.03))"; } }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; } }}
                 >
-                  <Icon size={18} strokeWidth={1.5} style={{ color: isActive ? engineColor : Z600, flexShrink: 0, transition: "color 180ms ease-out" }} />
+                  <Icon size={18} strokeWidth={1.5} style={{ color: isActive ? engineColor : "#9CA3AF", flexShrink: 0, transition: "color 180ms ease-out" }} />
                   <span>{name}</span>
                 </button>
               );
@@ -728,225 +696,86 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* ═══ STRUCTURAL DIVIDER ═══ */}
-        <div style={{ height: 1, background: Z800, margin: "14px 22px 10px", flexShrink: 0 }} />
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
 
-        {/* ═══ ZONE B — WORKSPACE ═══ */}
-        <div style={{ padding: "0 12px", flexShrink: 0 }}>
-          <div style={{
-            fontSize: 9.5, fontFamily: "var(--font-mono)", fontWeight: 500,
-            letterSpacing: 1.8, color: Z700,
-            padding: "0 10px 8px", textTransform: "uppercase",
-          }}>
-            Workspace
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {/* Recent — expandable */}
-            {workspaceExpandableItem(
-              <Clock size={15} strokeWidth={1.5} />, "Recent",
-              recentOpen,
-              () => { setRecentOpen(!recentOpen); setSavedOpen(false); },
+        {/* ═══ BOTTOM — Upgrade + Profile (logged in only) ═══ */}
+        {isLoggedIn && (
+          <div style={{ padding: "0 12px 12px", flexShrink: 0 }}>
+            {/* Upgrade button — only for free and pro */}
+            {tier !== "max" && tier !== "founding" && (
+              <button
+                onClick={() => { router.push("/pricing"); onClose(); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  width: "100%", padding: "10px 12px",
+                  border: "none", borderRadius: 8,
+                  cursor: "pointer", fontSize: 13, textAlign: "left",
+                  background: "transparent",
+                  color: SIGNUX_GOLD,
+                  fontWeight: 500,
+                  transition: "background 180ms ease-out",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(200,168,78,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <Star size={16} strokeWidth={1.5} style={{ color: SIGNUX_GOLD }} />
+                <span>{tier === "pro" ? "Upgrade to Max" : "Upgrade to Pro"}</span>
+              </button>
             )}
-            {/* Saved — expandable */}
-            {workspaceExpandableItem(
-              <BookOpen size={15} strokeWidth={1.5} />, "Saved",
-              savedOpen,
-              () => { setSavedOpen(!savedOpen); setRecentOpen(false); },
-              savedSimulations.length > 0 ? savedSimulations.length : undefined,
-            )}
-            {workspaceItem(<GitCompareArrows size={15} strokeWidth={1.5} />, "Compare", () => { handleMode("simulate" as Mode); })}
-            {workspaceItem(<FlaskConical size={15} strokeWidth={1.5} />, "What-if", () => { handleMode("simulate" as Mode); })}
-            {workspaceItem(<BarChart3 size={15} strokeWidth={1.5} />, "Usage", () => { router.push("/dashboard"); onClose(); })}
-            {workspaceItem(<CreditCard size={15} strokeWidth={1.5} />, "Billing", () => { router.push("/pricing"); onClose(); })}
-            {workspaceItem(<Settings size={15} strokeWidth={1.5} />, "Settings", () => { onOpenSettings(); onClose(); })}
-            {workspaceItem(<HelpCircle size={15} strokeWidth={1.5} />, "Help", () => { window.open("https://github.com/anthropics/claude-code/issues", "_blank"); onClose(); })}
-          </div>
-        </div>
 
-        {/* ═══ EXPANDABLE: Recent conversations ═══ */}
-        {recentOpen && (
-          <div style={{ flex: 1, overflowY: "auto", padding: "6px 12px 0", flexShrink: 1, minHeight: 0 }}>
-            <div style={{ height: 1, background: Z800, marginBottom: 6 }} />
-            {isLoading ? (
-              <HistorySkeleton />
-            ) : convList && convList.length === 0 ? (
-              <div style={{ padding: "20px 10px", fontSize: 11, color: Z700, textAlign: "center" }}>
-                No conversations yet
-              </div>
-            ) : convList ? (
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {groupByDate(convList).map(group => (
-                  <div key={group.label}>
-                    <div style={{
-                      padding: "10px 12px 4px", fontSize: 9.5, fontWeight: 500,
-                      color: Z700, textTransform: "uppercase", letterSpacing: 1,
-                      fontFamily: "var(--font-mono)",
-                    }}>
-                      {group.label}
-                    </div>
-                    {group.items.map(conv => (
-                      <ConversationItem
-                        key={conv.id} conv={conv}
-                        isActive={conv.id === activeConversationId}
-                        onLoad={() => { onLoadConversation?.(conv.id); onClose(); }}
-                        onDelete={() => onDeleteConversation?.(conv.id)}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {/* ═══ EXPANDABLE: Saved simulations ═══ */}
-        {savedOpen && (
-          <div style={{ flex: 1, overflowY: "auto", padding: "6px 12px 0", flexShrink: 1, minHeight: 0 }}>
-            <div style={{ height: 1, background: Z800, marginBottom: 6 }} />
-            {savedSimulations.length === 0 ? (
-              <div style={{ padding: "20px 10px", fontSize: 11, color: Z700, textAlign: "center" }}>
-                No saved simulations yet
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {savedSimulations.slice(0, 20).map((sim: any) => (
-                  <div key={sim.id}
-                    onClick={() => { onLoadSimulation?.(sim.id); onClose(); }}
-                    style={{
-                      padding: "9px 12px", borderRadius: 8, cursor: "pointer",
-                      transition: "background 180ms ease-out", fontSize: 12.5, color: Z500,
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <div style={{
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                      fontWeight: 500, color: Z200, marginBottom: 3,
-                    }}>
-                      {sim.scenario?.slice(0, 60) || "Untitled"}
-                    </div>
-                    <div style={{ fontSize: 10, color: Z700, display: "flex", gap: 8, fontFamily: "var(--font-mono)" }}>
-                      <span>{new Date(sim.created_at).toLocaleDateString()}</span>
-                      {sim.verdict?.viability != null && (
-                        <span style={{ color: Z500 }}>{sim.verdict.viability}/10</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Spacer when nothing expanded */}
-        {!recentOpen && !savedOpen && <div style={{ flex: 1 }} />}
-
-        {/* ═══ BOTTOM — Account Surface ═══ */}
-        <div style={{ padding: "0 12px 12px", flexShrink: 0 }}>
-          <div style={{ height: 1, background: Z800, marginBottom: 10 }} />
-
-          {/* Theme toggle */}
-          <div style={{ padding: "0 6px 8px" }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 1,
-              padding: 2, borderRadius: 8,
-              background: "rgba(255,255,255,0.02)",
-            }}>
-              {([
-                { value: "auto" as Theme, icon: Monitor, tip: "Auto" },
-                { value: "light" as Theme, icon: Sun, tip: "Light" },
-                { value: "dark" as Theme, icon: Moon, tip: "Dark" },
-              ]).map(({ value, icon: ThIcon, tip }) => {
-                const active = theme === value;
-                return (
-                  <button key={value} title={tip} onClick={() => setTheme(value)} style={{
-                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                    padding: "5px 0", border: "none", borderRadius: 6, cursor: "pointer",
-                    background: active ? "rgba(255,255,255,0.06)" : "transparent",
-                    color: active ? Z300 : Z700,
-                    transition: "background 180ms ease-out, color 180ms ease-out",
-                  }}>
-                    <ThIcon size={13} strokeWidth={1.5} />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Token counter */}
-          {tokenStatus && (
-            <div style={{ padding: "0 10px 8px", display: "flex", alignItems: "center" }}>
-              <span style={{
-                fontSize: 10.5, fontFamily: "var(--font-mono)", fontWeight: 500, letterSpacing: 0.3,
-                color: tokenStatus.available <= 0 ? "#EF4444" : Z600,
-              }}>
-                {tokenStatus.available >= 1000 ? `${(tokenStatus.available / 1000).toFixed(1)}K` : tokenStatus.available} ST
-              </span>
-            </div>
-          )}
-
-          {/* Profile row */}
-          {isLoggedIn && displayName ? (
+            {/* Profile row */}
             <button
-              ref={avatarRef}
-              onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
+              onClick={() => { router.push("/settings"); onClose(); }}
               style={{
                 display: "flex", alignItems: "center", gap: 10,
-                width: "100%", padding: "8px 10px", border: "none",
-                borderRadius: 8,
-                background: profilePopoverOpen ? "rgba(255,255,255,0.04)" : "transparent",
-                cursor: "pointer",
+                width: "100%", padding: "10px 12px",
+                border: "none", borderRadius: 8,
+                cursor: "pointer", textAlign: "left",
+                background: "transparent",
                 transition: "background 180ms ease-out",
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.035)"}
-              onMouseLeave={e => { if (!profilePopoverOpen) e.currentTarget.style.background = "transparent"; }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.03))"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               {authUser?.avatar ? (
-                <img src={authUser.avatar} alt={displayName} width={24} height={24}
+                <img src={authUser.avatar} alt={displayName} width={32} height={32}
                   style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
               ) : (
                 <div style={{
-                  width: 24, height: 24, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.04)", border: `1px solid ${Z800}`,
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: SIGNUX_GOLD,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 9.5, fontWeight: 600, color: Z400,
+                  fontSize: 12, fontWeight: 600, color: "#FFFFFF",
+                  flexShrink: 0,
                 }}>
                   {userInitials}
                 </div>
               )}
-              <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 12, fontWeight: 450, color: Z400,
+                  fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {displayName}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                  {tier === "max" || tier === "founding" ? "Max plan" : tier === "pro" ? "Pro plan" : "Free plan"}
                 </div>
               </div>
               <span style={{
                 fontSize: 9, fontFamily: "var(--font-mono)", fontWeight: 500,
                 padding: "2px 7px", borderRadius: 4, letterSpacing: 0.8,
-                background: tier === "max" || tier === "founding" ? "rgba(168,85,247,0.1)" :
-                            tier === "pro" ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
-                color: tier === "max" || tier === "founding" ? "#A855F7" :
-                       tier === "pro" ? Z500 : Z700,
+                background: tier === "max" || tier === "founding" ? "rgba(200,168,78,0.1)" :
+                            tier === "pro" ? "rgba(200,168,78,0.08)" : "var(--bg-hover, rgba(255,255,255,0.04))",
+                color: tier === "max" || tier === "founding" ? SIGNUX_GOLD :
+                       tier === "pro" ? SIGNUX_GOLD : "var(--text-tertiary)",
               }}>
                 {tier === "max" || tier === "founding" ? "MAX" : tier === "pro" ? "PRO" : "FREE"}
               </span>
             </button>
-          ) : !isLoggedIn ? (
-            <button onClick={() => { window.location.href = "/login"; }} style={{
-              display: "flex", alignItems: "center", gap: 10, width: "100%",
-              padding: "8px 10px", border: "none", background: "transparent",
-              borderRadius: 8, cursor: "pointer", color: Z500, fontSize: 12, textAlign: "left",
-              transition: "background 180ms ease-out, color 180ms ease-out",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.035)"; e.currentTarget.style.color = Z400; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = Z500; }}>
-              <LogIn size={15} strokeWidth={1.5} />
-              <span>{t("auth.sign_in")}</span>
-            </button>
-          ) : null}
-        </div>
+          </div>
+        )}
       </>
     );
   }
@@ -990,62 +819,27 @@ export default function Sidebar({
           ))}
         </div>
 
-        {/* ═══ DIVIDER ═══ */}
-        <div style={{ width: 22, height: 1, background: Z800, margin: "10px 0 8px" }} />
-
-        {/* ═══ ZONE B — workspace shortcuts ═══ */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-          <SidebarIconButton
-            icon={<Clock size={16} strokeWidth={iconSW} />}
-            tooltip="Recent"
-            modeColor={Z600}
-            onClick={onOpen}
-            size={34}
-          />
-          <SidebarIconButton
-            icon={<BookOpen size={16} strokeWidth={iconSW} />}
-            tooltip="Saved"
-            modeColor={Z600}
-            onClick={onOpen}
-            size={34}
-          />
-          <SidebarIconButton
-            icon={<Settings size={16} strokeWidth={iconSW} />}
-            tooltip="Settings"
-            modeColor={Z600}
-            onClick={() => onOpenSettings()}
-            size={34}
-          />
-        </div>
-
         <div style={{ flex: 1 }} />
 
-        {/* ═══ BOTTOM — avatar ═══ */}
-        {isLoggedIn ? (
+        {/* ═══ BOTTOM — Profile icon (logged in only) ═══ */}
+        {isLoggedIn && (
           <SidebarIconButton
             icon={
               authUser?.avatar ? (
-                <img src={authUser.avatar} alt={displayName} width={26} height={26} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
+                <img src={authUser.avatar} alt={displayName} width={28} height={28} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
               ) : (
                 <div style={{
-                  width: 26, height: 26, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.04)", border: `1px solid ${Z800}`,
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: SIGNUX_GOLD,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 9.5, fontWeight: 600, color: Z400,
+                  fontSize: 10, fontWeight: 600, color: "#FFFFFF",
                 }}>
                   {userInitials}
                 </div>
               )
             }
             tooltip={displayName || "Profile"}
-            onClick={() => setProfilePopoverOpen(!profilePopoverOpen)}
-            size={38}
-          />
-        ) : (
-          <SidebarIconButton
-            icon={<LogIn size={iconSize} strokeWidth={iconSW} />}
-            tooltip={t("auth.sign_in")}
-            onClick={() => { window.location.href = "/login"; }}
+            onClick={() => { router.push("/settings"); }}
             size={38}
           />
         )}
