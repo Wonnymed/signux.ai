@@ -705,7 +705,7 @@ export default function Sidebar({
             {/* Upgrade button — only for free and pro */}
             {tier !== "max" && tier !== "founding" && (
               <button
-                onClick={() => { router.push("/pricing"); onClose(); }}
+                onClick={() => { router.push("/billing"); onClose(); }}
                 style={{
                   display: "flex", alignItems: "center", gap: 10,
                   width: "100%", padding: "10px 12px",
