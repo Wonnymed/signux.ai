@@ -4,18 +4,22 @@ import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 import InstallPrompt from "./components/InstallPrompt";
 
 export const metadata: Metadata = {
-  title: "Signux AI — See what happens before it happens",
-  description: "Test any business idea before you invest. Spot bad deals before you sign. Know how competitors will react before they move. Free to start.",
+  title: {
+    default: "Signux AI — Decision Operating System",
+    template: "%s — Signux AI",
+  },
+  description: "Beyond chat and beyond consulting. Signux turns uncertainty into structured decisions for founders, operators, and investors.",
   metadataBase: new URL("https://signux-ai.vercel.app"),
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.png", type: "image/png", sizes: "32x32" },
     ],
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Signux AI — See what happens before it happens",
-    description: "The AI that sees around corners. Test ideas, detect lies, predict competitors. Free to start.",
+    title: "Signux AI — Beyond Chat. Beyond Consulting.",
+    description: "A new decision layer for founders, operators, and investors. Simulate, build, grow, hire, protect, compete.",
     url: "https://signux-ai.vercel.app",
     siteName: "Signux AI",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
@@ -23,8 +27,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Signux AI — See what happens before it happens",
-    description: "The AI that sees around corners. Free to start.",
+    title: "Signux AI — Beyond Chat. Beyond Consulting.",
+    description: "A new decision layer for founders, operators, and investors.",
     images: ["/og-image.png"],
   },
 };
@@ -36,7 +40,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="theme-color" content="#09090B" />
+        <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#09090B" media="(prefers-color-scheme: dark)" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

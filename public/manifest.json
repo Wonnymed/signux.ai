@@ -1,7 +1,7 @@
 {
   "name": "Signux AI",
   "short_name": "Signux",
-  "description": "Think through any business decision before you make it",
+  "description": "Beyond chat and beyond consulting. Signux turns uncertainty into structured decisions for founders, operators, and investors.",
   "start_url": "/chat",
   "display": "standalone",
   "background_color": "#0a0a0a",
