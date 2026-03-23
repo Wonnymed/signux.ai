@@ -5,7 +5,7 @@ import ChatInput, { type FileAttachment } from "./ChatInput";
 import { SignuxIcon } from "./SignuxIcon";
 import type { Mode } from "../lib/types";
 import { ENGINES, SIGNUX_GOLD, type EngineId } from "../lib/engines";
-import { Zap, Hammer, TrendingUp, UserCheck, Shield, Swords, ArrowRight, RefreshCw, Clock } from "lucide-react";
+import { Zap, Hammer, TrendingUp, UserCheck, Shield, Swords, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { signuxFetch } from "../lib/api-client";
 
 const GOLD = "#C8A84E";
@@ -18,6 +18,34 @@ const ENGINE_LIST = (Object.keys(ENGINES) as EngineId[]).map((id) => ({
   id,
   ...ENGINES[id],
 }));
+
+/* ═══ Homepage featured scenarios (curated slice) ═══ */
+const HOMEPAGE_SCENARIOS: {
+  engine: EngineId;
+  question: string;
+  context: string;
+}[] = [
+  {
+    engine: "simulate",
+    question: "Should I launch a premium coffee brand in Gangnam with a limited initial budget?",
+    context: "Test viability in a saturated market with constrained capital.",
+  },
+  {
+    engine: "hire",
+    question: "Should I hire a VP Sales now or wait until revenue is more stable?",
+    context: "Timing a senior hire when cash is limited but pipeline needs leadership.",
+  },
+  {
+    engine: "grow",
+    question: "Should I prioritize creator partnerships or performance ads for the next 90 days?",
+    context: "Pick the highest-leverage growth channel before committing budget.",
+  },
+  {
+    engine: "protect",
+    question: "What could break this product launch before it becomes expensive to fix?",
+    context: "Surface hidden risks in execution, regulation, or timing.",
+  },
+];
 
 export type RoutingResult = {
   engine: string;
@@ -55,6 +83,7 @@ export default function WelcomeScreen({
 }: WelcomeScreenProps) {
   const isMobile = useIsMobile();
   const [hoveredEngine, setHoveredEngine] = useState<string | null>(null);
+  const [hoveredScenario, setHoveredScenario] = useState<number | null>(null);
   const [routing, setRouting] = useState(false);
   const [routeResult, setRouteResult] = useState<RoutingResult | null>(null);
   const [routedQuestion, setRoutedQuestion] = useState("");
@@ -68,7 +97,7 @@ export default function WelcomeScreen({
       .then((data: any[]) => {
         const sorted = data
           .sort((a: any, b: any) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime())
-          .slice(0, 2);
+          .slice(0, 3);
         setRecentItems(sorted);
       })
       .catch(() => {});
@@ -118,6 +147,11 @@ export default function WelcomeScreen({
     setRoutedQuestion("");
   };
 
+  const handleUseScenario = (scenario: typeof HOMEPAGE_SCENARIOS[0]) => {
+    const q = scenario.question;
+    onRouteAndSwitch?.(q, scenario.engine as Mode);
+  };
+
   const showRoutingState = routing || routeResult;
 
   return (
@@ -151,12 +185,12 @@ export default function WelcomeScreen({
         </span>
       </div>
 
-      {/* ═══ INPUT ═══ */}
+      {/* ═══ A. ASK SIGNUX INPUT ═══ */}
       {!showRoutingState && (
         <div style={{
           width: "100%",
           maxWidth: isMobile ? 680 : "clamp(540px, 44vw, 720px)",
-          marginBottom: isMobile ? 24 : 32,
+          marginBottom: isMobile ? 16 : 20,
         }}>
           <ChatInput
             value={input}
@@ -186,9 +220,77 @@ export default function WelcomeScreen({
         />
       )}
 
-      {/* ═══ ENGINE GRID ═══ */}
+      {/* ═══ BELOW INPUT — only when not routing ═══ */}
       {!showRoutingState && (
         <>
+          {/* ═══ B. CONTINUE STRIP (returning users only) ═══ */}
+          {recentItems.length > 0 && (
+            <div style={{
+              width: "100%",
+              maxWidth: isMobile ? 400 : 560,
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              marginBottom: isMobile ? 24 : 28,
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                marginBottom: 2,
+              }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, letterSpacing: 1.2,
+                  color: "var(--text-tertiary)", textTransform: "uppercase",
+                }}>Continue where you left off</span>
+                <a
+                  href="/recent"
+                  style={{
+                    fontSize: 10, color: "var(--text-tertiary)", textDecoration: "none",
+                    transition: "color 180ms ease-out",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = "var(--text-secondary)"}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}
+                >View all</a>
+              </div>
+              {recentItems.map((item: any) => {
+                const engine = (item.engine || "simulate") as string;
+                const engineData = ENGINES[engine as EngineId];
+                const Icon = ICON_MAP[engineData?.icon] || Zap;
+                const eColor = engineData?.color || GOLD;
+                return (
+                  <a
+                    key={item.id}
+                    href={`/chat?load=${item.id}`}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "9px 13px", borderRadius: 9,
+                      border: "1px solid var(--border-primary)",
+                      background: "transparent",
+                      textDecoration: "none",
+                      transition: "border-color 180ms ease-out, background 180ms ease-out",
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = `${eColor}40`;
+                      e.currentTarget.style.background = `${eColor}06`;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = "var(--border-primary)";
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    <Icon size={13} strokeWidth={1.5} style={{ color: eColor, flexShrink: 0 }} />
+                    <span style={{
+                      flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 450,
+                      color: "var(--text-primary)",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>{item.scenario || "Untitled decision"}</span>
+                    <ArrowRight size={12} strokeWidth={1.5} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
+                  </a>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ═══ C. ENGINE GRID ═══ */}
           <span style={{
             fontSize: 12,
             color: "var(--text-tertiary)",
@@ -204,6 +306,7 @@ export default function WelcomeScreen({
             gap: 8,
             width: "100%",
             maxWidth: isMobile ? 400 : 560,
+            marginBottom: isMobile ? 28 : 36,
           }}>
             {ENGINE_LIST.map((engine) => {
               const Icon = ICON_MAP[engine.icon] || Zap;
@@ -238,71 +341,82 @@ export default function WelcomeScreen({
             })}
           </div>
 
-          {/* ═══ CONTINUE STRIP ═══ */}
-          {recentItems.length > 0 && (
+          {/* ═══ D. SCENARIO GALLERY SLICE ═══ */}
+          <div style={{
+            width: "100%",
+            maxWidth: isMobile ? 400 : 560,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}>
             <div style={{
-              marginTop: isMobile ? 32 : 40,
-              width: "100%",
-              maxWidth: isMobile ? 400 : 560,
-              display: "flex",
-              flexDirection: "column",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: 2,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Sparkles size={11} strokeWidth={1.5} style={{ color: "var(--text-tertiary)" }} />
+                <span style={{
+                  fontSize: 10, fontWeight: 600, letterSpacing: 1.2,
+                  color: "var(--text-tertiary)", textTransform: "uppercase",
+                }}>Start from a scenario</span>
+              </div>
+              <a
+                href="/scenarios"
+                style={{
+                  fontSize: 10, color: "var(--text-tertiary)", textDecoration: "none",
+                  transition: "color 180ms ease-out",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--text-secondary)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}
+              >View gallery</a>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
               gap: 8,
             }}>
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-              }}>
-                <span style={{
-                  fontSize: 11, fontWeight: 500, letterSpacing: 0.5,
-                  color: "var(--text-tertiary)", textTransform: "uppercase",
-                }}>Continue</span>
-                <a
-                  href="/recent"
-                  style={{
-                    fontSize: 11, color: "var(--text-tertiary)", textDecoration: "none",
-                    transition: "color 180ms ease-out",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.color = "var(--text-secondary)"}
-                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}
-                >View all</a>
-              </div>
-              {recentItems.map((item: any) => {
-                const engine = (item.engine || "simulate") as string;
-                const engineData = ENGINES[engine as EngineId];
-                const Icon = ICON_MAP[engineData?.icon] || Zap;
-                const eColor = engineData?.color || GOLD;
+              {HOMEPAGE_SCENARIOS.map((s, i) => {
+                const engineData = ENGINES[s.engine];
+                const eColor = engineData.color;
+                const isHov = hoveredScenario === i;
                 return (
-                  <a
-                    key={item.id}
-                    href={`/chat?load=${item.id}`}
+                  <button
+                    key={i}
+                    onClick={() => handleUseScenario(s)}
+                    onMouseEnter={() => setHoveredScenario(i)}
+                    onMouseLeave={() => setHoveredScenario(null)}
                     style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "10px 14px", borderRadius: 10,
-                      border: "1px solid var(--border-primary)",
-                      background: "transparent",
-                      textDecoration: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      padding: "12px 14px",
+                      borderRadius: 10,
+                      border: `1px solid ${isHov ? `${eColor}40` : "var(--border-primary)"}`,
+                      background: isHov ? `${eColor}06` : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
                       transition: "border-color 180ms ease-out, background 180ms ease-out",
                     }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = `${eColor}40`;
-                      e.currentTarget.style.background = `${eColor}06`;
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = "var(--border-primary)";
-                      e.currentTarget.style.background = "transparent";
-                    }}
                   >
-                    <Icon size={14} strokeWidth={1.5} style={{ color: eColor, flexShrink: 0 }} />
                     <span style={{
-                      flex: 1, minWidth: 0, fontSize: 13, fontWeight: 450,
-                      color: "var(--text-primary)",
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>{item.scenario || "Untitled decision"}</span>
-                    <ArrowRight size={13} strokeWidth={1.5} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
-                  </a>
+                      fontSize: 8.5, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
+                      color: eColor,
+                    }}>{engineData.name}</span>
+                    <span style={{
+                      fontSize: 12.5, fontWeight: 500, color: "var(--text-primary)",
+                      lineHeight: 1.4,
+                      display: "-webkit-box", WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical", overflow: "hidden",
+                    }}>{s.question}</span>
+                    <span style={{
+                      fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.4,
+                    }}>{s.context}</span>
+                  </button>
                 );
               })}
             </div>
-          )}
+          </div>
         </>
       )}
     </div>
