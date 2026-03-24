@@ -148,14 +148,10 @@ export default function WelcomeScreen({
   };
 
   const handleUseScenario = (scenario: typeof HOMEPAGE_SCENARIOS[0]) => {
-    const q = scenario.question;
-    onRouteAndSwitch?.(q, scenario.engine as Mode);
+    onRouteAndSwitch?.(scenario.question, scenario.engine as Mode);
   };
 
   const showRoutingState = routing || routeResult;
-
-  /* ═══ Content width — wider on desktop for better canvas use ═══ */
-  const contentMaxW = isMobile ? "100%" : "min(640px, 52vw)";
 
   return (
     <div style={{
@@ -166,76 +162,64 @@ export default function WelcomeScreen({
       minHeight: "100%",
     }}>
 
-      {/* ═══ ABOVE THE FOLD — Hero section ═══ */}
+      {/* ═══════════════════════════════════════════
+          ABOVE THE FOLD — Premium command surface
+      ═══════════════════════════════════════════ */}
       <div style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
-        minHeight: isMobile ? "calc(100vh - 48px)" : "calc(100vh - 16px)",
-        padding: isMobile ? "0 20px" : "0 32px",
+        minHeight: isMobile ? "calc(100vh - 48px)" : "100vh",
+        padding: isMobile ? "0 20px" : "0 40px",
       }}>
         <div style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          maxWidth: contentMaxW,
+          maxWidth: isMobile ? "100%" : 600,
         }}>
 
-          {/* 1. Premium brand mark — small, restrained */}
+          {/* ─── 1. Large Signux mark ─── */}
+          <div style={{ marginBottom: isMobile ? 14 : 18 }}>
+            <SignuxIcon size={isMobile ? 52 : 64} variant="gold" />
+          </div>
+
+          {/* ─── 2. SIGNUX AI wordmark ─── */}
           <div style={{
             display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: isMobile ? 20 : 28,
+            alignItems: "baseline",
+            gap: 6,
+            marginBottom: isMobile ? 36 : 48,
           }}>
-            <SignuxIcon size={isMobile ? 18 : 20} variant="gold" />
             <span style={{
               fontFamily: "var(--font-brand)",
-              fontSize: 10.5,
-              fontWeight: 600,
-              letterSpacing: 4,
-              color: "var(--text-tertiary)",
-              textTransform: "uppercase" as const,
+              fontSize: isMobile ? 18 : 22,
+              fontWeight: 500,
+              letterSpacing: 8,
+              color: "var(--text-primary)",
             }}>
               SIGNUX
             </span>
+            <span style={{
+              fontFamily: "var(--font-brand)",
+              fontSize: isMobile ? 18 : 22,
+              fontWeight: 300,
+              letterSpacing: 4,
+              color: "var(--text-tertiary)",
+              opacity: 0.5,
+            }}>
+              AI
+            </span>
           </div>
 
-          {/* 2. Strong product headline */}
-          <h1 style={{
-            fontFamily: "var(--font-serif, var(--font-brand))",
-            fontSize: isMobile ? 26 : "clamp(30px, 2.6vw, 38px)",
-            fontWeight: 400,
-            letterSpacing: "-0.01em",
-            color: "var(--text-primary)",
-            textAlign: "center",
-            lineHeight: 1.2,
-            margin: "0 0 10px",
-          }}>
-            What are you trying to decide?
-          </h1>
-
-          {/* 3. Supporting line */}
-          <p style={{
-            fontSize: isMobile ? 13 : 14,
-            color: "var(--text-tertiary)",
-            textAlign: "center",
-            lineHeight: 1.5,
-            margin: "0 0 28px",
-            maxWidth: 400,
-            letterSpacing: 0.1,
-          }}>
-            Describe the decision. Signux routes it to the right engine.
-          </p>
-
-          {/* ═══ 4. ASK SIGNUX INPUT ═══ */}
+          {/* ─── 3. Main premium input ─── */}
           {!showRoutingState && (
             <div style={{
               width: "100%",
-              marginBottom: isMobile ? 20 : 28,
+              marginBottom: 10,
             }}>
               <ChatInput
                 value={input}
@@ -247,12 +231,12 @@ export default function WelcomeScreen({
                 attachments={attachments}
                 onAttachmentsChange={onAttachmentsChange}
                 onToast={onToast}
-                placeholder="A tradeoff, a hiring call, a launch question, a risk to evaluate..."
+                placeholder="Describe a decision, tradeoff, or risk..."
               />
             </div>
           )}
 
-          {/* ═══ ROUTING STATE ═══ */}
+          {/* ─── ROUTING STATE ─── */}
           {routing && !routeResult && <RoutingLoader />}
           {routeResult && (
             <RoutingCard
@@ -265,150 +249,149 @@ export default function WelcomeScreen({
             />
           )}
 
-          {/* ═══ 5. ENGINE GRID — above the fold ═══ */}
+          {/* ─── 4. Micro support line ─── */}
           {!showRoutingState && (
-            <>
-              {/* Continue strip for returning users */}
-              {recentItems.length > 0 && (
-                <div style={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 5,
-                  marginBottom: isMobile ? 20 : 24,
-                }}>
-                  <div style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    marginBottom: 2, padding: "0 2px",
-                  }}>
-                    <span style={{
-                      fontSize: 10, fontWeight: 600, letterSpacing: 1.2,
-                      color: "var(--text-tertiary)", textTransform: "uppercase",
-                      fontFamily: "var(--font-mono)",
-                    }}>Continue where you left off</span>
-                    <a
-                      href="/recent"
-                      style={{
-                        fontSize: 10, color: "var(--text-tertiary)", textDecoration: "none",
-                        transition: "color 180ms ease-out", fontFamily: "var(--font-mono)",
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.color = "var(--text-secondary)"}
-                      onMouseLeave={e => e.currentTarget.style.color = "var(--text-tertiary)"}
-                    >View all</a>
-                  </div>
-                  {recentItems.map((item: any) => {
-                    const engine = (item.engine || "simulate") as string;
-                    const engineData = ENGINES[engine as EngineId];
-                    const Icon = ICON_MAP[engineData?.icon] || Zap;
-                    const eColor = engineData?.color || GOLD;
-                    return (
-                      <a
-                        key={item.id}
-                        href={`/chat?load=${item.id}`}
-                        style={{
-                          display: "flex", alignItems: "center", gap: 10,
-                          padding: "10px 14px", borderRadius: 10,
-                          border: "1px solid var(--border-primary)",
-                          background: "transparent",
-                          textDecoration: "none",
-                          transition: "border-color 180ms ease-out, background 180ms ease-out",
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.borderColor = `${eColor}40`;
-                          e.currentTarget.style.background = `${eColor}06`;
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.borderColor = "var(--border-primary)";
-                          e.currentTarget.style.background = "transparent";
-                        }}
-                      >
-                        <Icon size={13} strokeWidth={1.5} style={{ color: eColor, flexShrink: 0 }} />
-                        <span style={{
-                          flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 450,
-                          color: "var(--text-primary)",
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                        }}>{item.scenario || "Untitled decision"}</span>
-                        <ArrowRight size={12} strokeWidth={1.5} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
-                      </a>
-                    );
-                  })}
-                </div>
-              )}
+            <div style={{
+              fontSize: 11,
+              color: "var(--text-tertiary)",
+              letterSpacing: 0.8,
+              fontFamily: "var(--font-mono)",
+              textTransform: "uppercase" as const,
+              marginBottom: isMobile ? 28 : 36,
+              opacity: 0.6,
+            }}>
+              Six engines · One decision layer
+            </div>
+          )}
 
-              {/* Engine micro-label */}
+          {/* ─── 5. Compact engine shortcuts ─── */}
+          {!showRoutingState && (
+            <div style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: isMobile ? 6 : 8,
+              width: "100%",
+            }}>
+              {ENGINE_LIST.map((engine) => {
+                const Icon = ICON_MAP[engine.icon] || Zap;
+                const isHovered = hoveredEngine === engine.id;
+                const eColor = engine.color;
+
+                return (
+                  <button
+                    key={engine.id}
+                    onClick={() => onSwitchMode?.(engine.id as Mode)}
+                    onMouseEnter={() => setHoveredEngine(engine.id)}
+                    onMouseLeave={() => setHoveredEngine(null)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 7,
+                      padding: isMobile ? "8px 12px" : "9px 16px",
+                      borderRadius: 10,
+                      border: `1px solid ${isHovered ? `${eColor}50` : "var(--border-primary)"}`,
+                      background: isHovered ? `${eColor}08` : "transparent",
+                      cursor: "pointer",
+                      transition: "all 200ms ease-out",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <Icon size={14} color={isHovered ? eColor : "var(--text-tertiary)"} strokeWidth={1.5} style={{ transition: "color 200ms ease-out" }} />
+                    <span style={{
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      color: isHovered ? "var(--text-primary)" : "var(--text-secondary)",
+                      transition: "color 200ms ease-out",
+                      letterSpacing: 0.1,
+                    }}>
+                      {engine.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ─── Continue strip (returning users only) ─── */}
+          {!showRoutingState && recentItems.length > 0 && (
+            <div style={{
+              width: "100%",
+              maxWidth: 480,
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              marginTop: isMobile ? 24 : 32,
+            }}>
               <div style={{
-                display: "flex", alignItems: "center", gap: 6,
-                marginBottom: 12, padding: "0 2px",
-                width: "100%",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                marginBottom: 2, padding: "0 2px",
               }}>
                 <span style={{
-                  fontSize: 10, fontWeight: 600, letterSpacing: 1.2,
+                  fontSize: 9.5, fontWeight: 600, letterSpacing: 1.2,
                   color: "var(--text-tertiary)", textTransform: "uppercase",
-                  fontFamily: "var(--font-mono)",
-                }}>
-                  Six engines. One decision layer.
-                </span>
+                  fontFamily: "var(--font-mono)", opacity: 0.7,
+                }}>Continue</span>
+                <a
+                  href="/recent"
+                  style={{
+                    fontSize: 9.5, color: "var(--text-tertiary)", textDecoration: "none",
+                    transition: "color 180ms ease-out", fontFamily: "var(--font-mono)",
+                    opacity: 0.7,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.opacity = "1"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "var(--text-tertiary)"; e.currentTarget.style.opacity = "0.7"; }}
+                >View all</a>
               </div>
-
-              {/* Engine cards */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr",
-                gap: isMobile ? 8 : 10,
-                width: "100%",
-              }}>
-                {ENGINE_LIST.map((engine) => {
-                  const Icon = ICON_MAP[engine.icon] || Zap;
-                  const isHovered = hoveredEngine === engine.id;
-                  const eColor = engine.color;
-
-                  return (
-                    <button
-                      key={engine.id}
-                      onClick={() => onSwitchMode?.(engine.id as Mode)}
-                      onMouseEnter={() => setHoveredEngine(engine.id)}
-                      onMouseLeave={() => setHoveredEngine(null)}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                        padding: isMobile ? "14px 14px" : "16px 18px",
-                        borderRadius: 12,
-                        border: `1px solid ${isHovered ? `${eColor}50` : "var(--border-primary)"}`,
-                        background: isHovered ? `${eColor}08` : "transparent",
-                        cursor: "pointer",
-                        transition: "border-color 200ms ease-out, background 200ms ease-out, box-shadow 200ms ease-out",
-                        textAlign: "left",
-                        boxShadow: isHovered ? `0 2px 12px ${eColor}10` : "none",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                        <Icon size={16} color={eColor} strokeWidth={1.5} />
-                        <span style={{ fontSize: 13.5, fontWeight: 550, color: "var(--text-primary)", letterSpacing: 0.1 }}>
-                          {engine.name}
-                        </span>
-                      </div>
-                      <span style={{
-                        fontSize: 11.5, color: "var(--text-tertiary)", lineHeight: 1.35,
-                        letterSpacing: 0.05,
-                      }}>
-                        {engine.subtitle}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
+              {recentItems.map((item: any) => {
+                const engine = (item.engine || "simulate") as string;
+                const engineData = ENGINES[engine as EngineId];
+                const Icon = ICON_MAP[engineData?.icon] || Zap;
+                const eColor = engineData?.color || GOLD;
+                return (
+                  <a
+                    key={item.id}
+                    href={`/chat?load=${item.id}`}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "9px 13px", borderRadius: 9,
+                      border: "1px solid var(--border-primary)",
+                      background: "transparent",
+                      textDecoration: "none",
+                      transition: "border-color 180ms ease-out, background 180ms ease-out",
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = `${eColor}40`;
+                      e.currentTarget.style.background = `${eColor}06`;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = "var(--border-primary)";
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    <Icon size={12} strokeWidth={1.5} style={{ color: eColor, flexShrink: 0 }} />
+                    <span style={{
+                      flex: 1, minWidth: 0, fontSize: 12, fontWeight: 450,
+                      color: "var(--text-primary)",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>{item.scenario || "Untitled decision"}</span>
+                    <ArrowRight size={11} strokeWidth={1.5} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
+                  </a>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
 
-      {/* ═══ BELOW THE FOLD — Scenarios section ═══ */}
+      {/* ═══════════════════════════════════════════
+          BELOW THE FOLD — Curated scenarios
+      ═══════════════════════════════════════════ */}
       {!showRoutingState && (
         <div style={{
           width: "100%",
-          maxWidth: contentMaxW,
-          padding: isMobile ? "32px 20px 48px" : "40px 32px 64px",
+          maxWidth: isMobile ? "100%" : 600,
+          padding: isMobile ? "40px 20px 56px" : "48px 40px 72px",
           margin: "0 auto",
         }}>
           <div style={{
@@ -460,8 +443,7 @@ export default function WelcomeScreen({
                     background: isHov ? `${eColor}06` : "transparent",
                     cursor: "pointer",
                     textAlign: "left",
-                    transition: "border-color 200ms ease-out, background 200ms ease-out, box-shadow 200ms ease-out",
-                    boxShadow: isHov ? `0 2px 12px ${eColor}08` : "none",
+                    transition: "all 200ms ease-out",
                   }}
                 >
                   <span style={{
@@ -476,7 +458,6 @@ export default function WelcomeScreen({
                   }}>{s.question}</span>
                   <span style={{
                     fontSize: 11.5, color: "var(--text-tertiary)", lineHeight: 1.4,
-                    letterSpacing: 0.05,
                   }}>{s.context}</span>
                 </button>
               );
@@ -499,19 +480,19 @@ function RoutingLoader() {
       padding: "32px 0",
     }}>
       <div style={{
-        width: 32, height: 32,
+        width: 28, height: 28,
         border: "2px solid var(--border-primary)",
         borderTopColor: "var(--text-tertiary)",
         borderRadius: "50%",
         animation: "spin 0.8s linear infinite",
       }} />
       <span style={{
-        fontSize: 12.5,
-        color: "var(--text-secondary)",
+        fontSize: 12,
+        color: "var(--text-tertiary)",
         fontFamily: "var(--font-mono)",
         letterSpacing: 0.5,
       }}>
-        Routing your question...
+        Routing...
       </span>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -550,8 +531,8 @@ function RoutingCard({
       display: "flex",
       flexDirection: "column",
       gap: 16,
+      marginBottom: 16,
     }}>
-      {/* Question echo */}
       <div style={{
         fontSize: 12,
         color: "var(--text-secondary)",
@@ -565,7 +546,6 @@ function RoutingCard({
         {question}
       </div>
 
-      {/* Routing result */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{
           width: 36, height: 36, borderRadius: 10,
@@ -576,7 +556,7 @@ function RoutingCard({
           <Icon size={18} strokeWidth={1.5} color="var(--text-primary)" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14.5, fontWeight: 500, color: "var(--text-primary)", marginBottom: 2 }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)", marginBottom: 2 }}>
             {isAutoRouting ? `Routing to ${engineData?.name}` : `Routed to ${engineData?.name}`}
           </div>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
@@ -585,21 +565,16 @@ function RoutingCard({
         </div>
       </div>
 
-      {/* Clarification — low confidence */}
       {result.clarification && (
         <div style={{
-          fontSize: 12.5,
-          color: "var(--text-secondary)",
-          padding: "10px 14px",
-          borderRadius: 8,
-          border: "1px solid var(--border-primary)",
-          lineHeight: 1.5,
+          fontSize: 12.5, color: "var(--text-secondary)",
+          padding: "10px 14px", borderRadius: 8,
+          border: "1px solid var(--border-primary)", lineHeight: 1.5,
         }}>
           {result.clarification}
         </div>
       )}
 
-      {/* Auto-routing indicator */}
       {isAutoRouting && (
         <div style={{
           display: "flex", alignItems: "center", gap: 6,
@@ -615,7 +590,6 @@ function RoutingCard({
         </div>
       )}
 
-      {/* Actions — medium/low confidence */}
       {!isAutoRouting && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
@@ -628,8 +602,7 @@ function RoutingCard({
               background: confirmHovered ? "var(--bg-hover)" : "var(--bg-secondary)",
               border: `1px solid ${confirmHovered ? "var(--border-hover)" : "var(--border-primary)"}`,
               color: "var(--text-primary)", fontSize: 12.5, fontWeight: 500,
-              cursor: "pointer",
-              transition: "background 180ms ease-out, border-color 180ms ease-out",
+              cursor: "pointer", transition: "all 180ms ease-out",
             }}
           >
             Continue with {engineData?.name}
@@ -646,9 +619,9 @@ function RoutingCard({
                 padding: "8px 14px", borderRadius: 8,
                 background: "transparent",
                 border: `1px solid ${altHovered ? "var(--border-hover)" : "var(--border-primary)"}`,
-                color: altHovered ? "var(--text-primary)" : "var(--text-secondary)", fontSize: 12.5, fontWeight: 400,
-                cursor: "pointer",
-                transition: "border-color 180ms ease-out, color 180ms ease-out",
+                color: altHovered ? "var(--text-primary)" : "var(--text-secondary)",
+                fontSize: 12.5, fontWeight: 400, cursor: "pointer",
+                transition: "all 180ms ease-out",
               }}
             >
               Try {altEngineData.name}
@@ -662,10 +635,9 @@ function RoutingCard({
             style={{
               display: "flex", alignItems: "center", gap: 5,
               padding: "8px 12px", borderRadius: 8,
-              background: "transparent",
-              border: "none",
-              color: refineHovered ? "var(--text-secondary)" : "var(--text-tertiary)", fontSize: 12, fontWeight: 400,
-              cursor: "pointer",
+              background: "transparent", border: "none",
+              color: refineHovered ? "var(--text-secondary)" : "var(--text-tertiary)",
+              fontSize: 12, fontWeight: 400, cursor: "pointer",
               transition: "color 180ms ease-out",
             }}
           >
