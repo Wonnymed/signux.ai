@@ -1127,7 +1127,7 @@ function ChatPage() {
         background: "var(--bg-primary)", minWidth: 0, minHeight: 0,
         overflowY: "auto", overflowX: "hidden",
         paddingTop: (isMobile && !authUser) ? 48 : 0,
-        marginLeft: isMobile ? 0 : (sidebarOpen ? 260 : 56),
+        marginLeft: isMobile ? 0 : (sidebarOpen ? 240 : 52),
         transition: "margin-left 200ms ease",
       }}>
         {/* ═══ Desktop top bar — only when NOT logged in ═══ */}

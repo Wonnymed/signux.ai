@@ -500,9 +500,9 @@ export default function Sidebar({
   const [recentOpen, setRecentOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
 
-  const iconSize = 20;
+  const iconSize = 18;
   const iconSW = 1.5;
-  const sidebarWidth = open ? 260 : 56;
+  const sidebarWidth = open ? 240 : 52;
 
   // Zone B — workspace item (quieter than engines)
   const workspaceItem = (icon: React.ReactNode, label: string, onClick: () => void) => (
@@ -609,7 +609,7 @@ export default function Sidebar({
         width: sidebarWidth,
         zIndex: 45,
         background: "var(--sidebar-bg, var(--bg-primary))",
-        borderRight: "1px solid var(--border-primary)",
+        borderRight: "1px solid var(--border-secondary, rgba(255,255,255,0.04))",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -644,13 +644,13 @@ export default function Sidebar({
         {/* ═══ TOP — Wordmark ═══ */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 16px 0 20px", height: 52, flexShrink: 0,
+          padding: "0 12px 0 16px", height: 48, flexShrink: 0,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <SignuxIcon variant="gold" size={17} />
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <SignuxIcon variant="gold" size={15} />
             <span style={{
-              fontFamily: "var(--font-brand)", fontSize: 12.5, fontWeight: 500,
-              letterSpacing: 4, color: "var(--text-primary)",
+              fontFamily: "var(--font-brand)", fontSize: 11.5, fontWeight: 500,
+              letterSpacing: 3.5, color: "var(--text-secondary)",
             }}>
               SIGNUX
             </span>
@@ -659,30 +659,28 @@ export default function Sidebar({
         </div>
 
         {/* ═══ HOME ═══ */}
-        <div style={{ padding: "6px 12px 0", flexShrink: 0 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ padding: "4px 8px 0", flexShrink: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {(() => {
               const isHomeActive = mode === "chat";
               return (
                 <button
                   onClick={() => handleMode("chat" as Mode)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    width: "100%", padding: "10px 10px 10px 12px",
+                    display: "flex", alignItems: "center", gap: 10,
+                    width: "100%", padding: "8px 10px",
                     border: "none",
-                    borderLeft: isHomeActive ? `3px solid ${SIGNUX_GOLD}` : "3px solid transparent",
-                    borderRadius: 8,
-                    cursor: "pointer", fontSize: 13.5, textAlign: "left",
-                    background: isHomeActive ? `rgba(200,168,78,0.06)` : "transparent",
+                    borderRadius: 7,
+                    cursor: "pointer", fontSize: 13, textAlign: "left",
+                    background: isHomeActive ? "var(--bg-hover, rgba(255,255,255,0.04))" : "transparent",
                     color: isHomeActive ? "var(--text-primary)" : "var(--text-secondary)",
-                    fontWeight: isHomeActive ? 500 : 420,
-                    letterSpacing: 0.1,
+                    fontWeight: isHomeActive ? 500 : 400,
                     transition: "background 180ms ease-out, color 180ms ease-out",
                   }}
                   onMouseEnter={e => { if (!isHomeActive) { e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.03))"; } }}
                   onMouseLeave={e => { if (!isHomeActive) { e.currentTarget.style.background = "transparent"; } }}
                 >
-                  <Home size={18} strokeWidth={1.5} style={{ color: isHomeActive ? SIGNUX_GOLD : "#9CA3AF", flexShrink: 0, transition: "color 180ms ease-out" }} />
+                  <Home size={16} strokeWidth={1.5} style={{ color: isHomeActive ? "var(--text-primary)" : Z600, flexShrink: 0, transition: "color 180ms ease-out" }} />
                   <span>Home</span>
                 </button>
               );
@@ -691,8 +689,8 @@ export default function Sidebar({
         </div>
 
         {/* ═══ ZONE A — DECISION ENGINES ═══ */}
-        <div style={{ padding: "8px 12px 0", flexShrink: 0 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ padding: "4px 8px 0", flexShrink: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {ENGINE_MODES.map(({ key, icon: Icon, name }) => {
               const isActive = mode === key;
               const engineColor = ENGINES[key as EngineId]?.color || "#9CA3AF";
@@ -701,22 +699,20 @@ export default function Sidebar({
                   key={key}
                   onClick={() => handleMode(key)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    width: "100%", padding: "10px 10px 10px 12px",
+                    display: "flex", alignItems: "center", gap: 10,
+                    width: "100%", padding: "8px 10px",
                     border: "none",
-                    borderLeft: isActive ? `3px solid ${engineColor}` : "3px solid transparent",
-                    borderRadius: 8,
-                    cursor: "pointer", fontSize: 13.5, textAlign: "left",
-                    background: isActive ? `${engineColor}0F` : "transparent",
+                    borderRadius: 7,
+                    cursor: "pointer", fontSize: 13, textAlign: "left",
+                    background: isActive ? "var(--bg-hover, rgba(255,255,255,0.04))" : "transparent",
                     color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
-                    fontWeight: isActive ? 500 : 420,
-                    letterSpacing: 0.1,
+                    fontWeight: isActive ? 500 : 400,
                     transition: "background 180ms ease-out, color 180ms ease-out",
                   }}
                   onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.03))"; } }}
                   onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; } }}
                 >
-                  <Icon size={18} strokeWidth={1.5} style={{ color: isActive ? engineColor : "#9CA3AF", flexShrink: 0, transition: "color 180ms ease-out" }} />
+                  <Icon size={16} strokeWidth={1.5} style={{ color: isActive ? engineColor : Z600, flexShrink: 0, transition: "color 180ms ease-out" }} />
                   <span>{name}</span>
                 </button>
               );
@@ -729,25 +725,25 @@ export default function Sidebar({
 
         {/* ═══ BOTTOM — Upgrade + Profile (logged in only) ═══ */}
         {isLoggedIn && (
-          <div style={{ padding: "0 12px 12px", flexShrink: 0 }}>
+          <div style={{ padding: "0 8px 10px", flexShrink: 0 }}>
             {/* Upgrade button — only for free and pro */}
             {tier !== "max" && tier !== "founding" && (
               <button
                 onClick={() => { router.push("/billing"); onClose(); }}
                 style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  width: "100%", padding: "10px 12px",
-                  border: "none", borderRadius: 8,
-                  cursor: "pointer", fontSize: 13, textAlign: "left",
+                  display: "flex", alignItems: "center", gap: 9,
+                  width: "100%", padding: "8px 10px",
+                  border: "none", borderRadius: 7,
+                  cursor: "pointer", fontSize: 12.5, textAlign: "left",
                   background: "transparent",
                   color: SIGNUX_GOLD,
                   fontWeight: 500,
                   transition: "background 180ms ease-out",
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(200,168,78,0.05)"}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(200,168,78,0.04)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
-                <Star size={16} strokeWidth={1.5} style={{ color: SIGNUX_GOLD }} />
+                <Star size={14} strokeWidth={1.5} style={{ color: SIGNUX_GOLD }} />
                 <span>{tier === "pro" ? "Upgrade to Max" : "Upgrade to Pro"}</span>
               </button>
             )}
@@ -757,9 +753,9 @@ export default function Sidebar({
               ref={avatarRef}
               onClick={() => { setProfilePopoverOpen(true); }}
               style={{
-                display: "flex", alignItems: "center", gap: 10,
-                width: "100%", padding: "10px 12px",
-                border: "none", borderRadius: 8,
+                display: "flex", alignItems: "center", gap: 9,
+                width: "100%", padding: "8px 10px",
+                border: "none", borderRadius: 7,
                 cursor: "pointer", textAlign: "left",
                 background: "transparent",
                 transition: "background 180ms ease-out",
@@ -768,14 +764,14 @@ export default function Sidebar({
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               {authUser?.avatar ? (
-                <img src={authUser.avatar} alt={displayName} width={32} height={32}
+                <img src={authUser.avatar} alt={displayName} width={28} height={28}
                   style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} referrerPolicy="no-referrer" />
               ) : (
                 <div style={{
-                  width: 32, height: 32, borderRadius: "50%",
+                  width: 28, height: 28, borderRadius: "50%",
                   background: SIGNUX_GOLD,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 600, color: "#FFFFFF",
+                  fontSize: 10, fontWeight: 600, color: "#FFFFFF",
                   flexShrink: 0,
                 }}>
                   {userInitials}
@@ -783,25 +779,12 @@ export default function Sidebar({
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
+                  fontSize: 12.5, fontWeight: 500, color: "var(--text-secondary)",
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {displayName}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
-                  {tier === "max" || tier === "founding" ? "Max plan" : tier === "pro" ? "Pro plan" : "Free plan"}
-                </div>
               </div>
-              <span style={{
-                fontSize: 9, fontFamily: "var(--font-mono)", fontWeight: 500,
-                padding: "2px 7px", borderRadius: 4, letterSpacing: 0.8,
-                background: tier === "max" || tier === "founding" ? "rgba(200,168,78,0.1)" :
-                            tier === "pro" ? "rgba(200,168,78,0.08)" : "var(--bg-hover, rgba(255,255,255,0.04))",
-                color: tier === "max" || tier === "founding" ? SIGNUX_GOLD :
-                       tier === "pro" ? SIGNUX_GOLD : "var(--text-tertiary)",
-              }}>
-                {tier === "max" || tier === "founding" ? "MAX" : tier === "pro" ? "PRO" : "FREE"}
-              </span>
             </button>
           </div>
         )}
@@ -809,40 +792,39 @@ export default function Sidebar({
         {/* ═══ BOTTOM — Guest login block (not logged in only) ═══ */}
         {!isLoggedIn && (
           <div style={{
-            padding: "0 12px 16px", flexShrink: 0,
-            borderTop: "1px solid var(--border-primary)",
-            marginTop: 0,
+            padding: "0 8px 12px", flexShrink: 0,
           }}>
             <div style={{
-              padding: "14px 12px 10px",
+              padding: "12px 10px 8px",
             }}>
               <div style={{
                 fontSize: 11, color: "var(--text-tertiary)",
-                lineHeight: 1.5, marginBottom: 12,
+                lineHeight: 1.5, marginBottom: 10,
+                opacity: 0.7,
               }}>
-                Log in to save decisions, continue work, and unlock all engines.
+                Sign in to save decisions and unlock all engines.
               </div>
               <button
                 onClick={() => { onOpenAuth ? onOpenAuth() : window.location.href = "/login"; }}
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  gap: 8, width: "100%", padding: "10px 0",
-                  borderRadius: 9, border: "1px solid var(--border-primary)",
-                  background: "transparent",
-                  color: "var(--text-primary)",
-                  fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  gap: 7, width: "100%", padding: "8px 0",
+                  borderRadius: 7, border: "none",
+                  background: "var(--bg-hover, rgba(255,255,255,0.04))",
+                  color: "var(--text-secondary)",
+                  fontSize: 12.5, fontWeight: 500, cursor: "pointer",
                   transition: "all 180ms ease-out",
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = "var(--border-secondary, var(--border-primary))";
-                  e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.03))";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.color = "var(--text-primary)";
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = "var(--border-primary)";
-                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.background = "var(--bg-hover, rgba(255,255,255,0.04))";
+                  e.currentTarget.style.color = "var(--text-secondary)";
                 }}
               >
-                <LogIn size={15} strokeWidth={1.5} />
+                <LogIn size={14} strokeWidth={1.5} />
                 Log in
               </button>
             </div>
@@ -857,28 +839,28 @@ export default function Sidebar({
     return (
       <div style={{
         display: "flex", flexDirection: "column", alignItems: "center",
-        height: "100%", padding: "8px 0 14px",
+        height: "100%", padding: "6px 0 12px",
       }}>
         {/* Logo */}
         <CollapsedLogoButton onClick={onOpen} />
 
-        <div style={{ height: 14 }} />
+        <div style={{ height: 10 }} />
 
         {/* ═══ HOME icon ═══ */}
         <SidebarIconButton
           icon={<Home size={iconSize} strokeWidth={iconSW} />}
           tooltip="Home"
           active={mode === "chat"}
-          activeColor={SIGNUX_GOLD}
           modeColor={ICON_IDLE}
           onClick={() => handleMode("chat" as Mode)}
+          size={34}
         />
 
         {/* Separator */}
-        <div style={{ width: 20, height: 1, background: "var(--border-primary)", margin: "8px 0" }} />
+        <div style={{ width: 16, height: 1, background: "var(--border-secondary, rgba(255,255,255,0.04))", margin: "6px 0" }} />
 
         {/* ═══ ZONE A — 6 engine icons ═══ */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           {ENGINE_MODES.map(({ key, icon: Icon, name }) => (
             <SidebarIconButton
               key={key}
@@ -888,6 +870,7 @@ export default function Sidebar({
               activeColor={ENGINES[key as EngineId]?.color}
               modeColor={ICON_IDLE}
               onClick={() => handleMode(key)}
+              size={34}
             />
           ))}
         </div>
@@ -899,13 +882,13 @@ export default function Sidebar({
           <SidebarIconButton
             icon={
               authUser?.avatar ? (
-                <img src={authUser.avatar} alt={displayName} width={28} height={28} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
+                <img src={authUser.avatar} alt={displayName} width={26} height={26} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
               ) : (
                 <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
+                  width: 26, height: 26, borderRadius: "50%",
                   background: SIGNUX_GOLD,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 10, fontWeight: 600, color: "#FFFFFF",
+                  fontSize: 9, fontWeight: 600, color: "#FFFFFF",
                 }}>
                   {userInitials}
                 </div>
@@ -913,7 +896,7 @@ export default function Sidebar({
             }
             tooltip={displayName || "Profile"}
             onClick={() => { setProfilePopoverOpen(true); }}
-            size={38}
+            size={34}
           />
         )}
       </div>
@@ -971,9 +954,9 @@ function CollapsedLogoButton({ onClick }: { onClick: () => void }) {
       <button
         onClick={onClick}
         style={{
-          width: 38,
-          height: 38,
-          borderRadius: 8,
+          width: 34,
+          height: 34,
+          borderRadius: 7,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -984,14 +967,14 @@ function CollapsedLogoButton({ onClick }: { onClick: () => void }) {
           transition: "background 200ms ease-out",
         }}
       >
-        <div style={{ position: "relative", width: 22, height: 22 }}>
+        <div style={{ position: "relative", width: 18, height: 18 }}>
           <div style={{
             position: "absolute", inset: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             opacity: hovered ? 0 : 1,
             transition: "opacity 220ms ease-out",
           }}>
-            <SignuxIcon variant="gold" size={22} />
+            <SignuxIcon variant="gold" size={18} />
           </div>
           <div style={{
             position: "absolute", inset: 0,
@@ -1000,7 +983,7 @@ function CollapsedLogoButton({ onClick }: { onClick: () => void }) {
             transition: "opacity 220ms ease-out",
             color: Z300,
           }}>
-            <PanelLeft size={17} strokeWidth={1.5} />
+            <PanelLeft size={15} strokeWidth={1.5} />
           </div>
         </div>
       </button>
