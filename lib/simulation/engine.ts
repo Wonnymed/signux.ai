@@ -872,6 +872,19 @@ export async function* runSimulation(
 
   transitionPhase(state, 'verdict');
 
+  // ━━ COMPUTE AGENT CONSENSUS for verdict alignment ━━━━━━━━━
+  const allFinalPositions = consensusReports.map(r => r.position);
+  const verdictPositionCounts = { proceed: 0, delay: 0, abandon: 0 };
+  allFinalPositions.forEach(p => { if (p in verdictPositionCounts) verdictPositionCounts[p as keyof typeof verdictPositionCounts]++; });
+  const totalVerdictAgents = allFinalPositions.length;
+  const majorityEntry = Object.entries(verdictPositionCounts).sort((a, b) => b[1] - a[1])[0];
+  const agentConsensusPosition = majorityEntry[0];
+  const agentConsensusPercent = totalVerdictAgents > 0 ? Math.round((majorityEntry[1] / totalVerdictAgents) * 100) : 0;
+  const avgAgentConfidence = totalVerdictAgents > 0
+    ? consensusReports.reduce((sum, r) => sum + r.confidence, 0) / totalVerdictAgents
+    : 5;
+  console.log(`[consensus] ${agentConsensusPercent}% ${agentConsensusPosition}, avg confidence ${avgAgentConfidence.toFixed(1)}`);
+
   // ━━ ROUND 10 — VERDICT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   yield { event: 'phase_start', data: { phase: 'verdict', status: 'active' } };
@@ -897,7 +910,11 @@ DEBATE PROGRESS:
 - Key disagreements: ${progressLedger.key_disagreements.length > 0 ? progressLedger.key_disagreements.join('; ') : 'Resolved'}
 - Resolved disagreements: ${progressLedger.resolved_disagreements.length > 0 ? progressLedger.resolved_disagreements.join('; ') : 'None'}`;
 
-    const verdictPrompt = `QUESTION: ${question}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n${taskLedgerSection}\n\nSynthesize ALL agent positions into a final Decision Object. Weight by confidence and evidence quality. Use the Task Ledger to distinguish verified facts from assumptions — your verdict should rely on VERIFIED facts and flag unresolved assumptions as risks.\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }]\n}`;
+    const consensusDirective = agentConsensusPercent >= 70
+      ? `\n\nCRITICAL CONSENSUS CONSTRAINT: ${agentConsensusPercent}% of agents recommend "${agentConsensusPosition}" with average confidence ${avgAgentConfidence.toFixed(1)}/10. Your verdict MUST align with this consensus. The agents debated for 9 rounds — respect their conclusion. If they say "${agentConsensusPosition}", your recommendation must be "${agentConsensusPosition}"${agentConsensusPosition === 'proceed' ? ' or "proceed_with_conditions"' : ''}. Do NOT override the agents.\n`
+      : '';
+
+    const verdictPrompt = `QUESTION: ${question}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n${taskLedgerSection}${consensusDirective}\n\nSynthesize ALL agent positions into a final Decision Object. Weight by confidence and evidence quality. Use the Task Ledger to distinguish verified facts from assumptions — your verdict should rely on VERIFIED facts and flag unresolved assumptions as risks.\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }]\n}`;
     const verdictRaw = await callClaude({
       systemPrompt: chair.systemPrompt,
       userMessage: verdictPrompt,
@@ -949,12 +966,39 @@ DEBATE PROGRESS:
     console.log(`[self-refine] critique: actionability=${critique.actionability_score}, should_refine=${critique.should_refine}`);
 
     if (critique.should_refine) {
-      verdict = await refineVerdict(question, verdict, critique, state);
+      const consensusData = agentConsensusPercent >= 70
+        ? { position: agentConsensusPosition, percent: agentConsensusPercent }
+        : undefined;
+      verdict = await refineVerdict(question, verdict, critique, state, consensusData);
       console.log(`[self-refine] verdict REFINED: actionability ${critique.actionability_score} → improved`);
     }
   } catch (err) {
     console.error('[self-refine] critique/refine failed (non-fatal):', err);
     // Non-fatal — original verdict is still valid
+  }
+
+  // ━━ CONSENSUS OVERRIDE CHECK — verdict must not contradict agents ━━
+  if (agentConsensusPercent >= 70) {
+    const verdictAligns = (
+      (agentConsensusPosition === 'proceed' && (verdict.recommendation === 'proceed' || verdict.recommendation === 'proceed_with_conditions')) ||
+      (agentConsensusPosition === 'delay' && verdict.recommendation === 'delay') ||
+      (agentConsensusPosition === 'abandon' && verdict.recommendation === 'abandon')
+    );
+
+    if (!verdictAligns) {
+      console.warn(`[OVERRIDE] ${agentConsensusPercent}% agents said "${agentConsensusPosition}" but verdict said "${verdict.recommendation}". Correcting.`);
+
+      if (agentConsensusPosition === 'abandon') {
+        verdict.recommendation = 'abandon';
+        verdict.probability = Math.max(5, Math.round(100 - (avgAgentConfidence * 10)));
+      } else if (agentConsensusPosition === 'delay') {
+        verdict.recommendation = 'delay';
+        verdict.probability = Math.max(10, Math.round(50 - (avgAgentConfidence * 3)));
+      } else if (agentConsensusPosition === 'proceed') {
+        verdict.recommendation = verdict.recommendation === 'proceed_with_conditions' ? 'proceed_with_conditions' : 'proceed';
+        verdict.probability = Math.max(50, Math.round(avgAgentConfidence * 10));
+      }
+    }
   }
 
   // ━━ Verdict Insights: Counter-Factual Flip + Blind Spot Detector ━━

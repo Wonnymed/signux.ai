@@ -90,6 +90,7 @@ export async function refineVerdict(
   originalVerdict: DecisionObject,
   critique: VerdictCritique,
   state: SimulationState,
+  consensusData?: { position: string; percent: number },
 ): Promise<DecisionObject> {
   if (!critique.should_refine) return originalVerdict;
 
@@ -100,19 +101,27 @@ export async function refineVerdict(
     )
     .join('\n');
 
+  const consensusRule = consensusData
+    ? `\nCRITICAL RULE: ${consensusData.percent}% of agents recommend "${consensusData.position}". The refined verdict MUST keep the recommendation as "${consensusData.position}". You can improve probability calibration, risk analysis, and next_action specificity — but do NOT flip the recommendation against agent consensus. The agents debated for 9 rounds — respect their conclusion.`
+    : '';
+
+  const consensusMsg = consensusData
+    ? `\nAGENT CONSENSUS: ${consensusData.percent}% of agents recommended "${consensusData.position}". Your refined verdict MUST respect this consensus direction.\n`
+    : '';
+
   const response = await callClaude({
     systemPrompt: `You are the Decision Chair performing a REFINEMENT pass. A quality critic identified weaknesses. Produce an IMPROVED verdict that:
 - Fixes the specific weaknesses identified
 - Makes next_action MORE specific and actionable (include WHO does WHAT by WHEN)
 - Recalibrates probability if the critique says it's wrong
 - Adds missing perspectives into risk/leverage analysis
-- Improves the grade slightly if refinement is meaningful
+- Improves the grade slightly if refinement is meaningful${consensusRule}
 Respond with valid JSON only matching the DecisionObject schema.`,
     userMessage: `QUESTION: "${question}"
 
 AGENT DEBATE:
 ${agentSummary}
-
+${consensusMsg}
 ORIGINAL VERDICT:
 ${JSON.stringify(originalVerdict, null, 2)}
 
