@@ -292,6 +292,7 @@ function ProfilePopover({
 
         {/* Menu items */}
         {menuItem(<LayoutDashboard size={15} strokeWidth={1.5} />, "Dashboard", () => { window.location.href = "/dashboard"; })}
+        {menuItem(<CreditCard size={15} strokeWidth={1.5} />, "Billing & Plan", () => { window.location.href = "/billing"; })}
         {menuItem(<Settings size={15} strokeWidth={1.5} />, "Settings", onOpenSettings)}
 
         {onSignOut && (
@@ -566,6 +567,18 @@ export default function Sidebar({
           {renderExpandedContent()}
         </aside>
 
+        <ProfilePopover
+          anchorRef={avatarRef}
+          isOpen={profilePopoverOpen}
+          onClose={() => setProfilePopoverOpen(false)}
+          authUser={authUser}
+          userInitials={userInitials}
+          displayName={displayName}
+          tier={tier}
+          onOpenSettings={onOpenSettings}
+          onSignOut={onSignOut}
+          sidebarWidth={280}
+        />
       </>
     );
   }
@@ -603,6 +616,19 @@ export default function Sidebar({
         {open ? renderExpandedContent() : renderCollapsedContent()}
       </aside>
 
+      {/* Profile popover — portal-based, works from both collapsed/expanded */}
+      <ProfilePopover
+        anchorRef={avatarRef}
+        isOpen={profilePopoverOpen}
+        onClose={() => setProfilePopoverOpen(false)}
+        authUser={authUser}
+        userInitials={userInitials}
+        displayName={displayName}
+        tier={tier}
+        onOpenSettings={onOpenSettings}
+        onSignOut={onSignOut}
+        sidebarWidth={sidebarWidth}
+      />
     </>
   );
 
@@ -726,7 +752,8 @@ export default function Sidebar({
 
             {/* Profile row */}
             <button
-              onClick={() => { router.push("/settings"); onClose(); }}
+              ref={avatarRef}
+              onClick={() => { setProfilePopoverOpen(true); }}
               style={{
                 display: "flex", alignItems: "center", gap: 10,
                 width: "100%", padding: "10px 12px",
@@ -840,7 +867,7 @@ export default function Sidebar({
               )
             }
             tooltip={displayName || "Profile"}
-            onClick={() => { router.push("/settings"); }}
+            onClick={() => { setProfilePopoverOpen(true); }}
             size={38}
           />
         )}
