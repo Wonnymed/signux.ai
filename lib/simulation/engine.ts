@@ -6,6 +6,7 @@ import { createAudit, addRound, finalizeAudit, type SimulationAudit, type AuditR
 import { createInitialState, transitionPhase, addAgentReport, selectDebatePairs, recordHandoff, type SimulationState } from './state';
 import { buildCitations, type EnrichedCitation } from './citations';
 import { scoreAllAgents, type AgentPerformance } from './performance';
+import { critiqueVerdict, refineVerdict, type VerdictCritique } from './self-refine';
 import type { AdvisorPersona, AdvisorReport as CrowdAdvisorReport, CrowdWisdomResult } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -24,6 +25,7 @@ export type SimulationSSEEvent =
   | { event: 'audit_complete'; data: SimulationAudit }
   | { event: 'citations_enriched'; data: EnrichedCitation[] }
   | { event: 'agent_scores'; data: AgentPerformance[] }
+  | { event: 'verdict_critique'; data: VerdictCritique }
   | { event: 'state_summary'; data: any }
   | { event: 'complete'; data: { simulation_id: string } };
 
@@ -608,6 +610,21 @@ export async function* runSimulation(
       console.log(`[filter:${filter.name}] patched verdict: ${check.reason}`);
       verdict = check.patched;
     }
+  }
+
+  // ━━ Self-Evolving #13: Critique → Refine ━━━━━━━━━━━━━━━━━━
+  try {
+    const critique = await critiqueVerdict(question, verdict, state);
+    yield { event: 'verdict_critique', data: critique };
+    console.log(`[self-refine] critique: actionability=${critique.actionability_score}, should_refine=${critique.should_refine}`);
+
+    if (critique.should_refine) {
+      verdict = await refineVerdict(question, verdict, critique, state);
+      console.log(`[self-refine] verdict REFINED: actionability ${critique.actionability_score} → improved`);
+    }
+  } catch (err) {
+    console.error('[self-refine] critique/refine failed (non-fatal):', err);
+    // Non-fatal — original verdict is still valid
   }
 
   // Palantir #4: Build traceable citations from state
