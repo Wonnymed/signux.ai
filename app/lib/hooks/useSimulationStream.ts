@@ -34,6 +34,8 @@ const PHASE_ORDER: SimulationPhase[] = [
   "verdict",
 ];
 
+const TIMEOUT_MS = 60_000;
+
 const initialState: SimulationStreamState = {
   phases: PHASE_ORDER.map((p) => ({ phase: p, status: "pending" as const })),
   agents: [],
@@ -49,6 +51,27 @@ const initialState: SimulationStreamState = {
 export function useSimulationStream() {
   const [state, setState] = useState<SimulationStreamState>(initialState);
   const abortRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimeout_ = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const resetTimeout = () => {
+    clearTimeout_();
+    timeoutRef.current = setTimeout(() => {
+      // No events received for 60s — timeout
+      if (abortRef.current) abortRef.current.abort();
+      setState((s) => ({
+        ...s,
+        isRunning: false,
+        error: "Simulation timed out — no response for 60 seconds",
+      }));
+    }, TIMEOUT_MS);
+  };
 
   const startSimulation = useCallback(
     async (question: string, engine: string) => {
@@ -63,6 +86,9 @@ export function useSimulationStream() {
       const abort = new AbortController();
       abortRef.current = abort;
 
+      // Start timeout
+      resetTimeout();
+
       try {
         const res = await fetch("/api/simulate/stream", {
           method: "POST",
@@ -72,10 +98,11 @@ export function useSimulationStream() {
         });
 
         if (!res.ok || !res.body) {
+          clearTimeout_();
           setState((s) => ({
             ...s,
             isRunning: false,
-            error: "Failed to start simulation",
+            error: `Failed to start simulation (${res.status})`,
           }));
           return;
         }
@@ -87,6 +114,9 @@ export function useSimulationStream() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
+
+          // Reset timeout on every chunk
+          resetTimeout();
 
           buffer += decoder.decode(value, { stream: true });
 
@@ -120,8 +150,10 @@ export function useSimulationStream() {
           }
         }
 
+        clearTimeout_();
         setState((s) => ({ ...s, isRunning: false }));
       } catch (err: unknown) {
+        clearTimeout_();
         if (err instanceof Error && err.name === "AbortError") return;
         setState((s) => ({
           ...s,
@@ -130,10 +162,12 @@ export function useSimulationStream() {
         }));
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
   const stop = useCallback(() => {
+    clearTimeout_();
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
@@ -151,7 +185,13 @@ function processEvent(
   dataStr: string,
   setState: React.Dispatch<React.SetStateAction<SimulationStreamState>>,
 ) {
-  const data = JSON.parse(dataStr);
+  let data: unknown;
+  try {
+    data = JSON.parse(dataStr);
+  } catch {
+    console.error("[SSE] Failed to parse event data:", dataStr);
+    return;
+  }
 
   switch (event) {
     case "phase_start": {
@@ -202,6 +242,16 @@ function processEvent(
         phases: s.phases.map((p) =>
           p.status === "active" ? { ...p, status: "complete" } : p,
         ),
+      }));
+      break;
+    }
+
+    case "error": {
+      const { message } = data as { message: string };
+      setState((s) => ({
+        ...s,
+        error: message,
+        isRunning: false,
       }));
       break;
     }

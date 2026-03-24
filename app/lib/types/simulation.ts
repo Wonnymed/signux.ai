@@ -45,7 +45,8 @@ export type AgentReport = {
 
 export type SimulationPlanTask = {
   description: string;
-  agent: string;
+  agent?: string;
+  assigned_agent?: string;
 };
 
 export type SimulationPlan = {

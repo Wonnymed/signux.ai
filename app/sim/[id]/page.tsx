@@ -9,6 +9,7 @@ import ConsensusTracker from "@/app/components/sim/ConsensusTracker";
 import DecisionObjectCard from "@/app/components/sim/DecisionObject";
 import FollowUpChips from "@/app/components/sim/FollowUpChips";
 import { AgentCardSkeleton, VerdictSkeleton } from "@/app/components/sim/Skeleton";
+import AuthWallBanner from "@/app/components/sim/AuthWallBanner";
 import { useSimulationStream } from "@/app/lib/hooks/useSimulationStream";
 
 export default function SimulationPage() {
@@ -38,6 +39,7 @@ function SimulationPageInner() {
     verdict,
     followups,
     isRunning,
+    error,
     startSimulation,
   } = useSimulationStream();
 
@@ -159,13 +161,19 @@ function SimulationPageInner() {
           </h1>
           <span
             style={{
-              fontSize: 12,
-              color: isRunning ? "var(--accent)" : "var(--text-tertiary)",
+              fontSize: 11,
+              color: "var(--text-tertiary)",
               marginLeft: "auto",
               whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
-            {isRunning ? "Running simulation..." : "Simulation complete"}
+            <span>10 specialists · 10 rounds · Sonnet</span>
+            <span style={{ color: isRunning ? "var(--accent)" : "#10B981", fontWeight: 500 }}>
+              {isRunning ? "Running..." : "Complete"}
+            </span>
           </span>
         </header>
 
@@ -254,7 +262,7 @@ function SimulationPageInner() {
                           margin: 0,
                         }}
                       >
-                        {t.agent}
+                        {t.agent || t.assigned_agent}
                       </p>
                     </div>
                   </div>
@@ -369,6 +377,30 @@ function SimulationPageInner() {
                   suggestions={followups}
                   onSelect={handleFollowUp}
                 />
+              </div>
+            )}
+
+            {/* Auth wall — show after verdict for unauthenticated users */}
+            {verdict && !isRunning && (
+              <div style={{ marginTop: 4 }}>
+                <AuthWallBanner />
+              </div>
+            )}
+
+            {/* Error state */}
+            {error && (
+              <div
+                style={{
+                  padding: 16,
+                  borderRadius: "var(--radius-md)",
+                  background: "rgba(244,63,94,0.06)",
+                  border: "1px solid rgba(244,63,94,0.15)",
+                  marginTop: 8,
+                }}
+              >
+                <p style={{ fontSize: 13, color: "#F43F5E", margin: 0, fontWeight: 500 }}>
+                  {error}
+                </p>
               </div>
             )}
 
