@@ -4,6 +4,8 @@ import { generateAdvisorPersonas, runCrowdWisdom } from '../agents/advisors';
 import { createKernel, type OctuxKernel } from './kernel';
 import { createAudit, addRound, finalizeAudit, type SimulationAudit, type AuditRound } from './audit';
 import { createInitialState, transitionPhase, addAgentReport, selectDebatePairs, recordHandoff, checkEarlyConsensus, type SimulationState } from './state';
+import { buildCitations, type EnrichedCitation } from './citations';
+import { scoreAllAgents, type AgentPerformance } from './performance';
 import type { AdvisorPersona, AdvisorReport as CrowdAdvisorReport, CrowdWisdomResult } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -18,6 +20,8 @@ export type SimulationSSEEvent =
   | { event: 'crowd_advisor_complete'; data: CrowdAdvisorReport }
   | { event: 'crowd_complete'; data: CrowdWisdomResult }
   | { event: 'audit_complete'; data: SimulationAudit }
+  | { event: 'citations_enriched'; data: EnrichedCitation[] }
+  | { event: 'agent_scores'; data: AgentPerformance[] }
   | { event: 'state_summary'; data: any }
   | { event: 'complete'; data: { simulation_id: string } };
 
@@ -506,8 +510,30 @@ export async function* runSimulation(
     }
   }
 
+  // Palantir #4: Build traceable citations from state
+  const enrichedCitations = buildCitations(state);
+
+  // Replace Chair-generated citations with algorithmic ones
+  if (verdict.citations !== undefined) {
+    verdict.citations = enrichedCitations.map((c) => ({
+      id: c.id,
+      agent_id: c.agent_id as AgentId,
+      agent_name: c.agent_name,
+      claim: c.claim,
+      confidence: c.confidence,
+    }));
+  }
+
   state.verdict = verdict;
   yield { event: 'verdict_artifact', data: verdict };
+
+  // Yield enriched citations with full traceability
+  yield { event: 'citations_enriched', data: enrichedCitations };
+
+  // Agno #11: Score all agent performances
+  const agentScores = scoreAllAgents(state, enrichedCitations);
+  yield { event: 'agent_scores', data: agentScores };
+  console.log('[perf] Agent scores:', agentScores.map((s) => `${s.agent_name}: ${s.overall_score}/100`).join(', '));
 
   // Follow-up suggestions
   try {
