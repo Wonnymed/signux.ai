@@ -237,8 +237,8 @@ export function selectDebatePairs(
   // Sort by disagreement descending
   pairs.sort((x, y) => y.score - x.score);
 
-  // If highest disagreement is too low, skip debate entirely
-  if (pairs.length === 0 || pairs[0].score < 0.2) {
+  // ALWAYS return at least 1 pair — debate is the product, never skip it
+  if (pairs.length === 0) {
     state.debate_pairs = [];
     return [];
   }
@@ -302,15 +302,6 @@ export function recordHandoff(
 
 // ── AutoGen #3: Early Consensus Termination ────────────────
 
-export function checkEarlyConsensus(state: SimulationState): boolean {
-  const reports = Array.from(state.latest_reports.values());
-  if (reports.length < 2) return false;
-
-  const firstPosition = reports[0].position;
-  const allAgree = reports.every((r) => r.position === firstPosition);
-  if (!allAgree) return false;
-
-  const avgConfidence =
-    reports.reduce((sum, r) => sum + r.confidence, 0) / reports.length;
-  return avgConfidence > 7;
+export function checkEarlyConsensus(_state: SimulationState): boolean {
+  return false; // DISABLED: All 10 rounds must always execute
 }

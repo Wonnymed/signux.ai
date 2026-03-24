@@ -3,7 +3,7 @@ import { AGENTS, getAgentById } from '../agents/prompts';
 import { generateAdvisorPersonas, runCrowdWisdom } from '../agents/advisors';
 import { createKernel, type OctuxKernel } from './kernel';
 import { createAudit, addRound, finalizeAudit, type SimulationAudit, type AuditRound } from './audit';
-import { createInitialState, transitionPhase, addAgentReport, selectDebatePairs, recordHandoff, checkEarlyConsensus, type SimulationState } from './state';
+import { createInitialState, transitionPhase, addAgentReport, selectDebatePairs, recordHandoff, type SimulationState } from './state';
 import { buildCitations, type EnrichedCitation } from './citations';
 import { scoreAllAgents, type AgentPerformance } from './performance';
 import type { AdvisorPersona, AdvisorReport as CrowdAdvisorReport, CrowdWisdomResult } from '../agents/advisors';
@@ -66,21 +66,6 @@ function summarizeReports(reports: AgentReport[]): string {
     .map((r) => r.risks_identified[0])
     .slice(0, 2);
   return `Of ${reports.length} agents, ${positions.proceed} recommend proceed, ${positions.delay} recommend delay, ${positions.abandon} recommend abandon. Key risks: ${topRisks.join('; ') || 'none flagged yet'}.`;
-}
-
-// ── AutoGen #9 — Termination Conditions ────────────────────
-
-function shouldTerminate(reports: AgentReport[], kernel: OctuxKernel): boolean {
-  if (reports.length < kernel.config.minAgentsForVerdict) return false;
-
-  // Check convergence: if enough agents agree, we can skip remaining rounds
-  const total = reports.length;
-  const positions = { proceed: 0, delay: 0, abandon: 0 };
-  for (const r of reports) {
-    if (r.position in positions) positions[r.position as keyof typeof positions]++;
-  }
-  const maxAgreement = Math.max(positions.proceed, positions.delay, positions.abandon) / total;
-  return maxAgreement >= kernel.config.convergenceThreshold;
 }
 
 // ── Audited callAgent wrapper ──────────────────────────────
@@ -331,55 +316,54 @@ export async function* runSimulation(
 
   const summary = summarizeReports(allReports);
 
-  // AutoGen #9: Check early termination before quick takes
-  if (shouldTerminate(allReports, kernel)) {
-    console.log('[autogen] early convergence detected after deep analysis — skipping quick takes');
-    yield { event: 'round_start', data: { round: 5, title: 'Rapid Assessment', description: 'Skipped — early convergence detected', total_rounds: 10 } };
-    yield { event: 'round_complete', data: { round: 5 } };
-  } else {
-    transitionPhase(state, 'quick_takes');
-    yield { event: 'round_start', data: { round: 5, title: 'Rapid Assessment', description: 'Remaining specialists provide quick perspectives', total_rounds: 10 } };
+  transitionPhase(state, 'quick_takes');
+  yield { event: 'round_start', data: { round: 5, title: 'Rapid Assessment', description: 'Remaining specialists provide quick perspectives', total_rounds: 10 } };
 
-    const quickPromises = quickAgentTasks.map(({ agent, task }) =>
-      callAgent(
-        agent,
-        `Question: ${question}\n\nOther agents have analyzed this. Here is a brief summary: ${summary}\n\nAs ${agent.role}, add your perspective in under 100 words. Focus on what others MISSED. Respond with valid JSON only.`,
-        512,
-        audit, 5, 'quick_takes',
-      ).catch((err) => {
-        console.error(`[${agent.id}] quick take failed:`, err);
-        return null;
-      }),
-    );
+  const quickPromises = quickAgentTasks.map(({ agent, task }) =>
+    callAgent(
+      agent,
+      `Question: ${question}\n\nOther agents have analyzed this. Here is a brief summary: ${summary}\n\nAs ${agent.role}, add your perspective in under 100 words. Focus on what others MISSED. Respond with valid JSON only.`,
+      512,
+      audit, 5, 'quick_takes',
+    ).catch((err) => {
+      console.error(`[${agent.id}] quick take failed:`, err);
+      return null;
+    }),
+  );
 
-    const quickResults = await Promise.allSettled(quickPromises);
-    // Stagger yields for progressive feel
-    for (const result of quickResults) {
-      if (result.status === 'fulfilled' && result.value) {
-        let report = result.value;
-        let filtered = false;
-        for (const filter of kernel.agentFilters) {
-          const check = filter.run(report);
-          if (!check.pass) { filtered = true; console.warn(`[filter:${filter.name}] rejected ${report.agent_id}: ${check.reason}`); break; }
-          if (check.patched) report = check.patched;
-        }
-        if (!filtered) {
-          allReports.push(report);
-          addAgentReport(state, report);
-          yield { event: 'agent_complete', data: report };
-          await wait(200);
-        }
+  const quickResults = await Promise.allSettled(quickPromises);
+  // Stagger yields for progressive feel
+  for (const result of quickResults) {
+    if (result.status === 'fulfilled' && result.value) {
+      let report = result.value;
+      let filtered = false;
+      for (const filter of kernel.agentFilters) {
+        const check = filter.run(report);
+        if (!check.pass) { filtered = true; console.warn(`[filter:${filter.name}] rejected ${report.agent_id}: ${check.reason}`); break; }
+        if (check.patched) report = check.patched;
+      }
+      if (!filtered) {
+        allReports.push(report);
+        addAgentReport(state, report);
+        yield { event: 'agent_complete', data: report };
+        await wait(200);
       }
     }
-
-    yield { event: 'round_complete', data: { round: 5 } };
   }
+
+  yield { event: 'round_complete', data: { round: 5 } };
 
   const quickConsensus = calculateConsensus(allReports);
   state.consensus_history.push({ phase: 'quick_takes', ...quickConsensus });
   yield { event: 'consensus_update', data: quickConsensus };
 
-  // ━━ EARLY CONSENSUS CHECK (AutoGen #3 + LangGraph #2) ━━━━
+  // Verify all 10 agents participated after rounds 2-5
+  const uniqueAgentsAfterR5 = state.latest_reports.size;
+  if (uniqueAgentsAfterR5 < 10) {
+    console.error(`[engine] WARNING: Only ${uniqueAgentsAfterR5}/10 agents participated in rounds 2-5`);
+  } else {
+    console.log(`[engine] All 10 agents reported after round 5`);
+  }
 
   const reportSummaryForChair = allReports
     .map((r) => `${r.agent_name} (${r.agent_id}): position=${r.position}, confidence=${r.confidence}, argument="${r.key_argument}"`)
@@ -387,184 +371,193 @@ export async function* runSimulation(
 
   let finalReports: AgentReport[] = [];
 
-  if (checkEarlyConsensus(state)) {
-    console.log('[state] Early consensus detected — skipping adversarial + convergence (saves ~6-8 API calls)');
-    finalReports = Array.from(state.latest_reports.values());
+  // ━━ ROUNDS 6-7 — ADVERSARIAL DEBATE (ALWAYS runs) ━━━━━━━━
 
-    // Yield skip markers for rounds 6-9
-    for (const r of [
-      { round: 6, title: 'Adversarial Debate \u2014 Pair 1', description: 'Skipped \u2014 early consensus' },
-      { round: 7, title: 'Adversarial Debate \u2014 Pair 2', description: 'Skipped \u2014 early consensus' },
-      { round: 8, title: 'Position Challenge', description: 'Skipped \u2014 early consensus' },
-      { round: 9, title: 'Final Convergence', description: 'Skipped \u2014 early consensus' },
-    ]) {
-      yield { event: 'round_start', data: { ...r, total_rounds: 10 } };
-      yield { event: 'round_complete', data: { round: r.round } };
-    }
+  transitionPhase(state, 'adversarial');
+  yield { event: 'phase_start', data: { phase: 'adversarial', status: 'active' } };
 
-    transitionPhase(state, 'verdict');
-  } else {
-    // ━━ ROUNDS 6-7 — ADVERSARIAL DEBATE (AutoGen #3 smart pairing) ━━
+  const pairs = selectDebatePairs(state, 2);
 
-    transitionPhase(state, 'adversarial');
-    yield { event: 'phase_start', data: { phase: 'adversarial', status: 'active' } };
+  // Determine majority position for devil's advocate fallback
+  const positionCounts: Record<string, number> = { proceed: 0, delay: 0, abandon: 0 };
+  for (const r of Array.from(state.latest_reports.values())) {
+    if (r.position in positionCounts) positionCounts[r.position]++;
+  }
+  const majorityPosition = Object.entries(positionCounts).sort((a, b) => b[1] - a[1])[0][0];
 
-    const pairs = selectDebatePairs(state, 2);
+  for (let pairIdx = 0; pairIdx < 2; pairIdx++) {
+    const roundNum = 6 + pairIdx;
+    const pair = pairs[pairIdx];
 
-    if (pairs.length === 0) {
-      console.log('[state] Low disagreement (< 0.2) — skipping adversarial debate');
-      yield { event: 'round_start', data: { round: 6, title: 'Adversarial Debate \u2014 Pair 1', description: 'Skipped \u2014 low disagreement between agents', total_rounds: 10 } };
-      yield { event: 'round_complete', data: { round: 6 } };
-      yield { event: 'round_start', data: { round: 7, title: 'Adversarial Debate \u2014 Pair 2', description: 'Skipped \u2014 low disagreement between agents', total_rounds: 10 } };
-      yield { event: 'round_complete', data: { round: 7 } };
-    } else {
-      for (let pairIdx = 0; pairIdx < 2; pairIdx++) {
-        const roundNum = 6 + pairIdx;
-        const pair = pairs[pairIdx];
+    if (!pair) {
+      // Devil's advocate: Chair forces debate when agents mostly agree
+      yield { event: 'round_start', data: { round: roundNum, title: `Devil's Advocate \u2014 Round ${pairIdx + 1}`, description: `Chair challenges the ${majorityPosition} consensus`, total_rounds: 10 } };
 
-        if (!pair) {
-          yield { event: 'round_start', data: { round: roundNum, title: `Adversarial Debate \u2014 Pair ${pairIdx + 1}`, description: 'No additional conflict pair found', total_rounds: 10 } };
-          yield { event: 'round_complete', data: { round: roundNum } };
-          continue;
-        }
+      // Pick 2 agents that haven't debated yet
+      const debatedAgentIds = new Set(pairs.flatMap((p) => [p.challenger_id, p.defender_id]));
+      const availableAgents = specialistAgents().filter((a) => !debatedAgentIds.has(a.id));
+      const targetAgent = availableAgents[pairIdx] || availableAgents[0] || specialistAgents()[pairIdx];
 
-        yield { event: 'round_start', data: { round: roundNum, title: `Adversarial Debate \u2014 Pair ${pairIdx + 1}`, description: `Highest-conflict agents challenge each other directly`, total_rounds: 10 } };
-
-        let challengerAgent: AgentConfig;
-        let defenderAgent: AgentConfig;
+      if (targetAgent) {
         try {
-          challengerAgent = getAgentById(pair.challenger_id as AgentId);
-          defenderAgent = getAgentById(pair.defender_id as AgentId);
-        } catch {
-          yield { event: 'round_complete', data: { round: roundNum } };
-          continue;
-        }
-
-        recordHandoff(state, pair.challenger_id, pair.defender_id, pair.topic, roundNum);
-
-        const defenderReport = allReports.find((r) => r.agent_id === pair.defender_id);
-        const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
-
-        try {
-          const challengeReport = await callAgent(
-            challengerAgent,
-            `Original question: ${question}\n\nYou said "${challengerReport?.key_argument || 'your position'}". The ${defenderAgent.name} said "${defenderReport?.key_argument || 'their position'}". The debate topic: ${pair.topic}. Challenge the defender's position directly. Respond with valid JSON only.`,
+          const devilReport = await callAgent(
+            targetAgent,
+            `Original question: ${question}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". What could go catastrophically wrong? What are you all missing? Be contrarian and specific. Respond with valid JSON only.`,
             kernel.config.maxTokensPerAgent,
             audit, roundNum, 'adversarial',
           );
-          allReports.push(challengeReport);
-          addAgentReport(state, challengeReport);
-          yield { event: 'agent_complete', data: challengeReport };
+          allReports.push(devilReport);
+          addAgentReport(state, devilReport);
+          yield { event: 'agent_complete', data: devilReport };
         } catch (err) {
-          console.error(`[${pair.challenger_id}] challenge failed:`, err);
+          console.error(`[${targetAgent.id}] devil's advocate failed:`, err);
         }
-
-        try {
-          const defenseReport = await callAgent(
-            defenderAgent,
-            `Original question: ${question}\n\nThe ${challengerAgent.name} challenged your position on: ${pair.topic}. Their argument: "${challengerReport?.key_argument || 'disagreement'}". Defend or update your position. If you changed your mind, say so. Respond with valid JSON only.`,
-            kernel.config.maxTokensPerAgent,
-            audit, roundNum, 'adversarial',
-          );
-          allReports.push(defenseReport);
-          addAgentReport(state, defenseReport);
-          yield { event: 'agent_complete', data: defenseReport };
-        } catch (err) {
-          console.error(`[${pair.defender_id}] defense failed:`, err);
-        }
-
-        yield { event: 'round_complete', data: { round: roundNum } };
       }
+
+      yield { event: 'round_complete', data: { round: roundNum } };
+      continue;
     }
 
-    const adversarialConsensus = calculateConsensus(allReports);
-    state.consensus_history.push({ phase: 'adversarial', ...adversarialConsensus });
-    yield { event: 'consensus_update', data: adversarialConsensus };
+    yield { event: 'round_start', data: { round: roundNum, title: `Adversarial Debate \u2014 Pair ${pairIdx + 1}`, description: `Highest-conflict agents challenge each other directly`, total_rounds: 10 } };
 
-    // ━━ ROUND 8 — POSITION CHALLENGE (Chair challenges weak arguments) ━━
+    let challengerAgent: AgentConfig;
+    let defenderAgent: AgentConfig;
+    try {
+      challengerAgent = getAgentById(pair.challenger_id as AgentId);
+      defenderAgent = getAgentById(pair.defender_id as AgentId);
+    } catch {
+      yield { event: 'round_complete', data: { round: roundNum } };
+      continue;
+    }
 
-    yield { event: 'round_start', data: { round: 8, title: 'Position Challenge', description: 'Chair challenges remaining weak arguments', total_rounds: 10 } };
+    recordHandoff(state, pair.challenger_id, pair.defender_id, pair.topic, roundNum);
 
-    // Find the 2 weakest agents by evidence count + argument length
-    const latestReportsList = Array.from(state.latest_reports.values());
-    const rankedByWeakness = [...latestReportsList].sort((a, b) => {
-      const scoreA = (a.evidence?.length || 0) * 10 + (a.key_argument?.length || 0);
-      const scoreB = (b.evidence?.length || 0) * 10 + (b.key_argument?.length || 0);
-      return scoreA - scoreB;
+    const defenderReport = allReports.find((r) => r.agent_id === pair.defender_id);
+    const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
+
+    try {
+      const challengeReport = await callAgent(
+        challengerAgent,
+        `Original question: ${question}\n\nYou said "${challengerReport?.key_argument || 'your position'}". The ${defenderAgent.name} said "${defenderReport?.key_argument || 'their position'}". The debate topic: ${pair.topic}. Challenge the defender's position directly. Respond with valid JSON only.`,
+        kernel.config.maxTokensPerAgent,
+        audit, roundNum, 'adversarial',
+      );
+      allReports.push(challengeReport);
+      addAgentReport(state, challengeReport);
+      yield { event: 'agent_complete', data: challengeReport };
+    } catch (err) {
+      console.error(`[${pair.challenger_id}] challenge failed:`, err);
+    }
+
+    try {
+      const defenseReport = await callAgent(
+        defenderAgent,
+        `Original question: ${question}\n\nThe ${challengerAgent.name} challenged your position on: ${pair.topic}. Their argument: "${challengerReport?.key_argument || 'disagreement'}". Defend or update your position. If you changed your mind, say so. Respond with valid JSON only.`,
+        kernel.config.maxTokensPerAgent,
+        audit, roundNum, 'adversarial',
+      );
+      allReports.push(defenseReport);
+      addAgentReport(state, defenseReport);
+      yield { event: 'agent_complete', data: defenseReport };
+    } catch (err) {
+      console.error(`[${pair.defender_id}] defense failed:`, err);
+    }
+
+    yield { event: 'round_complete', data: { round: roundNum } };
+  }
+
+  const adversarialConsensus = calculateConsensus(allReports);
+  state.consensus_history.push({ phase: 'adversarial', ...adversarialConsensus });
+  yield { event: 'consensus_update', data: adversarialConsensus };
+
+  // ━━ ROUND 8 — POSITION CHALLENGE (Chair challenges weak arguments, ALWAYS runs) ━━
+
+  yield { event: 'round_start', data: { round: 8, title: 'Position Challenge', description: 'Chair challenges the weakest arguments for specificity', total_rounds: 10 } };
+
+  // Find the 2 weakest agents by evidence count + argument length
+  const latestReportsList = Array.from(state.latest_reports.values());
+  const rankedByWeakness = [...latestReportsList].sort((a, b) => {
+    const scoreA = (a.evidence?.length || 0) * 10 + (a.key_argument?.length || 0);
+    const scoreB = (b.evidence?.length || 0) * 10 + (b.key_argument?.length || 0);
+    return scoreA - scoreB;
+  });
+  const weakAgents = rankedByWeakness.slice(0, 2);
+
+  for (const weak of weakAgents) {
+    try {
+      const challengedAgent = getAgentById(weak.agent_id);
+      const challengeReport = await callAgent(
+        challengedAgent,
+        `Original question: ${question}\n\nThe Decision Chair reviewed your analysis and found it lacks specificity. Your argument was: "${weak.key_argument}"\n\nProvide concrete numbers, timelines, or precedents to strengthen your position \u2014 or reconsider it. Respond with valid JSON only.`,
+        kernel.config.maxTokensPerAgent,
+        audit, 8, 'adversarial',
+      );
+      allReports.push(challengeReport);
+      addAgentReport(state, challengeReport);
+      yield { event: 'agent_complete', data: challengeReport };
+    } catch (err) {
+      console.error(`[${weak.agent_id}] position challenge failed:`, err);
+    }
+  }
+
+  yield { event: 'round_complete', data: { round: 8 } };
+
+  // ━━ ROUND 9 — CONVERGENCE (all 10 specialists declare final position, ALWAYS runs) ━━
+
+  transitionPhase(state, 'convergence');
+  yield { event: 'phase_start', data: { phase: 'convergence', status: 'active' } };
+  yield { event: 'round_start', data: { round: 9, title: 'Final Convergence', description: 'All 10 specialists declare their final positions', total_rounds: 10 } };
+
+  const convergencePromises = specialistAgents().map((agent) => {
+    const lastReport = [...allReports].reverse().find((r) => r.agent_id === agent.id);
+    return callAgent(
+      agent,
+      `Original question: ${question}\n\nThe debate is concluding. Your original position was "${lastReport?.position || 'unknown'}" with confidence ${lastReport?.confidence || 5}. After hearing all arguments, declare your FINAL position. If you changed your mind, explain why in one sentence. Respond with valid JSON only.`,
+      256,
+      audit, 9, 'convergence',
+    ).catch((err) => {
+      console.error(`[${agent.id}] convergence failed:`, err);
+      return null;
     });
-    const weakAgents = rankedByWeakness.slice(0, 2);
+  });
 
-    for (const weak of weakAgents) {
-      try {
-        const challengedAgent = getAgentById(weak.agent_id);
-        const challengeReport = await callAgent(
-          challengedAgent,
-          `Original question: ${question}\n\nThe Decision Chair reviewed your analysis and found it lacks specific evidence. Your argument was: "${weak.key_argument}"\n\nStrengthen your position with concrete data points, specific numbers, or reconsider your position entirely. Be more specific. Respond with valid JSON only.`,
-          kernel.config.maxTokensPerAgent,
-          audit, 8, 'adversarial',
-        );
-        allReports.push(challengeReport);
-        addAgentReport(state, challengeReport);
-        yield { event: 'agent_complete', data: challengeReport };
-      } catch (err) {
-        console.error(`[${weak.agent_id}] position challenge failed:`, err);
+  const convergenceResults = await Promise.allSettled(convergencePromises);
+  for (const result of convergenceResults) {
+    if (result.status === 'fulfilled' && result.value) {
+      let report = result.value;
+      let filtered = false;
+      for (const filter of kernel.agentFilters) {
+        const check = filter.run(report);
+        if (!check.pass) { filtered = true; break; }
+        if (check.patched) report = check.patched;
+      }
+      if (!filtered) {
+        finalReports.push(report);
+        allReports.push(report);
+        addAgentReport(state, report);
+        yield { event: 'agent_complete', data: report };
       }
     }
+  }
 
-    yield { event: 'round_complete', data: { round: 8 } };
+  const convergenceConsensus = calculateConsensus(finalReports);
+  state.consensus_history.push({ phase: 'convergence', ...convergenceConsensus });
+  yield { event: 'consensus_update', data: convergenceConsensus };
+  yield { event: 'round_complete', data: { round: 9 } };
 
-    // ━━ ROUND 9 — CONVERGENCE (all 10 specialists, parallel) ━━
+  // Verify all 10 agents have final reports
+  const uniqueAgentsAfterR9 = state.latest_reports.size;
+  if (uniqueAgentsAfterR9 < 10) {
+    console.error(`[engine] WARNING: Only ${uniqueAgentsAfterR9}/10 agents have final reports after convergence`);
+  }
 
-    transitionPhase(state, 'convergence');
-    yield { event: 'phase_start', data: { phase: 'convergence', status: 'active' } };
-    yield { event: 'round_start', data: { round: 9, title: 'Final Convergence', description: 'All 10 specialists declare their final positions', total_rounds: 10 } };
-
-    const convergencePromises = specialistAgents().map((agent) => {
-      const lastReport = [...allReports].reverse().find((r) => r.agent_id === agent.id);
-      return callAgent(
-        agent,
-        `Original question: ${question}\n\nThe debate is concluding. Your original position was "${lastReport?.position || 'unknown'}" with confidence ${lastReport?.confidence || 5}. After hearing all arguments, declare your FINAL position. If you changed your mind, explain why in one sentence. Respond with valid JSON only.`,
-        256,
-        audit, 9, 'convergence',
-      ).catch((err) => {
-        console.error(`[${agent.id}] convergence failed:`, err);
-        return null;
-      });
-    });
-
-    const convergenceResults = await Promise.allSettled(convergencePromises);
-    for (const result of convergenceResults) {
-      if (result.status === 'fulfilled' && result.value) {
-        let report = result.value;
-        let filtered = false;
-        for (const filter of kernel.agentFilters) {
-          const check = filter.run(report);
-          if (!check.pass) { filtered = true; break; }
-          if (check.patched) report = check.patched;
-        }
-        if (!filtered) {
-          finalReports.push(report);
-          allReports.push(report);
-          addAgentReport(state, report);
-          yield { event: 'agent_complete', data: report };
-        }
-      }
-    }
-
-    const convergenceConsensus = calculateConsensus(finalReports);
-    state.consensus_history.push({ phase: 'convergence', ...convergenceConsensus });
-    yield { event: 'consensus_update', data: convergenceConsensus };
-    yield { event: 'round_complete', data: { round: 9 } };
-
-    transitionPhase(state, 'verdict');
-  } // end of else (non-early-consensus path)
+  transitionPhase(state, 'verdict');
 
   // ━━ ROUND 10 — VERDICT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   yield { event: 'phase_start', data: { phase: 'verdict', status: 'active' } };
   yield { event: 'round_start', data: { round: 10, title: 'Verdict Synthesis', description: 'Decision Chair synthesizes the final verdict', total_rounds: 10 } };
 
-  // If early consensus skipped convergence, finalReports is already set from latest_reports
   const finalSummary = finalReports
     .map((r) => `${r.agent_name} (${r.agent_id}): position=${r.position}, confidence=${r.confidence}, argument="${r.key_argument}", risks=[${r.risks_identified.join(', ')}]`)
     .join('\n');
@@ -706,7 +699,6 @@ export async function* runSimulation(
     debate_pairs: state.debate_pairs.length,
     debate_intensity: state.debate_pairs.map((p) => ({ agents: `${p.challenger_id} vs ${p.defender_id}`, intensity: p.intensity.toFixed(2) })),
     handoffs: state.handoffs.length,
-    early_consensus: !state.phase_history.some((p) => p.phase === 'adversarial' && p.completed_at && !p.skipped),
     consensus_history: state.consensus_history,
   } };
 

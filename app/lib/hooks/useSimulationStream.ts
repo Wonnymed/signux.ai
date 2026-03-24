@@ -247,7 +247,6 @@ function processEvent(
         description: string;
         total_rounds: number;
       };
-      const isSkipped = description.startsWith("Skipped");
       setState((s) => ({
         ...s,
         currentRound: round,
@@ -260,7 +259,7 @@ function processEvent(
             round,
             title,
             description,
-            status: isSkipped ? ("skipped" as const) : ("active" as const),
+            status: "active" as const,
           },
         ],
       }));
