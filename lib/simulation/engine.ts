@@ -7,6 +7,7 @@ import { createInitialState, transitionPhase, addAgentReport, selectDebatePairs,
 import { buildCitations, type EnrichedCitation } from './citations';
 import { scoreAllAgents, type AgentPerformance } from './performance';
 import { critiqueVerdict, refineVerdict, type VerdictCritique } from './self-refine';
+import { createTaskLedger, createProgressLedger, updateTaskLedger, assessProgress, replanDebate, type TaskLedger, type ProgressLedger } from './ledger';
 import type { AdvisorPersona, AdvisorReport as CrowdAdvisorReport, CrowdWisdomResult } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -26,6 +27,8 @@ export type SimulationSSEEvent =
   | { event: 'citations_enriched'; data: EnrichedCitation[] }
   | { event: 'agent_scores'; data: AgentPerformance[] }
   | { event: 'verdict_critique'; data: VerdictCritique }
+  | { event: 'ledger_update'; data: { task_ledger: TaskLedger; progress_ledger: ProgressLedger } }
+  | { event: 'stall_replan'; data: { stall_counter: number; directives: string[] } }
   | { event: 'state_summary'; data: any }
   | { event: 'complete'; data: { simulation_id: string } };
 
@@ -61,7 +64,12 @@ function calculateConsensus(reports: AgentReport[]): { proceed: number; delay: n
 // ── AutoGen v2: Growing debate context ──────────────────────
 // Each agent receives: debate history + their own previous positions + active conflicts
 
-function buildDebateContext(state: SimulationState, currentAgentId: string): string {
+function buildDebateContext(
+  state: SimulationState,
+  currentAgentId: string,
+  progressLedger?: ProgressLedger,
+  chairDirectives?: string[],
+): string {
   const reports = Array.from(state.latest_reports.entries());
   if (reports.length === 0) return 'No other agents have reported yet. You are among the first to analyze this decision.';
 
@@ -98,11 +106,20 @@ function buildDebateContext(state: SimulationState, currentAgentId: string): str
 Consider whether the debate has changed your view. If you changed your mind, explain WHY.`;
   }
 
+  // Chair directive from Progress Ledger (stall detection / replan)
+  let chairSection = '';
+  if (progressLedger && !progressLedger.is_progressing) {
+    chairSection += `\n\nCHAIR DIRECTIVE: The debate is stalling (${progressLedger.stall_counter} rounds without new arguments). ${progressLedger.next_focus}`;
+  }
+  if (chairDirectives && chairDirectives.length > 0) {
+    chairSection += `\n\nFRESH ANGLES FROM CHAIR:\n${chairDirectives.map((d) => `\u2022 ${d}`).join('\n')}`;
+  }
+
   return `DEBATE SO FAR:
 ${otherReports}
 
 ${consensusSummary}
-${conflicts.length > 0 ? '\n' + conflicts.join('\n') : ''}${ownHistory}
+${conflicts.length > 0 ? '\n' + conflicts.join('\n') : ''}${ownHistory}${chairSection}
 
 IMPORTANT: React to what other agents said. If you agree with someone, say why. If you disagree, challenge their specific claim. Do NOT repeat what others already covered \u2014 add NEW information or challenge EXISTING arguments.`;
 }
@@ -207,6 +224,11 @@ export async function* runSimulation(
 
   const chair = getAgentById('decision_chair');
   const allReports: AgentReport[] = [];
+
+  // MagenticOne #9: Dual Ledger System
+  let taskLedger = createTaskLedger();
+  let progressLedger = createProgressLedger();
+  let chairDirectives: string[] = [];
 
   // ━━ ROUND 1 — PLANNING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -352,13 +374,28 @@ export async function* runSimulation(
   state.consensus_history.push({ phase: 'opening', ...deepConsensus });
   yield { event: 'consensus_update', data: deepConsensus };
 
+  // MagenticOne #9: Ledger update after deep analysis (rounds 2-4)
+  {
+    const phaseReports = allReports.slice(); // all reports so far are from deep analysis
+    progressLedger = assessProgress(state, progressLedger, phaseReports);
+    taskLedger = await updateTaskLedger(question, taskLedger, phaseReports, state);
+    yield { event: 'ledger_update', data: { task_ledger: taskLedger, progress_ledger: progressLedger } };
+    console.log(`[ledger] After rounds 2-4: progressing=${progressLedger.is_progressing}, stall=${progressLedger.stall_counter}, new_args=${progressLedger.new_arguments_this_round}`);
+
+    if (progressLedger.stall_counter >= 2) {
+      chairDirectives = await replanDebate(question, taskLedger, progressLedger, state);
+      yield { event: 'stall_replan', data: { stall_counter: progressLedger.stall_counter, directives: chairDirectives } };
+      console.log(`[ledger] STALL DETECTED after rounds 2-4, directives:`, chairDirectives);
+    }
+  }
+
   // ━━ ROUND 5 — RAPID ASSESSMENT (remaining 5 agents, parallel, staggered yield) ━━
 
   transitionPhase(state, 'quick_takes');
   yield { event: 'round_start', data: { round: 5, title: 'Rapid Assessment', description: 'Remaining specialists provide quick perspectives', total_rounds: 10 } };
 
   const quickPromises = quickAgentTasks.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id);
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives);
     return callAgent(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -395,6 +432,21 @@ export async function* runSimulation(
   const quickConsensus = calculateConsensus(allReports);
   state.consensus_history.push({ phase: 'quick_takes', ...quickConsensus });
   yield { event: 'consensus_update', data: quickConsensus };
+
+  // MagenticOne #9: Ledger update after rapid assessment (round 5)
+  {
+    const recentQuickReports = allReports.slice(allReports.length - quickAgentTasks.length);
+    progressLedger = assessProgress(state, progressLedger, recentQuickReports);
+    taskLedger = await updateTaskLedger(question, taskLedger, recentQuickReports, state);
+    yield { event: 'ledger_update', data: { task_ledger: taskLedger, progress_ledger: progressLedger } };
+    console.log(`[ledger] After round 5: progressing=${progressLedger.is_progressing}, stall=${progressLedger.stall_counter}, new_args=${progressLedger.new_arguments_this_round}`);
+
+    if (progressLedger.stall_counter >= 2) {
+      chairDirectives = await replanDebate(question, taskLedger, progressLedger, state);
+      yield { event: 'stall_replan', data: { stall_counter: progressLedger.stall_counter, directives: chairDirectives } };
+      console.log(`[ledger] STALL DETECTED after round 5, directives:`, chairDirectives);
+    }
+  }
 
   // Verify all 10 agents participated after rounds 2-5
   const uniqueAgentsAfterR5 = state.latest_reports.size;
@@ -439,7 +491,7 @@ export async function* runSimulation(
 
       if (targetAgent) {
         try {
-          const devilCtx = buildDebateContext(state, targetAgent.id);
+          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives);
           const devilReport = await callAgent(
             targetAgent,
             `Question: ${question}\n\n${devilCtx}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". Reference specific claims from other agents and explain why they're wrong or incomplete. What could go catastrophically wrong? Respond with valid JSON only.`,
@@ -476,7 +528,7 @@ export async function* runSimulation(
     const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
 
     try {
-      const challengerCtx = buildDebateContext(state, pair.challenger_id);
+      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives);
       const challengeReport = await callAgent(
         challengerAgent,
         `Question: ${question}\n\n${challengerCtx}\n\nYou are CHALLENGING ${defenderAgent.name}'s position. They said: "${defenderReport?.key_argument || 'their position'}"\n\nAttack their weakest point with specific counter-evidence. Reference what other agents said to support your challenge. Be direct. Respond with valid JSON only.`,
@@ -491,7 +543,7 @@ export async function* runSimulation(
     }
 
     try {
-      const defenderCtx = buildDebateContext(state, pair.defender_id);
+      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives);
       const defenseReport = await callAgent(
         defenderAgent,
         `Question: ${question}\n\n${defenderCtx}\n\n${challengerAgent.name} CHALLENGED your position: "${challengerReport?.key_argument || 'disagreement'}"\n\nDefend your position with stronger evidence, or update your position if the challenge is valid. Be honest \u2014 if you changed your mind, say what convinced you. Respond with valid JSON only.`,
@@ -512,6 +564,25 @@ export async function* runSimulation(
   state.consensus_history.push({ phase: 'adversarial', ...adversarialConsensus });
   yield { event: 'consensus_update', data: adversarialConsensus };
 
+  // MagenticOne #9: Ledger update after adversarial debate (rounds 6-7)
+  {
+    const recentAdversarialReports = allReports.filter((r) => {
+      // Reports from adversarial phase — agents who participated in rounds 6-7
+      const history = state.agent_reports.get(r.agent_id) || [];
+      return history.length > 1; // agents with multiple reports likely debated
+    }).slice(-4); // at most 4 reports from 2 debate pairs
+    progressLedger = assessProgress(state, progressLedger, recentAdversarialReports);
+    taskLedger = await updateTaskLedger(question, taskLedger, recentAdversarialReports, state);
+    yield { event: 'ledger_update', data: { task_ledger: taskLedger, progress_ledger: progressLedger } };
+    console.log(`[ledger] After rounds 6-7: progressing=${progressLedger.is_progressing}, stall=${progressLedger.stall_counter}, new_args=${progressLedger.new_arguments_this_round}`);
+
+    if (progressLedger.stall_counter >= 2) {
+      chairDirectives = await replanDebate(question, taskLedger, progressLedger, state);
+      yield { event: 'stall_replan', data: { stall_counter: progressLedger.stall_counter, directives: chairDirectives } };
+      console.log(`[ledger] STALL DETECTED after rounds 6-7, directives:`, chairDirectives);
+    }
+  }
+
   // ━━ ROUND 8 — POSITION CHALLENGE (Chair challenges weak arguments, ALWAYS runs) ━━
 
   yield { event: 'round_start', data: { round: 8, title: 'Position Challenge', description: 'Chair challenges the weakest arguments for specificity', total_rounds: 10 } };
@@ -528,7 +599,7 @@ export async function* runSimulation(
   for (const weak of weakAgents) {
     try {
       const challengedAgent = getAgentById(weak.agent_id);
-      const challengeCtx = buildDebateContext(state, weak.agent_id);
+      const challengeCtx = buildDebateContext(state, weak.agent_id, progressLedger, chairDirectives);
       const challengeReport = await callAgent(
         challengedAgent,
         `Question: ${question}\n\n${challengeCtx}\n\nThe Decision Chair says your analysis lacks specificity. Your argument was: "${weak.key_argument}"\n\nStrengthen your argument with concrete numbers, timelines, and precedents. Reference what other agents said \u2014 agree or disagree with their specific claims. Or reconsider your position if the debate has changed your view. Respond with valid JSON only.`,
@@ -545,6 +616,14 @@ export async function* runSimulation(
 
   yield { event: 'round_complete', data: { round: 8 } };
 
+  // MagenticOne #9: Progress-only ledger update after round 8 (no Claude call)
+  {
+    const recentChallengeReports = allReports.slice(-weakAgents.length);
+    progressLedger = assessProgress(state, progressLedger, recentChallengeReports);
+    yield { event: 'ledger_update', data: { task_ledger: taskLedger, progress_ledger: progressLedger } };
+    console.log(`[ledger] After round 8: progressing=${progressLedger.is_progressing}, stall=${progressLedger.stall_counter}`);
+  }
+
   // ━━ ROUND 9 — CONVERGENCE (all 10 specialists declare final position, ALWAYS runs) ━━
 
   transitionPhase(state, 'convergence');
@@ -552,7 +631,7 @@ export async function* runSimulation(
   yield { event: 'round_start', data: { round: 9, title: 'Final Convergence', description: 'All 10 specialists declare their final positions', total_rounds: 10 } };
 
   const convergencePromises = specialistAgents().map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id);
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives);
     return callAgent(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
@@ -588,6 +667,14 @@ export async function* runSimulation(
   yield { event: 'consensus_update', data: convergenceConsensus };
   yield { event: 'round_complete', data: { round: 9 } };
 
+  // MagenticOne #9: Final ledger update after convergence (round 9)
+  {
+    progressLedger = assessProgress(state, progressLedger, finalReports);
+    taskLedger = await updateTaskLedger(question, taskLedger, finalReports, state);
+    yield { event: 'ledger_update', data: { task_ledger: taskLedger, progress_ledger: progressLedger } };
+    console.log(`[ledger] After round 9: verified_facts=${taskLedger.verified_facts.length}, assumptions=${taskLedger.assumptions.length}, insights=${taskLedger.derived_insights.length}`);
+  }
+
   // Verify all 10 agents have final reports
   const uniqueAgentsAfterR9 = state.latest_reports.size;
   if (uniqueAgentsAfterR9 < 10) {
@@ -608,7 +695,20 @@ export async function* runSimulation(
   let verdict: DecisionObject;
   try {
     const verdictStart = Date.now();
-    const verdictPrompt = `QUESTION: ${question}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n\nSynthesize ALL agent positions into a final Decision Object. Weight by confidence and evidence quality.\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }]\n}`;
+    const taskLedgerSection = `\nTASK LEDGER (verified through multi-agent debate):
+- Verified Facts: ${taskLedger.verified_facts.length > 0 ? taskLedger.verified_facts.join('; ') : 'None verified yet'}
+- Unverified Assumptions: ${taskLedger.assumptions.length > 0 ? taskLedger.assumptions.join('; ') : 'None'}
+- Derived Insights: ${taskLedger.derived_insights.length > 0 ? taskLedger.derived_insights.join('; ') : 'None'}
+- Open Questions: ${taskLedger.open_questions.length > 0 ? taskLedger.open_questions.join('; ') : 'None'}
+- Plan Adjustments: ${taskLedger.plan_adjustments.length > 0 ? taskLedger.plan_adjustments.join('; ') : 'None'}
+
+DEBATE PROGRESS:
+- Total rounds of progress tracking: ${progressLedger.round}
+- Currently progressing: ${progressLedger.is_progressing}
+- Key disagreements: ${progressLedger.key_disagreements.length > 0 ? progressLedger.key_disagreements.join('; ') : 'Resolved'}
+- Resolved disagreements: ${progressLedger.resolved_disagreements.length > 0 ? progressLedger.resolved_disagreements.join('; ') : 'None'}`;
+
+    const verdictPrompt = `QUESTION: ${question}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n${taskLedgerSection}\n\nSynthesize ALL agent positions into a final Decision Object. Weight by confidence and evidence quality. Use the Task Ledger to distinguish verified facts from assumptions — your verdict should rely on VERIFIED facts and flag unresolved assumptions as risks.\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }]\n}`;
     const verdictRaw = await callClaude({
       systemPrompt: chair.systemPrompt,
       userMessage: verdictPrompt,
