@@ -43,6 +43,34 @@ export type SimulationSSEEvent =
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Retry wrapper for rate-limited calls
+async function callAgentWithRetry(
+  agent: AgentConfig,
+  userMessage: string,
+  maxTokens: number,
+  audit: SimulationAudit | undefined,
+  roundNum: number,
+  phase: string,
+  retries = 2,
+): Promise<AgentReport | null> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await callAgent(agent, userMessage, maxTokens, audit, roundNum, phase);
+    } catch (err) {
+      const isRateLimit = err instanceof Error && (err.message.includes('429') || err.message.includes('rate_limit'));
+      if (isRateLimit && attempt < retries) {
+        const backoff = 1000 * (attempt + 1);
+        console.warn(`[${agent.id}] rate limited, retry ${attempt + 1}/${retries} after ${backoff}ms`);
+        await wait(backoff);
+        continue;
+      }
+      console.error(`[${agent.id}] failed after ${attempt + 1} attempts:`, err);
+      return null;
+    }
+  }
+  return null;
+}
+
 function specialistAgents(): AgentConfig[] {
   return AGENTS.filter((a) => a.id !== 'decision_chair');
 }
@@ -518,20 +546,34 @@ export async function* runSimulation(
   transitionPhase(state, 'quick_takes');
   yield { event: 'round_start', data: { round: 6, title: 'Rapid Assessment', description: `Remaining specialists provide quick perspectives${fieldScans.length > 0 ? ' with field intelligence' : ''}`, total_rounds: 10 } };
 
-  const quickPromises = quickAgentTasks.map(({ agent, task }) => {
+  // Stagger quick takes to avoid rate limits (2 batches)
+  const quickBatch1 = quickAgentTasks.slice(0, 3);
+  const quickBatch2 = quickAgentTasks.slice(3);
+
+  const quickBatch1Promises = quickBatch1.map(({ agent, task }) => {
     const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans);
-    return callAgent(
+    return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
-      512,
-      audit, 6, 'quick_takes',
-    ).catch((err) => {
-      console.error(`[${agent.id}] quick take failed:`, err);
-      return null;
-    });
+      512, audit, 6, 'quick_takes',
+    );
   });
+  const quickResults1 = await Promise.allSettled(quickBatch1Promises);
 
-  const quickResults = await Promise.allSettled(quickPromises);
+  // Small delay between batches to stay under rate limit
+  await wait(500);
+
+  const quickBatch2Promises = quickBatch2.map(({ agent, task }) => {
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans);
+    return callAgentWithRetry(
+      agent,
+      `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
+      512, audit, 6, 'quick_takes',
+    );
+  });
+  const quickResults2 = await Promise.allSettled(quickBatch2Promises);
+
+  const quickResults = [...quickResults1, ...quickResults2];
   for (const result of quickResults) {
     if (result.status === 'fulfilled' && result.value) {
       let report = result.value;
@@ -743,20 +785,34 @@ export async function* runSimulation(
   yield { event: 'phase_start', data: { phase: 'convergence', status: 'active' } };
   yield { event: 'round_start', data: { round: 9, title: 'Final Convergence', description: `All 10 specialists declare final positions${fieldScans.length > 0 ? ' informed by field intelligence' : ''}`, total_rounds: 10 } };
 
-  const convergencePromises = specialistAgents().map((agent) => {
+  // Stagger convergence into 2 batches of 5 to avoid rate limits
+  const specialists = specialistAgents();
+  const convBatch1 = specialists.slice(0, 5);
+  const convBatch2 = specialists.slice(5);
+
+  const convBatch1Promises = convBatch1.map((agent) => {
     const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans);
-    return callAgent(
+    return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
-      256,
-      audit, 9, 'convergence',
-    ).catch((err) => {
-      console.error(`[${agent.id}] convergence failed:`, err);
-      return null;
-    });
+      256, audit, 9, 'convergence',
+    );
   });
+  const convResults1 = await Promise.allSettled(convBatch1Promises);
 
-  const convergenceResults = await Promise.allSettled(convergencePromises);
+  await wait(500);
+
+  const convBatch2Promises = convBatch2.map((agent) => {
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans);
+    return callAgentWithRetry(
+      agent,
+      `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
+      256, audit, 9, 'convergence',
+    );
+  });
+  const convResults2 = await Promise.allSettled(convBatch2Promises);
+
+  const convergenceResults = [...convResults1, ...convResults2];
   for (const result of convergenceResults) {
     if (result.status === 'fulfilled' && result.value) {
       let report = result.value;
@@ -775,15 +831,21 @@ export async function* runSimulation(
     }
   }
 
-  const convergenceConsensus = calculateConsensus(finalReports);
+  // Use latest_reports for consensus if some convergence calls failed
+  const consensusReports = finalReports.length >= 8
+    ? finalReports
+    : Array.from(state.latest_reports.values());
+  const convergenceConsensus = calculateConsensus(consensusReports);
   state.consensus_history.push({ phase: 'convergence', ...convergenceConsensus });
   yield { event: 'consensus_update', data: convergenceConsensus };
   yield { event: 'round_complete', data: { round: 9 } };
 
+  console.log(`[convergence] ${finalReports.length}/10 convergence reports, using ${consensusReports.length} for consensus`);
+
   // MagenticOne #9: Final ledger update after convergence (round 9)
   {
-    progressLedger = assessProgress(state, progressLedger, finalReports);
-    taskLedger = await updateTaskLedger(question, taskLedger, finalReports, state);
+    progressLedger = assessProgress(state, progressLedger, consensusReports);
+    taskLedger = await updateTaskLedger(question, taskLedger, consensusReports, state);
     yield { event: 'ledger_update', data: { task_ledger: taskLedger, progress_ledger: progressLedger } };
     console.log(`[ledger] After round 9: verified_facts=${taskLedger.verified_facts.length}, assumptions=${taskLedger.assumptions.length}, insights=${taskLedger.derived_insights.length}`);
   }
@@ -791,7 +853,7 @@ export async function* runSimulation(
   // Verify all 10 agents have final reports
   const uniqueAgentsAfterR9 = state.latest_reports.size;
   if (uniqueAgentsAfterR9 < 10) {
-    console.error(`[engine] WARNING: Only ${uniqueAgentsAfterR9}/10 agents have final reports after convergence`);
+    console.warn(`[engine] WARNING: Only ${uniqueAgentsAfterR9}/10 agents have reports after convergence`);
   }
 
   transitionPhase(state, 'verdict');
@@ -801,8 +863,8 @@ export async function* runSimulation(
   yield { event: 'phase_start', data: { phase: 'verdict', status: 'active' } };
   yield { event: 'round_start', data: { round: 10, title: 'Verdict Synthesis', description: 'Decision Chair synthesizes the final verdict', total_rounds: 10 } };
 
-  const finalSummary = finalReports
-    .map((r) => `${r.agent_name} (${r.agent_id}): position=${r.position}, confidence=${r.confidence}, argument="${r.key_argument}", risks=[${r.risks_identified.join(', ')}]`)
+  const finalSummary = consensusReports
+    .map((r) => `${r.agent_name} (${r.agent_id}): position=${r.position}, confidence=${r.confidence}, argument="${r.key_argument}", risks=[${(r.risks_identified || []).join(', ')}]`)
     .join('\n');
 
   let verdict: DecisionObject;
@@ -847,7 +909,7 @@ DEBATE PROGRESS:
       next_action: 'Review the individual agent reports and address their specific concerns',
       grade: 'C',
       grade_score: 55,
-      citations: finalReports.slice(0, 3).map((r, i) => ({
+      citations: consensusReports.slice(0, 3).map((r, i) => ({
         id: i + 1,
         agent_id: r.agent_id,
         agent_name: r.agent_name,
