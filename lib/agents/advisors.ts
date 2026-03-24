@@ -1,4 +1,4 @@
-import { callClaude, parseJSON } from '@/lib/simulation/claude';
+import { callClaude, parseJSON, MODELS } from '@/lib/simulation/claude';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -11,7 +11,7 @@ export type AdvisorPersona = {
   backstory: string;
   constraints: string;
   perspective: string;
-  emoji: string;
+  icon: string;               // Lucide icon name
   stakeholder_type: 'customer' | 'competitor' | 'expert' | 'community' | 'supply_chain' | 'indirect' | 'wildcard';
 };
 
@@ -25,6 +25,105 @@ export type AdvisorReport = {
   reasoning: string;
   would_they_use_it: boolean;
 };
+
+// ── Field Teams ─────────────────────────────────────────────
+
+export type FieldTeam = {
+  id: string;
+  name: string;
+  icon: string;               // Lucide icon name
+  description: string;
+  stakeholder_types: string[];
+  count_20: number;
+  count_50: number;
+  count_100: number;
+};
+
+export const FIELD_TEAMS: FieldTeam[] = [
+  {
+    id: 'customer_panel',
+    name: 'Customer Panel',
+    icon: 'ShoppingCart',
+    description: 'What real customers think and would pay',
+    stakeholder_types: ['customer'],
+    count_20: 3,
+    count_50: 8,
+    count_100: 15,
+  },
+  {
+    id: 'competitor_watch',
+    name: 'Competitor Watch',
+    icon: 'Store',
+    description: 'What your competition sees and plans',
+    stakeholder_types: ['competitor'],
+    count_20: 3,
+    count_50: 7,
+    count_100: 14,
+  },
+  {
+    id: 'expert_council',
+    name: 'Expert Council',
+    icon: 'GraduationCap',
+    description: 'Deep domain and industry knowledge',
+    stakeholder_types: ['expert'],
+    count_20: 3,
+    count_50: 7,
+    count_100: 14,
+  },
+  {
+    id: 'community_pulse',
+    name: 'Community Pulse',
+    icon: 'MapPin',
+    description: 'Local ground truth and neighborhood reality',
+    stakeholder_types: ['community'],
+    count_20: 3,
+    count_50: 7,
+    count_100: 14,
+  },
+  {
+    id: 'supply_network',
+    name: 'Supply Network',
+    icon: 'Link',
+    description: 'Operational and supply chain reality check',
+    stakeholder_types: ['supply_chain'],
+    count_20: 3,
+    count_50: 7,
+    count_100: 14,
+  },
+  {
+    id: 'stakeholder_ring',
+    name: 'Stakeholder Ring',
+    icon: 'Users',
+    description: 'Everyone else affected by this decision',
+    stakeholder_types: ['indirect'],
+    count_20: 3,
+    count_50: 7,
+    count_100: 14,
+  },
+  {
+    id: 'wild_cards',
+    name: 'Wild Cards',
+    icon: 'Shuffle',
+    description: 'Perspectives nobody expected',
+    stakeholder_types: ['wildcard'],
+    count_20: 2,
+    count_50: 7,
+    count_100: 15,
+  },
+];
+
+export function groupAdvisorsByTeam(
+  advisors: AdvisorReport[],
+  personas: AdvisorPersona[],
+): { team: FieldTeam; advisors: AdvisorReport[] }[] {
+  return FIELD_TEAMS.map(team => ({
+    team,
+    advisors: advisors.filter(a => {
+      const persona = personas.find(p => p.id === a.advisor_id);
+      return persona && team.stakeholder_types.includes(persona.stakeholder_type);
+    }),
+  })).filter(g => g.advisors.length > 0);
+}
 
 // Palantir #4: Audit trail + DeepEval #12: Scoring
 export type CrowdWisdomResult = {
@@ -42,6 +141,14 @@ export type CrowdWisdomResult = {
     indirect: number;
     wildcards: number;
   };
+  team_breakdown?: {
+    team_name: string;
+    team_icon: string;
+    count: number;
+    support: number;
+    concern: number;
+    neutral: number;
+  }[];
   audit_trail: {
     personas_generated_at: string;
     advisors_completed: number;
@@ -59,34 +166,34 @@ export async function generateAdvisorPersonas(question: string, userGuidance?: s
   let maxTokens: number;
 
   if (count <= 20) {
-    distribution = `Generate EXACTLY 20 personas:
-   - 3 CUSTOMERS (people who would actually buy/use the product/service)
-   - 3 COMPETITORS (existing business owners in the same or adjacent space)
-   - 3 DOMAIN EXPERTS (people with deep technical or industry knowledge)
-   - 3 COMMUNITY members (residents, neighbors, local government, community leaders)
-   - 3 SUPPLY CHAIN (suppliers, distributors, delivery, logistics, service providers)
-   - 3 INDIRECT stakeholders (investors, landlords, employees, family members affected)
-   - 2 WILDCARDS (unexpected perspectives that could reveal blind spots)`;
+    distribution = `Generate EXACTLY 20 personas. Distribute across 7 Field Teams:
+   - Customer Panel (3): people who would actually buy/use the product/service
+   - Competitor Watch (3): existing business owners in the same or adjacent space
+   - Expert Council (3): people with deep technical or industry knowledge
+   - Community Pulse (3): residents, neighbors, local government, community leaders
+   - Supply Network (3): suppliers, distributors, delivery, logistics, service providers
+   - Stakeholder Ring (3): investors, landlords, employees, family members affected
+   - Wild Cards (2): unexpected perspectives that could reveal blind spots`;
     maxTokens = 3072;
   } else if (count <= 50) {
-    distribution = `Generate EXACTLY 50 personas with DEEP stakeholder diversity:
-   - 8 CUSTOMERS (ultra-diverse: different ages, income levels, usage frequency, locals vs visitors, different needs and preferences)
-   - 7 COMPETITORS (direct competitors at different scales, indirect competitors, adjacent businesses, franchise operators, online-only competitors)
-   - 7 DOMAIN EXPERTS (industry consultants, technologists, designers, marketing specialists, financial analysts, legal experts, academic researchers)
-   - 7 COMMUNITY members (residents from different neighborhoods, local officials, community leaders, school administrators, religious leaders, elderly care, local media)
-   - 7 SUPPLY CHAIN (suppliers at different tiers, equipment vendors, logistics, delivery, packaging, maintenance, technology vendors)
-   - 7 INDIRECT stakeholders (investors, landlords, employees at different levels, family members, neighboring businesses, influencers, regulators)
-   - 7 WILDCARDS (unexpected perspectives: tourists, activists, former employees of failed similar businesses, teenagers, elderly longtime residents, foreign observers, people with accessibility needs)`;
+    distribution = `Generate EXACTLY 50 personas with DEEP stakeholder diversity. Distribute across 7 Field Teams:
+   - Customer Panel (8): ultra-diverse: different ages, income levels, usage frequency, locals vs visitors, different needs and preferences
+   - Competitor Watch (7): direct competitors at different scales, indirect competitors, adjacent businesses, franchise operators, online-only competitors
+   - Expert Council (7): industry consultants, technologists, designers, marketing specialists, financial analysts, legal experts, academic researchers
+   - Community Pulse (7): residents from different neighborhoods, local officials, community leaders, school administrators, religious leaders, elderly care, local media
+   - Supply Network (7): suppliers at different tiers, equipment vendors, logistics, delivery, packaging, maintenance, technology vendors
+   - Stakeholder Ring (7): investors, landlords, employees at different levels, family members, neighboring businesses, influencers, regulators
+   - Wild Cards (7): unexpected perspectives: tourists, activists, former employees of failed similar businesses, teenagers, elderly longtime residents, foreign observers, people with accessibility needs`;
     maxTokens = 6144;
   } else {
-    distribution = `Generate EXACTLY 100 personas — this should feel like polling an ENTIRE community:
-   - 15 CUSTOMERS (ultra-diverse: ages 15-75, income from student to executive, daily to monthly users, locals to tourists, different dietary needs, solo diners to family groups, date night couples, business lunch crowd, food delivery only users)
-   - 14 COMPETITORS (direct competitors at different scales, indirect competitors, adjacent businesses, franchise operators, ghost kitchen operators, food truck owners, catering businesses, convenience store food sections, meal delivery services, vending operators, food court vendors)
-   - 14 DOMAIN EXPERTS (industry consultants, food scientists, restaurant designers, menu engineers, marketing specialists, social media managers, food photographers, health inspectors, commercial real estate agents, restaurant accountants, labor lawyers, supply chain specialists, food safety auditors, technology vendors)
-   - 14 COMMUNITY members (residents of different neighborhoods, local government officials, community leaders, neighborhood associations, school administrators, religious leaders, elderly care facility managers, park workers, street vendors, security guards, parking attendants, building doormen, local reporters, social workers)
-   - 14 SUPPLY CHAIN (food suppliers at different tiers, equipment vendors, cleaning supplies, waste management, delivery drivers, packaging suppliers, linen services, pest control, HVAC maintenance, POS vendors, payment processing, insurance agents, kitchen designers, refrigeration specialists)
-   - 14 INDIRECT stakeholders (investors, landlords, employees at different levels, family members, neighboring business owners, building management, franchise partners, delivery platform reps, influencers, food bloggers, tourism board, university professors, bank loan officers, insurance underwriters)
-   - 15 WILDCARDS (a first-time tourist, someone who got food poisoning nearby, a delivery driver who knows order density, a grandmother who's eaten here 40 years, a broke teenager, a corporate event planner, a wedding caterer, a hospital dietitian, a 2am worker seeking late-night food, a parent with a picky child, a vegan in a meat-heavy area, a food waste activist, a Michelin scout, an owner of a restaurant that closed here, a real estate speculator)`;
+    distribution = `Generate EXACTLY 100 personas — this should feel like polling an ENTIRE community. Distribute across 7 Field Teams:
+   - Customer Panel (15): ultra-diverse: ages 15-75, income from student to executive, daily to monthly users, locals to tourists, different dietary needs, solo diners to family groups, date night couples, business lunch crowd, food delivery only users
+   - Competitor Watch (14): direct competitors at different scales, indirect competitors, adjacent businesses, franchise operators, ghost kitchen operators, food truck owners, catering businesses, convenience store food sections, meal delivery services, vending operators, food court vendors
+   - Expert Council (14): industry consultants, food scientists, restaurant designers, menu engineers, marketing specialists, social media managers, food photographers, health inspectors, commercial real estate agents, restaurant accountants, labor lawyers, supply chain specialists, food safety auditors, technology vendors
+   - Community Pulse (14): residents of different neighborhoods, local government officials, community leaders, neighborhood associations, school administrators, religious leaders, elderly care facility managers, park workers, street vendors, security guards, parking attendants, building doormen, local reporters, social workers
+   - Supply Network (14): food suppliers at different tiers, equipment vendors, cleaning supplies, waste management, delivery drivers, packaging suppliers, linen services, pest control, HVAC maintenance, POS vendors, payment processing, insurance agents, kitchen designers, refrigeration specialists
+   - Stakeholder Ring (14): investors, landlords, employees at different levels, family members, neighboring business owners, building management, franchise partners, delivery platform reps, influencers, food bloggers, tourism board, university professors, bank loan officers, insurance underwriters
+   - Wild Cards (15): a first-time tourist, someone who got food poisoning nearby, a delivery driver who knows order density, a grandmother who's eaten here 40 years, a broke teenager, a corporate event planner, a wedding caterer, a hospital dietitian, a 2am worker seeking late-night food, a parent with a picky child, a vegan in a meat-heavy area, a food waste activist, a Michelin scout, an owner of a restaurant that closed here, a real estate speculator`;
     maxTokens = 10240;
   }
 
@@ -112,7 +219,7 @@ Return JSON array where each object has:
   "backstory": "${count > 50 ? '1 sentence' : '1-2 sentences'} of lived experience making them credible",
   "constraints": "What limits their perspective or creates bias",
   "perspective": "The unique insight only they can provide",
-  "emoji": "relevant emoji",
+  "icon": "one of: ShoppingCart, Store, GraduationCap, MapPin, Link, Users, Shuffle, Briefcase, Building, Heart, Coffee, Truck, Phone, Globe, BookOpen, Wrench, Scale, TrendingUp, Shield, DollarSign",
   "stakeholder_type": "customer|competitor|expert|community|supply_chain|indirect|wildcard"
 }`,
     maxTokens,
@@ -133,7 +240,7 @@ Return JSON array where each object has:
     if (count > 20) {
       try {
         const fallbackResponse = await callClaude({
-          systemPrompt: `Generate ${count} advisor personas as a JSON array. Each object: { "id": "advisor_N", "name": "Full Name, Title", "role": "role", "goal": "goal", "backstory": "1 sentence", "constraints": "bias", "perspective": "unique angle", "emoji": "emoji", "stakeholder_type": "customer|competitor|expert|community|supply_chain|indirect|wildcard" }. Return ONLY valid JSON array.`,
+          systemPrompt: `Generate ${count} advisor personas as a JSON array. Each object: { "id": "advisor_N", "name": "Full Name, Title", "role": "role", "goal": "goal", "backstory": "1 sentence", "constraints": "bias", "perspective": "unique angle", "icon": "LucideIconName", "stakeholder_type": "customer|competitor|expert|community|supply_chain|indirect|wildcard" }. Return ONLY valid JSON array.`,
           userMessage: `Decision: "${question}"\n\nGenerate ${count} diverse personas. Keep each persona concise (1 sentence backstory). Cover all 7 stakeholder types proportionally.`,
           maxTokens,
         });
@@ -191,7 +298,7 @@ JSON format:
   "would_they_use_it": true or false
 }`,
         maxTokens: 256,
-        model: 'claude-haiku-4-5-20251001',
+        model: MODELS.advisors,
       });
 
       return parseJSON<AdvisorReport>(response);
@@ -276,6 +383,25 @@ JSON format:
     duration_ms: Date.now() - startTime,
   };
 
+  // Team breakdown
+  const team_breakdown = FIELD_TEAMS.map(team => {
+    const teamAdvisors = advisors.filter(a => {
+      const persona = personas.find(p => p.id === a.advisor_id);
+      return persona && team.stakeholder_types.includes(persona.stakeholder_type);
+    });
+    const t = teamAdvisors.length || 1;
+    const sup = Math.round(teamAdvisors.filter(a => a.position === 'support').length / t * 100);
+    const con = Math.round(teamAdvisors.filter(a => a.position === 'concern').length / t * 100);
+    return {
+      team_name: team.name,
+      team_icon: team.icon,
+      count: teamAdvisors.length,
+      support: sup,
+      concern: con,
+      neutral: 100 - sup - con,
+    };
+  });
+
   return {
     advisors,
     sentiment: { support, concern, neutral },
@@ -283,6 +409,7 @@ JSON format:
     consensus_shift,
     quality_score,
     stakeholder_coverage,
+    team_breakdown,
     audit_trail,
   };
 }

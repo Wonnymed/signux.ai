@@ -1,7 +1,8 @@
+// TEST PHASE: All Haiku. Production: fast=Haiku, balanced=Sonnet, powerful=Opus
 export const MODELS = {
   fast: "claude-haiku-4-5-20251001",
-  balanced: "claude-sonnet-4-20250514",
-  powerful: "claude-opus-4-20250514",
+  balanced: "claude-haiku-4-5-20251001",     // PROD: claude-sonnet-4-20250514
+  powerful: "claude-haiku-4-5-20251001",     // PROD: claude-opus-4-20250514
 } as const;
 
 export type TierModels = {

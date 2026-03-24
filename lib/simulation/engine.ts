@@ -1,4 +1,4 @@
-import { callClaude, parseJSON } from './claude';
+import { callClaude, parseJSON, DEFAULT_MODEL } from './claude';
 import { AGENTS, getAgentById } from '../agents/prompts';
 import { generateAdvisorPersonas } from '../agents/advisors';
 import { selectRelevantAdvisors, runFieldScan, formatFieldIntelligence, type FieldScan } from './field-intelligence';
@@ -177,7 +177,7 @@ async function callAgent(
         round: roundNum,
         phase,
         agent_id: agent.id,
-        model: 'claude-sonnet-4-20250514',
+        model: DEFAULT_MODEL,
         input_tokens: inputTokens,
         output_tokens: outputTokens,
         latency_ms: latency,
@@ -266,7 +266,7 @@ export async function* runSimulation(
     });
     addRound(audit, {
       round: 1, phase: 'planning', agent_id: 'decision_chair',
-      model: 'claude-sonnet-4-20250514',
+      model: DEFAULT_MODEL,
       input_tokens: Math.ceil((chair.systemPrompt.length + planPrompt.length) / 4),
       output_tokens: Math.ceil(planRaw.length / 4),
       latency_ms: Date.now() - planStart, success: true,
@@ -827,7 +827,7 @@ DEBATE PROGRESS:
     });
     addRound(audit, {
       round: 10, phase: 'verdict', agent_id: 'decision_chair',
-      model: 'claude-sonnet-4-20250514',
+      model: DEFAULT_MODEL,
       input_tokens: Math.ceil((chair.systemPrompt.length + verdictPrompt.length) / 4),
       output_tokens: Math.ceil(verdictRaw.length / 4),
       latency_ms: Date.now() - verdictStart, success: true,

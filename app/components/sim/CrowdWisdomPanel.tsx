@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, ChevronDown, Lightbulb } from "lucide-react";
+import { Users, ChevronDown, Lightbulb, User } from "lucide-react";
+import { icons } from "lucide-react";
 import type { CrowdWisdomResult, AdvisorPersona } from "@/lib/agents/advisors";
 
 type CrowdWisdomPanelProps = {
@@ -255,9 +256,12 @@ export default function CrowdWisdomPanel({ crowdResult, personas, isLoading }: C
                             overflow: "hidden",
                           }}
                         >
-                          {/* Emoji avatar */}
-                          <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0, marginTop: 2 }}>
-                            {persona?.emoji || "👤"}
+                          {/* Icon avatar */}
+                          <span style={{ flexShrink: 0, marginTop: 2, color: "var(--text-secondary)" }}>
+                            {(() => {
+                              const IconComponent = persona?.icon ? icons[persona.icon as keyof typeof icons] : null;
+                              return IconComponent ? <IconComponent size={18} strokeWidth={1.5} /> : <User size={18} strokeWidth={1.5} />;
+                            })()}
                           </span>
 
                           {/* Content */}

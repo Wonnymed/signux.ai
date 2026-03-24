@@ -3,6 +3,7 @@ export const maxDuration = 300;
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../../lib/security";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 import { getUserFromRequest, checkUsageLimit, incrementUsage, getTierFromRequest } from "../../../lib/usage";
 import { createClient } from "@supabase/supabase-js";
 
@@ -391,20 +392,18 @@ export async function POST(req: NextRequest) {
         // ═══ ROUNDS 1-9: Individual agent calls ═══
         for (let round = 0; round < 9; round++) {
           const roundNum = round + 1;
-          // Rounds 1-5: Haiku (fast, cheap). Rounds 6-9: Sonnet (deep).
-          // Free tier always uses Haiku.
-          const useDeep = roundNum > 5 && tier !== "free";
-          const model = useDeep ? "claude-sonnet-4-20250514" : "claude-haiku-4-5-20251001";
-          const maxTokens = useDeep ? 600 : 450;
+          // TEST PHASE: All Haiku. PROD: Rounds 1-5 Haiku, 6-9 Sonnet (except free).
+          const model = DEFAULT_MODEL;
+          const maxTokens = 450;
           const agentTimeoutMs = 60000;
 
-          console.log(`[ENGINE] Round ${roundNum}/10 starting — ${ROUND_LABELS[round]} (${useDeep ? "sonnet" : "haiku"})`);
+          console.log(`[ENGINE] Round ${roundNum}/10 starting — ${ROUND_LABELS[round]} (${DEFAULT_MODEL})`);
           send({
             type: "round_start",
             round: roundNum,
             total: 10,
             label: ROUND_LABELS[round],
-            model: useDeep ? "sonnet" : "haiku",
+            model: "haiku",
           });
 
           // Build context — last 4 round summaries
@@ -539,7 +538,7 @@ Respond ONLY in this JSON format (no markdown, no backticks):
                   withTimeout(
                     () =>
                       anthropic.messages.create({
-                        model: "claude-haiku-4-5-20251001",
+                        model: DEFAULT_MODEL,
                         max_tokens: 200,
                         system: "Summarize a debate round in 3-4 bullet points. Focus on: key disagreements, strongest arguments, any agents who changed position. Be extremely concise.",
                         messages: [{ role: "user", content: `Round ${roundNum} debate on "${scenario.slice(0, 200)}":\n${successfulResults.map(r => `[${r.name}]: "${r.text}" [sentiment: ${r.sentiment}]`).join("\n")}` }],
@@ -562,9 +561,9 @@ Respond ONLY in this JSON format (no markdown, no backticks):
         // that generates all 10 agent final votes at once.
         {
           console.log("[ENGINE] Round 10/10 starting — Final Synthesis (consolidated)");
-          send({ type: "round_start", round: 10, total: 10, label: "Final Synthesis", model: tier !== "free" ? "sonnet" : "haiku" });
+          send({ type: "round_start", round: 10, total: 10, label: "Final Synthesis", model: "haiku" });
 
-          const synthModel = tier !== "free" ? "claude-sonnet-4-20250514" : "claude-haiku-4-5-20251001";
+          const synthModel = DEFAULT_MODEL;
           const lastSummaries = roundSummaries.slice(-4);
           const agentNames = AGENTS.map(a => `${a.name} (${a.id})`).join(", ");
 
@@ -688,7 +687,7 @@ Include all 10 agents. Each text should mention PROCEED or STOP and include a di
               withTimeout(
                 () =>
                   anthropic.messages.create({
-                    model: "claude-sonnet-4-20250514",
+                    model: DEFAULT_MODEL,
                     max_tokens: 600,
                     system: `You analyze multi-agent debate transcripts and identify EMERGENT PATTERNS — insights that no single agent would have produced alone. Respond in ${userLang}. Respond ONLY in JSON.`,
                     messages: [{

@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 import { getTierFromRequest } from "../../lib/usage";
 import { getKnowledgeForMode } from "../../lib/knowledge-base";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: DEFAULT_MODEL,
       max_tokens: 800,
       system: `${SECURITY_PREFIX}You are the Competitive Adversary. Your job is to ATTACK the analysis that was just given. Using knowledge of deception detection, risk intelligence, and game theory:
 ${knowledge.slice(0, 2000)}

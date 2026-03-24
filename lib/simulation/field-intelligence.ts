@@ -1,4 +1,4 @@
-import { callClaude, parseJSON } from './claude';
+import { callClaude, parseJSON, MODELS } from './claude';
 import type { AdvisorPersona, AdvisorReport } from '../agents/advisors';
 import type { SimulationState } from './state';
 
@@ -72,7 +72,7 @@ export async function runFieldScan(
         systemPrompt: `You are ${persona.name}. ${persona.role}. Give ONE specific fact or observation from your personal experience. Maximum 1 sentence. Be concrete — names, numbers, locations. No generic advice.`,
         userMessage: `Quick question about: "${question}"\nFocus on: ${focusArea}\nYour 1-sentence insight:`,
         maxTokens: 100,  // Very short — just 1 sentence
-        model: 'claude-haiku-4-5-20251001',
+        model: MODELS.advisors,
       });
 
       // Parse as simple text, not JSON — faster and cheaper

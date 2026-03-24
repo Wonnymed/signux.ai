@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 
 const anthropic = new Anthropic();
 const supabase = createClient(
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: DEFAULT_MODEL,
       max_tokens: 1000,
       messages: [{
         role: "user",

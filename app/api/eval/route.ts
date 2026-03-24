@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const signuxResponse = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: DEFAULT_MODEL,
       max_tokens: 2000,
       system: "You are Signux AI, a decision intelligence platform for global operators. Provide specific, actionable business intelligence with real numbers and frameworks.",
       messages: [{ role: "user", content: question }],
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
       : "";
 
     const evalResponse = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: DEFAULT_MODEL,
       max_tokens: 500,
       messages: [{
         role: "user",

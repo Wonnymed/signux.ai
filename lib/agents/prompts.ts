@@ -91,7 +91,7 @@ const AGENT_DEFS: AgentDef[] = [
   },
   {
     id: 'demand_signal_analyst',
-    name: 'Demand Signal Analyst',
+    name: 'Demand Signal Hunter',
     role: 'Market Demand & Growth Trends',
     icon: 'TrendingUp',
     color: '#F59E0B',
@@ -154,7 +154,7 @@ const AGENT_DEFS: AgentDef[] = [
   },
   {
     id: 'competitive_intel',
-    name: 'Competitive Intel',
+    name: 'Competitive Radar',
     role: 'Competitor Analysis & Positioning',
     icon: 'Radar',
     color: '#F97316',
@@ -217,7 +217,7 @@ const AGENT_DEFS: AgentDef[] = [
   },
   {
     id: 'scenario_planner',
-    name: 'Scenario Planner',
+    name: 'Scenario Architect',
     role: 'Contingencies & Stress Testing',
     icon: 'GitBranch',
     color: '#EC4899',
@@ -259,7 +259,7 @@ const AGENT_DEFS: AgentDef[] = [
   },
   {
     id: 'customer_reality',
-    name: 'Customer Reality Tester',
+    name: 'Customer Lens',
     role: 'Customer Perspective & Product-Market Fit',
     icon: 'UserCheck',
     color: '#8B5CF6',

@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SECURITY_PREFIX, verifyClientToken, applyRateLimit } from "../../lib/security";
 import { getTierFromRequest } from "../../lib/usage";
 import { getKnowledgeForMode } from "../../lib/knowledge-base";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     DOMAIN_SETS.map(async (ds) => {
       try {
         const response = await client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: DEFAULT_MODEL,
           max_tokens: 400,
           system: `${SECURITY_PREFIX}You are an expert in ${ds.label}. Using this knowledge:${knowledge.slice(0, 1500)}\n\n${ds.prompt}\n\nBe specific, concise, and give a different perspective than a generic AI would. Max 3 paragraphs. End with a confidence level (HIGH/MEDIUM/LOW) and one key insight.\n\n<!-- signux_domains: game-theory, risk-intelligence, behavioral-economics -->\n<!-- signux_domain_count: 3 -->
 

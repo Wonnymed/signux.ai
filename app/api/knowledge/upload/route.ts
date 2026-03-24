@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       const mimeType = file.type || "application/octet-stream";
 
       const extractResponse = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
+        model: DEFAULT_MODEL,
         max_tokens: 4000,
         messages: [{
           role: "user",

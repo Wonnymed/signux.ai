@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 
 const anthropic = new Anthropic();
 const supabase = createClient(
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are Signux AI, a decision intelligence platform. Mode: ${selectedMode}.${context ? ` Additional context: ${context}` : ""} Provide structured analysis with actionable insights. Include positive factors and key concerns.`;
 
-    const model = keyData.tier === "max" ? "claude-sonnet-4-20250514" : "claude-sonnet-4-20250514";
+    const model = DEFAULT_MODEL;
 
     const response = await anthropic.messages.create({
       model,

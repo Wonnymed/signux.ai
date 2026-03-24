@@ -13,6 +13,7 @@ import AuthWallBanner from "@/app/components/sim/AuthWallBanner";
 import FieldIntelligenceBar from "@/app/components/sim/FieldIntelligenceBar";
 import { useSimulationStream } from "@/app/lib/hooks/useSimulationStream";
 import { TIERS, ADVISOR_OPTIONS } from "@/lib/config/tiers";
+import { getDisplayModel } from "@/lib/simulation/claude";
 
 export default function SimulationPage() {
   return (
@@ -205,11 +206,11 @@ function SimulationPageInner() {
             <span>
               {isRunning && currentRound > 0
                 ? enableCrowdWisdom && advisorCount > 0
-                  ? `10 specialists + ${advisorCount} field researchers · Round ${currentRound}/10 · analyzing...`
-                  : `10 specialists · Round ${currentRound}/10 · analyzing...`
+                  ? `10 specialists · ${getDisplayModel()} · ${advisorCount} field researchers · Round ${currentRound}/10 · analyzing...`
+                  : `10 specialists · ${getDisplayModel()} · Round ${currentRound}/10 · analyzing...`
                 : enableCrowdWisdom && advisorCount > 0
-                  ? `${TIERS.free.features.specialists} specialists + ${advisorCount} field researchers · 10 rounds`
-                  : `${TIERS.free.features.specialists} specialists · 10 rounds · Sonnet`}
+                  ? `${TIERS.free.features.specialists} specialists · ${getDisplayModel()} · ${advisorCount} field researchers · 10 rounds`
+                  : `${TIERS.free.features.specialists} specialists · ${getDisplayModel()} · 10 rounds`}
             </span>
             {/* Crowd Wisdom tier selector — disabled once running */}
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

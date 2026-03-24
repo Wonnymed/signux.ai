@@ -101,8 +101,8 @@ export const TIERS: Record<TierName, TierConfig> = {
     displayName: 'Octopus',
     price: 249,
     limits: {
-      simsPerMonth: 150,
-      simsPerWeek: -1,              // no weekly limit
+      simsPerMonth: 120,
+      simsPerWeek: 40,
       maxSimsBeforeAuth: 0,
     },
     features: {
@@ -177,7 +177,7 @@ export function getUsageDisplay(
 export function getTierComparison(): { feature: string; free: string; pro: string; max: string; octopus: string }[] {
   return [
     { feature: 'Price', free: 'Free', pro: '$29/mo', max: '$99/mo', octopus: '$249/mo' },
-    { feature: 'Simulations', free: '2/month', pro: '16/month', max: '40/month', octopus: '150/month' },
+    { feature: 'Simulations', free: '2/month', pro: '16/month', max: '40/month', octopus: '120/month' },
     { feature: 'Specialist Agents', free: '10', pro: '10', max: '10', octopus: '10' },
     { feature: 'Field Researchers', free: '\u2014', pro: 'Up to 20', max: 'Up to 50', octopus: 'Up to 100' },
     { feature: 'Self-Refine', free: '\u2713', pro: '\u2713', max: '\u2713', octopus: '\u2713' },

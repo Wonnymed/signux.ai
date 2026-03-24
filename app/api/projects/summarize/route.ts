@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyClientToken } from "../../../lib/security";
+import { DEFAULT_MODEL } from "@/lib/simulation/claude";
 import { getUserFromRequest } from "../../../lib/usage";
 
 const supabase = createClient(
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     // Generate summary via Claude
     const response = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: DEFAULT_MODEL,
       max_tokens: 500,
       messages: [
         {
