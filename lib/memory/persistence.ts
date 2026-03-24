@@ -1,16 +1,7 @@
 // ── Phase 2B: Memory System — Simulation Persistence ────────
 // Saves completed simulations to Supabase for history & memory
 
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-// Lazy-init: only create client when both env vars are present
-const supabase =
-  supabaseUrl && supabaseKey
-    ? createClient(supabaseUrl, supabaseKey)
-    : null;
+import { supabase } from './supabase';
 
 // ── Types ──────────────────────────────────────────────────
 

@@ -13,6 +13,7 @@ import { processDelegations, type DelegationResponse } from './delegation';
 import { generateCounterFactualFlip, detectBlindSpots, type CounterFactualFlip, type BlindSpotAnalysis } from './verdict-insights';
 import { evaluateSimulation, type SimulationEval } from './evals';
 import { saveSimulation } from '../memory/persistence';
+import { extractAndSaveFacts } from '../memory/facts';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -1151,6 +1152,17 @@ DEBATE PROGRESS:
     if (id) console.log(`[persistence] Simulation saved: ${id}`);
     else console.warn('[persistence] Simulation save returned null');
   }).catch(err => console.error('[persistence] Save error:', err));
+
+  // Memory: Extract facts ASYNCHRONOUSLY (non-blocking, Mem0 pattern)
+  if (options?.userId) {
+    extractAndSaveFacts(
+      options.userId,
+      simId,
+      question,
+      verdict,
+      Object.fromEntries(state.agent_reports.entries()),
+    ).catch(err => console.error('[facts] Background extraction error:', err));
+  }
 
   yield { event: 'complete', data: { simulation_id: simId } };
 }
