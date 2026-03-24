@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useIsMobile } from "../lib/useIsMobile";
 import ChatInput, { type FileAttachment } from "./ChatInput";
+import { SignuxIcon } from "./SignuxIcon";
 import type { Mode } from "../lib/types";
 import { ENGINES, type EngineId } from "../lib/engines";
 import { Zap, Hammer, TrendingUp, UserCheck, Shield, Swords, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
@@ -177,19 +178,40 @@ export default function WelcomeScreen({
           maxWidth: isMobile ? "100%" : 600,
         }}>
 
-          {/* ─── Greeting line ─── */}
-          <div style={{
-            fontSize: isMobile ? 20 : 24,
-            fontWeight: 400,
-            color: "var(--text-primary)",
-            marginBottom: isMobile ? 28 : 36,
-            textAlign: "center",
-            letterSpacing: -0.3,
-          }}>
-            What decision are you facing?
+          {/* ─── 1. Large Signux mark ─── */}
+          <div style={{ marginBottom: isMobile ? 14 : 18 }}>
+            <SignuxIcon size={isMobile ? 52 : 64} variant="gold" />
           </div>
 
-          {/* ─── Main premium input ─── */}
+          {/* ─── 2. SIGNUX AI wordmark ─── */}
+          <div style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 6,
+            marginBottom: isMobile ? 36 : 48,
+          }}>
+            <span style={{
+              fontFamily: "var(--font-brand)",
+              fontSize: isMobile ? 18 : 22,
+              fontWeight: 500,
+              letterSpacing: 8,
+              color: "var(--text-primary)",
+            }}>
+              SIGNUX
+            </span>
+            <span style={{
+              fontFamily: "var(--font-brand)",
+              fontSize: isMobile ? 18 : 22,
+              fontWeight: 300,
+              letterSpacing: 4,
+              color: "var(--text-tertiary)",
+              opacity: 0.5,
+            }}>
+              AI
+            </span>
+          </div>
+
+          {/* ─── 3. Main premium input ─── */}
           {!showRoutingState && (
             <div style={{
               width: "100%",
@@ -221,6 +243,21 @@ export default function WelcomeScreen({
               onRefine={handleReset}
               isMobile={isMobile}
             />
+          )}
+
+          {/* ─── 4. Micro support line ─── */}
+          {!showRoutingState && (
+            <div style={{
+              fontSize: 11,
+              color: "var(--text-tertiary)",
+              letterSpacing: 0.8,
+              fontFamily: "var(--font-mono)",
+              textTransform: "uppercase" as const,
+              marginBottom: isMobile ? 28 : 36,
+              opacity: 0.6,
+            }}>
+              Six engines · One decision layer
+            </div>
           )}
 
           {/* ─── Continue strip (returning users only) ─── */}
