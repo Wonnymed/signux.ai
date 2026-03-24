@@ -219,7 +219,21 @@ async function callAgent(
   }
 
   console.log(`[${agent.id}] response: ${raw!.length} chars`);
-  const parsed = parseJSON<Partial<AgentReport>>(raw!);
+  let parsed: Partial<AgentReport>;
+  try {
+    parsed = parseJSON<Partial<AgentReport>>(raw!);
+  } catch (parseErr) {
+    console.warn(`[${agent.id}] JSON parse failed, extracting from raw text`);
+    // Attempt to salvage partial data from truncated JSON
+    const posMatch = raw!.match(/"position"\s*:\s*"(proceed|delay|abandon)"/);
+    const confMatch = raw!.match(/"confidence"\s*:\s*(\d+)/);
+    const argMatch = raw!.match(/"key_argument"\s*:\s*"([^"]{10,})"/);
+    parsed = {
+      position: (posMatch?.[1] as AgentReport['position']) || 'delay',
+      confidence: confMatch ? Number(confMatch[1]) : 5,
+      key_argument: argMatch?.[1] || raw!.substring(0, 200).replace(/[{}"]/g, '').trim() || `Analysis from ${agent.name}`,
+    };
+  }
   return {
     agent_id: agent.id,
     agent_name: agent.name,
