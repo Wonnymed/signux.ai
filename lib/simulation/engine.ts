@@ -1129,10 +1129,8 @@ DEBATE PROGRESS:
     consensus_history: state.consensus_history,
   } };
 
-  yield { event: 'complete', data: { simulation_id: simId } };
-
-  // ━━ PERSIST TO SUPABASE (async, non-blocking) ━━━━━━━━━━━━
-  saveSimulation({
+  // ━━ PERSIST TO SUPABASE (before complete — code after final yield won't run) ━━
+  await saveSimulation({
     simulationId: simId,
     userId: options?.userId,
     engine,
@@ -1153,4 +1151,6 @@ DEBATE PROGRESS:
     if (id) console.log(`[persistence] Simulation saved: ${id}`);
     else console.warn('[persistence] Simulation save returned null');
   }).catch(err => console.error('[persistence] Save error:', err));
+
+  yield { event: 'complete', data: { simulation_id: simId } };
 }

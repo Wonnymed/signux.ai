@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 -- SIMULATIONS (save every completed simulation)
 CREATE TABLE IF NOT EXISTS simulations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id),
   engine TEXT NOT NULL DEFAULT 'simulate',
   question TEXT NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS user_facts (
   category TEXT DEFAULT 'general',
   confidence FLOAT DEFAULT 0.8,
   evidence_count INT DEFAULT 1,
-  source_simulation UUID REFERENCES simulations(id),
+  source_simulation TEXT REFERENCES simulations(id),
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
