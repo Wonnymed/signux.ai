@@ -58,16 +58,53 @@ function calculateConsensus(reports: AgentReport[]): { proceed: number; delay: n
   };
 }
 
-function summarizeReports(reports: AgentReport[]): string {
+// ── AutoGen v2: Growing debate context ──────────────────────
+// Each agent receives: debate history + their own previous positions + active conflicts
+
+function buildDebateContext(state: SimulationState, currentAgentId: string): string {
+  const reports = Array.from(state.latest_reports.entries());
+  if (reports.length === 0) return 'No other agents have reported yet. You are among the first to analyze this decision.';
+
+  // Build summary of what other agents said (exclude current agent's own reports)
+  const otherReports = reports
+    .filter(([id]) => id !== currentAgentId)
+    .map(([, report]) => `\u2022 ${report.agent_name} (${report.position.toUpperCase()}, ${report.confidence}/10): ${report.key_argument}`)
+    .join('\n');
+
+  // Current consensus
   const positions = { proceed: 0, delay: 0, abandon: 0 };
-  for (const r of reports) {
-    if (r.position in positions) positions[r.position as keyof typeof positions]++;
+  reports.forEach(([, r]) => { if (r.position in positions) positions[r.position as keyof typeof positions]++; });
+  const total = reports.length;
+  const consensusSummary = `Current consensus: ${positions.proceed}/${total} proceed, ${positions.delay}/${total} delay, ${positions.abandon}/${total} abandon`;
+
+  // Identify active conflicts
+  const conflicts: string[] = [];
+  if (positions.proceed > 0 && positions.delay > 0) {
+    conflicts.push('ACTIVE CONFLICT: Some agents recommend proceeding while others recommend delay');
   }
-  const topRisks = reports
-    .filter((r) => r.risks_identified.length > 0)
-    .map((r) => r.risks_identified[0])
-    .slice(0, 2);
-  return `Of ${reports.length} agents, ${positions.proceed} recommend proceed, ${positions.delay} recommend delay, ${positions.abandon} recommend abandon. Key risks: ${topRisks.join('; ') || 'none flagged yet'}.`;
+  if (positions.proceed > 0 && positions.abandon > 0) {
+    conflicts.push('MAJOR CONFLICT: Some agents recommend proceeding while others recommend abandoning');
+  }
+  if (positions.delay > 0 && positions.abandon > 0) {
+    conflicts.push('CONFLICT: Disagreement between delay and abandon');
+  }
+
+  // Check if current agent already reported (for convergence round)
+  const ownPreviousReports = state.agent_reports.get(currentAgentId) || [];
+  let ownHistory = '';
+  if (ownPreviousReports.length > 0) {
+    const prev = ownPreviousReports[ownPreviousReports.length - 1];
+    ownHistory = `\n\nYOUR PREVIOUS POSITION: ${prev.position.toUpperCase()} (${prev.confidence}/10) \u2014 "${prev.key_argument}"
+Consider whether the debate has changed your view. If you changed your mind, explain WHY.`;
+  }
+
+  return `DEBATE SO FAR:
+${otherReports}
+
+${consensusSummary}
+${conflicts.length > 0 ? '\n' + conflicts.join('\n') : ''}${ownHistory}
+
+IMPORTANT: React to what other agents said. If you agree with someone, say why. If you disagree, challenge their specific claim. Do NOT repeat what others already covered \u2014 add NEW information or challenge EXISTING arguments.`;
 }
 
 // ── Audited callAgent wrapper ──────────────────────────────
@@ -277,17 +314,18 @@ export async function* runSimulation(
 
     yield { event: 'round_start', data: { round: roundNum, title: deepRoundTitles[batchIdx], description: deepRoundDescs[batchIdx], total_rounds: 10 } };
 
-    const batchPromises = batch.map(({ agent, task }) =>
-      callAgent(
+    const batchPromises = batch.map(({ agent, task }) => {
+      const debateCtx = buildDebateContext(state, agent.id);
+      return callAgent(
         agent,
-        `Question: ${question}\n\nYour task: ${task}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`,
+        `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`,
         kernel.config.maxTokensPerAgent,
         audit, roundNum, 'opening',
       ).catch((err) => {
         console.error(`[${agent.id}] deep analysis failed:`, err);
         return null;
-      }),
-    );
+      });
+    });
 
     const batchResults = await Promise.allSettled(batchPromises);
     for (const result of batchResults) {
@@ -316,22 +354,21 @@ export async function* runSimulation(
 
   // ━━ ROUND 5 — RAPID ASSESSMENT (remaining 5 agents, parallel, staggered yield) ━━
 
-  const summary = summarizeReports(allReports);
-
   transitionPhase(state, 'quick_takes');
   yield { event: 'round_start', data: { round: 5, title: 'Rapid Assessment', description: 'Remaining specialists provide quick perspectives', total_rounds: 10 } };
 
-  const quickPromises = quickAgentTasks.map(({ agent, task }) =>
-    callAgent(
+  const quickPromises = quickAgentTasks.map(({ agent, task }) => {
+    const debateCtx = buildDebateContext(state, agent.id);
+    return callAgent(
       agent,
-      `Question: ${question}\n\nOther agents have analyzed this. Here is a brief summary: ${summary}\n\nAs ${agent.role}, add your perspective in under 100 words. Focus on what others MISSED. Respond with valid JSON only.`,
+      `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
       512,
       audit, 5, 'quick_takes',
     ).catch((err) => {
       console.error(`[${agent.id}] quick take failed:`, err);
       return null;
-    }),
-  );
+    });
+  });
 
   const quickResults = await Promise.allSettled(quickPromises);
   // Stagger yields for progressive feel
@@ -402,9 +439,10 @@ export async function* runSimulation(
 
       if (targetAgent) {
         try {
+          const devilCtx = buildDebateContext(state, targetAgent.id);
           const devilReport = await callAgent(
             targetAgent,
-            `Original question: ${question}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". What could go catastrophically wrong? What are you all missing? Be contrarian and specific. Respond with valid JSON only.`,
+            `Question: ${question}\n\n${devilCtx}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". Reference specific claims from other agents and explain why they're wrong or incomplete. What could go catastrophically wrong? Respond with valid JSON only.`,
             kernel.config.maxTokensPerAgent,
             audit, roundNum, 'adversarial',
           );
@@ -438,9 +476,10 @@ export async function* runSimulation(
     const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
 
     try {
+      const challengerCtx = buildDebateContext(state, pair.challenger_id);
       const challengeReport = await callAgent(
         challengerAgent,
-        `Original question: ${question}\n\nYou said "${challengerReport?.key_argument || 'your position'}". The ${defenderAgent.name} said "${defenderReport?.key_argument || 'their position'}". The debate topic: ${pair.topic}. Challenge the defender's position directly. Respond with valid JSON only.`,
+        `Question: ${question}\n\n${challengerCtx}\n\nYou are CHALLENGING ${defenderAgent.name}'s position. They said: "${defenderReport?.key_argument || 'their position'}"\n\nAttack their weakest point with specific counter-evidence. Reference what other agents said to support your challenge. Be direct. Respond with valid JSON only.`,
         kernel.config.maxTokensPerAgent,
         audit, roundNum, 'adversarial',
       );
@@ -452,9 +491,10 @@ export async function* runSimulation(
     }
 
     try {
+      const defenderCtx = buildDebateContext(state, pair.defender_id);
       const defenseReport = await callAgent(
         defenderAgent,
-        `Original question: ${question}\n\nThe ${challengerAgent.name} challenged your position on: ${pair.topic}. Their argument: "${challengerReport?.key_argument || 'disagreement'}". Defend or update your position. If you changed your mind, say so. Respond with valid JSON only.`,
+        `Question: ${question}\n\n${defenderCtx}\n\n${challengerAgent.name} CHALLENGED your position: "${challengerReport?.key_argument || 'disagreement'}"\n\nDefend your position with stronger evidence, or update your position if the challenge is valid. Be honest \u2014 if you changed your mind, say what convinced you. Respond with valid JSON only.`,
         kernel.config.maxTokensPerAgent,
         audit, roundNum, 'adversarial',
       );
@@ -488,9 +528,10 @@ export async function* runSimulation(
   for (const weak of weakAgents) {
     try {
       const challengedAgent = getAgentById(weak.agent_id);
+      const challengeCtx = buildDebateContext(state, weak.agent_id);
       const challengeReport = await callAgent(
         challengedAgent,
-        `Original question: ${question}\n\nThe Decision Chair reviewed your analysis and found it lacks specificity. Your argument was: "${weak.key_argument}"\n\nProvide concrete numbers, timelines, or precedents to strengthen your position \u2014 or reconsider it. Respond with valid JSON only.`,
+        `Question: ${question}\n\n${challengeCtx}\n\nThe Decision Chair says your analysis lacks specificity. Your argument was: "${weak.key_argument}"\n\nStrengthen your argument with concrete numbers, timelines, and precedents. Reference what other agents said \u2014 agree or disagree with their specific claims. Or reconsider your position if the debate has changed your view. Respond with valid JSON only.`,
         kernel.config.maxTokensPerAgent,
         audit, 8, 'adversarial',
       );
@@ -511,10 +552,10 @@ export async function* runSimulation(
   yield { event: 'round_start', data: { round: 9, title: 'Final Convergence', description: 'All 10 specialists declare their final positions', total_rounds: 10 } };
 
   const convergencePromises = specialistAgents().map((agent) => {
-    const lastReport = [...allReports].reverse().find((r) => r.agent_id === agent.id);
+    const convergenceCtx = buildDebateContext(state, agent.id);
     return callAgent(
       agent,
-      `Original question: ${question}\n\nThe debate is concluding. Your original position was "${lastReport?.position || 'unknown'}" with confidence ${lastReport?.confidence || 5}. After hearing all arguments, declare your FINAL position. If you changed your mind, explain why in one sentence. Respond with valid JSON only.`,
+      `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
       256,
       audit, 9, 'convergence',
     ).catch((err) => {
