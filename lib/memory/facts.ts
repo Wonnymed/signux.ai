@@ -4,6 +4,7 @@
 
 import { callClaude, parseJSON } from '../simulation/claude';
 import { supabase } from './supabase';
+import { addFact, invalidateFact, temporalUpdateFact, resolveContradictions } from './temporal';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -106,52 +107,66 @@ export async function applyFactActions(
   simulationId: string,
   actions: FactAction[],
 ): Promise<number> {
-  if (!supabase) return 0;
-
-  let applied = 0;
+  let appliedCount = 0;
 
   for (const action of actions) {
     try {
-      if (action.action === 'ADD') {
-        const { error } = await supabase.from('user_facts').insert({
-          user_id: userId,
-          content: action.fact,
-          category: action.category,
-          confidence: action.confidence,
-          evidence_count: 1,
-          source_simulation: simulationId,
-          metadata: { reason: action.reason },
-        });
-        if (!error) applied++;
-        else console.error('[facts] ADD failed:', error.message);
-      } else if (action.action === 'UPDATE' && action.existing_fact_id) {
-        const { error } = await supabase
-          .from('user_facts')
-          .update({
-            content: action.fact,
-            confidence: Math.min(1, action.confidence + 0.05),
-            updated_at: new Date().toISOString(),
-            metadata: { reason: action.reason, last_simulation: simulationId },
-          })
-          .eq('id', action.existing_fact_id)
-          .eq('user_id', userId);
-        if (!error) applied++;
-        else console.error('[facts] UPDATE failed:', error.message);
-      } else if (action.action === 'DELETE' && action.existing_fact_id) {
-        const { error } = await supabase
-          .from('user_facts')
-          .delete()
-          .eq('id', action.existing_fact_id)
-          .eq('user_id', userId);
-        if (!error) applied++;
-        else console.error('[facts] DELETE failed:', error.message);
+      switch (action.action) {
+        case 'ADD': {
+          const newId = await addFact(
+            userId,
+            action.fact,
+            action.category || 'business_info',
+            action.confidence || 0.8,
+            simulationId
+          );
+          if (newId) appliedCount++;
+          break;
+        }
+
+        case 'UPDATE': {
+          if (action.existing_fact_id) {
+            const newId = await temporalUpdateFact(
+              userId,
+              action.existing_fact_id,
+              action.fact,
+              action.confidence || 0.8,
+              action.category || 'business_info',
+              simulationId
+            );
+            if (newId) appliedCount++;
+          }
+          break;
+        }
+
+        case 'DELETE': {
+          if (action.existing_fact_id) {
+            const success = await invalidateFact(
+              action.existing_fact_id,
+              action.reason || 'Retracted by fact extraction'
+            );
+            if (success) appliedCount++;
+          }
+          break;
+        }
+
+        case 'NOOP':
+        default:
+          break;
       }
     } catch (err) {
-      console.error('[facts] Action failed:', action.action, err);
+      console.error(`[temporal] Failed to apply ${action.action}:`, err);
     }
   }
 
-  return applied;
+  // After all actions, resolve contradictions (fire-and-forget)
+  if (appliedCount > 0) {
+    resolveContradictions(userId, simulationId)
+      .then(n => { if (n > 0) console.log(`[temporal] ${n} contradiction(s) auto-resolved`); })
+      .catch(err => console.error('[temporal] resolve error (non-blocking):', err));
+  }
+
+  return appliedCount;
 }
 
 // ── Read ───────────────────────────────────────────────────
@@ -163,6 +178,7 @@ export async function getUserFacts(userId: string, limit = 15): Promise<UserFact
     .from('user_facts')
     .select('*')
     .eq('user_id', userId)
+    .eq('is_current', true)
     .order('confidence', { ascending: false })
     .order('updated_at', { ascending: false })
     .limit(limit);
