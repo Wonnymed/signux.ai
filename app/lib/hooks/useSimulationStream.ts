@@ -404,6 +404,10 @@ function processEvent(
       console.log('Domain:', (data as Record<string, unknown>).domain);
       break;
 
+    case "behavioral_profile_loaded":
+      console.log('Behavioral profile:', data);
+      break;
+
     case "hitl_checkpoint": {
       const cp = data as { simulationId: string; assumptions: string[]; summary: string; agentPositions: { agent: string; position: string; confidence: number }[]; timeoutMs: number };
       setState((s) => ({

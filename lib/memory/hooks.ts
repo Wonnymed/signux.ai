@@ -29,6 +29,8 @@ import { extractAllAgentRules, loadAllAgentRules } from './procedural';
 import { getAllActivePrompts, recordEvalScore } from './prompt-optimizer';
 import { optimizeAllAgents, monitorAndRollback } from './multi-optimizer';
 import { extractTeamInsights, injectTeamContext } from './team-memory';
+import { inferBehavioralProfile } from './behavioral';
+import { supabase } from './supabase';
 
 // Re-export for engine convenience
 export { formatRoundDiscoveries, type RoundLearning } from './agent-improvement';
@@ -423,6 +425,19 @@ export async function postSimHook(
       }
     })
     .catch(err => console.error('HOOK POST: Monitor/rollback failed:', err));
+
+  // 13. Behavioral profile inference — every 10 sims
+  if (supabase) {
+    Promise.resolve(supabase.from('simulations').select('id', { count: 'exact', head: true }).eq('user_id', userId))
+      .then(({ count: simCount }) => {
+        if (simCount && simCount % 10 === 0 && simCount >= 5) {
+          inferBehavioralProfile(userId)
+            .then(() => console.log(`HOOK POST: Behavioral profile re-inferred after ${simCount} sims`))
+            .catch(err => console.error('HOOK POST: Behavioral inference failed:', err));
+        }
+      })
+      .catch(() => {});
+  }
 }
 
 // ═══════════════════════════════════════════
