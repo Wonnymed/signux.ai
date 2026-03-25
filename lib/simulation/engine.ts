@@ -1,4 +1,4 @@
-import { callClaude, parseJSON, DEFAULT_MODEL } from './claude';
+import { callClaude, callClaudeWithTools, formatSearchCitations, parseJSON, DEFAULT_MODEL, type SearchCitation, type ToolCallResult } from './claude';
 import { AGENTS, getAgentById } from '../agents/prompts';
 import { generateAdvisorPersonas } from '../agents/advisors';
 import { selectRelevantAdvisors, runFieldScan, formatFieldIntelligence, type FieldScan } from './field-intelligence';
@@ -59,6 +59,7 @@ export type SimulationSSEEvent =
   | { event: 'reflect_triggered'; data: { sim_count: number } }
   | { event: 'optimization_triggered'; data: { sim_count: number } }
   | { event: 'agent_reflected'; data: { agent_id: string; iterations: number; original_score: number; final_score: number } }
+  | { event: 'agent_searched'; data: { agent_id: string; searches: number; sources: number; domains: string[] } }
   | { event: 'confidence_heatmap'; data: ConfidenceHeatmap }
   | { event: 'agents_selected'; data: { active: { id: string; reason: string; priority: string }[]; skipped: { id: string; reason: string }[]; tokensPerAgent: number } }
   | { event: 'crowd_round_started'; data: { advisorCount: number } }
@@ -88,10 +89,11 @@ async function callAgentWithRetry(
   roundNum: number,
   phase: string,
   retries = 2,
-): Promise<AgentReport | null> {
+  useWebSearch = false,
+): Promise<CallAgentResult | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      return await callAgent(agent, userMessage, maxTokens, audit, roundNum, phase);
+      return await callAgent(agent, userMessage, maxTokens, audit, roundNum, phase, useWebSearch);
     } catch (err) {
       const isRateLimit = err instanceof Error && (err.message.includes('429') || err.message.includes('rate_limit'));
       if (isRateLimit && attempt < retries) {
@@ -225,6 +227,8 @@ IMPORTANT: React to what other agents said. If you agree with someone, say why. 
 
 // ── Audited callAgent wrapper ──────────────────────────────
 
+type CallAgentResult = AgentReport & { _searchCitations?: SearchCitation[]; _searchCount?: number };
+
 async function callAgent(
   agent: AgentConfig,
   userMessage: string,
@@ -232,18 +236,33 @@ async function callAgent(
   audit?: SimulationAudit,
   roundNum?: number,
   phase?: string,
-): Promise<AgentReport> {
+  useWebSearch = false,
+): Promise<CallAgentResult> {
   const start = Date.now();
   let success = true;
   let error: string | undefined;
   let raw: string;
+  let searchCitations: SearchCitation[] = [];
+  let searchCount = 0;
 
   try {
-    raw = await callClaude({
-      systemPrompt: agent.systemPrompt,
-      userMessage,
-      maxTokens,
-    });
+    if (useWebSearch) {
+      const toolResult = await callClaudeWithTools({
+        systemPrompt: agent.systemPrompt,
+        userMessage,
+        agentId: agent.id,
+        maxTokens,
+      });
+      raw = toolResult.text;
+      searchCitations = toolResult.searchCitations;
+      searchCount = toolResult.searchCount;
+    } else {
+      raw = await callClaude({
+        systemPrompt: agent.systemPrompt,
+        userMessage,
+        maxTokens,
+      });
+    }
   } catch (err) {
     success = false;
     error = err instanceof Error ? err.message : 'Unknown error';
@@ -251,7 +270,6 @@ async function callAgent(
   } finally {
     if (audit && roundNum !== undefined && phase) {
       const latency = Date.now() - start;
-      // Estimate tokens (rough: 4 chars ≈ 1 token)
       const inputTokens = Math.ceil((agent.systemPrompt.length + userMessage.length) / 4);
       const outputTokens = success ? Math.ceil((raw!?.length || 0) / 4) : 0;
       addRound(audit, {
@@ -269,13 +287,12 @@ async function callAgent(
     }
   }
 
-  console.log(`[${agent.id}] response: ${raw!.length} chars`);
+  console.log(`[${agent.id}] response: ${raw!.length} chars${searchCount > 0 ? ` (${searchCount} searches, ${searchCitations.length} sources)` : ''}`);
   let parsed: Partial<AgentReport>;
   try {
     parsed = parseJSON<Partial<AgentReport>>(raw!);
   } catch (parseErr) {
     console.warn(`[${agent.id}] JSON parse failed, extracting from raw text`);
-    // Attempt to salvage partial data from truncated JSON
     const posMatch = raw!.match(/"position"\s*:\s*"(proceed|delay|abandon)"/);
     const confMatch = raw!.match(/"confidence"\s*:\s*(\d+)/);
     const argMatch = raw!.match(/"key_argument"\s*:\s*"([^"]{10,})"/);
@@ -294,6 +311,8 @@ async function callAgent(
     evidence: parsed.evidence || [],
     risks_identified: parsed.risks_identified || [],
     recommendation: parsed.recommendation || '',
+    _searchCitations: searchCitations.length > 0 ? searchCitations : undefined,
+    _searchCount: searchCount > 0 ? searchCount : undefined,
   };
 }
 
@@ -309,6 +328,7 @@ export async function* runSimulation(
   const audit = createAudit(simId, question, engine);
   const state = createInitialState(simId, question, engine, options?.tier || 'free');
   const roundDiscoveries: RoundLearning[] = [];
+  const allSearchCitations: SearchCitation[] = [];
 
   // ═══ MEMORY SYSTEM — Single hook replaces 7+ individual operations ═══
   let preSim: PreSimResult = {
@@ -555,6 +575,7 @@ export async function* runSimulation(
         agent, userMsg,
         kernel.config.maxTokensPerAgent,
         audit, 3, 'opening',
+        true, // web search enabled for deep analysis
       ).catch((err) => {
         console.error(`[${agent.id}] deep analysis failed:`, err);
         return null;
@@ -568,6 +589,16 @@ export async function* runSimulation(
       const { agent, debateCtx } = batchItems[i];
       if (result.status === 'fulfilled' && result.value) {
         let report = result.value;
+        // Collect search citations from deep analysis
+        if (report._searchCitations) {
+          allSearchCitations.push(...report._searchCitations);
+          yield { event: 'agent_searched', data: {
+            agent_id: report.agent_id,
+            searches: report._searchCount || 0,
+            sources: report._searchCitations.length,
+            domains: Array.from(new Set(report._searchCitations.map(c => c.source_domain))) as string[],
+          }};
+        }
         let filtered = false;
         for (const filter of kernel.agentFilters) {
           const check = filter.run(report);
@@ -636,6 +667,7 @@ export async function* runSimulation(
         agent, userMsg,
         kernel.config.maxTokensPerAgent,
         audit, 5, 'opening',
+        true, // web search enabled for deep analysis
       ).catch((err) => {
         console.error(`[${agent.id}] deep analysis failed:`, err);
         return null;
@@ -649,6 +681,16 @@ export async function* runSimulation(
       const { agent, debateCtx } = batchItems2[i];
       if (result.status === 'fulfilled' && result.value) {
         let report = result.value;
+        // Collect search citations from deep analysis wave 2
+        if (report._searchCitations) {
+          allSearchCitations.push(...report._searchCitations);
+          yield { event: 'agent_searched', data: {
+            agent_id: report.agent_id,
+            searches: report._searchCount || 0,
+            sources: report._searchCitations.length,
+            domains: Array.from(new Set(report._searchCitations.map(c => c.source_domain))) as string[],
+          }};
+        }
         let filtered = false;
         for (const filter of kernel.agentFilters) {
           const check = filter.run(report);
@@ -1345,6 +1387,13 @@ DEBATE PROGRESS:
   } };
 
   // ━━ PERSIST TO SUPABASE (before complete — code after final yield won't run) ━━
+  // Attach web search citations to verdict metadata
+  const webCitations = formatSearchCitations(allSearchCitations);
+  if (webCitations.length > 0) {
+    (verdict as any).web_citations = webCitations;
+    console.log(`[search] ${webCitations.length} unique web sources from ${allSearchCitations.length} total citations`);
+  }
+
   await saveSimulation({
     simulationId: simId,
     userId: options?.userId,
