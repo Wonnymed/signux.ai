@@ -477,6 +477,14 @@ function SimulationPageInner() {
                   Decision Object
                 </p>
                 <DecisionObjectCard verdict={verdict} />
+                {(verdict as any)?.disclaimer && (
+                  <div style={{
+                    padding: '14px 16px', borderRadius: '8px', marginTop: '12px',
+                    background: '#FEF3C7', fontSize: '12px', color: '#92400E', lineHeight: 1.6,
+                  }}>
+                    {(verdict as any).disclaimer}
+                  </div>
+                )}
               </div>
             ) : isRunning && agents.length > 0 ? (
               <div style={{ marginTop: 8 }}>

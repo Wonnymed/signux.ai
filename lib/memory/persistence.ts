@@ -22,6 +22,10 @@ export type SaveSimulationInput = {
   totalTokens: number;
   totalCostUsd: number;
   durationMs: number;
+  domain?: string;
+  shareDigest?: string | null;
+  disclaimer?: string | null;
+  isPublic?: boolean;
 };
 
 // ── Save ───────────────────────────────────────────────────
@@ -53,6 +57,10 @@ export async function saveSimulation(input: SaveSimulationInput): Promise<string
         total_tokens: input.totalTokens,
         total_cost_usd: input.totalCostUsd,
         duration_ms: input.durationMs,
+        domain: input.domain || 'business',
+        share_digest: input.shareDigest || null,
+        disclaimer: input.disclaimer || null,
+        is_public: input.isPublic ?? true,
       })
       .select('id')
       .single();

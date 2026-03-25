@@ -400,6 +400,10 @@ function processEvent(
       break;
     }
 
+    case "domain_detected":
+      console.log('Domain:', (data as Record<string, unknown>).domain);
+      break;
+
     case "hitl_checkpoint": {
       const cp = data as { simulationId: string; assumptions: string[]; summary: string; agentPositions: { agent: string; position: string; confidence: number }[]; timeoutMs: number };
       setState((s) => ({

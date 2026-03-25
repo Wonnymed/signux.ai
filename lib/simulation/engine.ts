@@ -32,6 +32,7 @@ import { selectRelevantAgents, calculateAgentBudget, type AgentSelection } from 
 import { extractVerdictClaims, type ConfidenceHeatmap } from './confidence-heatmap';
 import { generateCheckpoint, formatUserCorrection, HITL_CONFIG, type HITLResponse } from './hitl';
 import { hitlStore } from './hitl-store';
+import { detectDomain, formatDomainConstraints, getDisclaimer, generateShareDigest, type DomainClassification } from './domain';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -69,6 +70,7 @@ export type SimulationSSEEvent =
   | { event: 'state_summary'; data: any }
   | { event: 'hitl_checkpoint'; data: { simulationId: string; assumptions: string[]; summary: string; agentPositions: { agent: string; position: string; confidence: number }[]; timeoutMs: number } }
   | { event: 'hitl_resumed'; data: { action: string; hasCorrection: boolean } }
+  | { event: 'domain_detected'; data: { domain: string; subdomain: string; disclaimer_required: boolean } }
   | { event: 'complete'; data: { simulation_id: string } };
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -151,11 +153,13 @@ function buildDebateContext(
   networkMemory?: string,
   agentKnowledge?: string,
   userCorrection?: string,
+  domainConstraints?: string,
 ): string {
-  // Memory injection — FIRST in context so agents always see it
-  let memorySection = '';
+  // Domain constraints go FIRST — sets the analysis frame
+  let memorySection = domainConstraints || '';
+  // Memory injection — early in context so agents always see it
   if (memory && memory.isReturningUser) {
-    memorySection = formatMemoryContext(memory);
+    memorySection += formatMemoryContext(memory);
     memorySection += formatAgentMemory(memory, currentAgentId);
     if (networkMemory) memorySection += networkMemory;
   }
@@ -403,6 +407,30 @@ export async function* runSimulation(
     }
   }
 
+  // ═══ DOMAIN DETECTION — classify question domain ═══
+  let domainClassification: DomainClassification = {
+    domain: 'general', confidence: 0.5, subdomain: 'general',
+    disclaimer_required: false, agent_constraints: [],
+  };
+  let domainConstraintsText = '';
+
+  try {
+    domainClassification = await detectDomain(question);
+    domainConstraintsText = formatDomainConstraints(domainClassification);
+    console.log(`DOMAIN: ${domainClassification.domain} (${(domainClassification.confidence * 100).toFixed(0)}%) — subdomain: ${domainClassification.subdomain}`);
+  } catch (err) {
+    console.error('Domain detection failed (non-blocking):', err);
+  }
+
+  yield {
+    event: 'domain_detected',
+    data: {
+      domain: domainClassification.domain,
+      subdomain: domainClassification.subdomain,
+      disclaimer_required: domainClassification.disclaimer_required,
+    },
+  };
+
   const chair = getAgentById('decision_chair');
   const allReports: AgentReport[] = [];
 
@@ -576,7 +604,7 @@ export async function* runSimulation(
 
   {
     const batchItems = deepWave1.map(({ agent, task }) => {
-      const debateCtx = buildDebateContext(state, agent.id, undefined, undefined, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+      const debateCtx = buildDebateContext(state, agent.id, undefined, undefined, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), undefined, domainConstraintsText);
       const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
       const promise = callAgent(
         agent, userMsg,
@@ -716,7 +744,7 @@ export async function* runSimulation(
 
   {
     const batchItems2 = deepWave2.map(({ agent, task }) => {
-      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
       const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
       const promise = callAgent(
         agent, userMsg,
@@ -835,7 +863,7 @@ export async function* runSimulation(
   const quickBatch2 = quickAgentTasks.slice(3);
 
   const quickBatch1Promises = quickBatch1.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -848,7 +876,7 @@ export async function* runSimulation(
   await wait(500);
 
   const quickBatch2Promises = quickBatch2.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -975,7 +1003,7 @@ export async function* runSimulation(
 
       if (targetAgent) {
         try {
-          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(targetAgent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(targetAgent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
           const devilReport = await callAgent(
             targetAgent,
             `Question: ${question}\n\n${devilCtx}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". Reference specific claims from other agents and explain why they're wrong or incomplete. What could go catastrophically wrong? Respond with valid JSON only.`,
@@ -1012,7 +1040,7 @@ export async function* runSimulation(
     const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
 
     try {
-      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.challenger_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.challenger_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
       const challengeReport = await callAgent(
         challengerAgent,
         `Question: ${question}\n\n${challengerCtx}\n\nYou are CHALLENGING ${defenderAgent.name}'s position. They said: "${defenderReport?.key_argument || 'their position'}"\n\nAttack their weakest point with specific counter-evidence. Reference what other agents said to support your challenge. Be direct. Respond with valid JSON only.`,
@@ -1027,7 +1055,7 @@ export async function* runSimulation(
     }
 
     try {
-      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.defender_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.defender_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
       const defenseReport = await callAgent(
         defenderAgent,
         `Question: ${question}\n\n${defenderCtx}\n\n${challengerAgent.name} CHALLENGED your position: "${challengerReport?.key_argument || 'disagreement'}"\n\nDefend your position with stronger evidence, or update your position if the challenge is valid. Be honest \u2014 if you changed your mind, say what convinced you. Respond with valid JSON only.`,
@@ -1079,7 +1107,7 @@ export async function* runSimulation(
   const convBatch2 = specialists.slice(convMid);
 
   const convBatch1Promises = convBatch1.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
@@ -1091,7 +1119,7 @@ export async function* runSimulation(
   await wait(500);
 
   const convBatch2Promises = convBatch2.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
@@ -1343,6 +1371,16 @@ DEBATE PROGRESS:
     console.error('[heatmap] extraction failed (non-fatal):', err);
   }
 
+  // Attach domain info, disclaimer, and share digest to verdict
+  (verdict as any).domain = domainClassification.domain;
+  (verdict as any).disclaimer = getDisclaimer(domainClassification.domain);
+  (verdict as any).share_digest = generateShareDigest(
+    question,
+    verdict,
+    domainClassification.domain,
+    activeAgentCount || 10
+  );
+
   state.verdict = verdict;
   yield { event: 'verdict_artifact', data: verdict };
   yield { event: 'round_complete', data: { round: 10 } };
@@ -1466,6 +1504,10 @@ DEBATE PROGRESS:
     totalTokens: audit.total_input_tokens + audit.total_output_tokens,
     totalCostUsd: audit.total_cost_usd,
     durationMs: audit.total_duration_ms || 0,
+    domain: domainClassification.domain,
+    shareDigest: (verdict as any).share_digest || null,
+    disclaimer: (verdict as any).disclaimer || null,
+    isPublic: true,
   }).then(id => {
     if (id) console.log(`[persistence] Simulation saved: ${id}`);
     else console.warn('[persistence] Simulation save returned null');
