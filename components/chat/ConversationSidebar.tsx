@@ -1,31 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/design/cn';
-import { OctAvatar, OctBadge, OctButton, OctSkeleton } from '@/components/ui';
-import { verdictColors } from '@/lib/design/tokens';
+import { OctAvatar, OctButton, OctSkeleton } from '@/components/ui';
+import SidebarSearch from '@/components/sidebar/SidebarSearch';
+import SidebarCategories from '@/components/sidebar/SidebarCategories';
+import SidebarContextMenu from '@/components/sidebar/SidebarContextMenu';
+import SidebarProfile from '@/components/sidebar/SidebarProfile';
+import SidebarEmptyState from '@/components/sidebar/SidebarEmptyState';
 
-interface ConversationSidebarProps {
-  expanded: boolean;
-  onNavigate?: () => void;
-}
+type CategoryFilter = 'all' | 'investment' | 'relationships' | 'career' | 'business' | 'life';
 
 type Conversation = {
   id: string;
   title: string;
   verdict_recommendation?: string;
   model_tier?: string;
+  category?: string;
   updated_at: string;
   pinned?: boolean;
 };
 
+interface ConversationSidebarProps {
+  expanded: boolean;
+  onNavigate?: () => void;
+}
+
 export default function ConversationSidebar({ expanded, onNavigate }: ConversationSidebarProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
   const router = useRouter();
   const pathname = usePathname();
 
+  // Fetch conversations
   useEffect(() => {
     fetch('/api/c')
       .then(r => r.json())
@@ -33,20 +44,79 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
       .catch(() => setLoading(false));
   }, [pathname]);
 
-  const navigate = (path: string) => {
+  const navigate = useCallback((path: string) => {
     router.push(path);
     onNavigate?.();
-  };
+  }, [router, onNavigate]);
 
   const activeId = pathname?.match(/^\/c\/(.+)/)?.[1];
 
+  // Filter by category
+  const filtered = useMemo(() => {
+    if (categoryFilter === 'all') return conversations;
+    return conversations.filter(c => c.category === categoryFilter);
+  }, [conversations, categoryFilter]);
+
   // Separate pinned and recent
-  const pinned = conversations.filter(c => c.pinned);
-  const recent = conversations.filter(c => !c.pinned).slice(0, 20);
+  const pinned = filtered.filter(c => c.pinned);
+  const recent = filtered.filter(c => !c.pinned).slice(0, 20);
+
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const c of conversations) {
+      if (c.category) counts[c.category] = (counts[c.category] || 0) + 1;
+    }
+    return counts;
+  }, [conversations]);
+
+  // Actions
+  const handlePin = async (id: string, currentlyPinned: boolean) => {
+    try {
+      await fetch(`/api/c/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: !currentlyPinned }),
+      });
+      setConversations(prev => prev.map(c => c.id === id ? { ...c, pinned: !currentlyPinned } : c));
+    } catch {}
+  };
+
+  const handleRename = async (id: string) => {
+    if (renamingId === id && renameValue.trim()) {
+      try {
+        await fetch(`/api/c/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: renameValue.trim() }),
+        });
+        setConversations(prev => prev.map(c => c.id === id ? { ...c, title: renameValue.trim() } : c));
+      } catch {}
+      setRenamingId(null);
+      setRenameValue('');
+    } else {
+      const conv = conversations.find(c => c.id === id);
+      setRenamingId(id);
+      setRenameValue(conv?.title || '');
+    }
+  };
+
+  const handleShare = (id: string) => {
+    const url = `${window.location.origin}/c/${id}/report`;
+    navigator.clipboard.writeText(url);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`/api/c/${id}`, { method: 'DELETE' });
+      setConversations(prev => prev.filter(c => c.id !== id));
+      if (activeId === id) navigate('/c');
+    } catch {}
+  };
 
   return (
     <div className="h-full flex flex-col">
-      {/* Top: entity + new button */}
+      {/* Top: entity + new */}
       <div className={cn('shrink-0 p-3', !expanded && 'flex flex-col items-center')}>
         {expanded ? (
           <div className="flex items-center justify-between mb-3">
@@ -88,6 +158,26 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
         )}
       </div>
 
+      {/* Search */}
+      <div className={cn('px-3 mb-1', !expanded && 'flex justify-center')}>
+        <SidebarSearch
+          expanded={expanded}
+          conversations={conversations}
+          onSelect={(id) => navigate(`/c/${id}`)}
+        />
+      </div>
+
+      {/* Category filters (expanded only) */}
+      {expanded && conversations.length > 0 && (
+        <div className="px-3 mb-2">
+          <SidebarCategories
+            active={categoryFilter}
+            onChange={setCategoryFilter}
+            counts={categoryCounts}
+          />
+        </div>
+      )}
+
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
         {loading ? (
@@ -96,6 +186,10 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
               <OctSkeleton key={i} variant="text" className={expanded ? 'h-8' : 'h-8 w-8 rounded-md'} />
             ))}
           </div>
+        ) : conversations.length === 0 ? (
+          expanded ? (
+            <SidebarEmptyState onStartConversation={() => { navigate('/c'); }} />
+          ) : null
         ) : (
           <>
             {/* Pinned section */}
@@ -105,13 +199,26 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
                   Pinned
                 </div>
                 {pinned.map(c => (
-                  <ConversationItem
+                  <SidebarContextMenu
                     key={c.id}
-                    conversation={c}
-                    active={c.id === activeId}
-                    expanded={expanded}
-                    onClick={() => navigate(`/c/${c.id}`)}
-                  />
+                    conversationId={c.id}
+                    pinned={true}
+                    onPin={() => handlePin(c.id, true)}
+                    onRename={() => handleRename(c.id)}
+                    onShare={() => handleShare(c.id)}
+                    onDelete={() => handleDelete(c.id)}
+                  >
+                    <ConversationItem
+                      conversation={c}
+                      active={c.id === activeId}
+                      expanded={expanded}
+                      renaming={renamingId === c.id}
+                      renameValue={renameValue}
+                      onRenameChange={setRenameValue}
+                      onRenameSubmit={() => handleRename(c.id)}
+                      onClick={() => navigate(`/c/${c.id}`)}
+                    />
+                  </SidebarContextMenu>
                 ))}
               </div>
             )}
@@ -122,62 +229,66 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
                 Recent
               </div>
             )}
-            {recent.map(c => (
+            {recent.map(c => expanded ? (
+              <SidebarContextMenu
+                key={c.id}
+                conversationId={c.id}
+                pinned={!!c.pinned}
+                onPin={() => handlePin(c.id, !!c.pinned)}
+                onRename={() => handleRename(c.id)}
+                onShare={() => handleShare(c.id)}
+                onDelete={() => handleDelete(c.id)}
+              >
+                <ConversationItem
+                  conversation={c}
+                  active={c.id === activeId}
+                  expanded={expanded}
+                  renaming={renamingId === c.id}
+                  renameValue={renameValue}
+                  onRenameChange={setRenameValue}
+                  onRenameSubmit={() => handleRename(c.id)}
+                  onClick={() => navigate(`/c/${c.id}`)}
+                />
+              </SidebarContextMenu>
+            ) : (
               <ConversationItem
                 key={c.id}
                 conversation={c}
                 active={c.id === activeId}
-                expanded={expanded}
+                expanded={false}
                 onClick={() => navigate(`/c/${c.id}`)}
               />
             ))}
-
-            {/* Empty state */}
-            {conversations.length === 0 && !loading && expanded && (
-              <div className="px-3 py-8 text-center">
-                <p className="text-xs text-txt-tertiary">Your decisions will appear here</p>
-              </div>
-            )}
           </>
         )}
       </div>
 
-      {/* Bottom: tier + settings */}
-      <div className={cn('shrink-0 border-t border-border-subtle p-3', !expanded && 'flex flex-col items-center gap-2')}>
-        {expanded ? (
-          <div className="flex items-center justify-between">
-            <OctBadge tier="free" size="xs">FREE</OctBadge>
-            <button className="p-1.5 rounded-md text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="7" cy="7" r="2.5" />
-                <path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.2 2.8l-1.1 1.1M3.9 9.1l-1.1 1.1M11.2 11.2l-1.1-1.1M3.9 4.9L2.8 2.8" />
-              </svg>
-            </button>
-          </div>
-        ) : (
-          <button className="p-1.5 rounded-md text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="7" cy="7" r="2.5" />
-              <path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.2 2.8l-1.1 1.1M3.9 9.1l-1.1 1.1M11.2 11.2l-1.1-1.1M3.9 4.9L2.8 2.8" />
-            </svg>
-          </button>
-        )}
+      {/* Bottom: profile */}
+      <div className={cn('shrink-0 border-t border-border-subtle px-3')}>
+        <SidebarProfile
+          expanded={expanded}
+          tier="free"
+          onSettings={() => {}}
+        />
       </div>
     </div>
   );
 }
 
-// --- Sub-component: Conversation list item ---
-function ConversationItem({ conversation, active, expanded, onClick }: {
+// ═══ Conversation list item ═══
+function ConversationItem({ conversation, active, expanded, renaming, renameValue, onRenameChange, onRenameSubmit, onClick }: {
   conversation: Conversation;
   active: boolean;
   expanded: boolean;
+  renaming?: boolean;
+  renameValue?: string;
+  onRenameChange?: (v: string) => void;
+  onRenameSubmit?: () => void;
   onClick: () => void;
 }) {
   const verdictDot = conversation.verdict_recommendation?.toLowerCase();
 
   if (!expanded) {
-    // Collapsed: just a dot
     return (
       <button
         onClick={onClick}
@@ -198,10 +309,9 @@ function ConversationItem({ conversation, active, expanded, onClick }: {
     );
   }
 
-  // Expanded: full item
   return (
     <button
-      onClick={onClick}
+      onClick={renaming ? undefined : onClick}
       className={cn(
         'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left transition-colors duration-normal group',
         active ? 'bg-surface-2 text-txt-primary' : 'text-txt-secondary hover:bg-surface-2 hover:text-txt-primary',
@@ -214,7 +324,20 @@ function ConversationItem({ conversation, active, expanded, onClick }: {
         verdictDot === 'abandon' && 'bg-verdict-abandon',
         !verdictDot && 'bg-txt-disabled',
       )} />
-      <span className="text-xs truncate flex-1">{conversation.title || 'New conversation'}</span>
+
+      {renaming ? (
+        <input
+          value={renameValue || ''}
+          onChange={e => onRenameChange?.(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') onRenameSubmit?.(); if (e.key === 'Escape') onRenameSubmit?.(); }}
+          onBlur={onRenameSubmit}
+          autoFocus
+          className="flex-1 text-xs bg-transparent outline-none border-b border-accent/30 text-txt-primary"
+        />
+      ) : (
+        <span className="text-xs truncate flex-1">{conversation.title || 'New conversation'}</span>
+      )}
+
       <span className="text-micro text-txt-disabled shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         {formatRelativeTime(conversation.updated_at)}
       </span>
