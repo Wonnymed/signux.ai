@@ -89,7 +89,7 @@ export default function PricingPage() {
                 fullWidth
                 loading={loading === tier.id}
                 onClick={() => {
-                  if (tier.id === 'free') window.location.href = '/c';
+                  if (tier.id === 'free') window.location.href = '/';
                   else handleCheckout(tier.id);
                 }}
               >

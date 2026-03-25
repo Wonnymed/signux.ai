@@ -88,10 +88,10 @@ export function useCommandPalette(): UseCommandPaletteReturn {
       case 'action':
         switch (command.id) {
           case 'action:new-conversation':
-            router.push('/c');
+            router.push('/');
             break;
           case 'action:new-simulation':
-            router.push('/c');
+            router.push('/');
             window.dispatchEvent(new CustomEvent('octux:auto-simulate'));
             break;
           case 'action:toggle-dark-mode':
@@ -114,14 +114,14 @@ export function useCommandPalette(): UseCommandPaletteReturn {
         break;
 
       case 'agent':
-        router.push('/c');
+        router.push('/');
         window.dispatchEvent(new CustomEvent('octux:agent-context', {
           detail: { agentId: command.metadata?.agentId, agentName: command.label },
         }));
         break;
 
       case 'category':
-        router.push('/c');
+        router.push('/');
         window.dispatchEvent(new CustomEvent('octux:category-filter', {
           detail: { category: command.category },
         }));

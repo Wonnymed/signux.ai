@@ -97,7 +97,7 @@ export default async function BoardroomReportPage({ params }: Props) {
             <p className="text-sm text-gray-500 mt-1">{createdAt} · 10 specialist analysts</p>
           </div>
           <div className="print:hidden">
-            <a href="/c" className="text-sm text-purple-600 hover:text-purple-700">octux.ai →</a>
+            <a href="/" className="text-sm text-purple-600 hover:text-purple-700">octux.ai →</a>
           </div>
         </div>
 
@@ -207,7 +207,7 @@ export default async function BoardroomReportPage({ params }: Props) {
         <div className="text-center pt-6 border-t border-gray-200 print:hidden">
           <p className="text-sm text-gray-500 mb-3">Powered by Octux AI — 10 specialists debate your decisions</p>
           <a
-            href="/c"
+            href="/"
             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
           >
             Run your own analysis →

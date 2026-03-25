@@ -110,7 +110,7 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
     try {
       await fetch(`/api/c/${id}`, { method: 'DELETE' });
       setConversations(prev => prev.filter(c => c.id !== id));
-      if (activeId === id) navigate('/c');
+      if (activeId === id) navigate('/');
     } catch {}
   };
 
@@ -136,7 +136,7 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
             variant="primary"
             size="sm"
             fullWidth
-            onClick={() => navigate('/c')}
+            onClick={() => navigate('/')}
             iconLeft={
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M7 2v10M2 7h10" />
@@ -147,7 +147,7 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
           </OctButton>
         ) : (
           <button
-            onClick={() => navigate('/c')}
+            onClick={() => navigate('/')}
             className="w-9 h-9 rounded-md flex items-center justify-center text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal"
             title="New conversation"
           >
@@ -188,7 +188,7 @@ export default function ConversationSidebar({ expanded, onNavigate }: Conversati
           </div>
         ) : conversations.length === 0 ? (
           expanded ? (
-            <SidebarEmptyState onStartConversation={() => { navigate('/c'); }} />
+            <SidebarEmptyState onStartConversation={() => { navigate('/'); }} />
           ) : null
         ) : (
           <>

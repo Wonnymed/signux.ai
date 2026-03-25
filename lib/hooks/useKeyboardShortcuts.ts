@@ -38,7 +38,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers = {}) {
         // Handled by CommandProvider directly (Cmd+K)
         break;
       case 'new-conversation':
-        router.push('/c');
+        router.push('/');
         break;
       case 'close-modal':
         // Handled by individual modals
@@ -49,7 +49,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers = {}) {
 
       // Navigation
       case 'navigate-home':
-        router.push('/c');
+        router.push('/');
         break;
       case 'navigate-settings':
         window.dispatchEvent(new CustomEvent('octux:open-settings'));
