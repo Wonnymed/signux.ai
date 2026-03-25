@@ -30,6 +30,7 @@ import {
 } from '../memory/session';
 import { reflectOnExperiences, shouldReflect } from '../memory/reflect';
 import { runMemoryOptimization } from '../memory/optimize';
+import { runReflectionLoop, agentShouldReflect } from '../memory/agent-reflection';
 import {
   evaluateAgentPerformance,
   loadAllAgentLessons,
@@ -65,6 +66,7 @@ export type SimulationSSEEvent =
   | { event: 'knowledge_graph_started'; data: { simulation_id: string } }
   | { event: 'reflect_triggered'; data: { sim_count: number } }
   | { event: 'optimization_triggered'; data: { sim_count: number } }
+  | { event: 'agent_reflected'; data: { agent_id: string; iterations: number; original_score: number; final_score: number } }
   | { event: 'state_summary'; data: any }
   | { event: 'complete'; data: { simulation_id: string } };
 
@@ -597,21 +599,24 @@ export async function* runSimulation(
   yield { event: 'round_start', data: { round: 3, title: 'Deep Analysis — Wave 1', description: `First wave of specialists analyzing${fieldScans.length > 0 ? ' with field intelligence' : ''}`, total_rounds: 10 } };
 
   {
-    const batchPromises = deepWave1.map(({ agent, task }) => {
+    const batchItems = deepWave1.map(({ agent, task }) => {
       const debateCtx = buildDebateContext(state, agent.id, undefined, undefined, fieldScans, memory, networkMemoryText, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
-      return callAgent(
-        agent,
-        `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`,
+      const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
+      const promise = callAgent(
+        agent, userMsg,
         kernel.config.maxTokensPerAgent,
         audit, 3, 'opening',
       ).catch((err) => {
         console.error(`[${agent.id}] deep analysis failed:`, err);
         return null;
       });
+      return { agent, debateCtx, promise };
     });
 
-    const batchResults = await Promise.allSettled(batchPromises);
-    for (const result of batchResults) {
+    const batchResults = await Promise.allSettled(batchItems.map(b => b.promise));
+    for (let i = 0; i < batchResults.length; i++) {
+      const result = batchResults[i];
+      const { agent, debateCtx } = batchItems[i];
       if (result.status === 'fulfilled' && result.value) {
         let report = result.value;
         let filtered = false;
@@ -621,6 +626,22 @@ export async function* runSimulation(
           if (check.patched) report = check.patched;
         }
         if (!filtered) {
+          // ═══ SELF-REFLECTION (PraisonAI — Deep Analysis only) ═══
+          if (agentShouldReflect(report.agent_id)) {
+            const reflection = await runReflectionLoop(
+              report.agent_id, report.agent_name || report.agent_id,
+              report, question, agent.systemPrompt, debateCtx
+            );
+            report = reflection.finalReport;
+            if (reflection.wasRevised) {
+              yield { event: 'agent_reflected', data: {
+                agent_id: report.agent_id,
+                iterations: reflection.iterations,
+                original_score: reflection.evaluations[0]?.score || 0,
+                final_score: reflection.evaluations[reflection.evaluations.length - 1]?.score || 0,
+              }};
+            }
+          }
           allReports.push(report);
           addAgentReport(state, report);
           const rl = persistRoundLearnings(report.agent_id, report.agent_name || report.agent_id, report);
@@ -659,21 +680,24 @@ export async function* runSimulation(
   yield { event: 'round_start', data: { round: 5, title: 'Deep Analysis — Wave 2', description: `Second wave of specialists${fieldScans.length > 1 ? ' with accumulated field intelligence' : ''}`, total_rounds: 10 } };
 
   {
-    const batchPromises = deepWave2.map(({ agent, task }) => {
+    const batchItems2 = deepWave2.map(({ agent, task }) => {
       const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
-      return callAgent(
-        agent,
-        `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`,
+      const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
+      const promise = callAgent(
+        agent, userMsg,
         kernel.config.maxTokensPerAgent,
         audit, 5, 'opening',
       ).catch((err) => {
         console.error(`[${agent.id}] deep analysis failed:`, err);
         return null;
       });
+      return { agent, debateCtx, promise };
     });
 
-    const batchResults = await Promise.allSettled(batchPromises);
-    for (const result of batchResults) {
+    const batchResults = await Promise.allSettled(batchItems2.map(b => b.promise));
+    for (let i = 0; i < batchResults.length; i++) {
+      const result = batchResults[i];
+      const { agent, debateCtx } = batchItems2[i];
       if (result.status === 'fulfilled' && result.value) {
         let report = result.value;
         let filtered = false;
@@ -683,6 +707,22 @@ export async function* runSimulation(
           if (check.patched) report = check.patched;
         }
         if (!filtered) {
+          // ═══ SELF-REFLECTION (PraisonAI — Deep Analysis only) ═══
+          if (agentShouldReflect(report.agent_id)) {
+            const reflection = await runReflectionLoop(
+              report.agent_id, report.agent_name || report.agent_id,
+              report, question, agent.systemPrompt, debateCtx
+            );
+            report = reflection.finalReport;
+            if (reflection.wasRevised) {
+              yield { event: 'agent_reflected', data: {
+                agent_id: report.agent_id,
+                iterations: reflection.iterations,
+                original_score: reflection.evaluations[0]?.score || 0,
+                final_score: reflection.evaluations[reflection.evaluations.length - 1]?.score || 0,
+              }};
+            }
+          }
           allReports.push(report);
           addAgentReport(state, report);
           const rl = persistRoundLearnings(report.agent_id, report.agent_name || report.agent_id, report);

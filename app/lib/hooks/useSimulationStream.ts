@@ -385,6 +385,12 @@ function processEvent(
       console.log(`Memory optimization triggered at ${(data as Record<string, unknown>).sim_count} sims`);
       break;
 
+    case "agent_reflected": {
+      const rd = data as Record<string, unknown>;
+      console.log(`Agent ${rd.agent_id} reflected: ${rd.original_score} → ${rd.final_score} (${rd.iterations} iters)`);
+      break;
+    }
+
     case "state_summary":
       setState((s) => ({ ...s, stateSummary: data }));
       break;
