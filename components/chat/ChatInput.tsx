@@ -171,9 +171,9 @@ export default function ChatInput({ onSend, placeholder, loading = false, disabl
 // --- Tier selector pills ---
 function TierPills({ tier, onChange, disabled }: { tier: string; onChange: (t: 'ink' | 'deep' | 'kraken') => void; disabled: boolean }) {
   const tiers = [
-    { id: 'ink' as const, label: 'Ink', tooltip: 'Quick chat (Haiku)' },
-    { id: 'deep' as const, label: 'Deep', tooltip: '10 agents debate (Sonnet)' },
-    { id: 'kraken' as const, label: 'Kraken', tooltip: '3 scenarios + crowd (Opus)' },
+    { id: 'ink' as const, label: 'Ink', tooltip: 'Quick chat (free)', cost: '' },
+    { id: 'deep' as const, label: 'Deep', tooltip: '10 agents debate (1 token)', cost: '1' },
+    { id: 'kraken' as const, label: 'Kraken', tooltip: '3 scenarios + crowd (8 tokens)', cost: '8' },
   ];
 
   return (
@@ -184,7 +184,7 @@ function TierPills({ tier, onChange, disabled }: { tier: string; onChange: (t: '
             onClick={() => !disabled && onChange(t.id)}
             disabled={disabled}
             className={cn(
-              'px-2.5 py-1 text-xs font-medium rounded-sm transition-all duration-normal',
+              'px-2.5 py-1 text-xs font-medium rounded-sm transition-all duration-normal flex items-center gap-1',
               tier === t.id
                 ? t.id === 'ink' ? 'bg-surface-raised text-txt-primary shadow-xs'
                   : t.id === 'deep' ? 'bg-accent-muted text-accent shadow-xs'
@@ -193,6 +193,9 @@ function TierPills({ tier, onChange, disabled }: { tier: string; onChange: (t: '
             )}
           >
             {t.label}
+            {t.cost && (
+              <span className="text-[10px] opacity-60">{t.cost}t</span>
+            )}
           </button>
         </OctTooltip>
       ))}

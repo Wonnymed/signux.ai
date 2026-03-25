@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { constructWebhookEvent, getStripe } from '@/lib/billing/stripe';
-import { createClient } from '@supabase/supabase-js';
-import { TIERS, type TierType } from '@/lib/billing/tiers';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { TIERS, type TierType, getTierByPrice } from '@/lib/billing/tiers';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let _supabase: SupabaseClient | null = null;
+function getSupabase() {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+  }
+  return _supabase;
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -34,39 +40,22 @@ export async function POST(request: NextRequest) {
         if (session.mode === 'subscription') {
           const subscription = await getStripe().subscriptions.retrieve(session.subscription);
           const priceId = subscription?.items?.data?.[0]?.price?.id;
-          const tier = priceIdToTier(priceId);
+          const tier = getTierByPrice(priceId || '');
           const tierConfig = TIERS[tier];
 
-          await supabase
+          await getSupabase()
             .from('user_subscriptions')
             .update({
               tier,
               stripe_subscription_id: session.subscription,
               stripe_customer_id: session.customer,
-              deep_sims_used: 0,
-              deep_sims_limit: tierConfig.limits.deepSimsPerMonth,
-              kraken_tokens_remaining: tierConfig.limits.krakenTokensPerMonth,
+              tokens_used: 0,
+              tokens_total: tierConfig.limits.tokensPerMonth,
               current_period_start: new Date().toISOString(),
               current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
               status: 'active',
             })
             .eq('user_id', userId);
-        } else if (session.mode === 'payment') {
-          const creditType = session.metadata?.creditType;
-          const quantity = parseInt(session.metadata?.quantity || '1');
-
-          if (creditType === 'deep') {
-            await supabase.rpc('increment_deep_credits', { p_user_id: userId, p_amount: quantity });
-          } else if (creditType === 'kraken') {
-            await supabase.rpc('increment_kraken_credits', { p_user_id: userId, p_amount: quantity });
-          }
-
-          // Ensure tier is at least paygo
-          await supabase
-            .from('user_subscriptions')
-            .update({ tier: 'paygo', stripe_customer_id: session.customer })
-            .eq('user_id', userId)
-            .eq('tier', 'free');
         }
         break;
       }
@@ -77,9 +66,9 @@ export async function POST(request: NextRequest) {
         if (!userId) break;
 
         const priceId = subscription.items?.data?.[0]?.price?.id;
-        const tier = priceIdToTier(priceId);
+        const tier = getTierByPrice(priceId || '');
 
-        await supabase
+        await getSupabase()
           .from('user_subscriptions')
           .update({
             tier,
@@ -97,14 +86,14 @@ export async function POST(request: NextRequest) {
         const userId = subscription.metadata?.userId;
         if (!userId) break;
 
-        await supabase
+        await getSupabase()
           .from('user_subscriptions')
           .update({
             tier: 'free',
             status: 'canceled',
             stripe_subscription_id: null,
-            deep_sims_limit: TIERS.free.limits.deepSimsPerMonth,
-            kraken_tokens_remaining: 0,
+            tokens_used: 0,
+            tokens_total: TIERS.free.limits.tokensPerMonth,
           })
           .eq('user_id', userId);
         break;
@@ -114,7 +103,7 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as any;
         const customerId = invoice.customer;
 
-        await supabase
+        await getSupabase()
           .from('user_subscriptions')
           .update({ status: 'past_due' })
           .eq('stripe_customer_id', customerId);
@@ -125,7 +114,7 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as any;
         if (invoice.billing_reason === 'subscription_cycle') {
           const customerId = invoice.customer;
-          const { data: sub } = await supabase
+          const { data: sub } = await getSupabase()
             .from('user_subscriptions')
             .select('user_id, tier')
             .eq('stripe_customer_id', customerId)
@@ -133,11 +122,11 @@ export async function POST(request: NextRequest) {
 
           if (sub) {
             const tierConfig = TIERS[sub.tier as TierType] || TIERS.free;
-            await supabase
+            await getSupabase()
               .from('user_subscriptions')
               .update({
-                deep_sims_used: 0,
-                kraken_tokens_remaining: tierConfig.limits.krakenTokensPerMonth,
+                tokens_used: 0,
+                tokens_total: tierConfig.limits.tokensPerMonth,
                 status: 'active',
                 current_period_start: new Date().toISOString(),
                 current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -154,10 +143,4 @@ export async function POST(request: NextRequest) {
     console.error('Webhook processing error:', error);
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
-}
-
-function priceIdToTier(priceId: string): TierType {
-  if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID) return 'pro';
-  if (priceId === process.env.NEXT_PUBLIC_STRIPE_MAX_PRICE_ID) return 'max';
-  return 'free';
 }

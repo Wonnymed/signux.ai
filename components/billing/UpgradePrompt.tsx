@@ -6,18 +6,17 @@ import { TIERS, type TierType } from '@/lib/billing/tiers';
 
 interface UpgradePromptProps {
   reason: string;
-  currentUsage?: number;
-  limit?: number;
+  tokensUsed?: number;
+  tokensTotal?: number;
   suggestedTier?: TierType;
   onUpgrade?: () => void;
-  onBuyCredits?: () => void;
   onDismiss?: () => void;
   className?: string;
 }
 
 export default function UpgradePrompt({
-  reason, currentUsage, limit, suggestedTier = 'pro',
-  onUpgrade, onBuyCredits, onDismiss, className,
+  reason, tokensUsed, tokensTotal, suggestedTier = 'pro',
+  onUpgrade, onDismiss, className,
 }: UpgradePromptProps) {
   const tier = TIERS[suggestedTier];
 
@@ -26,25 +25,12 @@ export default function UpgradePrompt({
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'subscribe', tier: suggestedTier }),
+        body: JSON.stringify({ tier: suggestedTier }),
       });
       const { url } = await res.json();
       if (url) window.location.href = url;
     } catch { /* noop */ }
     onUpgrade?.();
-  };
-
-  const handleBuyCredits = async (type: 'deep' | 'kraken') => {
-    try {
-      const res = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'buy_credits', creditType: type, quantity: 5 }),
-      });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
-    } catch { /* noop */ }
-    onBuyCredits?.();
   };
 
   return (
@@ -57,18 +43,15 @@ export default function UpgradePrompt({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-txt-primary font-medium mb-1">{reason}</p>
-          {currentUsage !== undefined && limit !== undefined && (
+          {tokensUsed !== undefined && tokensTotal !== undefined && (
             <p className="text-xs text-txt-tertiary mb-3">
-              Usage: {currentUsage}/{limit} this month
+              Tokens: {tokensUsed}/{tokensTotal} used this month
             </p>
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
             <OctButton variant="primary" size="sm" onClick={handleUpgrade}>
-              Upgrade to {tier.name} ({tier.priceLabel}{tier.period})
-            </OctButton>
-            <OctButton variant="ghost" size="sm" onClick={() => handleBuyCredits('deep')}>
-              Buy credits instead
+              Upgrade to {tier.name} — {tier.limits.tokensPerMonth} tokens{tier.period}
             </OctButton>
             {onDismiss && (
               <OctButton variant="ghost" size="xs" onClick={onDismiss}>

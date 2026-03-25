@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { TIERS, type TierType } from './tiers';
+import { TIERS, TOKEN_COSTS, type TierType } from './tiers';
 
 let _supabase: SupabaseClient | null = null;
 function getSupabase() {
@@ -9,138 +9,136 @@ function getSupabase() {
   return _supabase;
 }
 
-export type ActionType = 'ink_chat' | 'deep_sim' | 'kraken_sim' | 'web_search' | 'pdf_export' | 'agent_chat';
-
 export interface UsageCheckResult {
   allowed: boolean;
   reason?: string;
-  currentUsage?: number;
-  limit?: number;
+  tokensUsed?: number;
+  tokensTotal?: number;
   upgradeRequired?: TierType;
 }
 
-export async function checkUsage(userId: string, action: ActionType): Promise<UsageCheckResult> {
+export async function checkSimulationUsage(
+  userId: string,
+  simType: 'deep' | 'kraken',
+): Promise<UsageCheckResult> {
   const { data: sub } = await getSupabase()
     .from('user_subscriptions')
-    .select('*')
+    .select('tier, tokens_used, tokens_total')
     .eq('user_id', userId)
     .single();
 
   if (!sub) {
-    return { allowed: false, reason: 'No subscription found', upgradeRequired: 'free' };
+    return { allowed: false, reason: 'No subscription found', upgradeRequired: 'pro' };
   }
 
-  const tier = TIERS[sub.tier as TierType] || TIERS.free;
-  const limits = tier.limits;
+  const tier = (sub.tier as TierType) || 'free';
+  const tokensUsed = sub.tokens_used || 0;
+  const tokensTotal = sub.tokens_total || TIERS[tier].limits.tokensPerMonth;
+  const cost = TOKEN_COSTS[simType];
+  const remaining = tokensTotal - tokensUsed;
 
-  switch (action) {
-    case 'ink_chat': {
-      if (limits.inkChatsPerDay === -1) return { allowed: true };
-      return { allowed: true };
-    }
-
-    case 'deep_sim': {
-      if (sub.tier === 'paygo') {
-        if (sub.deep_credits > 0) return { allowed: true, currentUsage: sub.deep_credits };
-        return { allowed: false, reason: 'No Deep credits remaining', upgradeRequired: 'pro' };
-      }
-      if (limits.deepSimsPerMonth === -1) return { allowed: true };
-      if (sub.deep_sims_used < limits.deepSimsPerMonth) {
-        return { allowed: true, currentUsage: sub.deep_sims_used, limit: limits.deepSimsPerMonth };
-      }
-      return {
-        allowed: false,
-        reason: `Monthly limit reached (${sub.deep_sims_used}/${limits.deepSimsPerMonth})`,
-        currentUsage: sub.deep_sims_used,
-        limit: limits.deepSimsPerMonth,
-        upgradeRequired: sub.tier === 'free' ? 'pro' : 'max',
-      };
-    }
-
-    case 'kraken_sim': {
-      if (sub.tier === 'paygo') {
-        if (sub.kraken_credits > 0) return { allowed: true };
-        return { allowed: false, reason: 'No Kraken credits remaining', upgradeRequired: 'pro' };
-      }
-      if (sub.tier === 'free') {
-        return { allowed: false, reason: 'Kraken requires Pro or higher', upgradeRequired: 'pro' };
-      }
-      if (sub.kraken_tokens_remaining > 0) return { allowed: true };
-      return {
-        allowed: false,
-        reason: 'No Kraken tokens remaining this month',
-        upgradeRequired: sub.tier === 'pro' ? 'max' : undefined,
-      };
-    }
-
-    case 'web_search':
-      if (!limits.webSearch) return { allowed: false, reason: 'Web search requires Pro or higher', upgradeRequired: 'pro' };
-      return { allowed: true };
-
-    case 'pdf_export':
-      if (!limits.pdfExport) return { allowed: false, reason: 'PDF export requires Pro or higher', upgradeRequired: 'pro' };
-      return { allowed: true };
-
-    case 'agent_chat':
-      if (!limits.agentChat) return { allowed: false, reason: 'Agent chat requires Pay-as-go or higher', upgradeRequired: 'paygo' };
-      return { allowed: true };
-
-    default:
-      return { allowed: true };
+  if (remaining < cost) {
+    const nextTier = tier === 'free' ? 'pro' : tier === 'pro' ? 'max' : 'octopus';
+    return {
+      allowed: false,
+      reason: `Not enough tokens (${remaining} remaining, ${cost} needed)`,
+      tokensUsed,
+      tokensTotal,
+      upgradeRequired: nextTier as TierType,
+    };
   }
+
+  return { allowed: true, tokensUsed, tokensTotal };
 }
 
-export async function incrementUsage(userId: string, action: ActionType): Promise<void> {
+export async function consumeTokens(
+  userId: string,
+  simType: 'deep' | 'kraken',
+): Promise<void> {
+  const cost = TOKEN_COSTS[simType];
   const { data: sub } = await getSupabase()
     .from('user_subscriptions')
-    .select('tier, deep_sims_used, deep_credits, kraken_tokens_remaining, kraken_credits')
+    .select('tokens_used')
     .eq('user_id', userId)
     .single();
 
   if (!sub) return;
 
-  switch (action) {
-    case 'deep_sim':
-      if (sub.tier === 'paygo') {
-        await getSupabase()
-          .from('user_subscriptions')
-          .update({ deep_credits: Math.max(0, sub.deep_credits - 1) })
-          .eq('user_id', userId);
-      } else {
-        await getSupabase()
-          .from('user_subscriptions')
-          .update({ deep_sims_used: sub.deep_sims_used + 1 })
-          .eq('user_id', userId);
-      }
-      break;
+  const { error } = await getSupabase()
+    .from('user_subscriptions')
+    .update({ tokens_used: (sub.tokens_used || 0) + cost })
+    .eq('user_id', userId);
 
-    case 'kraken_sim':
-      if (sub.tier === 'paygo') {
-        await getSupabase()
-          .from('user_subscriptions')
-          .update({ kraken_credits: Math.max(0, sub.kraken_credits - 1) })
-          .eq('user_id', userId);
-      } else {
-        await getSupabase()
-          .from('user_subscriptions')
-          .update({ kraken_tokens_remaining: Math.max(0, sub.kraken_tokens_remaining - 1) })
-          .eq('user_id', userId);
-      }
-      break;
-  }
+  if (error) console.error('Token consumption failed:', error);
 }
 
-export async function resetMonthlyUsage(userId: string, tier: TierType): Promise<void> {
+export async function getTokenBalance(userId: string): Promise<{
+  tokensUsed: number;
+  tokensTotal: number;
+  tokensRemaining: number;
+  tier: TierType;
+}> {
+  const { data: sub } = await getSupabase()
+    .from('user_subscriptions')
+    .select('tier, tokens_used, tokens_total')
+    .eq('user_id', userId)
+    .single();
+
+  if (!sub) {
+    return { tokensUsed: 0, tokensTotal: 1, tokensRemaining: 1, tier: 'free' };
+  }
+
+  const tier = (sub.tier as TierType) || 'free';
+  const tokensUsed = sub.tokens_used || 0;
+  const tokensTotal = sub.tokens_total || TIERS[tier].limits.tokensPerMonth;
+
+  return {
+    tokensUsed,
+    tokensTotal,
+    tokensRemaining: Math.max(0, tokensTotal - tokensUsed),
+    tier,
+  };
+}
+
+export async function resetMonthlyTokens(userId: string, tier: TierType): Promise<void> {
   const config = TIERS[tier] || TIERS.free;
-  await getSupabase()
+  const { error } = await getSupabase()
     .from('user_subscriptions')
     .update({
-      deep_sims_used: 0,
-      kraken_tokens_remaining: config.limits.krakenTokensPerMonth,
+      tokens_used: 0,
+      tokens_total: config.limits.tokensPerMonth,
       current_period_start: new Date().toISOString(),
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     })
     .eq('user_id', userId);
+
+  if (error) console.error('Token reset failed:', error);
+}
+
+export async function checkFeatureAccess(
+  userId: string,
+  feature: keyof typeof TIERS.free.limits,
+): Promise<UsageCheckResult> {
+  const { data: sub } = await getSupabase()
+    .from('user_subscriptions')
+    .select('tier')
+    .eq('user_id', userId)
+    .single();
+
+  const tier = (sub?.tier as TierType) || 'free';
+  const config = TIERS[tier];
+  const value = config.limits[feature];
+
+  if (typeof value === 'boolean' && !value) {
+    const nextTier = tier === 'free' ? 'pro' : tier === 'pro' ? 'max' : 'octopus';
+    return {
+      allowed: false,
+      reason: `${feature} requires ${nextTier} or higher`,
+      upgradeRequired: nextTier as TierType,
+    };
+  }
+
+  return { allowed: true };
 }
 
 export async function getSubscription(userId: string) {

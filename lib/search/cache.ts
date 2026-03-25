@@ -45,9 +45,9 @@ function hashQuery(q: string): string {
 /** Web search limits by tier */
 export const WEB_SEARCH_LIMITS: Record<string, number> = {
   free: 0,
-  paygo: 3,
   pro: 5,
   max: 10,
+  octopus: 10,
 };
 
 export function canAgentSearch(agentIndex: number, userTier: string): boolean {

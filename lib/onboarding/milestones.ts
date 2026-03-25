@@ -121,7 +121,7 @@ export const MILESTONES: Record<MilestoneId, Milestone> = {
 export const TIPS: Record<TipId, Tip> = {
   tip_simulate: {
     id: 'tip_simulate',
-    text: "💡 You have 1 free simulation this month. Ask a specific question first, then hit ⚡ when you're ready for a full analysis.",
+    text: "💡 You have 1 free token this month (1 Deep sim). Ask a specific question first, then hit ⚡ when you're ready.",
     triggeredAfter: 'first_message',
     position: 'bottom-center',
     dismissible: true,
@@ -193,7 +193,7 @@ export const TIPS: Record<TipId, Tip> = {
   },
   tip_free_limit_info: {
     id: 'tip_free_limit_info',
-    text: '📊 You can still chat with Ink (free). Simulations with 10 agents require credits or a Pro plan.',
+    text: '📊 You can still chat with Ink (free). Simulations require tokens — upgrade to Pro for 8 tokens/month.',
     triggeredAfter: 'free_limit_reached',
     position: 'bottom-center',
     dismissible: true,

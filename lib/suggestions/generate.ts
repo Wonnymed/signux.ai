@@ -28,14 +28,14 @@ export interface Suggestion {
 
 /**
  * Generate suggestions LOCALLY using templates.
- * NO API CALL for free/paygo users.
+ * NO API CALL for free users.
  * Only Pro/Max get AI-generated suggestions (post-verdict only).
  */
 export async function generateSuggestions(input: SuggestionInput): Promise<Suggestion[]> {
   if (
     input.context === 'post_verdict' &&
     input.verdict &&
-    (input.userTier === 'pro' || input.userTier === 'max')
+    (input.userTier === 'pro' || input.userTier === 'max' || input.userTier === 'octopus')
   ) {
     try {
       return await generateAISuggestions(input);

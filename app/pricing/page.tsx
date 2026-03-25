@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/design/cn';
 import { OctButton } from '@/components/ui';
-import { TIERS, CREDIT_PRICES, type TierType } from '@/lib/billing/tiers';
+import { TIERS, type TierType } from '@/lib/billing/tiers';
 
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -14,20 +14,7 @@ export default function PricingPage() {
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'subscribe', tier }),
-      });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
-    } catch { /* noop */ } finally { setLoading(null); }
-  };
-
-  const handleBuyCredits = async (type: 'deep' | 'kraken', qty: number) => {
-    setLoading(type);
-    try {
-      const res = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'buy_credits', creditType: type, quantity: qty }),
+        body: JSON.stringify({ tier }),
       });
       const { url } = await res.json();
       if (url) window.location.href = url;
@@ -78,7 +65,8 @@ export default function PricingPage() {
                 <span className="text-3xl font-bold text-txt-primary">{tier.priceLabel}</span>
                 <span className="text-xs text-txt-tertiary">{tier.period}</span>
               </div>
-              <p className="text-xs text-txt-tertiary mb-5">{tier.description}</p>
+              <p className="text-xs text-txt-tertiary mb-2">{tier.description}</p>
+              <p className="text-xs text-txt-secondary font-medium mb-5">{tier.tagline}</p>
 
               <div className="space-y-2.5 mb-6 flex-1">
                 {tier.features.map((f, j) => (
@@ -102,11 +90,10 @@ export default function PricingPage() {
                 loading={loading === tier.id}
                 onClick={() => {
                   if (tier.id === 'free') window.location.href = '/c';
-                  else if (tier.id === 'paygo') handleBuyCredits('deep', 5);
                   else handleCheckout(tier.id);
                 }}
               >
-                {tier.id === 'free' ? 'Start free' : tier.id === 'paygo' ? 'Buy 5 credits ($14.95)' : `Go ${tier.name}`}
+                {tier.id === 'free' ? 'Start free' : `Go ${tier.name}`}
               </OctButton>
             </div>
           ))}
