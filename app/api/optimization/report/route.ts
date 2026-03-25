@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOptimizationReport } from '@/lib/memory/multi-optimizer';
+import { getUserIdFromRequest } from '@/lib/auth/supabase-client';
 
 export async function GET(req: NextRequest) {
-  const forwarded = req.headers.get('x-forwarded-for');
-  const ip = forwarded?.split(',')[0] || 'anonymous';
-  const userAgent = req.headers.get('user-agent') || 'unknown';
-  const fingerprint = `${ip}-${userAgent}`.substring(0, 100);
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(fingerprint);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const userId = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 36);
+  const { userId } = await getUserIdFromRequest(req);
 
   try {
     const report = await getOptimizationReport(userId);

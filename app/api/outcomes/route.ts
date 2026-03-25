@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordOutcome, getCalibrationData } from '@/lib/memory/outcomes';
-
-async function getUserId(req: NextRequest): Promise<string> {
-  const forwarded = req.headers.get('x-forwarded-for');
-  const ip = forwarded?.split(',')[0] || 'anonymous';
-  const ua = req.headers.get('user-agent') || 'unknown';
-  const fp = `${ip}-${ua}`.substring(0, 100);
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(fp);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 36);
-}
+import { getUserIdFromRequest } from '@/lib/auth/supabase-client';
 
 export async function POST(req: NextRequest) {
-  const userId = await getUserId(req);
+  const { userId } = await getUserIdFromRequest(req);
   const body = await req.json();
 
   if (!body.experienceId || !body.outcome) {
@@ -41,7 +29,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const userId = await getUserId(req);
+  const { userId } = await getUserIdFromRequest(req);
 
   try {
     const data = await getCalibrationData(userId);
