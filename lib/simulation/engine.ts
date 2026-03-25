@@ -28,6 +28,7 @@ import {
   saveToWorkingBuffer,
   clearWorkingBuffer,
 } from '../memory/session';
+import { reflectOnExperiences, shouldReflect } from '../memory/reflect';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -54,6 +55,7 @@ export type SimulationSSEEvent =
   | { event: 'evaluation'; data: SimulationEval }
   | { event: 'memory_loaded'; data: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number; hasRecalledMemories: boolean; hasThreadHistory: boolean; threadId: string | null } }
   | { event: 'knowledge_graph_started'; data: { simulation_id: string } }
+  | { event: 'reflect_triggered'; data: { sim_count: number } }
   | { event: 'state_summary'; data: any }
   | { event: 'complete'; data: { simulation_id: string } };
 
@@ -1408,6 +1410,24 @@ DEBATE PROGRESS:
 
     clearWorkingBuffer(simId)
       .catch(err => console.error('BUFFER clear error:', err));
+  }
+
+  // ═══ REFLECT: Form opinions + derive patterns every 5 sims (Hindsight) ═══
+  if (options?.userId) {
+    try {
+      const simCount = await shouldReflect(options.userId);
+      if (simCount > 0) {
+        yield { event: 'reflect_triggered', data: { sim_count: simCount } };
+      }
+    } catch { /* non-blocking */ }
+
+    reflectOnExperiences(options.userId)
+      .then(result => {
+        if (result.opinions > 0 || result.observations > 0 || result.misses > 0) {
+          console.log(`REFLECT: ${result.opinions} opinions, ${result.observations} observations, ${result.misses} misses`);
+        }
+      })
+      .catch(err => console.error('REFLECT error (non-blocking):', err));
   }
 
   yield { event: 'complete', data: { simulation_id: simId } };

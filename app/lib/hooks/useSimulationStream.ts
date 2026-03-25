@@ -377,6 +377,10 @@ function processEvent(
       console.log('Knowledge graph extraction started for sim:', (data as Record<string, unknown>).simulation_id);
       break;
 
+    case "reflect_triggered":
+      console.log(`Reflect triggered at ${(data as Record<string, unknown>).sim_count} sims`);
+      break;
+
     case "state_summary":
       setState((s) => ({ ...s, stateSummary: data }));
       break;
