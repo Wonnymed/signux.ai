@@ -1,92 +1,53 @@
 'use client';
 
-/**
- * New conversation — octopus idle state, ready for input.
- * When user sends first message, creates conversation and redirects to /c/[id].
- */
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import OctopusVisual from '@/components/chat/OctopusVisual';
+import EntityVisual from '@/components/chat/EntityVisual';
 import ChatInput from '@/components/chat/ChatInput';
 
-export default function NewConversation() {
-  const router = useRouter();
+export default function NewConversationPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  async function handleSend(message: string, tier: string) {
-    if (!message.trim() || loading) return;
+  const handleSend = async (message: string, options?: { tier?: string; simulate?: boolean }) => {
     setLoading(true);
-
     try {
-      // Create conversation
       const res = await fetch('/api/c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstMessage: message }),
       });
-      const { id } = await res.json();
+      const data = await res.json();
+      const id = data.id || data.conversation?.id;
+      if (!id) throw new Error('No conversation created');
 
       // Send first message
       await fetch(`/api/c/${id}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, tier }),
+        body: JSON.stringify({
+          message,
+          action: options?.simulate ? 'simulate' : 'chat',
+          tier: options?.tier || 'ink',
+        }),
       });
 
-      // Navigate to conversation
       router.push(`/c/${id}`);
-    } catch {
+    } catch (err) {
+      console.error('Failed to create conversation:', err);
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div style={{
-      flex: 1, display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      minHeight: '100vh', padding: '24px',
-    }}>
-      <OctopusVisual state="idle" />
-
-      <div style={{ marginTop: '16px', marginBottom: '32px', textAlign: 'center' }}>
-        <div style={{ fontSize: '20px', fontWeight: 300, color: '#7C3AED' }}>octux ai</div>
-        <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-          Any decision. 10 AI specialists. Memory that compounds.
-        </div>
+    <div className="flex flex-col h-full">
+      {/* Center: Entity + wordmark */}
+      <div className="flex-1 flex items-center justify-center">
+        <EntityVisual state="idle" />
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px', justifyContent: 'center', maxWidth: '500px' }}>
-        {[
-          'Should I invest $10K in NVIDIA?',
-          'Open a restaurant in Gangnam?',
-          'Accept this job offer or negotiate?',
-          'Is it time to raise a seed round?',
-        ].map((suggestion, i) => (
-          <button
-            key={i}
-            onClick={() => handleSend(suggestion, 'ink')}
-            disabled={loading}
-            style={{
-              padding: '8px 14px', borderRadius: '20px', fontSize: '13px',
-              border: '1px solid var(--border-default, rgba(0,0,0,0.10))',
-              background: 'transparent', cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {suggestion}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ width: '100%', maxWidth: '600px' }}>
-        <ChatInput
-          onSend={handleSend}
-          placeholder="What decision are you facing?"
-          loading={loading}
-        />
-      </div>
+      {/* Bottom: input */}
+      <ChatInput onSend={handleSend} loading={loading} />
     </div>
   );
 }

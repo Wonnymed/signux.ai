@@ -1,18 +1,63 @@
 'use client';
 
-// Placeholder — P41 (Structured Chat Responses) will flesh this out.
+import { cn } from '@/lib/design/cn';
+import { OctCard, OctBadge, OctButton } from '@/components/ui';
 
-type Props = { data: any };
+interface DataCardProps {
+  data: any;
+}
 
-export default function DataCard({ data }: Props) {
+export default function DataCard({ data }: DataCardProps) {
+  if (!data) return null;
+
   return (
-    <div style={{
-      margin: '8px 0', padding: '12px 16px', borderRadius: '8px',
-      background: 'var(--surface-1, #f9f9f8)', border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-    }}>
-      <pre style={{ fontSize: '13px', color: 'var(--text-primary, #111)', whiteSpace: 'pre-wrap', margin: 0 }}>
-        {JSON.stringify(data, null, 2)}
-      </pre>
+    <div className="mb-4 animate-fade-in">
+      <OctCard variant="default" padding="md">
+        {/* Title with category badge */}
+        <div className="flex items-center gap-2 mb-3">
+          {data.icon && <span className="text-base">{data.icon}</span>}
+          <span className="text-sm font-medium text-txt-primary">{data.title || 'Data'}</span>
+          {data.category && (
+            <OctBadge category={data.category} size="xs">{data.category}</OctBadge>
+          )}
+        </div>
+
+        {/* Key-value data */}
+        {data.fields && (
+          <div className="space-y-2 mb-3">
+            {data.fields.map((field: any, i: number) => (
+              <div key={i} className="flex items-start justify-between gap-4">
+                <span className="text-xs text-txt-tertiary shrink-0">{field.label}</span>
+                <span className="text-xs text-txt-primary text-right font-medium">{field.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Body text */}
+        {data.body && (
+          <p className="text-xs text-txt-secondary leading-relaxed mb-3">{data.body}</p>
+        )}
+
+        {/* Source */}
+        {data.source && (
+          <p className="text-micro text-txt-disabled mb-3">Source: {data.source}</p>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
+          {data.related_sim && (
+            <OctButton variant="ghost" size="xs">
+              Related: Sim #{data.related_sim}
+            </OctButton>
+          )}
+          {data.simulatable && (
+            <OctButton variant="accent" size="xs">
+              Simulate this
+            </OctButton>
+          )}
+        </div>
+      </OctCard>
     </div>
   );
 }

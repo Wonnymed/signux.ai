@@ -2,143 +2,234 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { cn } from '@/lib/design/cn';
+import { OctAvatar, OctBadge, OctButton, OctSkeleton } from '@/components/ui';
+import { verdictColors } from '@/lib/design/tokens';
+
+interface ConversationSidebarProps {
+  expanded: boolean;
+  onNavigate?: () => void;
+}
 
 type Conversation = {
   id: string;
   title: string;
-  has_simulation: boolean;
-  latest_verdict: string | null;
-  is_pinned: boolean;
+  verdict_recommendation?: string;
+  model_tier?: string;
   updated_at: string;
+  pinned?: boolean;
 };
 
-export default function ConversationSidebar() {
+export default function ConversationSidebar({ expanded, onNavigate }: ConversationSidebarProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    fetch('/api/c').then(r => r.json()).then(d => setConversations(d.conversations || [])).catch(() => {});
+    fetch('/api/c')
+      .then(r => r.json())
+      .then(data => { setConversations(data.conversations || []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, [pathname]);
 
-  const pinned = conversations.filter(c => c.is_pinned);
-  const recent = conversations.filter(c => !c.is_pinned);
+  const navigate = (path: string) => {
+    router.push(path);
+    onNavigate?.();
+  };
 
-  const today = new Date().toDateString();
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
-  const todayConvos = recent.filter(c => new Date(c.updated_at).toDateString() === today);
-  const yesterdayConvos = recent.filter(c => new Date(c.updated_at).toDateString() === yesterday);
-  const olderConvos = recent.filter(c => {
-    const d = new Date(c.updated_at).toDateString();
-    return d !== today && d !== yesterday;
-  });
+  const activeId = pathname?.match(/^\/c\/(.+)/)?.[1];
+
+  // Separate pinned and recent
+  const pinned = conversations.filter(c => c.pinned);
+  const recent = conversations.filter(c => !c.pinned).slice(0, 20);
 
   return (
-    <div style={{
-      width: collapsed ? '56px' : '260px',
-      background: 'var(--surface-1, #f9f9f8)',
-      borderRight: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-      display: 'flex', flexDirection: 'column',
-      transition: 'width 0.15s ease',
-      overflow: 'hidden',
-    }}>
-      {/* Header */}
-      <div style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {!collapsed && (
-          <button
-            onClick={() => router.push('/c')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 500, color: '#7C3AED', display: 'flex', alignItems: 'center', gap: '6px' }}
+    <div className="h-full flex flex-col">
+      {/* Top: entity + new button */}
+      <div className={cn('shrink-0 p-3', !expanded && 'flex flex-col items-center')}>
+        {expanded ? (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <OctAvatar type="entity" state="dormant" size="xs" />
+              <span className="text-sm font-light tracking-[0.15em] text-txt-secondary lowercase">octux</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3">
+            <OctAvatar type="entity" state="dormant" size="sm" />
+          </div>
+        )}
+
+        {expanded ? (
+          <OctButton
+            variant="primary"
+            size="sm"
+            fullWidth
+            onClick={() => navigate('/c')}
+            iconLeft={
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M7 2v10M2 7h10" />
+              </svg>
+            }
           >
-            octux
+            New
+          </OctButton>
+        ) : (
+          <button
+            onClick={() => navigate('/c')}
+            className="w-9 h-9 rounded-md flex items-center justify-center text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal"
+            title="New conversation"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M8 3v10M3 8h10" />
+            </svg>
           </button>
         )}
-        <button
-          onClick={() => collapsed ? setCollapsed(false) : router.push('/c')}
-          title={collapsed ? 'Expand sidebar' : 'New conversation'}
-          style={{
-            width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border-default, rgba(0,0,0,0.1))',
-            background: 'transparent', cursor: 'pointer', fontSize: '16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          {collapsed ? '>' : '+'}
-        </button>
       </div>
 
-      {collapsed ? null : (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
-          {pinned.length > 0 && (
-            <Section label="Pinned">
-              {pinned.map(c => <ConvoItem key={c.id} convo={c} active={pathname === `/c/${c.id}`} onClick={() => router.push(`/c/${c.id}`)} />)}
-            </Section>
-          )}
+      {/* Conversation list */}
+      <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
+        {loading ? (
+          <div className="space-y-2 px-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <OctSkeleton key={i} variant="text" className={expanded ? 'h-8' : 'h-8 w-8 rounded-md'} />
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Pinned section */}
+            {pinned.length > 0 && expanded && (
+              <div className="mb-2">
+                <div className="px-2 py-1 text-[10px] font-medium text-txt-disabled uppercase tracking-widest">
+                  Pinned
+                </div>
+                {pinned.map(c => (
+                  <ConversationItem
+                    key={c.id}
+                    conversation={c}
+                    active={c.id === activeId}
+                    expanded={expanded}
+                    onClick={() => navigate(`/c/${c.id}`)}
+                  />
+                ))}
+              </div>
+            )}
 
-          {todayConvos.length > 0 && (
-            <Section label="Today">
-              {todayConvos.map(c => <ConvoItem key={c.id} convo={c} active={pathname === `/c/${c.id}`} onClick={() => router.push(`/c/${c.id}`)} />)}
-            </Section>
-          )}
+            {/* Recent section */}
+            {expanded && recent.length > 0 && (
+              <div className="px-2 py-1 text-[10px] font-medium text-txt-disabled uppercase tracking-widest">
+                Recent
+              </div>
+            )}
+            {recent.map(c => (
+              <ConversationItem
+                key={c.id}
+                conversation={c}
+                active={c.id === activeId}
+                expanded={expanded}
+                onClick={() => navigate(`/c/${c.id}`)}
+              />
+            ))}
 
-          {yesterdayConvos.length > 0 && (
-            <Section label="Yesterday">
-              {yesterdayConvos.map(c => <ConvoItem key={c.id} convo={c} active={pathname === `/c/${c.id}`} onClick={() => router.push(`/c/${c.id}`)} />)}
-            </Section>
-          )}
+            {/* Empty state */}
+            {conversations.length === 0 && !loading && expanded && (
+              <div className="px-3 py-8 text-center">
+                <p className="text-xs text-txt-tertiary">Your decisions will appear here</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
-          {olderConvos.length > 0 && (
-            <Section label="Previous">
-              {olderConvos.slice(0, 15).map(c => <ConvoItem key={c.id} convo={c} active={pathname === `/c/${c.id}`} onClick={() => router.push(`/c/${c.id}`)} />)}
-            </Section>
-          )}
-        </div>
-      )}
-
-      {!collapsed && (
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
-          <button
-            onClick={() => setCollapsed(true)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary, #999)' }}
-          >
-            Collapse
+      {/* Bottom: tier + settings */}
+      <div className={cn('shrink-0 border-t border-border-subtle p-3', !expanded && 'flex flex-col items-center gap-2')}>
+        {expanded ? (
+          <div className="flex items-center justify-between">
+            <OctBadge tier="free" size="xs">FREE</OctBadge>
+            <button className="p-1.5 rounded-md text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="7" cy="7" r="2.5" />
+                <path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.2 2.8l-1.1 1.1M3.9 9.1l-1.1 1.1M11.2 11.2l-1.1-1.1M3.9 4.9L2.8 2.8" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <button className="p-1.5 rounded-md text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="7" cy="7" r="2.5" />
+              <path d="M7 1v1.5M7 11.5V13M13 7h-1.5M2.5 7H1M11.2 2.8l-1.1 1.1M3.9 9.1l-1.1 1.1M11.2 11.2l-1.1-1.1M3.9 4.9L2.8 2.8" />
+            </svg>
           </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginBottom: '8px' }}>
-      <div style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 500, color: 'var(--text-tertiary, #999)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        {label}
+        )}
       </div>
-      {children}
     </div>
   );
 }
 
-function ConvoItem({ convo, active, onClick }: { convo: Conversation; active: boolean; onClick: () => void }) {
-  const icon = convo.is_pinned ? '|' : convo.has_simulation ? (
-    convo.latest_verdict === 'proceed' ? '*' : convo.latest_verdict === 'delay' ? '~' : convo.latest_verdict === 'abandon' ? 'x' : '>'
-  ) : '>';
+// --- Sub-component: Conversation list item ---
+function ConversationItem({ conversation, active, expanded, onClick }: {
+  conversation: Conversation;
+  active: boolean;
+  expanded: boolean;
+  onClick: () => void;
+}) {
+  const verdictDot = conversation.verdict_recommendation?.toLowerCase();
 
+  if (!expanded) {
+    // Collapsed: just a dot
+    return (
+      <button
+        onClick={onClick}
+        className={cn(
+          'w-9 h-9 rounded-md flex items-center justify-center transition-colors duration-normal',
+          active ? 'bg-surface-2' : 'hover:bg-surface-2',
+        )}
+        title={conversation.title}
+      >
+        <span className={cn(
+          'w-2 h-2 rounded-full',
+          verdictDot === 'proceed' && 'bg-verdict-proceed',
+          verdictDot === 'delay' && 'bg-verdict-delay',
+          verdictDot === 'abandon' && 'bg-verdict-abandon',
+          !verdictDot && 'bg-txt-disabled',
+        )} />
+      </button>
+    );
+  }
+
+  // Expanded: full item
   return (
     <button
       onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '8px',
-        width: '100%', padding: '6px 8px', border: 'none',
-        background: active ? 'var(--surface-2, #f2f2ef)' : 'transparent',
-        cursor: 'pointer', textAlign: 'left', borderRadius: '6px',
-        fontSize: '13px', color: active ? 'var(--text-primary, #111)' : 'var(--text-secondary, #555)',
-      }}
+      className={cn(
+        'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left transition-colors duration-normal group',
+        active ? 'bg-surface-2 text-txt-primary' : 'text-txt-secondary hover:bg-surface-2 hover:text-txt-primary',
+      )}
     >
-      <span style={{ fontSize: '10px', flexShrink: 0, fontFamily: 'monospace' }}>{icon}</span>
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {convo.title}
+      <span className={cn(
+        'w-1.5 h-1.5 rounded-full shrink-0',
+        verdictDot === 'proceed' && 'bg-verdict-proceed',
+        verdictDot === 'delay' && 'bg-verdict-delay',
+        verdictDot === 'abandon' && 'bg-verdict-abandon',
+        !verdictDot && 'bg-txt-disabled',
+      )} />
+      <span className="text-xs truncate flex-1">{conversation.title || 'New conversation'}</span>
+      <span className="text-micro text-txt-disabled shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        {formatRelativeTime(conversation.updated_at)}
       </span>
     </button>
   );
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return `${Math.floor(days / 7)}w`;
 }

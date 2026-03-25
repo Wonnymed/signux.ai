@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import OctopusVisual from '@/components/chat/OctopusVisual';
+import EntityVisual from '@/components/chat/EntityVisual';
 import ChatInput from '@/components/chat/ChatInput';
 import MessageBubble from '@/components/chat/MessageBubble';
 import SimulationBlock from '@/components/chat/SimulationBlock';
 import VerdictCard from '@/components/chat/VerdictCard';
 import RefinementCard from '@/components/chat/RefinementCard';
+import { cn } from '@/lib/design/cn';
+import { OctButton } from '@/components/ui';
 
 type Message = {
   id: string;
@@ -30,7 +32,7 @@ export default function ConversationPage() {
   const [loading, setLoading] = useState(false);
   const [octopusState, setOctopusState] = useState<OctopusState>('idle');
   const [, setActiveSimulation] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   // Load conversation messages
   useEffect(() => {
@@ -50,12 +52,20 @@ export default function ConversationPage() {
 
   // Auto-scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   // Send chat message
-  const handleSend = useCallback(async (message: string, tier: string) => {
+  const handleSend = useCallback(async (message: string, options?: { tier?: string; simulate?: boolean }) => {
     if (!message.trim() || loading) return;
+    const tier = options?.tier || 'ink';
+
+    // If simulate requested, trigger simulation flow
+    if (options?.simulate) {
+      handleSimulate(message, tier);
+      return;
+    }
+
     setLoading(true);
     setOctopusState('chatting');
 
@@ -165,14 +175,14 @@ export default function ConversationPage() {
   function renderMessage(msg: Message) {
     switch (msg.message_type) {
       case 'text':
-        return <MessageBubble key={msg.id} role={msg.role} content={msg.content || ''} tier={msg.model_tier} />;
+        return <MessageBubble key={msg.id} role={msg.role as any} content={msg.content || ''} tier={msg.model_tier} />;
 
       case 'decision_card':
         return (
           <div key={msg.id}>
             <MessageBubble role="assistant" content={msg.content || ''} tier={msg.model_tier} />
             {msg.structured_data?.suggest_simulation && (
-              <div style={{ margin: '8px 0 8px 48px' }}>
+              <div className="ml-10 mt-2 mb-2">
                 <SimulationSuggestCard
                   prompt={msg.structured_data.simulation_prompt}
                   onSimulate={(q) => handleSimulate(q, 'deep')}
@@ -180,7 +190,7 @@ export default function ConversationPage() {
               </div>
             )}
             {msg.structured_data?.disclaimer && (
-              <div style={{ margin: '4px 0 4px 48px', padding: '8px 12px', borderRadius: '6px', background: '#FEF3C720', fontSize: '11px', color: '#92400E' }}>
+              <div className="ml-10 mt-1 mb-1 px-3 py-2 rounded-md bg-verdict-delay/5 text-micro text-verdict-delay">
                 {msg.structured_data.disclaimer}
               </div>
             )}
@@ -195,6 +205,7 @@ export default function ConversationPage() {
             streamUrl={msg.structured_data?.streamUrl}
             octopusState={octopusState}
             onComplete={handleSimulationComplete}
+            onStateChange={(s) => setOctopusState(s as OctopusState)}
           />
         );
 
@@ -206,40 +217,48 @@ export default function ConversationPage() {
 
       case 'system':
         return (
-          <div key={msg.id} style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: 'var(--text-tertiary)' }}>
-            {msg.content}
-          </div>
+          <MessageBubble key={msg.id} role="system" content={msg.content || ''} />
         );
 
       default:
-        return <MessageBubble key={msg.id} role={msg.role} content={msg.content || ''} tier={msg.model_tier} />;
+        return <MessageBubble key={msg.id} role={msg.role as any} content={msg.content || ''} tier={msg.model_tier} />;
     }
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{
-        display: 'flex', justifyContent: 'center', padding: '16px 0',
-        transition: 'all 0.3s ease',
-        height: messages.length === 0 ? '200px' : '80px',
-        overflow: 'hidden',
-      }}>
-        <OctopusVisual state={octopusState} compact={messages.length > 0} />
+    <div className="flex flex-col h-full bg-surface-0">
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto w-full px-4 py-6">
+          {/* Entity visual (compact when messages exist) */}
+          <EntityVisual state={octopusState} compact={messages.length > 0} />
+
+          {/* Messages */}
+          {messages.map(renderMessage)}
+
+          {/* Loading indicator */}
+          {loading && (
+            <div className="flex gap-3 mb-4 animate-fade-in">
+              <div className="shrink-0 mt-1">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/80 to-entity-bioluminescent/60 flex items-center justify-center animate-breathe-fast">
+                  <span className="text-[10px] text-white font-medium">O</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 py-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-accent" />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-accent stagger-2" />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-accent stagger-3" />
+              </div>
+            </div>
+          )}
+
+          {/* Scroll anchor */}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px', maxWidth: '720px', margin: '0 auto', width: '100%' }}>
-        {messages.map(renderMessage)}
-        {loading && (
-          <div style={{ padding: '12px 0', fontSize: '13px', color: 'var(--text-tertiary)' }}>
-            Thinking...
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div style={{ padding: '12px 24px 24px', maxWidth: '720px', margin: '0 auto', width: '100%' }}>
-        <ChatInput onSend={handleSend} loading={loading} />
-      </div>
+      {/* Input */}
+      <ChatInput onSend={handleSend} loading={loading} />
     </div>
   );
 }
@@ -248,23 +267,17 @@ export default function ConversationPage() {
 
 function SimulationSuggestCard({ prompt, onSimulate }: { prompt: string; onSimulate: (q: string) => void }) {
   return (
-    <div style={{
-      padding: '12px 16px', borderRadius: '10px',
-      border: '1px solid rgba(124,58,237,0.2)', background: 'rgba(124,58,237,0.04)',
-    }}>
-      <div style={{ fontSize: '12px', fontWeight: 500, color: '#7C3AED', marginBottom: '8px' }}>
+    <div className="p-3 rounded-lg border border-accent/20 bg-accent-subtle/50">
+      <div className="text-xs font-medium text-accent mb-2">
         This looks like a decision worth analyzing deeply
       </div>
-      <button
+      <OctButton
+        variant="accent"
+        size="sm"
         onClick={() => onSimulate(prompt)}
-        style={{
-          padding: '8px 16px', borderRadius: '8px', border: 'none',
-          background: '#7C3AED', color: '#fff', fontSize: '13px',
-          fontWeight: 500, cursor: 'pointer',
-        }}
       >
         Activate Deep Simulation
-      </button>
+      </OctButton>
     </div>
   );
 }
