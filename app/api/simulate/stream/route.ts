@@ -61,8 +61,16 @@ export async function POST(req: NextRequest) {
       };
 
       try {
-        // TODO: Extract userId from Supabase auth session when auth is wired
-        const userId = undefined;
+        // Generate stable anonymous user ID from request fingerprint
+        // Temporary until real auth — same browser = same memory
+        const forwarded = req.headers.get('x-forwarded-for');
+        const ip = forwarded?.split(',')[0] || 'anonymous';
+        const userAgent = req.headers.get('user-agent') || 'unknown';
+        const fingerprint = `${ip}-${userAgent}`.substring(0, 100);
+        const fingerprintData = new TextEncoder().encode(fingerprint);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', fingerprintData);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const userId = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 36);
 
         const generator = runSimulation(question, engine, {
           enableCrowdWisdom: !!enableCrowdWisdom,

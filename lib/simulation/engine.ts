@@ -13,9 +13,9 @@ import { processDelegations, type DelegationResponse } from './delegation';
 import { generateCounterFactualFlip, detectBlindSpots, type CounterFactualFlip, type BlindSpotAnalysis } from './verdict-insights';
 import { evaluateSimulation, type SimulationEval } from './evals';
 import { saveSimulation } from '../memory/persistence';
-import { extractAndSaveFacts, applyFactActions } from '../memory/facts';
+import { extractAndSaveFacts, applyFactActions, parseQuestionForFacts } from '../memory/facts';
 import { maybeRegenerateProfile } from '../memory/profile';
-import { loadMemoryForSimulation, formatMemoryContext, formatAgentMemory, extractQuestionFacts, type MemoryPayload } from '../memory/core-memory';
+import { loadMemoryForSimulation, formatMemoryContext, formatAgentMemory, type MemoryPayload } from '../memory/core-memory';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -278,19 +278,16 @@ export async function* runSimulation(
     console.log(`[memory] Loaded: ${memory.relevantFacts.length} facts, profile: ${memory.profile ? 'yes' : 'no'}, sims: ${memory.previousSimCount}`);
   }
 
-  // OpenClaw WAL: Parse question for immediate facts BEFORE sim runs
+  // OpenClaw WAL: Parse question for facts BEFORE sim runs (Claude-powered)
   if (options?.userId) {
-    const questionFacts = extractQuestionFacts(question);
-    if (questionFacts.length > 0) {
-      console.log(`[memory:wal] Extracted ${questionFacts.length} facts from question`);
-      const walActions = questionFacts.map(f => ({
-        action: 'ADD' as const,
-        fact: f.content,
-        category: f.category as 'business_info' | 'market_context' | 'financial' | 'personal' | 'preference' | 'decision_history',
-        confidence: 0.9,
-        reason: 'Extracted from user question (WAL protocol)',
-      }));
-      applyFactActions(options.userId, simId, walActions).catch(() => {});
+    try {
+      const walFacts = await parseQuestionForFacts(options.userId, question);
+      if (walFacts.length > 0) {
+        await applyFactActions(options.userId, `wal_${simId}`, walFacts);
+        console.log(`[memory:wal] Pre-extracted ${walFacts.length} facts from question`);
+      }
+    } catch (err) {
+      console.error('[memory:wal] Extraction failed (non-blocking):', err);
     }
   }
 

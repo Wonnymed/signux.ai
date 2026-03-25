@@ -195,6 +195,62 @@ export function formatFactsForContext(facts: UserFact[]): string {
   return output;
 }
 
+// ── WAL Protocol (OpenClaw) — Extract facts from question BEFORE sim ──
+
+export async function parseQuestionForFacts(
+  userId: string,
+  question: string,
+): Promise<FactAction[]> {
+  const existingFacts = await getUserFacts(userId);
+  const existingText = existingFacts.length > 0
+    ? existingFacts.map(f => `[${f.id}] ${f.content} (${f.category})`).join('\n')
+    : 'No existing facts.';
+
+  const response = await callClaude({
+    systemPrompt: `You are a fact pre-processor for Octux AI. Before a simulation runs, you scan the user's question for EXPLICIT facts about them or their situation.
+
+EXTRACT ONLY facts that are DIRECTLY STATED in the question:
+- Budget amounts: "$50K budget" → ADD financial fact
+- Locations: "in Gangnam" → ADD business_info
+- Industry: "pet food business" → ADD business_info
+- Timeline: "launching in 3 months" → ADD business_info
+- Corrections: "actually my budget is $80K not $50K" → UPDATE
+- Team size: "just me and a co-founder" → ADD personal
+
+DO NOT extract:
+- The question itself (that's not a fact)
+- Opinions or hypotheticals ("should I...")
+- Things the user is asking ABOUT (not facts about them)
+
+If the question contains NO personal/business facts, return empty array [].
+Return valid JSON array only. Be conservative — better to miss a fact than hallucinate one.`,
+    userMessage: `USER'S QUESTION: "${question}"
+
+EXISTING USER FACTS:
+${existingText}
+
+Extract facts from the question. If a fact contradicts an existing one, use UPDATE with the existing_fact_id. JSON array:
+[
+  {
+    "action": "ADD|UPDATE|DELETE|NOOP",
+    "fact": "specific fact",
+    "category": "business_info|market_context|financial|personal|preference|decision_history",
+    "confidence": 0.9,
+    "reason": "directly stated in question",
+    "existing_fact_id": "uuid if UPDATE"
+  }
+]`,
+    maxTokens: 512,
+  });
+
+  try {
+    const actions = parseJSON<FactAction[]>(response);
+    return actions.filter(a => a.action !== 'NOOP' && a.confidence >= 0.7);
+  } catch {
+    return [];
+  }
+}
+
 // ── Background Entrypoint ──────────────────────────────────
 
 export async function extractAndSaveFacts(
