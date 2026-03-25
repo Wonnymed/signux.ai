@@ -28,6 +28,8 @@ import {
   type RoundLearning,
 } from '../memory/hooks';
 import { buildSystemPromptFromOverride } from '../memory/prompt-optimizer';
+import { searchKnowledge, formatKnowledgeForAgent } from '../knowledge/search';
+import { getAgentKnowledgeSources } from '../knowledge/agent-mapping';
 import { generateCrowdAdvisors, runCrowdRound, synthesizeCrowdSignal, formatCrowdSignal, type CrowdSignal } from './crowd';
 import { selectRelevantAgents, calculateAgentBudget, type AgentSelection } from './agent-selection';
 import { extractVerdictClaims, type ConfidenceHeatmap } from './confidence-heatmap';
@@ -158,10 +160,12 @@ function buildDebateContext(
   userCorrection?: string,
   domainConstraints?: string,
   behavioralContext?: string,
+  ragContext?: string,
 ): string {
-  // Domain constraints go FIRST — sets the analysis frame
-  // Behavioral context goes SECOND — who is the decision-maker
-  let memorySection = (domainConstraints || '') + (behavioralContext || '');
+  // RAG knowledge goes FIRST — foundational curated intelligence
+  // Domain constraints go SECOND — sets the analysis frame
+  // Behavioral context goes THIRD — who is the decision-maker
+  let memorySection = (ragContext || '') + (domainConstraints || '') + (behavioralContext || '');
   // Memory injection — early in context so agents always see it
   if (memory && memory.isReturningUser) {
     memorySection += formatMemoryContext(memory);
@@ -574,6 +578,35 @@ export async function* runSimulation(
     return getAgentById(id as AgentId);
   };
 
+  // ═══ RAG: Pre-compute knowledge context for each agent (P43) ═══
+  const ragContextMap = new Map<string, string>();
+  try {
+    const ragPromises = [...dynamicAgentMap.keys()]
+      .filter(id => id !== 'decision_chair')
+      .map(async (agentId) => {
+        const sources = getAgentKnowledgeSources(agentId);
+        if (sources.categories.length === 0 && sources.vSeries.length === 0) return;
+        try {
+          const chunks = await searchKnowledge(question, {
+            categories: sources.categories.length > 0 ? sources.categories : undefined,
+            vSeries: sources.vSeries.length > 0 ? sources.vSeries : undefined,
+            limit: sources.maxChunks,
+            minSimilarity: 0.35,
+          });
+          if (chunks.length > 0) {
+            const agentName = dynamicAgentMap.get(agentId)?.name || agentId;
+            ragContextMap.set(agentId, formatKnowledgeForAgent(chunks, agentName));
+          }
+        } catch {}
+      });
+    await Promise.all(ragPromises);
+    if (ragContextMap.size > 0) {
+      console.log(`RAG(P43): loaded knowledge for ${ragContextMap.size} agents`);
+    }
+  } catch (err) {
+    console.error('RAG(P43): knowledge pre-load failed (non-blocking):', err);
+  }
+
   // ═══ ADAPTIVE AGENT SELECTION (Free tier: 4-6 agents, Pro/Max: all 10) ═══
   const useAdaptiveSelection = !options?.tier || options.tier === 'free';
   let agentSelection: AgentSelection | null = null;
@@ -718,7 +751,7 @@ export async function* runSimulation(
 
   {
     const batchItems = deepWave1.map(({ agent, task }) => {
-      const debateCtx = buildDebateContext(state, agent.id, undefined, undefined, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), undefined, domainConstraintsText, behavioralContextText);
+      const debateCtx = buildDebateContext(state, agent.id, undefined, undefined, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), undefined, domainConstraintsText, behavioralContextText, ragContextMap.get(agent.id));
       const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
       const promise = callAgent(
         agent, userMsg,
@@ -858,7 +891,7 @@ export async function* runSimulation(
 
   {
     const batchItems2 = deepWave2.map(({ agent, task }) => {
-      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(agent.id));
       const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
       const promise = callAgent(
         agent, userMsg,
@@ -977,7 +1010,7 @@ export async function* runSimulation(
   const quickBatch2 = quickAgentTasks.slice(3);
 
   const quickBatch1Promises = quickBatch1.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(agent.id));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -990,7 +1023,7 @@ export async function* runSimulation(
   await wait(500);
 
   const quickBatch2Promises = quickBatch2.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(agent.id));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -1117,7 +1150,7 @@ export async function* runSimulation(
 
       if (targetAgent) {
         try {
-          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(targetAgent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(targetAgent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(targetAgent.id));
           const devilReport = await callAgent(
             targetAgent,
             `Question: ${question}\n\n${devilCtx}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". Reference specific claims from other agents and explain why they're wrong or incomplete. What could go catastrophically wrong? Respond with valid JSON only.`,
@@ -1154,7 +1187,7 @@ export async function* runSimulation(
     const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
 
     try {
-      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.challenger_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.challenger_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(pair.challenger_id));
       const challengeReport = await callAgent(
         challengerAgent,
         `Question: ${question}\n\n${challengerCtx}\n\nYou are CHALLENGING ${defenderAgent.name}'s position. They said: "${defenderReport?.key_argument || 'their position'}"\n\nAttack their weakest point with specific counter-evidence. Reference what other agents said to support your challenge. Be direct. Respond with valid JSON only.`,
@@ -1169,7 +1202,7 @@ export async function* runSimulation(
     }
 
     try {
-      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.defender_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.defender_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(pair.defender_id));
       const defenseReport = await callAgent(
         defenderAgent,
         `Question: ${question}\n\n${defenderCtx}\n\n${challengerAgent.name} CHALLENGED your position: "${challengerReport?.key_argument || 'disagreement'}"\n\nDefend your position with stronger evidence, or update your position if the challenge is valid. Be honest \u2014 if you changed your mind, say what convinced you. Respond with valid JSON only.`,
@@ -1221,7 +1254,7 @@ export async function* runSimulation(
   const convBatch2 = specialists.slice(convMid);
 
   const convBatch1Promises = convBatch1.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(agent.id));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
@@ -1233,7 +1266,7 @@ export async function* runSimulation(
   await wait(500);
 
   const convBatch2Promises = convBatch2.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText);
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText, domainConstraintsText, behavioralContextText, ragContextMap.get(agent.id));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,

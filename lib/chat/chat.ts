@@ -12,6 +12,7 @@ import { getTopKMemories } from '../memory/recall';
 import { getOrCreateProfile, formatBehavioralContext } from '../memory/behavioral';
 import { formatGraphForContext } from '../memory/knowledge-graph';
 import { detectDomain, getDisclaimer } from '../simulation/domain';
+import { searchKnowledge, formatKnowledgeForAgent } from '../knowledge/search';
 import { parseQuestionForFacts, applyFactActions } from '../memory/facts';
 import { getModelForTier, type ModelTier, TIER_CONFIGS } from './tiers';
 
@@ -105,7 +106,30 @@ export async function chatWithMemory(
   const domain = await detectDomain(message);
   const disclaimer = getDisclaimer(domain.domain);
 
-  // 3. WAL: extract any new facts from the user's message
+  // 3. RAG: Search relevant knowledge for chat response (P43)
+  let ragContext = '';
+  try {
+    const domainKnowledgeMap: Record<string, string[]> = {
+      investment: ['crypto-opsec', 'banking', 'economics', 'market-intel', 'risk-intel'],
+      business: ['market-intel', 'logistics', 'legal', 'economics'],
+      career: ['negotiation-warfare'],
+      legal: ['legal', 'regulatory-compliance'],
+      technology: ['cybersecurity', 'intelligence-systems'],
+    };
+    const searchCategories = domainKnowledgeMap[domain.domain] || [];
+    if (searchCategories.length > 0) {
+      const chunks = await searchKnowledge(message, {
+        categories: searchCategories,
+        limit: 3,
+        minSimilarity: 0.4,
+      });
+      if (chunks.length > 0) {
+        ragContext = formatKnowledgeForAgent(chunks, 'Octux Chat');
+      }
+    }
+  } catch {} // non-blocking
+
+  // 4. WAL: extract any new facts from the user's message
   let factsExtracted = 0;
   try {
     const walFacts = await parseQuestionForFacts(userId, message);
@@ -115,8 +139,9 @@ export async function chatWithMemory(
     }
   } catch {} // non-blocking
 
-  // 4. Build conversation with memory
-  const systemPrompt = buildChatSystemPrompt(memoryContext, tier);
+  // 5. Build conversation with memory + RAG
+  const fullContext = ragContext ? ragContext + '\n\n' + memoryContext : memoryContext;
+  const systemPrompt = buildChatSystemPrompt(fullContext, tier);
 
   const messages = [
     ...history.slice(-8).map(m => ({
