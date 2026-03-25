@@ -30,6 +30,8 @@ import { buildSystemPromptFromOverride } from '../memory/prompt-optimizer';
 import { generateCrowdAdvisors, runCrowdRound, synthesizeCrowdSignal, formatCrowdSignal, type CrowdSignal } from './crowd';
 import { selectRelevantAgents, calculateAgentBudget, type AgentSelection } from './agent-selection';
 import { extractVerdictClaims, type ConfidenceHeatmap } from './confidence-heatmap';
+import { generateCheckpoint, formatUserCorrection, HITL_CONFIG, type HITLResponse } from './hitl';
+import { hitlStore } from './hitl-store';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -65,6 +67,8 @@ export type SimulationSSEEvent =
   | { event: 'crowd_round_started'; data: { advisorCount: number } }
   | { event: 'crowd_round_complete'; data: CrowdSignal }
   | { event: 'state_summary'; data: any }
+  | { event: 'hitl_checkpoint'; data: { simulationId: string; assumptions: string[]; summary: string; agentPositions: { agent: string; position: string; confidence: number }[]; timeoutMs: number } }
+  | { event: 'hitl_resumed'; data: { action: string; hasCorrection: boolean } }
   | { event: 'complete'; data: { simulation_id: string } };
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -146,6 +150,7 @@ function buildDebateContext(
   memory?: MemoryPayload,
   networkMemory?: string,
   agentKnowledge?: string,
+  userCorrection?: string,
 ): string {
   // Memory injection — FIRST in context so agents always see it
   let memorySection = '';
@@ -216,7 +221,9 @@ Consider whether the debate has changed your view. If you changed your mind, exp
   // Field Intelligence: ground-level data from Haiku advisors
   const fieldSection = fieldScans ? formatFieldIntelligence(fieldScans) : '';
 
-  return `${memorySection}DEBATE SO FAR:
+  const correctionSection = userCorrection || '';
+
+  return `${correctionSection}${memorySection}DEBATE SO FAR:
 ${otherReports}
 
 ${consensusSummary}
@@ -321,7 +328,7 @@ async function callAgent(
 export async function* runSimulation(
   question: string,
   engine: string,
-  options?: { enableCrowdWisdom?: boolean; advisorGuidance?: string; advisorCount?: number; tier?: string; userId?: string; threadId?: string },
+  options?: { enableCrowdWisdom?: boolean; advisorGuidance?: string; advisorCount?: number; tier?: string; userId?: string; threadId?: string; onHITLCheckpoint?: (checkpoint: any) => Promise<HITLResponse> },
 ): AsyncGenerator<SimulationSSEEvent> {
   const kernel = createKernel();
   const simId = `sim_${Date.now()}`;
@@ -655,13 +662,61 @@ export async function* runSimulation(
     }
   }
 
+  // ═══ HITL CHECKPOINT — After Round 4 (deep analysis complete) ═══
+  let userCorrectionText = '';
+
+  if (HITL_CONFIG.enabled && options?.onHITLCheckpoint && state.latest_reports.size >= HITL_CONFIG.minAgentReports) {
+    const checkpoint = await generateCheckpoint(question, state.latest_reports);
+
+    if (checkpoint.assumptions.length > 0) {
+      yield {
+        event: 'hitl_checkpoint',
+        data: {
+          simulationId: simId,
+          assumptions: checkpoint.assumptions,
+          summary: checkpoint.summary,
+          agentPositions: checkpoint.agentPositions,
+          timeoutMs: HITL_CONFIG.timeoutMs,
+        }
+      };
+
+      try {
+        const userResponse = await Promise.race([
+          options.onHITLCheckpoint({ ...checkpoint, _simId: simId }),
+          new Promise<HITLResponse>((resolve) =>
+            setTimeout(() => resolve({ action: 'skip', timestamp: Date.now() }), HITL_CONFIG.timeoutMs)
+          ),
+        ]);
+
+        userCorrectionText = formatUserCorrection(userResponse);
+
+        yield {
+          event: 'hitl_resumed',
+          data: {
+            action: userResponse.action,
+            hasCorrection: userResponse.action === 'correct',
+          }
+        };
+
+        if (userResponse.action === 'correct') {
+          console.log(`HITL: User correction received: "${(userResponse.correction || '').substring(0, 100)}"`);
+        } else {
+          console.log(`HITL: User ${userResponse.action} — continuing`);
+        }
+      } catch (err) {
+        console.error('HITL: Checkpoint failed, continuing without:', err);
+        yield { event: 'hitl_resumed', data: { action: 'skip', hasCorrection: false } };
+      }
+    }
+  }
+
   // ━━ ROUND 5 — DEEP ANALYSIS WAVE 2 (WITH accumulated field intelligence) ━━
 
   yield { event: 'round_start', data: { round: 5, title: 'Deep Analysis — Wave 2', description: `Second wave of specialists${fieldScans.length > 1 ? ' with accumulated field intelligence' : ''}`, total_rounds: 10 } };
 
   {
     const batchItems2 = deepWave2.map(({ agent, task }) => {
-      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
       const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
       const promise = callAgent(
         agent, userMsg,
@@ -780,7 +835,7 @@ export async function* runSimulation(
   const quickBatch2 = quickAgentTasks.slice(3);
 
   const quickBatch1Promises = quickBatch1.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -793,7 +848,7 @@ export async function* runSimulation(
   await wait(500);
 
   const quickBatch2Promises = quickBatch2.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -920,7 +975,7 @@ export async function* runSimulation(
 
       if (targetAgent) {
         try {
-          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(targetAgent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(targetAgent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
           const devilReport = await callAgent(
             targetAgent,
             `Question: ${question}\n\n${devilCtx}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". Reference specific claims from other agents and explain why they're wrong or incomplete. What could go catastrophically wrong? Respond with valid JSON only.`,
@@ -957,7 +1012,7 @@ export async function* runSimulation(
     const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
 
     try {
-      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.challenger_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.challenger_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
       const challengeReport = await callAgent(
         challengerAgent,
         `Question: ${question}\n\n${challengerCtx}\n\nYou are CHALLENGING ${defenderAgent.name}'s position. They said: "${defenderReport?.key_argument || 'their position'}"\n\nAttack their weakest point with specific counter-evidence. Reference what other agents said to support your challenge. Be direct. Respond with valid JSON only.`,
@@ -972,7 +1027,7 @@ export async function* runSimulation(
     }
 
     try {
-      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.defender_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.defender_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
       const defenseReport = await callAgent(
         defenderAgent,
         `Question: ${question}\n\n${defenderCtx}\n\n${challengerAgent.name} CHALLENGED your position: "${challengerReport?.key_argument || 'disagreement'}"\n\nDefend your position with stronger evidence, or update your position if the challenge is valid. Be honest \u2014 if you changed your mind, say what convinced you. Respond with valid JSON only.`,
@@ -1024,7 +1079,7 @@ export async function* runSimulation(
   const convBatch2 = specialists.slice(convMid);
 
   const convBatch1Promises = convBatch1.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
@@ -1036,7 +1091,7 @@ export async function* runSimulation(
   await wait(500);
 
   const convBatch2Promises = convBatch2.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap));
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap, preSim.agentRulesMap), userCorrectionText);
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,

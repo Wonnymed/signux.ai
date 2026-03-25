@@ -50,6 +50,14 @@ type SimulationStreamState = {
   stateSummary: any | null;
   evaluation: any | null;
   memory: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number; hasRecalledMemories: boolean; hasThreadHistory: boolean; threadId: string | null; hasAgentLessons: boolean } | null;
+  hitlCheckpoint: {
+    isActive: boolean;
+    simulationId: string;
+    assumptions: string[];
+    summary: string;
+    agentPositions: { agent: string; position: string; confidence: number }[];
+    timeoutMs: number;
+  } | null;
 };
 
 const BASE_PHASES: SimulationPhase[] = [
@@ -91,6 +99,7 @@ const initialState: SimulationStreamState = {
   stateSummary: null,
   evaluation: null,
   memory: null,
+  hitlCheckpoint: null,
 };
 
 export function useSimulationStream() {
@@ -390,6 +399,29 @@ function processEvent(
       console.log(`Agent ${rd.agent_id} reflected: ${rd.original_score} → ${rd.final_score} (${rd.iterations} iters)`);
       break;
     }
+
+    case "hitl_checkpoint": {
+      const cp = data as { simulationId: string; assumptions: string[]; summary: string; agentPositions: { agent: string; position: string; confidence: number }[]; timeoutMs: number };
+      setState((s) => ({
+        ...s,
+        hitlCheckpoint: {
+          isActive: true,
+          simulationId: cp.simulationId,
+          assumptions: cp.assumptions,
+          summary: cp.summary,
+          agentPositions: cp.agentPositions,
+          timeoutMs: cp.timeoutMs,
+        },
+      }));
+      break;
+    }
+
+    case "hitl_resumed":
+      setState((s) => ({
+        ...s,
+        hitlCheckpoint: s.hitlCheckpoint ? { ...s.hitlCheckpoint, isActive: false } : null,
+      }));
+      break;
 
     case "state_summary":
       setState((s) => ({ ...s, stateSummary: data }));

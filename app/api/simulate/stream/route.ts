@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { runSimulation } from "@/lib/simulation/engine";
 import { getUserIdFromRequest } from "@/lib/auth/supabase-server";
+import { hitlStore } from "@/lib/simulation/hitl-store";
+import type { HITLResponse } from "@/lib/simulation/hitl";
 
 /* ═══════════════════════════════════════
    POST /api/simulate/stream
@@ -65,6 +67,28 @@ export async function POST(req: NextRequest) {
       try {
         const { userId } = await getUserIdFromRequest(req);
 
+        // HITL callback: engine calls this when it reaches a checkpoint.
+        // We create a promise keyed by simId in the hitlStore, which
+        // the POST /api/simulate/hitl endpoint resolves when the user responds.
+        const onHITLCheckpoint = (checkpoint: any): Promise<HITLResponse> => {
+          return new Promise((resolve) => {
+            // The engine passes the simId through when it yields the checkpoint
+            // We extract it from the SSE event data that was just sent
+            const simId = checkpoint._simId;
+            if (!simId) {
+              resolve({ action: 'skip', timestamp: Date.now() });
+              return;
+            }
+
+            const timeout = setTimeout(() => {
+              hitlStore.delete(simId);
+              resolve({ action: 'skip', timestamp: Date.now() });
+            }, 60000);
+
+            hitlStore.set(simId, { resolve, timeout });
+          });
+        };
+
         const generator = runSimulation(question, engine, {
           enableCrowdWisdom: !!enableCrowdWisdom,
           advisorGuidance: advisorGuidance || undefined,
@@ -72,6 +96,7 @@ export async function POST(req: NextRequest) {
           tier: tier || 'free',
           userId,
           threadId: threadId || undefined,
+          onHITLCheckpoint,
         });
 
         for await (const sse of generator) {

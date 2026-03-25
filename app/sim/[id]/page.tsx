@@ -11,6 +11,7 @@ import FollowUpChips from "@/app/components/sim/FollowUpChips";
 import { AgentCardSkeleton, VerdictSkeleton } from "@/app/components/sim/Skeleton";
 import AuthWallBanner from "@/app/components/sim/AuthWallBanner";
 import FieldIntelligenceBar from "@/app/components/sim/FieldIntelligenceBar";
+import HITLCheckpoint from "@/components/simulation/HITLCheckpoint";
 import { useSimulationStream } from "@/app/lib/hooks/useSimulationStream";
 import { TIERS, ADVISOR_OPTIONS } from "@/lib/config/tiers";
 import { getDisplayModel } from "@/lib/display";
@@ -51,6 +52,7 @@ function SimulationPageInner() {
     error,
     fieldPersonas,
     fieldScans,
+    hitlCheckpoint,
     startSimulation,
   } = useSimulationStream();
 
@@ -445,6 +447,18 @@ function SimulationPageInner() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* HITL Checkpoint — appears after deep analysis, before verdict */}
+            {hitlCheckpoint?.isActive && (
+              <HITLCheckpoint
+                simulationId={hitlCheckpoint.simulationId}
+                assumptions={hitlCheckpoint.assumptions}
+                summary={hitlCheckpoint.summary}
+                agentPositions={hitlCheckpoint.agentPositions}
+                timeoutMs={hitlCheckpoint.timeoutMs}
+                onComplete={() => {}}
+              />
             )}
 
             {/* Verdict or verdict skeleton */}
