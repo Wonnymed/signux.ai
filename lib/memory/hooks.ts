@@ -25,6 +25,7 @@ import { cognify } from './knowledge-graph';
 import { maybeRegenerateProfile } from './profile';
 import { reflectOnExperiences } from './reflect';
 import { runMemoryOptimization } from './optimize';
+import { extractAllAgentRules, loadAllAgentRules } from './procedural';
 
 // Re-export for engine convenience
 export { formatRoundDiscoveries, type RoundLearning } from './agent-improvement';
@@ -39,6 +40,7 @@ export type PreSimResult = {
   networkMemoryText: string;
   agentKnowledgeMap: Map<string, string>;
   agentLessonsMap: Map<string, string>;
+  agentRulesMap: Map<string, string>;
   activeThreadId: string;
   // For SSE event
   recalledMemoryText: string;
@@ -84,6 +86,7 @@ export async function preSimHook(
   let networkMemoryText = '';
   let agentKnowledgeMap = new Map<string, string>();
   let agentLessonsMap = new Map<string, string>();
+  let agentRulesMap = new Map<string, string>();
   let activeThreadId = '';
   let recalledMemoryText = '';
   let threadContext = '';
@@ -100,7 +103,7 @@ export async function preSimHook(
   }
 
   // 2-7 can run in parallel (independent reads)
-  const [networkResult, knowledgeResult, lessonsResult, recallResult, threadResult, walResult] = await Promise.allSettled([
+  const [networkResult, knowledgeResult, lessonsResult, rulesResult, recallResult, threadResult, walResult] = await Promise.allSettled([
     // 2. 4-network memory (Hindsight pattern)
     (async () => {
       const [experiences, opinions, observations] = await Promise.all([
@@ -120,6 +123,9 @@ export async function preSimHook(
 
     // 4. Per-agent lessons (OpenClaw)
     loadAllAgentLessons(userId),
+
+    // 4b. Per-agent procedural rules (LangMem)
+    loadAllAgentRules(userId),
 
     // 5. Top-K scored recall (Mem0 + RRF)
     getTopKMemories(userId, question, 15),
@@ -160,6 +166,13 @@ export async function preSimHook(
     }
   }
 
+  if (rulesResult.status === 'fulfilled') {
+    agentRulesMap = rulesResult.value;
+    if (agentRulesMap.size > 0) {
+      console.log(`HOOK PRE: Procedural rules for ${agentRulesMap.size} agents`);
+    }
+  }
+
   if (recallResult.status === 'fulfilled' && recallResult.value) {
     recalledMemoryText = recallResult.value;
     networkMemoryText = recalledMemoryText + (networkMemoryText ? '\n' + networkMemoryText : '');
@@ -194,6 +207,7 @@ export async function preSimHook(
     networkMemoryText,
     agentKnowledgeMap,
     agentLessonsMap,
+    agentRulesMap,
     activeThreadId,
     recalledMemoryText,
     threadContext,
@@ -342,6 +356,13 @@ export async function postSimHook(
       }
     })
     .catch(err => console.error('HOOK POST: Optimize failed:', err));
+
+  // 10. Procedural rule extraction — every 10 sims (LangMem)
+  extractAllAgentRules(userId)
+    .then(n => {
+      if (n > 0) console.log(`HOOK POST: Procedural — ${n} rule(s) extracted/updated`);
+    })
+    .catch(err => console.error('HOOK POST: Procedural rules failed:', err));
 }
 
 // ═══════════════════════════════════════════
@@ -355,9 +376,11 @@ export async function postSimHook(
 export function buildAgentContext(
   agentId: string,
   agentKnowledgeMap: Map<string, string>,
-  agentLessonsMap: Map<string, string>
+  agentLessonsMap: Map<string, string>,
+  agentRulesMap?: Map<string, string>
 ): string {
   const knowledge = agentKnowledgeMap.get(agentId) || '';
   const lessons = agentLessonsMap.get(agentId) || '';
-  return [knowledge, lessons].filter(Boolean).join('\n');
+  const rules = agentRulesMap?.get(agentId) || '';
+  return [knowledge, lessons, rules].filter(Boolean).join('\n');
 }
