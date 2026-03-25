@@ -20,6 +20,7 @@ import { saveExperience, getUserExperiences, formatExperiencesForContext } from 
 import { cognify } from '../memory/knowledge-graph';
 import { buildAllAgentKnowledge } from '../memory/agent-knowledge';
 import { extractOpinionsAndObservations, applyOpinionActions, saveObservations, getUserOpinions, getUserObservations, formatOpinionsForContext, formatObservationsForContext } from '../memory/opinions';
+import { getTopKMemories } from '../memory/recall';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -44,7 +45,7 @@ export type SimulationSSEEvent =
   | { event: 'counter_factual'; data: CounterFactualFlip }
   | { event: 'blind_spots'; data: BlindSpotAnalysis }
   | { event: 'evaluation'; data: SimulationEval }
-  | { event: 'memory_loaded'; data: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number } }
+  | { event: 'memory_loaded'; data: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number; hasRecalledMemories: boolean } }
   | { event: 'knowledge_graph_started'; data: { simulation_id: string } }
   | { event: 'state_summary'; data: any }
   | { event: 'complete'; data: { simulation_id: string } };
@@ -327,6 +328,20 @@ export async function* runSimulation(
     }
   }
 
+  // ═══ MULTI-STRATEGY RECALL (Mem0 + RRF fusion) ═══
+  let recalledMemoryText = '';
+  if (options?.userId) {
+    try {
+      recalledMemoryText = await getTopKMemories(options.userId, question, 15);
+      if (recalledMemoryText) {
+        networkMemoryText = recalledMemoryText + (networkMemoryText ? '\n' + networkMemoryText : '');
+        console.log(`[memory:recall] Multi-strategy recall loaded for question`);
+      }
+    } catch (err) {
+      console.error('[memory:recall] Recall failed (non-blocking):', err);
+    }
+  }
+
   // OpenClaw WAL: Parse question for facts BEFORE sim runs (Claude-powered)
   if (options?.userId) {
     try {
@@ -345,6 +360,7 @@ export async function* runSimulation(
     factCount: memory.relevantFacts.length,
     hasProfile: !!memory.profile,
     previousSimCount: memory.previousSimCount,
+    hasRecalledMemories: !!recalledMemoryText,
   }};
 
   // ━━ INPUT GUARDRAILS (OpenAI Agents SDK #8) ━━━━━━━━━━━━━━

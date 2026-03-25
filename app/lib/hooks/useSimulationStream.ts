@@ -49,7 +49,7 @@ type SimulationStreamState = {
   blindSpots: any | null;
   stateSummary: any | null;
   evaluation: any | null;
-  memory: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number } | null;
+  memory: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number; hasRecalledMemories: boolean } | null;
 };
 
 const BASE_PHASES: SimulationPhase[] = [
