@@ -1,99 +1,98 @@
-import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/memory/supabase';
+import { ImageResponse } from 'next/og';
+import { createClient } from '@supabase/supabase-js';
 
-/**
- * Dynamic OG image for shared simulation links.
- * Returns an SVG that Twitter/LinkedIn/Slack renders as a card preview.
- * Target: 1200x630 (works for both Twitter and LinkedIn).
- */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export const runtime = 'edge';
 
-  if (!supabase) {
-    return new Response('Service unavailable', { status: 503 });
-  }
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id: conversationId } = await params;
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const { data: sim } = await supabase
     .from('simulations')
-    .select('question, verdict, domain, share_digest')
-    .eq('id', id)
+    .select('question, verdict')
+    .eq('id', conversationId)
     .single();
 
-  if (!sim) {
-    return new Response('Not found', { status: 404 });
-  }
+  const verdict = sim?.verdict as any;
+  const question = sim?.question || 'Decision Analysis';
 
-  const verdict = sim.verdict as any;
-  const rec = (verdict?.recommendation || 'unknown').toUpperCase();
-  const prob = verdict?.probability || 0;
-  const question = (sim.question || '').substring(0, 90);
-  const domain = (sim.domain || 'business').toUpperCase();
-  const oneLiner = (verdict?.one_liner || '').substring(0, 80);
-  const grade = verdict?.grade || '?';
+  const recommendation = (verdict?.recommendation || 'analyzing').toUpperCase();
+  const probability = verdict?.probability || '?';
+  const grade = verdict?.grade || '';
+  const oneLiner = verdict?.one_liner || verdict?.summary || 'AI-powered decision analysis';
 
-  const recColor = rec === 'PROCEED' ? '#10B981' : rec === 'DELAY' ? '#F59E0B' : rec === 'ABANDON' ? '#F43F5E' : '#6B7280';
+  const recColor = recommendation === 'PROCEED' ? '#10B981' : recommendation === 'DELAY' ? '#F59E0B' : recommendation === 'ABANDON' ? '#EF4444' : '#7C3AED';
 
-  const svg = `
-<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0F0A1A;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1A0F2E;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#A78BFA;stop-opacity:1" />
-    </linearGradient>
-  </defs>
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: '1200px',
+          height: '630px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: '60px 80px',
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #1A1A2E 50%, #0A0A0F 100%)',
+          fontFamily: 'Inter, system-ui, sans-serif',
+        }}
+      >
+        {/* Octux wordmark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+          <span style={{ fontSize: '18px', fontWeight: 300, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)' }}>octux</span>
+          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.2)' }}>·</span>
+          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>Decision Report</span>
+        </div>
 
-  <rect width="1200" height="630" fill="url(#bg)" />
-  <ellipse cx="600" cy="315" rx="400" ry="200" fill="rgba(124,58,237,0.06)" />
+        {/* Question */}
+        <h1 style={{ fontSize: '28px', fontWeight: 500, color: 'rgba(255,255,255,0.92)', lineHeight: 1.3, marginBottom: '28px', maxWidth: '900px' }}>
+          {question.length > 80 ? question.substring(0, 77) + '...' : question}
+        </h1>
 
-  <text x="60" y="60" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="500" fill="#A78BFA">octux ai</text>
-  <text x="1140" y="60" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="400" fill="rgba(255,255,255,0.4)" text-anchor="end">${escapeXml(domain)}</text>
+        {/* Verdict row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '24px' }}>
+          <div style={{
+            width: '80px', height: '80px', borderRadius: '50%',
+            border: `4px solid ${recColor}`, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: '28px', fontWeight: 700, color: recColor }}>{probability}%</span>
+          </div>
 
-  <text x="60" y="160" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="300" fill="rgba(255,255,255,0.90)">
-    <tspan x="60">&quot;${escapeXml(question.substring(0, 50))}</tspan>
-    ${question.length > 50 ? `<tspan x="60" dy="36">${escapeXml(question.substring(50, 90))}${question.length > 90 ? '...' : ''}&quot;</tspan>` : '&quot;'}
-  </text>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{
+                fontSize: '14px', fontWeight: 600, padding: '4px 12px',
+                borderRadius: '6px', backgroundColor: recColor + '25', color: recColor,
+              }}>
+                {recommendation}
+              </span>
+              {grade && (
+                <span style={{
+                  fontSize: '13px', fontWeight: 500, padding: '3px 10px',
+                  borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)',
+                }}>
+                  {grade}
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, maxWidth: '700px' }}>
+              {oneLiner.length > 120 ? oneLiner.substring(0, 117) + '...' : oneLiner}
+            </p>
+          </div>
+        </div>
 
-  <rect x="60" y="250" width="1080" height="120" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-
-  <rect x="80" y="270" width="${rec.length * 16 + 40}" height="36" rx="6" fill="${recColor}20" />
-  <text x="${80 + (rec.length * 16 + 40) / 2}" y="294" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="${recColor}" text-anchor="middle">${escapeXml(rec)}</text>
-
-  <text x="${80 + rec.length * 16 + 60}" y="296" font-family="Inter, system-ui, sans-serif" font-size="40" font-weight="300" fill="rgba(255,255,255,0.90)">${prob}%</text>
-
-  <text x="1100" y="300" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="500" fill="url(#purple)" text-anchor="end">${escapeXml(grade)}</text>
-
-  <text x="80" y="350" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="400" fill="rgba(255,255,255,0.55)">${escapeXml(oneLiner)}</text>
-
-  <text x="60" y="520" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="400" fill="rgba(255,255,255,0.4)">10 AI specialists debated this decision</text>
-
-  <rect x="60" y="550" width="180" height="40" rx="8" fill="#7C3AED" />
-  <text x="150" y="576" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="#FFFFFF" text-anchor="middle">See full analysis</text>
-
-  <text x="1140" y="576" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="400" fill="rgba(255,255,255,0.3)" text-anchor="end">octux.ai</text>
-
-  <rect x="0" y="625" width="1200" height="5" fill="url(#purple)" />
-</svg>`;
-
-  return new Response(svg, {
-    headers: {
-      'Content-Type': 'image/svg+xml',
-      'Cache-Control': 'public, max-age=3600, s-maxage=86400',
-    },
-  });
-}
-
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+        {/* Footer */}
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.25)' }}>Analyzed by 10 AI specialists</span>
+          <span style={{ fontSize: '14px', color: '#7C3AED', fontWeight: 500 }}>octux.ai</span>
+        </div>
+      </div>
+    ),
+    { width: 1200, height: 630 },
+  );
 }
