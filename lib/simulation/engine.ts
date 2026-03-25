@@ -13,31 +13,19 @@ import { processDelegations, type DelegationResponse } from './delegation';
 import { generateCounterFactualFlip, detectBlindSpots, type CounterFactualFlip, type BlindSpotAnalysis } from './verdict-insights';
 import { evaluateSimulation, type SimulationEval } from './evals';
 import { saveSimulation } from '../memory/persistence';
-import { extractAndSaveFacts, applyFactActions, parseQuestionForFacts } from '../memory/facts';
-import { maybeRegenerateProfile } from '../memory/profile';
 import { loadMemoryForSimulation, formatMemoryContext, formatAgentMemory, type MemoryPayload } from '../memory/core-memory';
-import { saveExperience, getUserExperiences, formatExperiencesForContext } from '../memory/experiences';
-import { cognify } from '../memory/knowledge-graph';
-import { buildAllAgentKnowledge } from '../memory/agent-knowledge';
-import { extractOpinionsAndObservations, applyOpinionActions, saveObservations, getUserOpinions, getUserObservations, formatOpinionsForContext, formatObservationsForContext } from '../memory/opinions';
-import { getTopKMemories } from '../memory/recall';
-import {
-  getOrCreateThread,
-  saveSessionSummary,
-  accumulateThreadContext,
-  saveToWorkingBuffer,
-  clearWorkingBuffer,
-} from '../memory/session';
-import { reflectOnExperiences, shouldReflect } from '../memory/reflect';
-import { runMemoryOptimization } from '../memory/optimize';
+import { saveToWorkingBuffer } from '../memory/session';
+import { shouldReflect } from '../memory/reflect';
 import { runReflectionLoop, agentShouldReflect } from '../memory/agent-reflection';
 import {
-  evaluateAgentPerformance,
-  loadAllAgentLessons,
-  persistRoundLearnings,
+  preSimHook,
+  postAgentHook,
+  postSimHook,
+  buildAgentContext,
   formatRoundDiscoveries,
+  type PreSimResult,
   type RoundLearning,
-} from '../memory/agent-improvement';
+} from '../memory/hooks';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -314,121 +302,35 @@ export async function* runSimulation(
   const state = createInitialState(simId, question, engine, options?.tier || 'free');
   const roundDiscoveries: RoundLearning[] = [];
 
-  // ═══ MEMORY: Load user context (Letta + Mem0 + Agno) ═══
-  const memory = await loadMemoryForSimulation(options?.userId, question);
+  // ═══ MEMORY SYSTEM — Single hook replaces 7+ individual operations ═══
+  let preSim: PreSimResult = {
+    memory: { coreMemory: { human: '', business: '', preferences: '', history: '' }, isReturningUser: false, relevantFacts: [], profile: null, previousSimCount: 0, opinions: [], observations: [], graphContext: '' },
+    networkMemoryText: '', agentKnowledgeMap: new Map(), agentLessonsMap: new Map(),
+    activeThreadId: '', recalledMemoryText: '', threadContext: '', walFactsExtracted: 0,
+  };
 
-  if (memory.isReturningUser) {
-    console.log(`[memory] Loaded: ${memory.relevantFacts.length} facts, profile: ${memory.profile ? 'yes' : 'no'}, sims: ${memory.previousSimCount}`);
-  }
-
-  // Load 4-network memory (Hindsight pattern)
-  let networkMemoryText = '';
   if (options?.userId) {
     try {
-      const [experiences, opinions, observations] = await Promise.all([
-        getUserExperiences(options.userId, 5),
-        getUserOpinions(options.userId, 8),
-        getUserObservations(options.userId, 5),
-      ]);
-
-      networkMemoryText = [
-        formatExperiencesForContext(experiences),
-        formatOpinionsForContext(opinions),
-        formatObservationsForContext(observations),
-      ].filter(Boolean).join('\n');
-
-      if (networkMemoryText) {
-        console.log(`[memory:4net] ${experiences.length} experiences, ${opinions.length} opinions, ${observations.length} observations`);
-      }
+      preSim = await preSimHook(options.userId, question, simId, { threadId: options.threadId });
     } catch (err) {
-      console.error('[memory:4net] Load failed (non-blocking):', err);
+      console.error('PRE-SIM HOOK failed (non-blocking):', err);
     }
+  } else {
+    preSim.memory = await loadMemoryForSimulation(undefined, question);
   }
 
-  // ═══ PER-AGENT KNOWLEDGE (MiroFish individual memory) ═══
-  let agentKnowledgeMap = new Map<string, string>();
-  if (options?.userId) {
-    try {
-      agentKnowledgeMap = await buildAllAgentKnowledge(options.userId);
-      if (agentKnowledgeMap.size > 0) {
-        console.log(`[memory:agent-knowledge] Loaded personalized context for ${agentKnowledgeMap.size} agents`);
-      }
-    } catch (err) {
-      console.error('[memory:agent-knowledge] Load failed (non-blocking):', err);
-    }
-  }
-
-  // ═══ AGENT LESSONS (OpenClaw self-improving pattern) ═══
-  let agentLessonsMap = new Map<string, string>();
-  if (options?.userId) {
-    try {
-      agentLessonsMap = await loadAllAgentLessons(options.userId);
-      if (agentLessonsMap.size > 0) {
-        console.log(`LESSONS: Loaded learned rules for ${agentLessonsMap.size} agents`);
-      }
-    } catch (err) {
-      console.error('Lesson load failed (non-blocking):', err);
-    }
-  }
-
-  // ═══ MULTI-STRATEGY RECALL (Mem0 + RRF fusion) ═══
-  let recalledMemoryText = '';
-  if (options?.userId) {
-    try {
-      recalledMemoryText = await getTopKMemories(options.userId, question, 15);
-      if (recalledMemoryText) {
-        networkMemoryText = recalledMemoryText + (networkMemoryText ? '\n' + networkMemoryText : '');
-        console.log(`[memory:recall] Multi-strategy recall loaded for question`);
-      }
-    } catch (err) {
-      console.error('[memory:recall] Recall failed (non-blocking):', err);
-    }
-  }
-
-  // ═══ SESSION THREAD CONTEXT (Agno per-thread memory) ═══
-  let threadContext = '';
-  let activeThreadId = '';
-  if (options?.userId) {
-    try {
-      activeThreadId = await getOrCreateThread(
-        options.userId,
-        options.threadId || null,
-        question
-      );
-      threadContext = await accumulateThreadContext(activeThreadId);
-      if (threadContext) {
-        networkMemoryText = networkMemoryText
-          ? networkMemoryText + '\n' + threadContext
-          : threadContext;
-        console.log(`SESSION: Thread context loaded for thread ${activeThreadId}`);
-      }
-    } catch (err) {
-      console.error('Session thread load failed (non-blocking):', err);
-    }
-  }
-
-  // OpenClaw WAL: Parse question for facts BEFORE sim runs (Claude-powered)
-  if (options?.userId) {
-    try {
-      const walFacts = await parseQuestionForFacts(options.userId, question);
-      if (walFacts.length > 0) {
-        await applyFactActions(options.userId, `wal_${simId}`, walFacts);
-        console.log(`[memory:wal] Pre-extracted ${walFacts.length} facts from question`);
-      }
-    } catch (err) {
-      console.error('[memory:wal] Extraction failed (non-blocking):', err);
-    }
-  }
+  const memory = preSim.memory;
+  let networkMemoryText = preSim.networkMemoryText;
 
   yield { event: 'memory_loaded', data: {
     isReturningUser: memory.isReturningUser,
     factCount: memory.relevantFacts.length,
     hasProfile: !!memory.profile,
     previousSimCount: memory.previousSimCount,
-    hasRecalledMemories: !!recalledMemoryText,
-    hasThreadHistory: !!threadContext,
-    threadId: activeThreadId || null,
-    hasAgentLessons: agentLessonsMap.size > 0,
+    hasRecalledMemories: !!preSim.recalledMemoryText,
+    hasThreadHistory: !!preSim.threadContext,
+    threadId: preSim.activeThreadId || null,
+    hasAgentLessons: preSim.agentLessonsMap.size > 0,
   }};
 
   // ━━ INPUT GUARDRAILS (OpenAI Agents SDK #8) ━━━━━━━━━━━━━━
@@ -600,7 +502,7 @@ export async function* runSimulation(
 
   {
     const batchItems = deepWave1.map(({ agent, task }) => {
-      const debateCtx = buildDebateContext(state, agent.id, undefined, undefined, fieldScans, memory, networkMemoryText, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
+      const debateCtx = buildDebateContext(state, agent.id, undefined, undefined, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
       const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
       const promise = callAgent(
         agent, userMsg,
@@ -644,7 +546,7 @@ export async function* runSimulation(
           }
           allReports.push(report);
           addAgentReport(state, report);
-          const rl = persistRoundLearnings(report.agent_id, report.agent_name || report.agent_id, report);
+          const rl = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
           if (rl.facts_discovered.length > 0 || rl.key_claims.length > 0) roundDiscoveries.push(rl);
           yield { event: 'agent_complete', data: report };
         }
@@ -681,7 +583,7 @@ export async function* runSimulation(
 
   {
     const batchItems2 = deepWave2.map(({ agent, task }) => {
-      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
+      const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryText, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
       const userMsg = `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
       const promise = callAgent(
         agent, userMsg,
@@ -725,7 +627,7 @@ export async function* runSimulation(
           }
           allReports.push(report);
           addAgentReport(state, report);
-          const rl = persistRoundLearnings(report.agent_id, report.agent_name || report.agent_id, report);
+          const rl = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
           if (rl.facts_discovered.length > 0 || rl.key_claims.length > 0) roundDiscoveries.push(rl);
           yield { event: 'agent_complete', data: report };
         }
@@ -789,7 +691,7 @@ export async function* runSimulation(
   const quickBatch2 = quickAgentTasks.slice(3);
 
   const quickBatch1Promises = quickBatch1.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -802,7 +704,7 @@ export async function* runSimulation(
   await wait(500);
 
   const quickBatch2Promises = quickBatch2.map(({ agent, task }) => {
-    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
+    const debateCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${debateCtx}\n\nAs ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments. Respond with valid JSON only.`,
@@ -824,7 +726,7 @@ export async function* runSimulation(
       if (!filtered) {
         allReports.push(report);
         addAgentReport(state, report);
-        const rl6 = persistRoundLearnings(report.agent_id, report.agent_name || report.agent_id, report);
+        const rl6 = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
         if (rl6.facts_discovered.length > 0 || rl6.key_claims.length > 0) roundDiscoveries.push(rl6);
         yield { event: 'agent_complete', data: report };
         await wait(200);
@@ -929,7 +831,7 @@ export async function* runSimulation(
 
       if (targetAgent) {
         try {
-          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, [agentKnowledgeMap.get(targetAgent.id) || '', agentLessonsMap.get(targetAgent.id) || ''].filter(Boolean).join('\n'));
+          const devilCtx = buildDebateContext(state, targetAgent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(targetAgent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
           const devilReport = await callAgent(
             targetAgent,
             `Question: ${question}\n\n${devilCtx}\n\nAll agents currently agree on "${majorityPosition}". The Decision Chair is forcing a devil's advocate round. As ${targetAgent.role}, present the STRONGEST possible argument AGAINST "${majorityPosition}". Reference specific claims from other agents and explain why they're wrong or incomplete. What could go catastrophically wrong? Respond with valid JSON only.`,
@@ -966,7 +868,7 @@ export async function* runSimulation(
     const challengerReport = allReports.find((r) => r.agent_id === pair.challenger_id);
 
     try {
-      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, [agentKnowledgeMap.get(pair.challenger_id) || '', agentLessonsMap.get(pair.challenger_id) || ''].filter(Boolean).join('\n'));
+      const challengerCtx = buildDebateContext(state, pair.challenger_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.challenger_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
       const challengeReport = await callAgent(
         challengerAgent,
         `Question: ${question}\n\n${challengerCtx}\n\nYou are CHALLENGING ${defenderAgent.name}'s position. They said: "${defenderReport?.key_argument || 'their position'}"\n\nAttack their weakest point with specific counter-evidence. Reference what other agents said to support your challenge. Be direct. Respond with valid JSON only.`,
@@ -981,7 +883,7 @@ export async function* runSimulation(
     }
 
     try {
-      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, [agentKnowledgeMap.get(pair.defender_id) || '', agentLessonsMap.get(pair.defender_id) || ''].filter(Boolean).join('\n'));
+      const defenderCtx = buildDebateContext(state, pair.defender_id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(pair.defender_id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
       const defenseReport = await callAgent(
         defenderAgent,
         `Question: ${question}\n\n${defenderCtx}\n\n${challengerAgent.name} CHALLENGED your position: "${challengerReport?.key_argument || 'disagreement'}"\n\nDefend your position with stronger evidence, or update your position if the challenge is valid. Be honest \u2014 if you changed your mind, say what convinced you. Respond with valid JSON only.`,
@@ -1032,7 +934,7 @@ export async function* runSimulation(
   const convBatch2 = specialists.slice(5);
 
   const convBatch1Promises = convBatch1.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
@@ -1044,7 +946,7 @@ export async function* runSimulation(
   await wait(500);
 
   const convBatch2Promises = convBatch2.map((agent) => {
-    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, [agentKnowledgeMap.get(agent.id) || '', agentLessonsMap.get(agent.id) || ''].filter(Boolean).join('\n'));
+    const convergenceCtx = buildDebateContext(state, agent.id, progressLedger, chairDirectives, fieldScans, memory, networkMemoryWithDiscoveries, buildAgentContext(agent.id, preSim.agentKnowledgeMap, preSim.agentLessonsMap));
     return callAgentWithRetry(
       agent,
       `Question: ${question}\n\n${convergenceCtx}\n\nThe debate is concluding. Declare your FINAL position. If you changed your mind from your earlier analysis, explain what argument convinced you. Reference specific agents or evidence that influenced your final stance. Respond with valid JSON only.`,
@@ -1067,7 +969,7 @@ export async function* runSimulation(
         finalReports.push(report);
         allReports.push(report);
         addAgentReport(state, report);
-        const rl9 = persistRoundLearnings(report.agent_id, report.agent_name || report.agent_id, report);
+        const rl9 = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
         if (rl9.facts_discovered.length > 0 || rl9.key_claims.length > 0) roundDiscoveries.push(rl9);
         yield { event: 'agent_complete', data: report };
       }
@@ -1386,122 +1288,7 @@ DEBATE PROGRESS:
     else console.warn('[persistence] Simulation save returned null');
   }).catch(err => console.error('[persistence] Save error:', err));
 
-  // Memory: Extract facts (must await — serverless shuts down after generator ends)
-  if (options?.userId) {
-    try {
-      await extractAndSaveFacts(
-        options.userId,
-        simId,
-        question,
-        verdict,
-        Object.fromEntries(state.agent_reports.entries()),
-      );
-    } catch (err) {
-      console.error('[facts] Extraction error (non-fatal):', err);
-    }
-
-    // Memory: Check if Decision Profile needs regeneration (every 3 sims)
-    try {
-      await maybeRegenerateProfile(options.userId);
-    } catch (err) {
-      console.error('[profile] Regeneration error (non-fatal):', err);
-    }
-
-    // Hindsight Network 2: Save experience
-    try {
-      await saveExperience(options.userId, simId, question, verdict as Record<string, unknown>);
-      console.log(`[hindsight] Experience saved for sim ${simId}`);
-    } catch (err) {
-      console.error('[hindsight] Experience save error (non-fatal):', err);
-    }
-
-    // Hindsight Networks 3 & 4: Extract and apply opinions + observations
-    console.log(`[hindsight] Starting opinion/observation extraction for sim ${simId}`);
-    try {
-      const existingOpinions = await getUserOpinions(options.userId, 20);
-      const { opinions, observations } = await extractOpinionsAndObservations(
-        options.userId,
-        simId,
-        question,
-        verdict,
-        Object.fromEntries(state.agent_reports.entries()),
-        existingOpinions.map((o: Record<string, unknown>) => ({
-          id: o.id as string,
-          belief: o.belief as string,
-          confidence: o.confidence as number,
-          domain: o.domain as string,
-        })),
-      );
-
-      if (opinions.length > 0) {
-        const applied = await applyOpinionActions(options.userId, simId, opinions);
-        console.log(`[hindsight] ${applied} opinion(s) applied`);
-      }
-      if (observations.length > 0) {
-        const saved = await saveObservations(options.userId, simId, observations);
-        console.log(`[hindsight] ${saved} observation(s) saved`);
-      }
-    } catch (err) {
-      console.error('[hindsight] Opinion/observation extraction error (non-fatal):', err);
-    }
-  }
-
-  // ═══ KNOWLEDGE GRAPH — cognify (Cognee pattern) ═══
-  if (options?.userId) {
-    yield { event: 'knowledge_graph_started', data: { simulation_id: simId } };
-
-    const verdictSummary = verdict
-      ? `Recommendation: ${(verdict as Record<string, unknown>).recommendation}. Probability: ${(verdict as Record<string, unknown>).probability}%. Risk: ${(verdict as Record<string, unknown>).main_risk}. Action: ${(verdict as Record<string, unknown>).next_action}.`
-      : 'No verdict generated.';
-
-    const agentSummaries = Array.from(state.latest_reports.entries())
-      .map(([agentId, report]) =>
-        `${report.agent_name || agentId} (${report.position}, ${report.confidence}/10): ${report.key_argument}`
-      )
-      .join('\n');
-
-    // Must await — serverless shuts down after generator ends
-    try {
-      const result = await cognify(
-        options.userId,
-        simId,
-        question,
-        verdictSummary,
-        agentSummaries
-      );
-      console.log(`[cognify] Complete: ${result.entity_count} entities, ${result.relation_count} relations`);
-    } catch (err) {
-      console.error('[cognify] Error (non-fatal):', err);
-    }
-  }
-
-  // ═══ AGENT EVAL: Grade performance + extract lessons (OpenClaw) ═══
-  if (options?.userId) {
-    evaluateAgentPerformance(
-      options.userId,
-      simId,
-      question,
-      state.latest_reports,
-      verdict
-    ).catch(err => console.error('EVAL error (non-blocking):', err));
-  }
-
-  // ═══ SESSION: Save thread summary + clear buffer ═══
-  if (options?.userId && activeThreadId) {
-    await saveSessionSummary(
-      activeThreadId,
-      simId,
-      options.userId,
-      question,
-      verdict,
-      state.latest_reports
-    ).catch(err => console.error('SESSION summary save error:', err));
-
-    clearWorkingBuffer(simId)
-      .catch(err => console.error('BUFFER clear error:', err));
-  }
-
-  // ═══ REFLECT: Form opinions + derive patterns every 5 sims (Hindsight) ═══
+  // ═══ POST-SIM — Single hook replaces 9+ individual operations ═══
   if (options?.userId) {
     try {
       const simCount = await shouldReflect(options.userId);
@@ -1510,24 +1297,14 @@ DEBATE PROGRESS:
       }
     } catch { /* non-blocking */ }
 
-    reflectOnExperiences(options.userId)
-      .then(result => {
-        if (result.opinions > 0 || result.observations > 0 || result.misses > 0) {
-          console.log(`REFLECT: ${result.opinions} opinions, ${result.observations} observations, ${result.misses} misses`);
-        }
-      })
-      .catch(err => console.error('REFLECT error (non-blocking):', err));
-  }
-
-  // ═══ MEMORY OPTIMIZATION: consolidate + prune + strengthen every 10 sims ═══
-  if (options?.userId) {
-    runMemoryOptimization(options.userId)
-      .then(result => {
-        if (result.consolidated > 0 || result.pruned > 0 || result.strengthened > 0 || result.derived > 0) {
-          console.log(`OPTIMIZE: consolidated=${result.consolidated}, pruned=${result.pruned}, strengthened=${result.strengthened}, derived=${result.derived}`);
-        }
-      })
-      .catch(err => console.error('OPTIMIZE error (non-blocking):', err));
+    await postSimHook(
+      options.userId,
+      simId,
+      question,
+      verdict,
+      state.latest_reports,
+      preSim.activeThreadId
+    ).catch(err => console.error('POST-SIM HOOK failed (non-blocking):', err));
   }
 
   yield { event: 'complete', data: { simulation_id: simId } };
