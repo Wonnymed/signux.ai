@@ -1,0 +1,9 @@
+# Octux Consensus Tracker Configuration
+# P49 — Enhanced Consensus Tracker
+
+lag_threshold_ms: 200        # acima disso → status "lag"
+offline_timeout_s: 30        # sem heartbeat → status "offline"
+round_duration_s: 15         # duração máxima de uma rodada
+proposal_ttl_rounds: 10      # proposta expira após N rodadas sem conclusão
+min_quorum_pct: 66.7         # porcentagem mínima para quórum
+matrix_window_rounds: 10     # janela de rodadas para matriz de acordo
