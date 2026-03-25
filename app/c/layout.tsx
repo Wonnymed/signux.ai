@@ -6,7 +6,12 @@ import OnboardingProvider from '@/components/onboarding/OnboardingProvider';
 import { getAuthUserId } from '@/lib/auth/supabase-server';
 
 export default async function ConversationLayout({ children }: { children: React.ReactNode }) {
-  const userId = await getAuthUserId() ?? undefined;
+  let userId: string | undefined;
+  try {
+    userId = (await getAuthUserId()) ?? undefined;
+  } catch {
+    userId = undefined;
+  }
 
   return (
     <OnboardingProvider userId={userId}>

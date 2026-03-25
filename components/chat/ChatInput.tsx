@@ -184,12 +184,12 @@ function TierPills({ tier, onChange, disabled }: { tier: string; onChange: (t: '
             onClick={() => !disabled && onChange(t.id)}
             disabled={disabled}
             className={cn(
-              'px-2 py-0.5 text-micro font-medium rounded-sm transition-all duration-normal',
+              'px-2.5 py-1 text-xs font-medium rounded-sm transition-all duration-normal',
               tier === t.id
                 ? t.id === 'ink' ? 'bg-surface-raised text-txt-primary shadow-xs'
                   : t.id === 'deep' ? 'bg-accent-muted text-accent shadow-xs'
-                  : 'bg-tier-kraken/15 text-tier-kraken shadow-xs'
-                : 'text-txt-disabled hover:text-txt-tertiary',
+                  : 'bg-[#00e5ff]/10 text-[#00e5ff] shadow-xs'
+                : 'text-txt-tertiary hover:text-txt-secondary',
             )}
           >
             {t.label}

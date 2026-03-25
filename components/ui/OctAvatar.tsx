@@ -61,7 +61,7 @@ export default function OctAvatar({ type = 'agent', size = 'md', category = 'lif
         'bg-gradient-to-br from-accent to-entity-bioluminescent', s.container,
         glowClass[state], state === 'dormant' && 'animate-breathe', className,
       )}>
-        <span className={cn(s.text, 'text-white')}>O</span>
+        <span className={s.text}>🐙</span>
       </div>
     );
   }

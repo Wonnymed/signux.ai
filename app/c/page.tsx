@@ -47,7 +47,7 @@ export default function NewConversationPage() {
       </div>
 
       {/* Bottom: input */}
-      <ChatInput onSend={handleSend} loading={loading} />
+      <ChatInput onSend={handleSend} loading={loading} isNewConversation />
     </div>
   );
 }

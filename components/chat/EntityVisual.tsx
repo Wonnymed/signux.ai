@@ -50,7 +50,7 @@ export default function EntityVisual({ state, compact = false, className }: Enti
           'transition-all duration-entity ease-out',
           s.scale, s.glow, s.breathe,
         )}>
-          <span className="text-sm text-white font-medium">O</span>
+          <span className="text-sm">🐙</span>
         </div>
         {s.label && (
           <span className="absolute mt-12 text-micro text-txt-tertiary animate-fade-in">
@@ -73,7 +73,7 @@ export default function EntityVisual({ state, compact = false, className }: Enti
           'transition-all duration-entity ease-out',
           s.scale, s.glow, s.breathe,
         )}>
-          <span className="text-3xl text-white font-medium">O</span>
+          <span className="text-3xl">🐙</span>
         </div>
       </div>
 
