@@ -17,7 +17,8 @@ export type TipId =
   | 'tip_keyboard_shortcuts'
   | 'tip_decision_style'
   | 'tip_agent_chat'
-  | 'tip_share';
+  | 'tip_share'
+  | 'tip_free_limit_info';
 
 export interface Milestone {
   id: MilestoneId;
@@ -108,7 +109,7 @@ export const MILESTONES: Record<MilestoneId, Milestone> = {
   free_limit_reached: {
     id: 'free_limit_reached',
     title: 'Free simulations used',
-    description: "You've used all 3 free simulations this month",
+    description: "You've used your free simulation this month",
     emoji: '📊',
     triggeredBy: 'octux:free-limit-reached',
     celebration: 'none',
@@ -120,12 +121,12 @@ export const MILESTONES: Record<MilestoneId, Milestone> = {
 export const TIPS: Record<TipId, Tip> = {
   tip_simulate: {
     id: 'tip_simulate',
-    text: "💡 Type 'simulate' or click ⚡ for a Deep analysis with 10 specialists",
+    text: "💡 You have 1 free simulation this month. Ask a specific question first, then hit ⚡ when you're ready for a full analysis.",
     triggeredAfter: 'first_message',
     position: 'bottom-center',
     dismissible: true,
     showOnce: true,
-    delayMs: 2000,
+    delayMs: 5000,
   },
   tip_agent_perspectives: {
     id: 'tip_agent_perspectives',
@@ -189,6 +190,15 @@ export const TIPS: Record<TipId, Tip> = {
     dismissible: true,
     showOnce: true,
     delayMs: 20000,
+  },
+  tip_free_limit_info: {
+    id: 'tip_free_limit_info',
+    text: '📊 You can still chat with Ink (free). Simulations with 10 agents require credits or a Pro plan.',
+    triggeredAfter: 'free_limit_reached',
+    position: 'bottom-center',
+    dismissible: true,
+    showOnce: true,
+    delayMs: 1000,
   },
 };
 

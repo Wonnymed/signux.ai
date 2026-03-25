@@ -17,10 +17,18 @@ interface HeroSectionProps {
 
 export default function HeroSection({ onSignIn }: HeroSectionProps) {
   const [input, setInput] = useState('');
+  const [showConsent, setShowConsent] = useState(false);
 
   const handleSubmit = () => {
     if (!input.trim()) return;
-    // Open auth — after login, user will land on /c
+
+    if (!showConsent) {
+      setShowConsent(true);
+      return;
+    }
+
+    // Save question as backup
+    try { localStorage.setItem('octux_pending_question', input.trim().substring(0, 200)); } catch {}
     onSignIn();
   };
 
@@ -81,6 +89,14 @@ export default function HeroSection({ onSignIn }: HeroSectionProps) {
             </button>
           </div>
         </div>
+
+        {/* Consent message */}
+        {showConsent && (
+          <p className="text-xs text-txt-secondary mb-4 animate-fade-in">
+            Press Enter to create a free account and start your analysis.
+            <span className="text-txt-disabled"> No credit card required.</span>
+          </p>
+        )}
 
         {/* Suggestion chips */}
         <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">

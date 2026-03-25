@@ -27,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const recColor = recommendation === 'PROCEED' ? '#10B981' : recommendation === 'DELAY' ? '#F59E0B' : recommendation === 'ABANDON' ? '#EF4444' : '#7C3AED';
 
-  return new ImageResponse(
+  const imageResponse = new ImageResponse(
     (
       <div
         style={{
@@ -95,4 +95,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     ),
     { width: 1200, height: 630 },
   );
+
+  // Cache for 24h on CDN, 1h in browser
+  imageResponse.headers.set('Cache-Control', 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=86400');
+  imageResponse.headers.set('CDN-Cache-Control', 'public, max-age=86400');
+
+  return imageResponse;
 }

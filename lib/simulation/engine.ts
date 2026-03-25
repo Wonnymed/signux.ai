@@ -181,9 +181,15 @@ function buildDebateContext(
   if (reports.length === 0) return memorySection + 'No other agents have reported yet. You are among the first to analyze this decision.';
 
   // Build summary of what other agents said (exclude current agent's own reports)
+  // Truncate key_argument to limit context growth across rounds
   const otherReports = reports
     .filter(([id]) => id !== currentAgentId)
-    .map(([, report]) => `\u2022 ${report.agent_name} (${report.position.toUpperCase()}, ${report.confidence}/10): ${report.key_argument}`)
+    .map(([, report]) => {
+      const arg = report.key_argument?.length > 200
+        ? report.key_argument.substring(0, 197) + '...'
+        : report.key_argument;
+      return `\u2022 ${report.agent_name} (${report.position.toUpperCase()}, ${report.confidence}/10): ${arg}`;
+    })
     .join('\n');
 
   // Current consensus

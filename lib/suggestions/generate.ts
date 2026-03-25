@@ -1,11 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 export type SuggestionContext = 'post_verdict' | 'post_chat' | 'post_agent_chat';
 
 export interface SuggestionInput {
   context: SuggestionContext;
   conversationTitle?: string;
-  // Post-verdict
   verdict?: {
     recommendation: string;
     probability: number;
@@ -15,12 +12,11 @@ export interface SuggestionInput {
     next_action?: string;
     agent_scores?: { agent_name: string; position: string; confidence: number }[];
   };
-  // Post-chat
   recentMessages?: { role: string; content: string }[];
-  // Post-agent-chat
   agentName?: string;
   agentCategory?: string;
   agentLastResponse?: string;
+  userTier?: string;
 }
 
 export interface Suggestion {
@@ -30,124 +26,139 @@ export interface Suggestion {
   priority: number;
 }
 
-const SUGGESTION_COUNTS: Record<SuggestionContext, number> = {
-  post_verdict: 4,
-  post_chat: 3,
-  post_agent_chat: 2,
-};
-
+/**
+ * Generate suggestions LOCALLY using templates.
+ * NO API CALL for free/paygo users.
+ * Only Pro/Max get AI-generated suggestions (post-verdict only).
+ */
 export async function generateSuggestions(input: SuggestionInput): Promise<Suggestion[]> {
-  const anthropic = new Anthropic();
-  const count = SUGGESTION_COUNTS[input.context];
-
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(input, count);
-
-  try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    });
-
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '';
-    return parseSuggestions(text, count);
-  } catch (error) {
-    console.error('Failed to generate suggestions:', error);
-    return getFallbackSuggestions(input);
+  if (
+    input.context === 'post_verdict' &&
+    input.verdict &&
+    (input.userTier === 'pro' || input.userTier === 'max')
+  ) {
+    try {
+      return await generateAISuggestions(input);
+    } catch {
+      return generateTemplateSuggestions(input);
+    }
   }
+
+  return generateTemplateSuggestions(input);
 }
 
-function buildSystemPrompt(): string {
-  return `You are a follow-up suggestion generator for Octux AI, a Decision Operating System.
-Your job: generate short, actionable follow-up questions that help users explore their decision deeper.
-
-Rules:
-- Each suggestion is 5-12 words, phrased as a question or action
-- Be SPECIFIC to the conversation context (never generic)
-- Include at least 1 "what if" scenario
-- Include at least 1 actionable next step
-- Never repeat what was already discussed
-- Match the user's domain (investment = financial terms, relationships = emotional terms)
-- Vary the types: what-if, deep-dive, compare, simulate, explore, challenge
-
-Format: Return ONLY a JSON array of objects with "text" and "type" fields.
-Types: what_if, deep_dive, compare, simulate, explore, challenge
-Example: [{"text":"What if the budget was 2× larger?","type":"what_if"},{"text":"Which permits do I need first?","type":"deep_dive"}]`;
-}
-
-function buildUserPrompt(input: SuggestionInput, count: number): string {
-  let context = '';
-
+function generateTemplateSuggestions(input: SuggestionInput): Suggestion[] {
   if (input.context === 'post_verdict' && input.verdict) {
-    const v = input.verdict;
-    context = `The user just received a verdict for: "${input.conversationTitle || 'their decision'}"
-Recommendation: ${v.recommendation?.toUpperCase()} (${v.probability}%)
-Grade: ${v.grade || 'N/A'}
-Summary: ${v.one_liner || ''}
-Main risk: ${v.main_risk || 'none identified'}
-Recommended action: ${v.next_action || 'none specified'}
-Agents: ${v.agent_scores?.map(a => `${a.agent_name} (${a.position}, ${a.confidence}/10)`).join(', ') || 'N/A'}`;
-  } else if (input.context === 'post_chat' && input.recentMessages) {
-    const msgs = input.recentMessages.slice(-3);
-    context = `Conversation about: "${input.conversationTitle || 'a decision'}"
-Recent messages:
-${msgs.map(m => `${m.role}: ${m.content.substring(0, 200)}`).join('\n')}`;
-  } else if (input.context === 'post_agent_chat') {
-    context = `The user is chatting with agent "${input.agentName}" (${input.agentCategory || 'general'}).
-Agent's last response: ${input.agentLastResponse?.substring(0, 300) || 'N/A'}`;
+    return generateVerdictSuggestions(input);
   }
-
-  return `${context}
-
-Generate exactly ${count} follow-up suggestions. Return ONLY valid JSON array.`;
-}
-
-function parseSuggestions(text: string, count: number): Suggestion[] {
-  try {
-    // Strip markdown code fences if present
-    const clean = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    const parsed = JSON.parse(clean);
-
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.slice(0, count).map((item: any, i: number) => ({
-      id: `sug_${Date.now()}_${i}`,
-      text: typeof item.text === 'string' ? item.text : String(item),
-      type: ['what_if', 'deep_dive', 'compare', 'simulate', 'explore', 'challenge'].includes(item.type) ? item.type : 'explore',
-      priority: count - i,
-    }));
-  } catch {
-    // If JSON parse fails, try line-by-line
-    const lines = text.split('\n').filter(l => l.trim().length > 5);
-    return lines.slice(0, count).map((line, i) => ({
-      id: `sug_${Date.now()}_${i}`,
-      text: line.replace(/^[-•*\d.)\s]+/, '').replace(/[""]/g, '').trim(),
-      type: 'explore' as const,
-      priority: count - i,
-    }));
-  }
-}
-
-function getFallbackSuggestions(input: SuggestionInput): Suggestion[] {
-  if (input.context === 'post_verdict') {
-    return [
-      { id: 'fb_1', text: 'What if the timeline was twice as long?', type: 'what_if', priority: 4 },
-      { id: 'fb_2', text: 'Which risk should I address first?', type: 'deep_dive', priority: 3 },
-      { id: 'fb_3', text: 'Run a deeper simulation with more agents', type: 'simulate', priority: 2 },
-      { id: 'fb_4', text: 'What are the alternatives?', type: 'compare', priority: 1 },
-    ];
+  if (input.context === 'post_chat') {
+    return generateChatSuggestions(input);
   }
   if (input.context === 'post_agent_chat') {
-    return [
-      { id: 'fb_1', text: 'What data sources did you use?', type: 'deep_dive', priority: 2 },
-      { id: 'fb_2', text: 'How does your view compare to the others?', type: 'challenge', priority: 1 },
-    ];
+    return generateAgentChatSuggestions(input);
   }
+  return getGenericSuggestions();
+}
+
+function uid(): string {
+  return `sug_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function generateVerdictSuggestions(input: SuggestionInput): Suggestion[] {
+  const v = input.verdict!;
+  const suggestions: Suggestion[] = [];
+
+  if (v.recommendation?.toLowerCase() === 'proceed') {
+    suggestions.push({ id: uid(), text: 'What if the timeline was twice as long?', type: 'what_if', priority: 4 });
+    suggestions.push({ id: uid(), text: 'What could make this fail?', type: 'challenge', priority: 3 });
+  } else if (v.recommendation?.toLowerCase() === 'delay') {
+    suggestions.push({ id: uid(), text: 'What conditions would change this to proceed?', type: 'what_if', priority: 4 });
+    suggestions.push({ id: uid(), text: 'How long should I wait?', type: 'deep_dive', priority: 3 });
+  } else {
+    suggestions.push({ id: uid(), text: 'What alternatives should I consider?', type: 'compare', priority: 4 });
+    suggestions.push({ id: uid(), text: 'Is there a smaller version worth trying?', type: 'what_if', priority: 3 });
+  }
+
+  if (v.main_risk) {
+    suggestions.push({ id: uid(), text: 'How do I mitigate the main risk?', type: 'deep_dive', priority: 2 });
+  }
+
+  if (v.next_action) {
+    suggestions.push({ id: uid(), text: 'Break down the next action into steps', type: 'explore', priority: 1 });
+  } else {
+    suggestions.push({ id: uid(), text: 'What should I do first?', type: 'explore', priority: 1 });
+  }
+
+  return suggestions.slice(0, 4);
+}
+
+function generateChatSuggestions(input: SuggestionInput): Suggestion[] {
+  const lastMsg = input.recentMessages?.slice(-1)[0]?.content?.toLowerCase() || '';
+  const suggestions: Suggestion[] = [];
+
+  if (lastMsg.includes('invest') || lastMsg.includes('stock') || lastMsg.includes('crypto')) {
+    suggestions.push({ id: uid(), text: 'What are the main risks?', type: 'deep_dive', priority: 3 });
+    suggestions.push({ id: uid(), text: 'Run a full simulation on this', type: 'simulate', priority: 2 });
+  } else if (lastMsg.includes('relationship') || lastMsg.includes('partner') || lastMsg.includes('break')) {
+    suggestions.push({ id: uid(), text: 'What would a therapist say?', type: 'explore', priority: 3 });
+    suggestions.push({ id: uid(), text: 'Run a full simulation on this', type: 'simulate', priority: 2 });
+  } else if (lastMsg.includes('job') || lastMsg.includes('career') || lastMsg.includes('quit')) {
+    suggestions.push({ id: uid(), text: 'What does the job market look like?', type: 'deep_dive', priority: 3 });
+    suggestions.push({ id: uid(), text: 'Run a full simulation on this', type: 'simulate', priority: 2 });
+  } else {
+    suggestions.push({ id: uid(), text: 'Tell me more about the risks', type: 'deep_dive', priority: 3 });
+    suggestions.push({ id: uid(), text: 'Run a full simulation on this', type: 'simulate', priority: 2 });
+  }
+
+  suggestions.push({ id: uid(), text: 'What am I not considering?', type: 'challenge', priority: 1 });
+  return suggestions.slice(0, 3);
+}
+
+function generateAgentChatSuggestions(_input: SuggestionInput): Suggestion[] {
   return [
-    { id: 'fb_1', text: 'Tell me more about this', type: 'explore', priority: 3 },
-    { id: 'fb_2', text: 'Run a full simulation', type: 'simulate', priority: 2 },
-    { id: 'fb_3', text: 'What are the risks?', type: 'deep_dive', priority: 1 },
+    { id: uid(), text: 'What data sources did you use?', type: 'deep_dive', priority: 2 },
+    { id: uid(), text: 'How does your view compare to the others?', type: 'challenge', priority: 1 },
   ];
+}
+
+function getGenericSuggestions(): Suggestion[] {
+  return [
+    { id: uid(), text: 'Tell me more about this', type: 'explore', priority: 3 },
+    { id: uid(), text: 'Run a full simulation', type: 'simulate', priority: 2 },
+    { id: uid(), text: 'What are the risks?', type: 'deep_dive', priority: 1 },
+  ];
+}
+
+/**
+ * AI-powered suggestions — ONLY for Pro/Max post-verdict.
+ * Cost: ~$0.003 per call (Haiku).
+ */
+async function generateAISuggestions(input: SuggestionInput): Promise<Suggestion[]> {
+  const Anthropic = (await import('@anthropic-ai/sdk')).default;
+  const anthropic = new Anthropic();
+  const v = input.verdict!;
+
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 300,
+    system: 'Generate 4 follow-up questions for a decision analysis verdict. Each question 5-12 words. Return ONLY a JSON array of objects with "text" and "type" fields. Types: what_if, deep_dive, compare, simulate, explore, challenge.',
+    messages: [{
+      role: 'user',
+      content: `Verdict: ${v.recommendation?.toUpperCase()} (${v.probability}%). Summary: ${v.one_liner || ''}. Risk: ${v.main_risk || 'none'}. Action: ${v.next_action || 'none'}. Generate 4 specific follow-ups.`,
+    }],
+  });
+
+  const text = response.content[0]?.type === 'text' ? response.content[0].text : '';
+  try {
+    const clean = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(clean);
+    return parsed.slice(0, 4).map((item: any, i: number) => ({
+      id: `ai_${Date.now()}_${i}`,
+      text: item.text,
+      type: item.type || 'explore',
+      priority: 4 - i,
+    }));
+  } catch {
+    return generateTemplateSuggestions(input);
+  }
 }
