@@ -303,3 +303,150 @@ JSON array:`,
   }
   return resolvedCount;
 }
+
+// ═══════════════════════════════════════════
+// getFactTimeline() — Chronological evolution of a fact
+// ═══════════════════════════════════════════
+
+export type FactVersion = {
+  id: string;
+  content: string;
+  confidence: number;
+  valid_from: string;
+  valid_until: string | null;
+  learned_at: string;
+  is_current: boolean;
+  superseded_by: string | null;
+  source_simulation: string | null;
+};
+
+export type FactTimeline = {
+  search_term: string;
+  versions: FactVersion[];
+  change_count: number;
+  current_value: string | null;
+};
+
+/**
+ * Get the full chronological history of a fact by keyword search.
+ * Follows the supersession chain to show how a value evolved over time.
+ */
+export async function getFactTimeline(
+  userId: string,
+  searchTerm: string,
+  category?: string
+): Promise<FactTimeline | null> {
+  if (!supabase) return null;
+
+  let query = supabase
+    .from('user_facts')
+    .select('id, content, confidence, valid_from, valid_until, learned_at, is_current, superseded_by, source_simulation')
+    .eq('user_id', userId)
+    .ilike('content', `%${searchTerm}%`)
+    .order('valid_from', { ascending: true });
+
+  if (category) {
+    query = query.eq('category', category);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data || data.length === 0) return null;
+
+  const currentVersion = data.find(f => f.is_current);
+
+  return {
+    search_term: searchTerm,
+    versions: data.map(f => ({
+      id: f.id,
+      content: f.content,
+      confidence: f.confidence,
+      valid_from: f.valid_from,
+      valid_until: f.valid_until,
+      learned_at: f.learned_at,
+      is_current: f.is_current,
+      superseded_by: f.superseded_by,
+      source_simulation: f.source_simulation,
+    })),
+    change_count: data.length - 1,
+    current_value: currentVersion?.content || null,
+  };
+}
+
+/**
+ * Get the full chronological history of a SPECIFIC fact by ID,
+ * walking the supersession chain backward and forward.
+ */
+export async function getFactChain(factId: string): Promise<FactVersion[]> {
+  if (!supabase) return [];
+
+  const visited = new Set<string>();
+
+  // Walk BACKWARD: find predecessors
+  let currentId: string | null = factId;
+  const backward: string[] = [];
+
+  while (currentId && !visited.has(currentId)) {
+    visited.add(currentId);
+    backward.push(currentId);
+
+    const { data } = await supabase
+      .from('user_facts')
+      .select('id')
+      .eq('superseded_by', currentId)
+      .maybeSingle();
+
+    currentId = data?.id || null;
+  }
+
+  backward.reverse(); // oldest → newest
+
+  // Walk FORWARD from factId
+  const orderedIds = [...backward];
+  visited.clear();
+  for (const id of orderedIds) visited.add(id);
+
+  const { data: originalFact } = await supabase
+    .from('user_facts')
+    .select('superseded_by')
+    .eq('id', factId)
+    .maybeSingle();
+
+  let nextId: string | null = originalFact?.superseded_by || null;
+  while (nextId && !visited.has(nextId)) {
+    visited.add(nextId);
+    orderedIds.push(nextId);
+
+    const { data } = await supabase
+      .from('user_facts')
+      .select('superseded_by')
+      .eq('id', nextId)
+      .maybeSingle();
+
+    nextId = data?.superseded_by || null;
+  }
+
+  if (orderedIds.length === 0) return [];
+
+  const { data: facts } = await supabase
+    .from('user_facts')
+    .select('id, content, confidence, valid_from, valid_until, learned_at, is_current, superseded_by, source_simulation')
+    .in('id', orderedIds);
+
+  if (!facts) return [];
+
+  const idOrder = new Map(orderedIds.map((id, i) => [id, i]));
+  facts.sort((a, b) => (idOrder.get(a.id) || 0) - (idOrder.get(b.id) || 0));
+
+  return facts.map(f => ({
+    id: f.id,
+    content: f.content,
+    confidence: f.confidence,
+    valid_from: f.valid_from,
+    valid_until: f.valid_until,
+    learned_at: f.learned_at,
+    is_current: f.is_current,
+    superseded_by: f.superseded_by,
+    source_simulation: f.source_simulation,
+  }));
+}
