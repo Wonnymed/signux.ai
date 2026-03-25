@@ -28,6 +28,7 @@ import { runMemoryOptimization } from './optimize';
 import { extractAllAgentRules, loadAllAgentRules } from './procedural';
 import { getAllActivePrompts, recordEvalScore } from './prompt-optimizer';
 import { optimizeAllAgents, monitorAndRollback } from './multi-optimizer';
+import { extractTeamInsights, injectTeamContext } from './team-memory';
 
 // Re-export for engine convenience
 export { formatRoundDiscoveries, type RoundLearning } from './agent-improvement';
@@ -107,7 +108,7 @@ export async function preSimHook(
   }
 
   // 2-7 can run in parallel (independent reads)
-  const [networkResult, knowledgeResult, lessonsResult, rulesResult, promptResult, recallResult, threadResult, walResult] = await Promise.allSettled([
+  const [networkResult, knowledgeResult, lessonsResult, rulesResult, promptResult, teamResult, recallResult, threadResult, walResult] = await Promise.allSettled([
     // 2. 4-network memory (Hindsight pattern)
     (async () => {
       const [experiences, opinions, observations] = await Promise.all([
@@ -133,6 +134,9 @@ export async function preSimHook(
 
     // 4c. Active prompt overrides (LangMem prompt optimization)
     getAllActivePrompts(userId),
+
+    // 4d. Team insights (Agno team memory)
+    injectTeamContext(userId),
 
     // 5. Top-K scored recall (Mem0 + RRF)
     getTopKMemories(userId, question, 15),
@@ -185,6 +189,13 @@ export async function preSimHook(
     if (promptOverrides.size > 0) {
       console.log(`HOOK PRE: Prompt overrides for ${promptOverrides.size} agents`);
     }
+  }
+
+  if (teamResult.status === 'fulfilled' && teamResult.value) {
+    networkMemoryText = networkMemoryText
+      ? networkMemoryText + '\n' + teamResult.value
+      : teamResult.value;
+    console.log('HOOK PRE: Team insights loaded');
   }
 
   if (recallResult.status === 'fulfilled' && recallResult.value) {
@@ -360,7 +371,14 @@ export async function postSimHook(
   clearWorkingBuffer(simId)
     .catch(err => console.error('HOOK POST: Buffer clear failed:', err));
 
-  // 8. Reflect loop — every 5 sims
+  // 8. Team insights — every 5 sims (Agno team memory)
+  extractTeamInsights(userId, simId)
+    .then(n => {
+      if (n > 0) console.log(`HOOK POST: Team memory — ${n} insight(s) extracted/reinforced`);
+    })
+    .catch(err => console.error('HOOK POST: Team memory failed:', err));
+
+  // 9. Reflect loop — every 5 sims
   reflectOnExperiences(userId)
     .then(r => {
       if (r.opinions > 0 || r.observations > 0 || r.misses > 0) {
