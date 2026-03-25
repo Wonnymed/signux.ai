@@ -26,6 +26,8 @@ import { maybeRegenerateProfile } from './profile';
 import { reflectOnExperiences } from './reflect';
 import { runMemoryOptimization } from './optimize';
 import { extractAllAgentRules, loadAllAgentRules } from './procedural';
+import { getAllActivePrompts, recordEvalScore, optimizePrompt } from './prompt-optimizer';
+import { supabase } from './supabase';
 
 // Re-export for engine convenience
 export { formatRoundDiscoveries, type RoundLearning } from './agent-improvement';
@@ -41,6 +43,7 @@ export type PreSimResult = {
   agentKnowledgeMap: Map<string, string>;
   agentLessonsMap: Map<string, string>;
   agentRulesMap: Map<string, string>;
+  promptOverrides: Map<string, { role: string; goal: string; backstory: string; sop: string; extra_constraints: string[] }>;
   activeThreadId: string;
   // For SSE event
   recalledMemoryText: string;
@@ -87,6 +90,7 @@ export async function preSimHook(
   let agentKnowledgeMap = new Map<string, string>();
   let agentLessonsMap = new Map<string, string>();
   let agentRulesMap = new Map<string, string>();
+  let promptOverrides = new Map<string, { role: string; goal: string; backstory: string; sop: string; extra_constraints: string[] }>();
   let activeThreadId = '';
   let recalledMemoryText = '';
   let threadContext = '';
@@ -103,7 +107,7 @@ export async function preSimHook(
   }
 
   // 2-7 can run in parallel (independent reads)
-  const [networkResult, knowledgeResult, lessonsResult, rulesResult, recallResult, threadResult, walResult] = await Promise.allSettled([
+  const [networkResult, knowledgeResult, lessonsResult, rulesResult, promptResult, recallResult, threadResult, walResult] = await Promise.allSettled([
     // 2. 4-network memory (Hindsight pattern)
     (async () => {
       const [experiences, opinions, observations] = await Promise.all([
@@ -126,6 +130,9 @@ export async function preSimHook(
 
     // 4b. Per-agent procedural rules (LangMem)
     loadAllAgentRules(userId),
+
+    // 4c. Active prompt overrides (LangMem prompt optimization)
+    getAllActivePrompts(userId),
 
     // 5. Top-K scored recall (Mem0 + RRF)
     getTopKMemories(userId, question, 15),
@@ -173,6 +180,13 @@ export async function preSimHook(
     }
   }
 
+  if (promptResult.status === 'fulfilled') {
+    promptOverrides = promptResult.value;
+    if (promptOverrides.size > 0) {
+      console.log(`HOOK PRE: Prompt overrides for ${promptOverrides.size} agents`);
+    }
+  }
+
   if (recallResult.status === 'fulfilled' && recallResult.value) {
     recalledMemoryText = recallResult.value;
     networkMemoryText = recalledMemoryText + (networkMemoryText ? '\n' + networkMemoryText : '');
@@ -208,6 +222,7 @@ export async function preSimHook(
     agentKnowledgeMap,
     agentLessonsMap,
     agentRulesMap,
+    promptOverrides,
     activeThreadId,
     recalledMemoryText,
     threadContext,
@@ -327,8 +342,14 @@ export async function postSimHook(
 
   // ── BACKGROUND (fire-and-forget) ──
 
-  // 6. Evaluate agent performance + write lessons
+  // 6. Evaluate agent performance + write lessons + record eval scores per prompt version
   evaluateAgentPerformance(userId, simId, question, agentReports, verdict)
+    .then(evaluations => {
+      for (const eval_ of evaluations) {
+        recordEvalScore(userId, eval_.agent_id, eval_.score)
+          .catch(() => {});
+      }
+    })
     .catch(err => console.error('HOOK POST: Agent eval failed:', err));
 
   // 7. Save session summary + clear buffer
@@ -363,6 +384,38 @@ export async function postSimHook(
       if (n > 0) console.log(`HOOK POST: Procedural — ${n} rule(s) extracted/updated`);
     })
     .catch(err => console.error('HOOK POST: Procedural rules failed:', err));
+
+  // 11. Prompt optimization — every 20 sims (LangMem gradient)
+  // Expensive (~5 LLM calls per agent) so run less frequently
+  if (supabase) {
+    Promise.resolve(
+      supabase
+        .from('simulations')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+    ).then(({ count }) => {
+      if (!count || count < 20 || count % 20 !== 0) return;
+
+      console.log(`HOOK POST: Triggering prompt optimization (${count} sims)`);
+
+      import('../agents/prompts').then(({ AGENTS }) => {
+        const specialists = AGENTS.filter((a: any) => a.id !== 'decision_chair');
+        for (const agent of specialists) {
+          optimizePrompt(userId, agent.id, {
+            role: agent.role,
+            goal: agent.goal,
+            backstory: agent.backstory,
+            sop: agent.sop,
+            constraints: agent.constraints,
+          })
+            .then(promoted => {
+              if (promoted) console.log(`HOOK POST: Prompt optimized for ${agent.id}`);
+            })
+            .catch(err => console.error(`HOOK POST: Prompt optimization failed for ${agent.id}:`, err));
+        }
+      }).catch(() => {});
+    }).catch(() => {});
+  }
 }
 
 // ═══════════════════════════════════════════

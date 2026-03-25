@@ -26,6 +26,7 @@ import {
   type PreSimResult,
   type RoundLearning,
 } from '../memory/hooks';
+import { buildSystemPromptFromOverride } from '../memory/prompt-optimizer';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -305,7 +306,7 @@ export async function* runSimulation(
   // ═══ MEMORY SYSTEM — Single hook replaces 7+ individual operations ═══
   let preSim: PreSimResult = {
     memory: { coreMemory: { human: '', business: '', preferences: '', history: '' }, isReturningUser: false, relevantFacts: [], profile: null, previousSimCount: 0, opinions: [], observations: [], graphContext: '' },
-    networkMemoryText: '', agentKnowledgeMap: new Map(), agentLessonsMap: new Map(), agentRulesMap: new Map(),
+    networkMemoryText: '', agentKnowledgeMap: new Map(), agentLessonsMap: new Map(), agentRulesMap: new Map(), promptOverrides: new Map(),
     activeThreadId: '', recalledMemoryText: '', threadContext: '', walFactsExtracted: 0,
   };
 
@@ -332,6 +333,15 @@ export async function* runSimulation(
     threadId: preSim.activeThreadId || null,
     hasAgentLessons: preSim.agentLessonsMap.size > 0,
   }};
+
+  // ═══ PROMPT OVERRIDES — Apply optimized prompts (LangMem gradient) ═══
+  // Returns a copy of the agent with overridden systemPrompt if one exists, or the original.
+  const applyPromptOverride = (agent: AgentConfig): AgentConfig => {
+    const override = preSim.promptOverrides.get(agent.id);
+    if (!override) return agent;
+    console.log(`Using optimized prompt for ${agent.id}`);
+    return { ...agent, systemPrompt: buildSystemPromptFromOverride(override, agent.name) };
+  };
 
   // ━━ INPUT GUARDRAILS (OpenAI Agents SDK #8) ━━━━━━━━━━━━━━
   for (const filter of kernel.inputFilters) {
@@ -428,7 +438,7 @@ export async function* runSimulation(
     const agentId = t.assigned_agent as AgentId;
     if (deepAgentIds.has(agentId) || agentId === 'decision_chair') continue;
     try {
-      const agent = getAgentById(agentId);
+      const agent = applyPromptOverride(getAgentById(agentId));
       deepAgentTasks.push({ agent, task: t.description });
       deepAgentIds.add(agentId);
     } catch { continue; }
@@ -437,7 +447,7 @@ export async function* runSimulation(
   const quickAgentTasks: { agent: AgentConfig; task: string }[] = [];
   for (const id of allSpecialistIds) {
     if (deepAgentIds.has(id)) continue;
-    const agent = getAgentById(id);
+    const agent = applyPromptOverride(getAgentById(id));
     const planTask = plan.tasks.find((t) => t.assigned_agent === id);
     quickAgentTasks.push({ agent, task: planTask?.description || `Analyze this decision from your perspective as ${agent.role}` });
   }
@@ -855,8 +865,8 @@ export async function* runSimulation(
     let challengerAgent: AgentConfig;
     let defenderAgent: AgentConfig;
     try {
-      challengerAgent = getAgentById(pair.challenger_id as AgentId);
-      defenderAgent = getAgentById(pair.defender_id as AgentId);
+      challengerAgent = applyPromptOverride(getAgentById(pair.challenger_id as AgentId));
+      defenderAgent = applyPromptOverride(getAgentById(pair.defender_id as AgentId));
     } catch {
       yield { event: 'round_complete', data: { round: roundNum } };
       continue;
