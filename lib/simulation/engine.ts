@@ -21,6 +21,13 @@ import { cognify } from '../memory/knowledge-graph';
 import { buildAllAgentKnowledge } from '../memory/agent-knowledge';
 import { extractOpinionsAndObservations, applyOpinionActions, saveObservations, getUserOpinions, getUserObservations, formatOpinionsForContext, formatObservationsForContext } from '../memory/opinions';
 import { getTopKMemories } from '../memory/recall';
+import {
+  getOrCreateThread,
+  saveSessionSummary,
+  accumulateThreadContext,
+  saveToWorkingBuffer,
+  clearWorkingBuffer,
+} from '../memory/session';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
 
@@ -45,7 +52,7 @@ export type SimulationSSEEvent =
   | { event: 'counter_factual'; data: CounterFactualFlip }
   | { event: 'blind_spots'; data: BlindSpotAnalysis }
   | { event: 'evaluation'; data: SimulationEval }
-  | { event: 'memory_loaded'; data: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number; hasRecalledMemories: boolean } }
+  | { event: 'memory_loaded'; data: { isReturningUser: boolean; factCount: number; hasProfile: boolean; previousSimCount: number; hasRecalledMemories: boolean; hasThreadHistory: boolean; threadId: string | null } }
   | { event: 'knowledge_graph_started'; data: { simulation_id: string } }
   | { event: 'state_summary'; data: any }
   | { event: 'complete'; data: { simulation_id: string } };
@@ -53,6 +60,15 @@ export type SimulationSSEEvent =
 // ── Helpers ──────────────────────────────────────────────────
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Snapshot current agent positions for working buffer. */
+function getCurrentPositions(state: SimulationState): Record<string, string> {
+  const positions: Record<string, string> = {};
+  for (const [agentId, report] of state.latest_reports.entries()) {
+    positions[agentId] = report.position || 'unknown';
+  }
+  return positions;
+}
 
 // Retry wrapper for rate-limited calls
 async function callAgentWithRetry(
@@ -277,7 +293,7 @@ async function callAgent(
 export async function* runSimulation(
   question: string,
   engine: string,
-  options?: { enableCrowdWisdom?: boolean; advisorGuidance?: string; advisorCount?: number; tier?: string; userId?: string },
+  options?: { enableCrowdWisdom?: boolean; advisorGuidance?: string; advisorCount?: number; tier?: string; userId?: string; threadId?: string },
 ): AsyncGenerator<SimulationSSEEvent> {
   const kernel = createKernel();
   const simId = `sim_${Date.now()}`;
@@ -342,6 +358,28 @@ export async function* runSimulation(
     }
   }
 
+  // ═══ SESSION THREAD CONTEXT (Agno per-thread memory) ═══
+  let threadContext = '';
+  let activeThreadId = '';
+  if (options?.userId) {
+    try {
+      activeThreadId = await getOrCreateThread(
+        options.userId,
+        options.threadId || null,
+        question
+      );
+      threadContext = await accumulateThreadContext(activeThreadId);
+      if (threadContext) {
+        networkMemoryText = networkMemoryText
+          ? networkMemoryText + '\n' + threadContext
+          : threadContext;
+        console.log(`SESSION: Thread context loaded for thread ${activeThreadId}`);
+      }
+    } catch (err) {
+      console.error('Session thread load failed (non-blocking):', err);
+    }
+  }
+
   // OpenClaw WAL: Parse question for facts BEFORE sim runs (Claude-powered)
   if (options?.userId) {
     try {
@@ -361,6 +399,8 @@ export async function* runSimulation(
     hasProfile: !!memory.profile,
     previousSimCount: memory.previousSimCount,
     hasRecalledMemories: !!recalledMemoryText,
+    hasThreadHistory: !!threadContext,
+    threadId: activeThreadId || null,
   }};
 
   // ━━ INPUT GUARDRAILS (OpenAI Agents SDK #8) ━━━━━━━━━━━━━━
@@ -493,6 +533,7 @@ export async function* runSimulation(
   }
 
   yield { event: 'round_complete', data: { round: 1 } };
+  saveToWorkingBuffer(simId, options?.userId || 'anon', 1, 'planning', `Chair planned ${plan.tasks?.length || 0} tasks across specialists`, 'decision_chair');
 
   // ━━ ROUND 2 — FIELD SCAN BATCH 1 + DEEP ANALYSIS WAVE 1 ━━━━
 
@@ -563,6 +604,7 @@ export async function* runSimulation(
   }
 
   yield { event: 'round_complete', data: { round: 3 } };
+  saveToWorkingBuffer(simId, options?.userId || 'anon', 3, 'deep_analysis', `Deep wave 1: ${allReports.length} reports`, null, getCurrentPositions(state));
 
   // ━━ ROUND 4 — FIELD SCAN BATCH 2 + DEEP ANALYSIS WAVE 2 ━━
 
@@ -622,6 +664,7 @@ export async function* runSimulation(
   }
 
   yield { event: 'round_complete', data: { round: 5 } };
+  saveToWorkingBuffer(simId, options?.userId || 'anon', 5, 'deep_analysis', `Deep wave 2: ${allReports.length} total reports`, null, getCurrentPositions(state));
 
   const deepConsensus = calculateConsensus(allReports);
   state.consensus_history.push({ phase: 'opening', ...deepConsensus });
@@ -712,6 +755,7 @@ export async function* runSimulation(
   }
 
   yield { event: 'round_complete', data: { round: 6 } };
+  saveToWorkingBuffer(simId, options?.userId || 'anon', 6, 'rapid_assessment', `Rapid assessment: ${allReports.length} total reports`, null, getCurrentPositions(state));
 
   const quickConsensus = calculateConsensus(allReports);
   state.consensus_history.push({ phase: 'quick_takes', ...quickConsensus });
@@ -958,6 +1002,7 @@ export async function* runSimulation(
   state.consensus_history.push({ phase: 'convergence', ...convergenceConsensus });
   yield { event: 'consensus_update', data: convergenceConsensus };
   yield { event: 'round_complete', data: { round: 9 } };
+  saveToWorkingBuffer(simId, options?.userId || 'anon', 9, 'convergence', `Convergence: ${finalReports.length} final positions`, null, getCurrentPositions(state));
 
   console.log(`[convergence] ${finalReports.length}/10 convergence reports, using ${consensusReports.length} for consensus`);
 
@@ -1143,6 +1188,7 @@ DEBATE PROGRESS:
   state.verdict = verdict;
   yield { event: 'verdict_artifact', data: verdict };
   yield { event: 'round_complete', data: { round: 10 } };
+  saveToWorkingBuffer(simId, options?.userId || 'anon', 10, 'verdict', `Verdict: ${(verdict as Record<string, unknown>)?.recommendation || 'unknown'} (${(verdict as Record<string, unknown>)?.probability || 0}%)`, 'decision_chair', getCurrentPositions(state));
 
   // Yield enriched citations with full traceability
   yield { event: 'citations_enriched', data: enrichedCitations };
@@ -1347,6 +1393,21 @@ DEBATE PROGRESS:
     } catch (err) {
       console.error('[cognify] Error (non-fatal):', err);
     }
+  }
+
+  // ═══ SESSION: Save thread summary + clear buffer ═══
+  if (options?.userId && activeThreadId) {
+    await saveSessionSummary(
+      activeThreadId,
+      simId,
+      options.userId,
+      question,
+      verdict,
+      state.latest_reports
+    ).catch(err => console.error('SESSION summary save error:', err));
+
+    clearWorkingBuffer(simId)
+      .catch(err => console.error('BUFFER clear error:', err));
   }
 
   yield { event: 'complete', data: { simulation_id: simId } };
