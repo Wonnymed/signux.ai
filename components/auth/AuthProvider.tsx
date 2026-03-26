@@ -48,6 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const onShowAuth = () => setShowAuthModal(true);
+    window.addEventListener('octux:show-auth', onShowAuth);
+    return () => window.removeEventListener('octux:show-auth', onShowAuth);
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
