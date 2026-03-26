@@ -9,7 +9,7 @@ export default function ThinkingIndicator() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.2 }}
-      className="flex items-start mb-4 max-w-[88%]"
+      className="flex items-start mb-4 w-full"
     >
       <div className="rounded-2xl rounded-bl-md bg-[#1a1a28] border border-white/[0.08] flex items-center gap-2 shadow-sm shadow-white/[0.02]" style={{ padding: '12px 16px' }}>
         <div className="flex items-center gap-1">

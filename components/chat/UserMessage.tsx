@@ -23,7 +23,7 @@ export default function UserMessage({ content, tier, optimistic, label }: UserMe
       )}
       <div
         className={cn(
-          'max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-md',
+          'max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-md',
           'bg-accent text-white',
           'text-sm leading-relaxed whitespace-pre-wrap break-words',
           optimistic && 'opacity-70',

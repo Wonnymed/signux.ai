@@ -24,7 +24,7 @@ export default function AssistantMessage({ content, tier, disclaimer, isCode }: 
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="flex flex-col items-start mb-4 max-w-[88%]"
+      className="flex flex-col items-start mb-4 w-full"
     >
       <div
         className={cn(

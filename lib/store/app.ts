@@ -41,7 +41,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Sidebar
-  sidebarExpanded: false,
+  sidebarExpanded: true,
   setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
   toggleSidebar: () => set((s) => ({ sidebarExpanded: !s.sidebarExpanded })),
 

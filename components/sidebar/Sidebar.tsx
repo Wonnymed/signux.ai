@@ -75,8 +75,6 @@ export default function Sidebar() {
         initial={false}
         animate={{ width: expanded ? 260 : 56 }}
         transition={{ duration: 0.15, ease: 'easeOut' }}
-        onMouseEnter={() => setExpanded(true)}
-        onMouseLeave={() => setExpanded(false)}
         className={cn(
           'h-full shrink-0 flex flex-col',
           'bg-surface-1 border-r border-border-subtle',

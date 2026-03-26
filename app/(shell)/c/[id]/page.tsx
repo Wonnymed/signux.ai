@@ -104,7 +104,7 @@ export default function ConversationPage() {
     <div className="flex flex-col h-full bg-surface-0">
       {/* ─── MESSAGES AREA ─── */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6">
+        <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-6">
           <EntityVisual
             state={entityState || 'idle'}
             compact={hasMessages}
