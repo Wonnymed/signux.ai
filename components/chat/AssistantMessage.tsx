@@ -29,7 +29,7 @@ export default function AssistantMessage({ content, tier, disclaimer, isCode }: 
       <div
         className={cn(
           'px-4 py-3 rounded-2xl rounded-bl-md',
-          'bg-surface-1 border border-border-subtle',
+          'bg-surface-2 border border-border-default',
           'text-sm text-txt-primary leading-relaxed',
         )}
       >

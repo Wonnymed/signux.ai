@@ -11,7 +11,7 @@ export default function ThinkingIndicator() {
       transition={{ duration: 0.2 }}
       className="flex items-start mb-4 max-w-[88%]"
     >
-      <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-surface-1 border border-border-subtle flex items-center gap-2">
+      <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-surface-2 border border-border-default flex items-center gap-2">
         <div className="flex items-center gap-1">
           {[0, 1, 2].map((i) => (
             <motion.span

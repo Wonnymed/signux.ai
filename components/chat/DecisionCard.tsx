@@ -25,7 +25,7 @@ export default function DecisionCard({
       transition={{ duration: 0.25 }}
       className="flex flex-col items-start mb-4 max-w-[88%]"
     >
-      <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-surface-1 border border-border-subtle text-sm text-txt-primary leading-relaxed">
+      <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-surface-2 border border-border-default text-sm text-txt-primary leading-relaxed">
         <MarkdownRenderer content={content} />
       </div>
 
