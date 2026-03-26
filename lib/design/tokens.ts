@@ -28,6 +28,12 @@ export const verdictColors = {
 } as const;
 export type VerdictType = keyof typeof verdictColors;
 
+export const verdictLabels: Record<VerdictType, string> = {
+  proceed: 'PROCEED',
+  delay: 'DELAY',
+  abandon: 'ABANDON',
+};
+
 export const gradeColors: Record<string, string> = {
   'A+': '#10B981', 'A': '#10B981', 'A-': '#10B981',
   'B+': '#3B82F6', 'B': '#3B82F6', 'B-': '#3B82F6',

@@ -11,8 +11,9 @@ import ErrorMessage from './ErrorMessage';
 
 // PF-13: real simulation block (replaces placeholder)
 import SimulationBlockNew from '@/components/simulation/SimulationBlockNew';
-// Placeholders — replaced by PF-14, PF-17
-import VerdictCardPlaceholder from './placeholders/VerdictCardPlaceholder';
+// PF-14: real verdict card (replaces placeholder)
+import VerdictCard from '@/components/verdict/VerdictCard';
+// Placeholders — replaced by PF-17
 import RefinementCardPlaceholder from './placeholders/RefinementCardPlaceholder';
 
 interface MessageRendererProps {
@@ -76,7 +77,7 @@ const MessageRenderer = memo(function MessageRenderer({
 
     case 'simulation_verdict':
       return (
-        <VerdictCardPlaceholder
+        <VerdictCard
           verdict={message.structured_data}
           simulationId={message.simulation_id}
           conversationId={conversationId}
