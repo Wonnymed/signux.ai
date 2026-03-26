@@ -205,7 +205,7 @@ export default function Sidebar() {
                 {tier === 'free' ? (
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('octux:show-upgrade', { detail: { suggestedTier: 'pro' } }))}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface-2 hover:bg-surface-3 border border-border-subtle transition-colors duration-normal text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface-2/80 hover:bg-surface-3 border border-border-subtle/80 border-accent/10 shadow-sm shadow-black/20 backdrop-blur-sm transition-colors duration-normal text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
                       <Zap size={14} className="text-accent" />
@@ -307,7 +307,7 @@ function ConversationGroup({
             exit={{ opacity: 0, height: 0 }}
             className="px-2 py-1"
           >
-            <span className="text-[10px] font-semibold text-txt-disabled uppercase tracking-[0.08em]">
+            <span className="sidebar-section-label block !mt-0 !mb-0 !py-1 !px-2">
               {label}
             </span>
           </motion.div>
@@ -374,10 +374,10 @@ function ConversationItem({
         <button
           onClick={onClick}
           className={cn(
-            'w-full flex items-center gap-2 rounded-md transition-all duration-normal',
+            'w-full flex items-center gap-2 rounded-md transition-all duration-normal border-l-2 border-transparent',
             expanded ? 'px-2 py-1.5' : 'px-0 py-1.5 justify-center',
             active
-              ? 'bg-surface-2 text-txt-primary'
+              ? 'sidebar-item-active text-txt-primary'
               : 'text-txt-secondary hover:bg-surface-2/60 hover:text-txt-primary',
           )}
         >

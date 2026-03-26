@@ -42,7 +42,6 @@ const MessageRenderer = memo(function MessageRenderer({
         return (
           <UserMessage
             content={message.content || ''}
-            tier={message.model_tier}
             optimistic={message._optimistic}
           />
         );
@@ -108,7 +107,6 @@ const MessageRenderer = memo(function MessageRenderer({
       return (
         <UserMessage
           content={message.content || ''}
-          tier={message.model_tier}
           label="Your input"
         />
       );
@@ -124,7 +122,7 @@ const MessageRenderer = memo(function MessageRenderer({
 
     default:
       if (message.role === 'user') {
-        return <UserMessage content={message.content || ''} tier={message.model_tier} />;
+        return <UserMessage content={message.content || ''} />;
       }
       return <AssistantMessage content={message.content || ''} tier={message.model_tier} />;
   }

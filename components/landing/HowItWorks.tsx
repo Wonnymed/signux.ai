@@ -26,11 +26,11 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-20 sm:py-28 px-6">
+    <section className="py-24 sm:py-32 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* Section header */}
+        <div className="section-divider mb-12 opacity-80" aria-hidden />
         <div className="text-center mb-16">
-          <h2 className="text-2xl sm:text-3xl font-medium text-txt-primary mb-3">
+          <h2 className="marketing-heading sm:text-3xl">
             How it works
           </h2>
           <p className="text-sm text-txt-tertiary max-w-md mx-auto">

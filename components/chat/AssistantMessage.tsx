@@ -26,31 +26,38 @@ export default function AssistantMessage({ content, tier, disclaimer, isCode }: 
       transition={{ duration: 0.25 }}
       className="flex flex-col items-start mb-4 w-full"
     >
-      <div
-        className={cn(
-          'rounded-2xl rounded-bl-md',
-          'bg-[#1a1a28] border border-white/[0.08]',
-          'text-sm text-txt-primary leading-relaxed',
-          'shadow-sm shadow-white/[0.02]',
-        )}
-        style={{ padding: '12px 16px' }}
-      >
-        {isCode ? (
-          <pre className="text-xs text-txt-secondary font-mono whitespace-pre-wrap overflow-x-auto">
-            {content}
-          </pre>
-        ) : (
-          <MarkdownRenderer content={content} />
-        )}
+      <div className="flex items-start gap-3 max-w-[min(85%,42rem)] w-full">
+        <div
+          className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/60 to-cyan-500/40 flex items-center justify-center shrink-0 mt-0.5 border border-white/[0.08] shadow-sm shadow-black/20"
+          aria-hidden
+        >
+          <span className="text-[10px] leading-none">🐙</span>
+        </div>
+        <div
+          className={cn(
+            'min-w-0 flex-1 px-4 py-3 rounded-2xl rounded-bl-sm',
+            'bg-[#111118] border border-white/[0.06]',
+            'text-[14px] leading-relaxed text-white/85',
+            'shadow-sm shadow-black/20',
+          )}
+        >
+          {isCode ? (
+            <pre className="text-xs text-txt-secondary font-mono whitespace-pre-wrap overflow-x-auto">
+              {content}
+            </pre>
+          ) : (
+            <MarkdownRenderer content={content} />
+          )}
+        </div>
       </div>
 
       {tier && TIER_LABELS[tier] && (
-        <span className="text-micro text-txt-disabled mt-1 ml-2">
+        <span className="text-micro text-txt-disabled mt-1 ml-10">
           {TIER_LABELS[tier]}
         </span>
       )}
 
-      {disclaimer && <DisclaimerBanner text={disclaimer} className="mt-2 ml-0" />}
+      {disclaimer && <DisclaimerBanner text={disclaimer} className="mt-2 ml-10" />}
     </motion.div>
   );
 }

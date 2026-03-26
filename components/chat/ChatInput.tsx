@@ -8,6 +8,7 @@ import { useChatStore } from '@/lib/store/chat';
 import { useBillingStore } from '@/lib/store/billing';
 import { TIER_CONFIGS, type ModelTier } from '@/lib/chat/tiers';
 import { TOKEN_COSTS } from '@/lib/billing/tiers';
+import { SUGGESTION_CHIP_CONFIG } from '@/lib/design/suggestionChips';
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/shadcn/tooltip';
@@ -27,14 +28,6 @@ interface ChatInputProps {
   className?: string;
 }
 
-const SUGGESTION_CHIPS = [
-  'Should I invest $10K in NVIDIA?',
-  'Time to break up or work on it?',
-  'Quit my 9-5 for a startup?',
-  'Open a restaurant in Gangnam?',
-  'Move abroad or stay close to family?',
-];
-
 const MAX_ROWS = 6;
 const LINE_HEIGHT = 22;
 
@@ -50,7 +43,6 @@ export default function ChatInput({
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Zustand
   const selectedTier = useChatStore((s) => s.selectedTier);
   const setSelectedTier = useChatStore((s) => s.setSelectedTier);
   const storeSending = useChatStore((s) => s.sending);
@@ -59,13 +51,11 @@ export default function ChatInput({
   const tokensRemaining = useBillingStore((s) => s.tokensRemaining);
   const canAfford = useBillingStore((s) => s.canAfford);
 
-  // Local state
   const [value, setValue] = useState('');
   const [hasContent, setHasContent] = useState(false);
   const sending = externalLoading ?? storeSending;
   const chips = showSuggestions ?? isNewConversation ?? false;
 
-  // ─── AUTO-RESIZE ───
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -77,7 +67,6 @@ export default function ChatInput({
 
   useEffect(() => { autoResize(); }, [value, autoResize]);
 
-  // ─── SEND ───
   const handleSend = useCallback(() => {
     const message = value.trim();
     if (!message || sending || disabled) return;
@@ -95,7 +84,6 @@ export default function ChatInput({
     }
   }, [value, sending, disabled, selectedTier, onSend, conversationId, storeSendMessage]);
 
-  // ─── KEYBOARD ───
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -106,15 +94,12 @@ export default function ChatInput({
     [handleSend],
   );
 
-  // ─── CHIP CLICK ───
   const handleChipClick = useCallback(
     (text: string) => {
       if (sending) return;
       if (onSend) {
-        // Direct send — don't set value (prevents Enter key double-send)
         onSend(text, { tier: selectedTier });
       } else {
-        // Fill input for Zustand path
         setValue(text);
         setHasContent(true);
         textareaRef.current?.focus();
@@ -123,7 +108,6 @@ export default function ChatInput({
     [selectedTier, onSend, sending],
   );
 
-  // ─── TIER CLICK ───
   const handleTierClick = useCallback(
     (tier: ModelTier) => {
       if (tier === 'ink') {
@@ -147,7 +131,6 @@ export default function ChatInput({
     [canAfford, setSelectedTier],
   );
 
-  // ─── FOCUS ON MOUNT ───
   useEffect(() => {
     const timer = setTimeout(() => textareaRef.current?.focus(), 200);
     return () => clearTimeout(timer);
@@ -155,7 +138,6 @@ export default function ChatInput({
 
   return (
     <div className={cn('shrink-0 border-t border-border-subtle bg-surface-0', className)}>
-      {/* ─── SUGGESTION CHIPS ─── */}
       <AnimatePresence>
         {chips && !hasContent && !sending && (
           <motion.div
@@ -165,134 +147,91 @@ export default function ChatInput({
             transition={{ duration: 0.2 }}
             className="px-4 pt-3 pb-0 max-w-3xl mx-auto w-full"
           >
-            <div className="flex flex-wrap gap-1.5 justify-center">
-              {SUGGESTION_CHIPS.map((chip, i) => (
-                <motion.button
-                  key={i}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: i * 0.04 }}
-                  onClick={() => handleChipClick(chip)}
-                  disabled={sending}
-                  className={cn(
-                    'px-3 py-1.5 text-xs rounded-full border transition-all duration-normal',
-                    'border-border-default text-txt-secondary',
-                    'hover:text-txt-primary hover:border-accent/30 hover:bg-surface-2/50',
-                    'active:scale-[0.97]',
-                    'disabled:opacity-40 disabled:cursor-not-allowed',
-                  )}
-                >
-                  {chip}
-                </motion.button>
-              ))}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {SUGGESTION_CHIP_CONFIG.map((chip, i) => {
+                const Icon = chip.Icon;
+                return (
+                  <motion.button
+                    key={chip.text}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: i * 0.04 }}
+                    onClick={() => handleChipClick(chip.text)}
+                    disabled={sending}
+                    type="button"
+                    className={cn(
+                      'group flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200',
+                      'border-white/[0.06] bg-white/[0.02]',
+                      'hover:bg-white/[0.05] hover:border-white/[0.12] active:scale-[0.98]',
+                      'disabled:opacity-40 disabled:cursor-not-allowed',
+                    )}
+                  >
+                    <Icon
+                      size={13}
+                      className="opacity-35 group-hover:opacity-100 transition-opacity shrink-0"
+                      style={{ color: chip.color }}
+                    />
+                    <span className="text-[13px] text-white/50 group-hover:text-white/75 transition-colors">
+                      {chip.text}
+                    </span>
+                  </motion.button>
+                );
+              })}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ─── INPUT AREA ─── */}
       <div className="p-4 max-w-3xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className={cn(
-            'flex items-end gap-2 rounded-xl border transition-colors duration-normal',
-            'bg-surface-1',
-            'focus-within:border-accent/30 focus-within:shadow-sm focus-within:shadow-accent/5',
-            sending ? 'border-border-subtle opacity-70' : 'border-border-default',
-          )}
+          className="space-y-2"
         >
-          {/* ─── TIER SELECTOR ─── */}
-          <TooltipProvider delayDuration={300}>
-            <div className="pl-3 pb-2.5 pt-2.5 shrink-0">
-              <div className="flex items-center gap-0.5 p-0.5 bg-surface-2 rounded-md">
-                {(['ink', 'deep', 'kraken'] as const).map((tier) => {
-                  const config = TIER_CONFIGS[tier];
-                  const isActive = selectedTier === tier;
-                  const cost = tier === 'ink' ? 0 : TOKEN_COSTS[tier === 'kraken' ? 'kraken' : 'deep'];
-                  const locked = cost > 0 && !canAfford(tier === 'kraken' ? 'kraken' : 'deep');
-
-                  return (
-                    <Tooltip key={tier}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => handleTierClick(tier)}
-                          disabled={sending}
-                          className={cn(
-                            'flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-medium transition-all duration-normal',
-                            isActive
-                              ? tier === 'ink'
-                                ? 'bg-surface-raised text-txt-primary shadow-xs'
-                                : tier === 'deep'
-                                ? 'bg-accent-muted text-accent shadow-xs'
-                                : 'bg-[#00e5ff]/10 text-[#00e5ff] shadow-xs'
-                              : locked
-                              ? 'text-txt-disabled cursor-not-allowed opacity-50'
-                              : 'text-txt-tertiary hover:text-txt-secondary',
-                          )}
-                        >
-                          {config.label}
-                          {cost > 0 && (
-                            <span className={cn('text-[10px] tabular-nums', isActive ? 'opacity-80' : 'opacity-50')}>
-                              {cost}t
-                            </span>
-                          )}
-                          {locked && <Lock size={9} className="opacity-60" />}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs max-w-48">
-                        <p className="font-medium">{config.label}</p>
-                        <p className="text-txt-tertiary">{config.description}</p>
-                        {locked && (
-                          <p className="text-verdict-delay mt-1">
-                            Need {cost} token{cost > 1 ? 's' : ''} · {tokensRemaining} remaining
-                          </p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
-          </TooltipProvider>
-
-          {/* ─── TEXTAREA ─── */}
-          <textarea
-            ref={textareaRef}
-            data-chat-input
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-              const newHas = e.target.value.trim().length > 0;
-              if (newHas !== hasContent) setHasContent(newHas);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={sending || disabled}
-            rows={1}
+          {/* Large input — primary focus */}
+          <div
             className={cn(
-              'flex-1 resize-none bg-transparent text-sm text-txt-primary',
-              'placeholder:text-txt-disabled',
-              'outline-none border-none',
-              'min-h-[22px] py-2.5',
-              'disabled:cursor-not-allowed disabled:opacity-50',
+              'relative rounded-2xl border transition-all duration-200',
+              'bg-[#111118] border-white/[0.06]',
+              'shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]',
+              'focus-within:border-accent/30 focus-within:shadow-lg focus-within:shadow-accent/5',
+              'hover:border-white/[0.10]',
+              sending && 'opacity-70 pointer-events-none',
             )}
-            style={{
-              lineHeight: `${LINE_HEIGHT}px`,
-              overflow: 'hidden',
-            }}
-          />
-
-          {/* ─── SEND BUTTON ─── */}
-          <div className="pr-2 pb-2 flex items-center gap-1 shrink-0">
+          >
+            <textarea
+              ref={textareaRef}
+              data-chat-input
+              value={value}
+              onChange={(e) => {
+                setValue(e.target.value);
+                const newHas = e.target.value.trim().length > 0;
+                if (newHas !== hasContent) setHasContent(newHas);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={sending || disabled}
+              rows={1}
+              className={cn(
+                'w-full min-h-[52px] max-h-[120px] resize-none bg-transparent',
+                'px-5 py-3.5 pr-14 text-[15px] text-white/90 placeholder:text-white/25',
+                'outline-none',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+              )}
+              style={{
+                lineHeight: `${LINE_HEIGHT}px`,
+                overflow: 'hidden',
+              }}
+            />
             <button
+              type="button"
               onClick={handleSend}
               disabled={!hasContent || sending || disabled}
               className={cn(
-                'w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-normal',
+                'absolute right-3 bottom-3 w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
                 hasContent && !sending
-                  ? 'bg-accent text-white hover:bg-accent-hover active:scale-95'
+                  ? 'bg-accent text-white hover:bg-accent-hover'
                   : 'bg-surface-2 text-txt-disabled',
                 (sending || disabled) && 'opacity-50 cursor-not-allowed',
               )}
@@ -302,16 +241,64 @@ export default function ChatInput({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 >
-                  <Zap size={14} />
+                  <Zap size={16} />
                 </motion.div>
               ) : (
-                <ArrowUp size={14} strokeWidth={2.5} />
+                <ArrowUp size={16} strokeWidth={2.5} />
               )}
             </button>
           </div>
+
+          {/* Tier row — separate from input */}
+          <TooltipProvider delayDuration={300}>
+            <div className="flex items-center justify-center gap-1 flex-wrap">
+              {(['ink', 'deep', 'kraken'] as const).map((tier) => {
+                const config = TIER_CONFIGS[tier];
+                const isActive = selectedTier === tier;
+                const cost = tier === 'ink' ? 0 : TOKEN_COSTS[tier === 'kraken' ? 'kraken' : 'deep'];
+                const locked = cost > 0 && !canAfford(tier === 'kraken' ? 'kraken' : 'deep');
+
+                return (
+                  <Tooltip key={tier}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => handleTierClick(tier)}
+                        disabled={sending}
+                        className={cn(
+                          'flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-all',
+                          isActive
+                            ? 'bg-white/[0.08] text-white/80'
+                            : locked
+                              ? 'text-white/20 cursor-not-allowed opacity-50'
+                              : 'text-white/30 hover:text-white/50',
+                        )}
+                      >
+                        {config.label}
+                        {cost > 0 && (
+                          <span className={cn('text-[10px] tabular-nums text-white/20', isActive && 'text-white/35')}>
+                            {cost}t
+                          </span>
+                        )}
+                        {locked && <Lock size={9} className="opacity-60" />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs max-w-48">
+                      <p className="font-medium">{config.label}</p>
+                      <p className="text-txt-tertiary">{config.description}</p>
+                      {locked && (
+                        <p className="text-verdict-delay mt-1">
+                          Need {cost} token{cost > 1 ? 's' : ''} · {tokensRemaining} remaining
+                        </p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </motion.div>
 
-        {/* ─── FOOTER HINTS ─── */}
         <div className="flex items-center justify-between mt-1.5 px-1">
           <span className="text-micro text-txt-disabled">
             Enter to send · Shift+Enter for new line

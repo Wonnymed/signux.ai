@@ -26,14 +26,16 @@ export default function LandingPage() {
         </button>
       </header>
 
-      {/* Sections */}
       <HeroSection onSignIn={() => setShowAuth(true)} />
-      <TrustStrip />
-      <HowItWorks />
-      <LiveExample onSignIn={() => setShowAuth(true)} />
-      <WhyNotChatGPT />
-      <PricingPreview onSignIn={() => setShowAuth(true)} />
-      <LandingFooter onSignIn={() => setShowAuth(true)} />
+
+      <div className="landing-marketing-stack">
+        <TrustStrip />
+        <HowItWorks />
+        <LiveExample onSignIn={() => setShowAuth(true)} />
+        <WhyNotChatGPT />
+        <PricingPreview onSignIn={() => setShowAuth(true)} />
+        <LandingFooter onSignIn={() => setShowAuth(true)} />
+      </div>
 
       {/* Auth modal */}
       <AuthModal
