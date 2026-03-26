@@ -75,3 +75,31 @@ export const layout = {
 } as const;
 
 export const breakpoints = { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 } as const;
+
+// ═══ CONFIDENCE HELPERS ═══
+
+export function getConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' {
+  if (confidence >= 75) return 'high';
+  if (confidence >= 50) return 'medium';
+  return 'low';
+}
+
+export function getConfidenceColor(confidence: number): string {
+  if (confidence >= 75) return '#10B981';
+  if (confidence >= 50) return '#F59E0B';
+  return '#EF4444';
+}
+
+// Deterministic avatar gradient from agent index
+export const AGENT_GRADIENTS = [
+  ['#6366F1', '#8B5CF6'],
+  ['#EC4899', '#F43F5E'],
+  ['#10B981', '#14B8A6'],
+  ['#F59E0B', '#F97316'],
+  ['#3B82F6', '#06B6D4'],
+  ['#D946EF', '#E879F9'],
+  ['#EF4444', '#F87171'],
+  ['#22C55E', '#4ADE80'],
+  ['#0EA5E9', '#38BDF8'],
+  ['#A855F7', '#C084FC'],
+] as const;
