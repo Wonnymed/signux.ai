@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/design/cn';
 
-type EntityState = 'idle' | 'chatting' | 'diving' | 'resting';
+type EntityState = 'idle' | 'chatting' | 'diving' | 'resting' | 'dormant' | 'active' | 'thinking';
 
 interface EntityVisualProps {
   state: EntityState;
@@ -18,7 +18,25 @@ const stateMap: Record<EntityState, { scale: string; glow: string; breathe: stri
     breathe: 'animate-breathe',
     label: '',
   },
+  dormant: {
+    scale: 'scale-100',
+    glow: 'entity-ring',
+    breathe: 'animate-breathe',
+    label: '',
+  },
   chatting: {
+    scale: 'scale-105',
+    glow: 'entity-ring-active',
+    breathe: 'animate-breathe-fast',
+    label: 'Thinking...',
+  },
+  active: {
+    scale: 'scale-105',
+    glow: 'entity-ring-active',
+    breathe: 'animate-breathe-fast',
+    label: '',
+  },
+  thinking: {
     scale: 'scale-105',
     glow: 'entity-ring-active',
     breathe: 'animate-breathe-fast',
@@ -39,7 +57,7 @@ const stateMap: Record<EntityState, { scale: string; glow: string; breathe: stri
 };
 
 export default function EntityVisual({ state, compact = false, className }: EntityVisualProps) {
-  const s = stateMap[state];
+  const s = stateMap[state] || stateMap.idle;
 
   if (compact) {
     return (
