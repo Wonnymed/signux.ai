@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/design/cn';
-import { layout } from '@/lib/design/tokens';
 import { useKeyboardShortcuts } from '@/lib/hooks/useKeyboardShortcuts';
-import ConversationSidebar from './ConversationSidebar';
+import { useAppStore } from '@/lib/store/app';
+import Sidebar from '@/components/sidebar/Sidebar';
+import { Menu } from 'lucide-react';
 
 interface ChatLayoutProps {
   children: React.ReactNode;
 }
 
 export default function ChatLayout({ children }: ChatLayoutProps) {
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const sidebarExpanded = useAppStore((s) => s.sidebarExpanded);
+  const setSidebarExpanded = useAppStore((s) => s.setSidebarExpanded);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -23,7 +25,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
 
   // Central keyboard shortcuts
   useKeyboardShortcuts({
-    onToggleSidebar: () => setSidebarExpanded(prev => !prev),
+    onToggleSidebar: () => setSidebarExpanded(!sidebarExpanded),
     onFocusInput: () => document.querySelector<HTMLTextAreaElement>('[data-chat-input]')?.focus(),
     onExpandVerdict: () => window.dispatchEvent(new CustomEvent('octux:toggle-verdict-expand')),
     onStartDeepSim: () => window.dispatchEvent(new CustomEvent('octux:auto-simulate', { detail: { tier: 'deep' } })),
@@ -33,21 +35,9 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   return (
     <div className="flex h-dvh bg-surface-0">
       {/* Sidebar — always visible on desktop */}
-      {!isMobile && (
-        <aside
-          className={cn(
-            'h-full shrink-0 bg-surface-1 border-r border-border-subtle',
-            'transition-[width] duration-normal ease-out overflow-hidden',
-          )}
-          style={{ width: sidebarExpanded ? layout.sidebarExpanded : layout.sidebarCollapsed }}
-          onMouseEnter={() => setSidebarExpanded(true)}
-          onMouseLeave={() => setSidebarExpanded(false)}
-        >
-          <ConversationSidebar expanded={sidebarExpanded} />
-        </aside>
-      )}
+      {!isMobile && <Sidebar />}
 
-      {/* Main content — scrollable for home page marketing, contained for conversations */}
+      {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 relative overflow-y-auto overflow-x-hidden">
         {/* Mobile header */}
         {isMobile && (
@@ -56,9 +46,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
               onClick={() => setSidebarExpanded(true)}
               className="p-1.5 rounded-md text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal"
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M3 5h12M3 9h12M3 13h12" />
-              </svg>
+              <Menu size={18} />
             </button>
             <div className="flex-1 flex justify-center">
               <span className="text-sm font-light tracking-widest text-txt-tertiary lowercase">octux</span>
@@ -78,7 +66,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             onClick={() => setSidebarExpanded(false)}
           />
           <aside className="fixed inset-y-0 left-0 w-72 bg-surface-1 border-r border-border-subtle z-50 animate-slide-in-right">
-            <ConversationSidebar expanded={true} onNavigate={() => setSidebarExpanded(false)} />
+            <Sidebar />
           </aside>
         </>
       )}
