@@ -3,12 +3,10 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/design/cn';
 import { useChatStore } from '@/lib/store/chat';
 import { useSimulationStore } from '@/lib/store/simulation';
 import { useAppStore } from '@/lib/store/app';
-import { useBillingStore } from '@/lib/store/billing';
-import { TOKEN_COSTS } from '@/lib/billing/tiers';
+import { useSimulationStream } from '@/lib/hooks/useSimulationStream';
 import EntityVisual from '@/components/chat/EntityVisual';
 import ChatInput from '@/components/chat/ChatInput';
 import { MessageRenderer, ThinkingIndicator } from '@/components/chat';
@@ -24,14 +22,11 @@ export default function ConversationPage() {
   const loadConversation = useChatStore((s) => s.loadConversation);
   const clear = useChatStore((s) => s.clear);
 
-  const simStatus = useSimulationStore((s) => s.status);
-  const startSimulation = useSimulationStore((s) => s.startSimulation);
-  const simResult = useSimulationStore((s) => s.result);
   const simReset = useSimulationStore((s) => s.reset);
-
-  const updateConversation = useAppStore((s) => s.updateConversation);
   const setActiveConversationId = useAppStore((s) => s.setActiveConversationId);
-  const consumeTokens = useBillingStore((s) => s.consumeTokens);
+
+  // ─── SIMULATION HOOK ───
+  const { triggerSimulation } = useSimulationStream({ conversationId });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +37,7 @@ export default function ConversationPage() {
     const load = async () => {
       await loadConversation(conversationId);
 
-      // Race condition: first message may not be saved yet if we just navigated from root page
+      // Race condition: first message may not be saved yet
       const msgs = useChatStore.getState().messages;
       if (msgs.length === 0) {
         setTimeout(() => loadConversation(conversationId), 1000);
@@ -65,69 +60,13 @@ export default function ConversationPage() {
     return () => clearTimeout(timer);
   }, [messages.length, sending]);
 
-  // ─── HANDLE SIMULATION TRIGGER ───
+  // ─── HANDLE SIMULATION ───
   const handleSimulate = useCallback(
-    async (question: string, tier: string) => {
-      try {
-        const res = await fetch(`/api/c/${conversationId}/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'simulate', question, tier }),
-        });
-
-        if (!res.ok) throw new Error('Failed to trigger simulation');
-        const data = await res.json();
-
-        if (data.streamUrl) {
-          useChatStore.getState().addMessage({
-            id: `sim-start-${Date.now()}`,
-            message_type: 'simulation_start',
-            role: 'system',
-            content: question,
-            structured_data: { streamUrl: data.streamUrl, tier },
-            model_tier: tier,
-            simulation_id: null,
-            created_at: new Date().toISOString(),
-          });
-
-          useChatStore.getState().setEntityState('diving');
-          startSimulation(data.streamUrl);
-        }
-      } catch (error) {
-        console.error('Simulation trigger failed:', error);
-      }
+    (question: string, tier: string) => {
+      triggerSimulation(question, tier);
     },
-    [conversationId, startSimulation],
+    [triggerSimulation],
   );
-
-  // ─── HANDLE SIMULATION COMPLETE ───
-  useEffect(() => {
-    if (simResult && simStatus === 'complete') {
-      useChatStore.getState().addMessage({
-        id: `verdict-${Date.now()}`,
-        message_type: 'simulation_verdict',
-        role: 'assistant',
-        content: null,
-        structured_data: simResult,
-        model_tier: 'deep',
-        simulation_id: useSimulationStore.getState().simulationId,
-        created_at: new Date().toISOString(),
-      });
-
-      useChatStore.getState().setEntityState('resting');
-
-      const rec = simResult?.recommendation?.toLowerCase();
-      if (rec) {
-        updateConversation(conversationId, {
-          has_simulation: true,
-          latest_verdict: rec,
-          latest_verdict_probability: simResult?.probability || null,
-        });
-      }
-
-      consumeTokens(TOKEN_COSTS.deep);
-    }
-  }, [simResult, simStatus, conversationId, updateConversation, consumeTokens]);
 
   // ─── HANDLE REFINEMENT ───
   const handleRefine = useCallback(
@@ -166,13 +105,11 @@ export default function ConversationPage() {
       {/* ─── MESSAGES AREA ─── */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6">
-          {/* Entity visual (compact when messages exist) */}
           <EntityVisual
             state={entityState as 'idle' | 'chatting' | 'diving' | 'resting'}
             compact={hasMessages}
           />
 
-          {/* Empty state */}
           {!hasMessages && !sending && (
             <div className="text-center py-8">
               <p className="text-sm text-txt-tertiary mb-1">Ask anything about a decision you&apos;re facing</p>
@@ -180,7 +117,6 @@ export default function ConversationPage() {
             </div>
           )}
 
-          {/* Messages */}
           <AnimatePresence initial={false}>
             {messages.map((msg, i) => (
               <MessageRenderer
@@ -194,12 +130,10 @@ export default function ConversationPage() {
             ))}
           </AnimatePresence>
 
-          {/* Thinking indicator */}
           <AnimatePresence>
             {sending && <ThinkingIndicator />}
           </AnimatePresence>
 
-          {/* Scroll anchor */}
           <div ref={messagesEndRef} className="h-1" />
         </div>
       </div>

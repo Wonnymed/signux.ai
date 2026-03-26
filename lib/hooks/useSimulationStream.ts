@@ -1,51 +1,42 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { useSimulationStore } from '@/lib/store/simulation';
+import { useChatStore } from '@/lib/store/chat';
+import { useAppStore } from '@/lib/store/app';
+import { useBillingStore } from '@/lib/store/billing';
+import { TOKEN_COSTS } from '@/lib/billing/tiers';
+import { SIMULATION_TIMEOUT_MS } from '@/lib/simulation/phases';
+import type { VerdictResult } from '@/lib/simulation/events';
 
-// ═══ TYPES ═══
+// ─── RE-EXPORTED TYPES ───
+// These types are consumed by simulation UI components that import from this module.
 
-export type SimPhase = 'idle' | 'planning' | 'opening' | 'adversarial' | 'convergence' | 'verdict' | 'complete' | 'error';
-
-export type PhaseStep = {
-  name: string;
-  status: 'pending' | 'active' | 'complete';
-  description?: string;
-  details?: PlanTask[];
-};
-
-export type PlanTask = {
-  task: string;
-  assigned_agent?: string;
-  status: 'pending' | 'active' | 'complete';
-};
-
-export type StreamingAgent = {
+export interface StreamingAgent {
   agent_id: string;
   agent_name: string;
+  role?: string;
   category?: string;
   status: 'pending' | 'streaming' | 'complete';
-  partial_text: string;
-  position?: string;
+  position?: 'proceed' | 'delay' | 'abandon';
   confidence?: number;
   confidence_trend?: 'up' | 'down' | 'stable';
+  partial_text?: string;
   key_argument?: string;
   evidence?: string[];
   risks?: string[];
   round?: number;
-};
+  report?: any;
+}
 
-export type ChallengeEvent = {
-  id: string;
-  challenger_id: string;
+export interface ChallengeEvent {
   challenger_name: string;
-  challenged_id: string;
   challenged_name: string;
-  topic: string;
+  topic?: string;
   round: number;
-  timestamp: number;
-};
+}
 
-export type ConsensusState = {
+export interface ConsensusState {
   proceed: number;
   delay: number;
   abandon: number;
@@ -53,387 +44,301 @@ export type ConsensusState = {
   avg_confidence: number;
   positions_changed: number;
   key_disagreement?: string;
-  round: number;
-};
+  round?: number;
+}
 
-export type HITLState = {
+export interface HITLState {
   active: boolean;
-  assumptions: { key: string; value: string }[];
   round: number;
-};
+  assumptions: Array<{ key: string; value: string }>;
+}
 
-export type VerdictState = {
+export interface PhaseStep {
+  name: string;
+  status: 'pending' | 'active' | 'complete';
+  description?: string;
+  details?: Array<{
+    task: string;
+    status?: 'pending' | 'active' | 'complete';
+    assigned_agent?: string;
+  }>;
+}
+
+export interface VerdictState {
   streaming: boolean;
-  partial_text: string;
+  complete: boolean;
+  partial_text?: string;
   recommendation?: string;
   probability?: number;
   grade?: string;
   one_liner?: string;
   main_risk?: string;
   next_action?: string;
-  citations?: any[];
-  agent_scores?: any[];
-  confidence_heatmap?: any[];
   disclaimer?: string;
   calibration_adjusted?: boolean;
-  calibration_note?: string;
-  complete: boolean;
-};
+}
 
-export type SimulationStreamState = {
-  phase: SimPhase;
+/** Full simulation UI state returned by the 2-arg overload (used by SimulationBlock). */
+export interface SimulationStreamState {
+  phase: string;
   phases: PhaseStep[];
   agents: Map<string, StreamingAgent>;
-  agentOrder: string[]; // preserves insertion order for rendering
+  agentOrder: string[];
   challenges: ChallengeEvent[];
   consensus: ConsensusState;
   hitl: HITLState;
   verdict: VerdictState;
-  elapsed: number; // seconds since start
+  elapsed: number;
+  error?: string;
+}
+
+interface UseSimulationStreamOptions {
+  conversationId: string;
+}
+
+// ─── OVERLOADS ───
+// Overload 1: legacy 2-arg signature used by SimulationBlock (will be replaced in later PFs)
+export function useSimulationStream(
+  streamUrl: string,
+  question: string,
+): { state: SimulationStreamState; respondToHITL: (response: { approved: boolean; corrections?: Record<string, string> }) => void };
+// Overload 2: current object-arg signature
+export function useSimulationStream(
+  options: UseSimulationStreamOptions,
+): {
+  triggerSimulation: (question: string, tier: string) => Promise<void>;
+  cancel: () => void;
+  isSimulating: boolean;
+  status: string;
   error: string | null;
-  question: string;
 };
 
-// ═══ INITIAL STATE ═══
+/**
+ * Orchestration hook that bridges:
+ *   - Simulation store (SSE state machine)
+ *   - Chat store (add messages to thread)
+ *   - App store (update sidebar verdict)
+ *   - Billing store (consume tokens)
+ */
+export function useSimulationStream(
+  streamUrlOrOptions: string | UseSimulationStreamOptions,
+  question?: string,
+): any {
+  // Legacy 2-arg call (SimulationBlock) — stub returning empty state.
+  // This overload will be replaced when SimulationBlock is rewritten.
+  if (typeof streamUrlOrOptions === 'string') {
+    const emptyConsensus: ConsensusState = { proceed: 0, delay: 0, abandon: 0, total: 0, avg_confidence: 0, positions_changed: 0 };
+    const emptyHitl: HITLState = { active: false, round: 0, assumptions: [] };
+    const emptyVerdict: VerdictState = { streaming: false, complete: false };
+    const state: SimulationStreamState = {
+      phase: 'idle',
+      phases: [],
+      agents: new Map(),
+      agentOrder: [],
+      challenges: [],
+      consensus: emptyConsensus,
+      hitl: emptyHitl,
+      verdict: emptyVerdict,
+      elapsed: 0,
+    };
+    const respondToHITL = (_response: { approved: boolean; corrections?: Record<string, string> }) => {};
+    return { state, respondToHITL };
+  }
 
-const initialState: SimulationStreamState = {
-  phase: 'idle',
-  phases: [
-    { name: 'Research Plan', status: 'pending' },
-    { name: 'Opening Analysis', status: 'pending' },
-    { name: 'Adversarial Debate', status: 'pending' },
-    { name: 'Convergence', status: 'pending' },
-    { name: 'Verdict', status: 'pending' },
-  ],
-  agents: new Map(),
-  agentOrder: [],
-  challenges: [],
-  consensus: { proceed: 0, delay: 0, abandon: 0, total: 0, avg_confidence: 0, positions_changed: 0, round: 0 },
-  hitl: { active: false, assumptions: [], round: 0 },
-  verdict: { streaming: false, partial_text: '', complete: false },
-  elapsed: 0,
-  error: null,
-  question: '',
-};
+  const { conversationId } = streamUrlOrOptions;
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completedRef = useRef(false);
 
-// ═══ HOOK ═══
+  const simStatus = useSimulationStore((s) => s.status);
+  const simResult = useSimulationStore((s) => s.result);
+  const simError = useSimulationStore((s) => s.error);
+  const simulationId = useSimulationStore((s) => s.simulationId);
+  const startSimulation = useSimulationStore((s) => s.startSimulation);
+  const stopSimulation = useSimulationStore((s) => s.stopSimulation);
 
-export function useSimulationStream(streamUrl: string | null, question: string) {
-  const [state, setState] = useState<SimulationStreamState>({ ...initialState, question });
-  const esRef = useRef<EventSource | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef<number>(0);
+  const addMessage = useChatStore((s) => s.addMessage);
+  const setEntityState = useChatStore((s) => s.setEntityState);
 
-  // Elapsed timer
+  const updateConversation = useAppStore((s) => s.updateConversation);
+  const consumeTokens = useBillingStore((s) => s.consumeTokens);
+
+  // ─── TRIGGER SIMULATION ───
+  const triggerSimulation = useCallback(
+    async (question: string, tier: string) => {
+      completedRef.current = false;
+
+      try {
+        const res = await fetch(`/api/c/${conversationId}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'simulate', question, tier }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+
+          // Token gate
+          if (res.status === 403) {
+            addMessage({
+              id: `upgrade-${Date.now()}`,
+              message_type: 'system',
+              role: 'system',
+              content: null,
+              structured_data: {
+                type: 'upgrade_prompt',
+                reason: errData.message || 'Insufficient tokens',
+                suggestedTier: errData.suggestedTier || 'pro',
+              },
+              model_tier: tier,
+              simulation_id: null,
+              created_at: new Date().toISOString(),
+            });
+            return;
+          }
+
+          throw new Error(errData.error || 'Failed to start simulation');
+        }
+
+        const data = await res.json();
+        if (!data.streamUrl) throw new Error('No stream URL returned');
+
+        // Add simulation_start message to chat
+        addMessage({
+          id: `sim-start-${Date.now()}`,
+          message_type: 'simulation_start',
+          role: 'system',
+          content: question,
+          structured_data: { streamUrl: data.streamUrl, tier },
+          model_tier: tier,
+          simulation_id: null,
+          created_at: new Date().toISOString(),
+        });
+
+        // Set entity state
+        setEntityState('diving');
+
+        // Start SSE via Zustand store
+        startSimulation(data.streamUrl);
+
+        // Set timeout
+        timeoutRef.current = setTimeout(() => {
+          if (!completedRef.current) {
+            useSimulationStore.getState().setError('Simulation timed out. Please try again.');
+            useSimulationStore.getState().stopSimulation();
+            setEntityState('active');
+          }
+        }, SIMULATION_TIMEOUT_MS);
+      } catch (error) {
+        console.error('Simulation trigger failed:', error);
+        addMessage({
+          id: `sim-error-${Date.now()}`,
+          message_type: 'text',
+          role: 'assistant',
+          content: `Failed to start simulation: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
+          structured_data: null,
+          model_tier: tier,
+          simulation_id: null,
+          created_at: new Date().toISOString(),
+          _error: true,
+        });
+        setEntityState('active');
+      }
+    },
+    [conversationId, addMessage, setEntityState, startSimulation],
+  );
+
+  // ─── HANDLE COMPLETION ───
   useEffect(() => {
-    if (state.phase !== 'idle' && state.phase !== 'complete' && state.phase !== 'error') {
-      if (!startTimeRef.current) startTimeRef.current = Date.now();
-      timerRef.current = setInterval(() => {
-        setState(prev => ({ ...prev, elapsed: Math.floor((Date.now() - startTimeRef.current) / 1000) }));
-      }, 1000);
-      return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }
-  }, [state.phase]);
+    if (simStatus === 'complete' && simResult && !completedRef.current) {
+      completedRef.current = true;
 
-  const processEvent = useCallback((eventType: string, data: any) => {
-    setState(prev => {
-      const next = { ...prev };
-
-      switch (eventType) {
-        // ─── PLAN ───
-        case 'plan_complete':
-        case 'planning_complete': {
-          next.phases = next.phases.map((p, i) =>
-            i === 0 ? { ...p, status: 'complete' as const, description: `${data.task_count || data.sub_tasks?.length || '?'} sub-tasks`, details: data.sub_tasks?.map((t: any) => ({ task: t.task || t, assigned_agent: t.assigned || t.agent, status: 'pending' as const })) }
-            : i === 1 ? { ...p, status: 'active' as const, description: `${data.agent_count || '?'} agents selected` }
-            : p
-          );
-          next.phase = 'opening';
-          break;
-        }
-
-        // ─── PHASE TRANSITIONS ───
-        case 'phase_start':
-        case 'phase_started':
-        case 'phase_update': {
-          const phaseName = (data.phase || data.name || '').toLowerCase();
-          let targetPhase: SimPhase = prev.phase;
-
-          if (phaseName.includes('open')) targetPhase = 'opening';
-          else if (phaseName.includes('adversarial') || phaseName.includes('challenge')) targetPhase = 'adversarial';
-          else if (phaseName.includes('converg') || phaseName.includes('final')) targetPhase = 'convergence';
-          else if (phaseName.includes('verdict') || phaseName.includes('chair')) targetPhase = 'verdict';
-
-          next.phase = targetPhase;
-          next.phases = next.phases.map(p => {
-            const pLower = p.name.toLowerCase();
-            if (pLower.includes(phaseName) || (targetPhase === 'opening' && pLower.includes('opening'))) return { ...p, status: 'active' as const };
-            if (p.status === 'active') return { ...p, status: 'complete' as const };
-            return p;
-          });
-          break;
-        }
-
-        // ─── AGENT STREAMING ───
-        case 'agent_started': {
-          const id = data.agent_id || data.id;
-          const name = data.agent_name || data.name || id;
-          if (!next.agents.has(id)) {
-            next.agentOrder = [...next.agentOrder, id];
-          }
-          next.agents = new Map(next.agents);
-          next.agents.set(id, {
-            agent_id: id,
-            agent_name: name,
-            category: data.category,
-            status: 'streaming',
-            partial_text: '',
-            round: data.round,
-          });
-          break;
-        }
-
-        case 'agent_token': {
-          const id = data.agent_id || data.id;
-          const token = data.token || data.text || '';
-          next.agents = new Map(next.agents);
-          const agent = next.agents.get(id);
-          if (agent) {
-            next.agents.set(id, { ...agent, partial_text: agent.partial_text + token });
-          }
-          break;
-        }
-
-        case 'agent_report':
-        case 'agent_complete': {
-          const id = data.agent_id || data.id;
-          next.agents = new Map(next.agents);
-          const existing = next.agents.get(id);
-          next.agents.set(id, {
-            agent_id: id,
-            agent_name: data.agent_name || existing?.agent_name || id,
-            category: data.category || existing?.category,
-            status: 'complete',
-            partial_text: '',
-            position: data.position,
-            confidence: data.confidence,
-            confidence_trend: data.confidence_trend || (data.confidence_delta ? (data.confidence_delta > 0 ? 'up' : data.confidence_delta < 0 ? 'down' : 'stable') : 'stable'),
-            key_argument: data.key_argument || data.summary,
-            evidence: data.evidence,
-            risks: data.risks,
-            round: data.round || existing?.round,
-          });
-          if (!next.agentOrder.includes(id)) {
-            next.agentOrder = [...next.agentOrder, id];
-          }
-          // Update consensus
-          const pos = (data.position || '').toLowerCase();
-          if (pos === 'proceed') next.consensus = { ...next.consensus, proceed: next.consensus.proceed + 1, total: next.consensus.total + 1 };
-          else if (pos === 'delay') next.consensus = { ...next.consensus, delay: next.consensus.delay + 1, total: next.consensus.total + 1 };
-          else if (pos === 'abandon') next.consensus = { ...next.consensus, abandon: next.consensus.abandon + 1, total: next.consensus.total + 1 };
-          // Avg confidence
-          const allAgents = Array.from(next.agents.values()).filter(a => a.status === 'complete' && a.confidence);
-          if (allAgents.length > 0) {
-            next.consensus.avg_confidence = allAgents.reduce((s, a) => s + (a.confidence || 0), 0) / allAgents.length;
-          }
-          break;
-        }
-
-        // ─── CHALLENGES ───
-        case 'challenge_event':
-        case 'adversarial_exchange': {
-          const challenge: ChallengeEvent = {
-            id: `ch_${Date.now()}`,
-            challenger_id: data.challenger_id || data.from_agent,
-            challenger_name: data.challenger_name || data.from_name,
-            challenged_id: data.challenged_id || data.to_agent,
-            challenged_name: data.challenged_name || data.to_name,
-            topic: data.topic || data.dispute || data.summary,
-            round: data.round || 0,
-            timestamp: Date.now(),
-          };
-          next.challenges = [...next.challenges, challenge];
-          break;
-        }
-
-        // ─── CONSENSUS UPDATES ───
-        case 'consensus_update': {
-          next.consensus = {
-            ...next.consensus,
-            proceed: data.proceed ?? next.consensus.proceed,
-            delay: data.delay ?? next.consensus.delay,
-            abandon: data.abandon ?? next.consensus.abandon,
-            total: data.total ?? next.consensus.total,
-            avg_confidence: data.avg_confidence ?? next.consensus.avg_confidence,
-            positions_changed: data.positions_changed ?? next.consensus.positions_changed,
-            key_disagreement: data.key_disagreement ?? next.consensus.key_disagreement,
-            round: data.round ?? next.consensus.round,
-          };
-          if (data.agent_positions) {
-            next.agents = new Map(next.agents);
-            for (const [agentId, posData] of Object.entries(data.agent_positions as Record<string, any>)) {
-              const agent = next.agents.get(agentId);
-              if (agent) {
-                const oldPos = agent.position;
-                const newPos = (posData as any).position || posData;
-                const newConf = (posData as any).confidence;
-                if (oldPos && oldPos !== newPos) {
-                  next.consensus.positions_changed = (next.consensus.positions_changed || 0) + 1;
-                }
-                next.agents.set(agentId, {
-                  ...agent,
-                  position: typeof newPos === 'string' ? newPos : agent.position,
-                  confidence: typeof newConf === 'number' ? newConf : agent.confidence,
-                  confidence_trend: newConf && agent.confidence ? (newConf > agent.confidence ? 'up' : newConf < agent.confidence ? 'down' : 'stable') : agent.confidence_trend,
-                });
-              }
-            }
-          }
-          break;
-        }
-
-        // ─── HITL ───
-        case 'hitl_checkpoint':
-        case 'checkpoint': {
-          next.hitl = {
-            active: true,
-            assumptions: data.assumptions || data.items || [],
-            round: data.round || 5,
-          };
-          break;
-        }
-
-        case 'hitl_resumed':
-        case 'checkpoint_response': {
-          next.hitl = { ...next.hitl, active: false };
-          break;
-        }
-
-        // ─── CONVERGENCE ───
-        case 'convergence_started':
-        case 'convergence_start': {
-          next.phase = 'convergence';
-          next.phases = next.phases.map(p =>
-            p.name.toLowerCase().includes('converg') ? { ...p, status: 'active' as const } :
-            p.status === 'active' ? { ...p, status: 'complete' as const } : p
-          );
-          break;
-        }
-
-        // ─── VERDICT STREAMING ───
-        case 'verdict_streaming':
-        case 'verdict_token': {
-          next.phase = 'verdict';
-          next.phases = next.phases.map(p =>
-            p.name.toLowerCase().includes('verdict') ? { ...p, status: 'active' as const } :
-            p.status === 'active' ? { ...p, status: 'complete' as const } : p
-          );
-          next.verdict = {
-            ...next.verdict,
-            streaming: true,
-            partial_text: next.verdict.partial_text + (data.token || data.text || ''),
-          };
-          break;
-        }
-
-        // ─── VERDICT COMPLETE ───
-        case 'verdict':
-        case 'verdict_complete':
-        case 'simulation_complete':
-        case 'sim_complete': {
-          const v = data.verdict || data.result || data;
-          next.phase = 'complete';
-          next.phases = next.phases.map(p => ({ ...p, status: 'complete' as const }));
-          next.verdict = {
-            streaming: false,
-            partial_text: '',
-            recommendation: v.recommendation,
-            probability: v.probability,
-            grade: v.grade,
-            one_liner: v.one_liner || v.summary,
-            main_risk: v.main_risk,
-            next_action: v.next_action,
-            citations: v.citations,
-            agent_scores: v.agent_scores,
-            confidence_heatmap: v.confidence_heatmap,
-            disclaimer: v.disclaimer,
-            calibration_adjusted: v.calibration_adjusted,
-            calibration_note: v.calibration_note,
-            complete: true,
-          };
-          if (timerRef.current) clearInterval(timerRef.current);
-          break;
-        }
-
-        // ─── ERROR ───
-        case 'error': {
-          next.phase = 'error';
-          next.error = data.message || data.error || 'Simulation failed';
-          if (timerRef.current) clearInterval(timerRef.current);
-          break;
-        }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
 
-      return next;
-    });
+      addMessage({
+        id: `verdict-${Date.now()}`,
+        message_type: 'simulation_verdict',
+        role: 'assistant',
+        content: null,
+        structured_data: simResult,
+        model_tier: 'deep',
+        simulation_id: simulationId,
+        created_at: new Date().toISOString(),
+      });
+
+      setEntityState('resting');
+
+      const verdict = simResult as VerdictResult;
+      const rec = verdict?.recommendation?.toLowerCase();
+      if (rec) {
+        updateConversation(conversationId, {
+          has_simulation: true,
+          latest_verdict: rec,
+          latest_verdict_probability: verdict?.probability || null,
+          simulation_count: 1,
+        });
+      }
+
+      consumeTokens(TOKEN_COSTS.deep);
+    }
+  }, [
+    simStatus, simResult, simulationId, conversationId,
+    addMessage, setEntityState, updateConversation, consumeTokens,
+  ]);
+
+  // ─── HANDLE ERROR ───
+  useEffect(() => {
+    if (simStatus === 'error' && simError && !completedRef.current) {
+      completedRef.current = true;
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      addMessage({
+        id: `sim-error-${Date.now()}`,
+        message_type: 'text',
+        role: 'assistant',
+        content: `Simulation error: ${simError}`,
+        structured_data: null,
+        model_tier: 'deep',
+        simulation_id: null,
+        created_at: new Date().toISOString(),
+        _error: true,
+      });
+
+      setEntityState('active');
+    }
+  }, [simStatus, simError, addMessage, setEntityState]);
+
+  // ─── CANCEL ───
+  const cancel = useCallback(() => {
+    completedRef.current = true;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    stopSimulation();
+    setEntityState('active');
+  }, [stopSimulation, setEntityState]);
+
+  // ─── CLEANUP ON UNMOUNT ───
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
 
-  // SSE connection
-  useEffect(() => {
-    if (!streamUrl) return;
-
-    setState(prev => ({
-      ...prev,
-      ...initialState,
-      question,
-      phase: 'planning',
-      phases: initialState.phases.map((p, i) => ({ ...p, status: i === 0 ? 'active' as const : 'pending' as const })),
-    }));
-    startTimeRef.current = Date.now();
-
-    const es = new EventSource(streamUrl);
-    esRef.current = es;
-
-    es.onmessage = (event) => {
-      try {
-        const raw = JSON.parse(event.data);
-        const data = raw.data || raw;
-        const eventType = raw.event || raw.type || '';
-        processEvent(eventType, data);
-      } catch {}
-    };
-
-    es.onerror = () => {
-      setState(prev => ({
-        ...prev,
-        phase: 'error',
-        error: 'Connection lost. The simulation may still be running on the server.',
-      }));
-      es.close();
-    };
-
-    return () => {
-      es.close();
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [streamUrl, processEvent, question]);
-
-  // HITL response function
-  const respondToHITL = useCallback(async (response: { approved: boolean; corrections?: Record<string, string> }) => {
-    const hitlUrl = streamUrl?.replace('/stream', '/hitl');
-    if (!hitlUrl) return;
-
-    try {
-      await fetch(hitlUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(response),
-      });
-      setState(prev => ({ ...prev, hitl: { ...prev.hitl, active: false } }));
-    } catch {
-      setState(prev => ({ ...prev, hitl: { ...prev.hitl, active: false } }));
-    }
-  }, [streamUrl]);
-
-  return { state, respondToHITL };
+  return {
+    triggerSimulation,
+    cancel,
+    isSimulating: ['connecting', 'planning', 'opening', 'adversarial', 'converging', 'verdict'].includes(simStatus),
+    status: simStatus,
+    error: simError,
+  };
 }
