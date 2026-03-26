@@ -31,8 +31,8 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   });
 
   return (
-    <div className="flex h-dvh bg-surface-0 overflow-hidden">
-      {/* Sidebar */}
+    <div className="flex h-dvh bg-surface-0">
+      {/* Sidebar — always visible on desktop */}
       {!isMobile && (
         <aside
           className={cn(
@@ -47,11 +47,11 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
         </aside>
       )}
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0 relative">
+      {/* Main content — scrollable for home page marketing, contained for conversations */}
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-y-auto overflow-x-hidden">
         {/* Mobile header */}
         {isMobile && (
-          <header className="h-12 flex items-center px-4 border-b border-border-subtle bg-surface-1 shrink-0">
+          <header className="h-12 flex items-center px-4 border-b border-border-subtle bg-surface-1 shrink-0 sticky top-0 z-30">
             <button
               onClick={() => setSidebarExpanded(true)}
               className="p-1.5 rounded-md text-icon-secondary hover:text-icon-primary hover:bg-surface-2 transition-colors duration-normal"
@@ -63,7 +63,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             <div className="flex-1 flex justify-center">
               <span className="text-sm font-light tracking-widest text-txt-tertiary lowercase">octux</span>
             </div>
-            <div className="w-7" /> {/* balance */}
+            <div className="w-7" />
           </header>
         )}
 

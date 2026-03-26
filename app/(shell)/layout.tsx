@@ -13,19 +13,14 @@ export default async function ShellLayout({ children }: { children: React.ReactN
     userId = undefined;
   }
 
-  // Authenticated → full product shell with sidebar
-  if (userId) {
-    return (
-      <OnboardingProvider userId={userId}>
-        <CommandProvider>
-          <ChatLayout>{children}</ChatLayout>
-          <ShortcutOverlay />
-          <ShortcutToast />
-        </CommandProvider>
-      </OnboardingProvider>
-    );
-  }
-
-  // Visitor → clean page, no chrome
-  return <>{children}</>;
+  // ALWAYS render the product shell — sidebar for everyone
+  return (
+    <OnboardingProvider userId={userId}>
+      <CommandProvider>
+        <ChatLayout>{children}</ChatLayout>
+        <ShortcutOverlay />
+        <ShortcutToast />
+      </CommandProvider>
+    </OnboardingProvider>
+  );
 }
