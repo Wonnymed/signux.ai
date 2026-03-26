@@ -42,7 +42,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       {!isMobile && <Sidebar />}
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0 relative overflow-x-hidden">
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-x-hidden overflow-y-auto">
         {/* Top header bar */}
         <header className="h-12 flex items-center px-4 shrink-0 sticky top-0 z-30 bg-surface-0">
           {/* Left: sidebar toggle */}

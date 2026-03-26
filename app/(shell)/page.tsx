@@ -7,6 +7,13 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/lib/store/app';
 import ChatInput from '@/components/chat/ChatInput';
 import AuthModal from '@/components/auth/AuthModal';
+// Marketing sections (below the fold)
+import TrustStrip from '@/components/landing/TrustStrip';
+import HowItWorks from '@/components/landing/HowItWorks';
+import LiveExample from '@/components/landing/LiveExample';
+import WhyNotChatGPT from '@/components/landing/WhyNotChatGPT';
+import PricingPreview from '@/components/landing/PricingPreview';
+import SiteFooter from '@/components/landing/LandingFooter';
 
 export default function HomePage() {
   const { isAuthenticated, isLoading, checkGuestLimit } = useAuth();
@@ -90,41 +97,47 @@ export default function HomePage() {
   return (
     <>
       {/* ═══ MAIN CHAT VIEW ═══ */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
-          <div className="relative z-10 max-w-3xl mx-auto text-center w-full">
-            {/* Large Logo + Branding */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="mb-8 flex flex-col items-center"
-            >
-              <div className="relative mb-4">
-                <div className="absolute inset-0 oct-entity-bg scale-150 opacity-50" />
-                <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-accent/80 to-entity-bioluminescent/60 animate-breathe entity-ring">
-                  <span className="text-3xl">🐙</span>
-                </div>
+      <div className="min-h-dvh flex flex-col items-center justify-center px-6 relative">
+        <div className="relative z-10 max-w-3xl mx-auto text-center w-full">
+          {/* Large Logo + Branding */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8 flex flex-col items-center"
+          >
+            <div className="relative mb-4">
+              <div className="absolute inset-0 oct-entity-bg scale-150 opacity-50" />
+              <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-accent/80 to-entity-bioluminescent/60 animate-breathe entity-ring">
+                <span className="text-3xl">🐙</span>
               </div>
-              <h1 className="oct-wordmark text-3xl text-txt-primary tracking-wide">OCTUX AI</h1>
-            </motion.div>
+            </div>
+            <h1 className="oct-wordmark text-3xl text-txt-primary tracking-wide">OCTUX AI</h1>
+          </motion.div>
 
-            {/* Input */}
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
-            >
-              <ChatInput
-                onSend={handleSend}
-                loading={loading}
-                showSuggestions
-                placeholder="What decision are you facing?"
-              />
-            </motion.div>
-          </div>
+          {/* Input */}
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+          >
+            <ChatInput
+              onSend={handleSend}
+              loading={loading}
+              showSuggestions
+              placeholder="What decision are you facing?"
+            />
+          </motion.div>
         </div>
       </div>
+
+      {/* ═══ MARKETING (below the fold) ═══ */}
+      <TrustStrip />
+      <HowItWorks />
+      <LiveExample onSignIn={() => setShowAuth(true)} />
+      <WhyNotChatGPT />
+      <PricingPreview onSignIn={() => setShowAuth(true)} />
+      <SiteFooter onSignIn={() => setShowAuth(true)} />
 
       {/* Auth modal */}
       <AuthModal
