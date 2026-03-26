@@ -449,8 +449,8 @@ function VerdictDot({ verdict, hasSim, pinned }: {
     return <Pin size={13} className="shrink-0 text-accent opacity-70" />;
   }
 
-  if (!hasSim) {
-    return <MessageSquare size={13} className="shrink-0 text-txt-tertiary" />;
+  if (!hasSim || !verdict) {
+    return <MessageSquare size={14} className="shrink-0 text-icon-secondary opacity-50" />;
   }
 
   const colorMap: Record<string, string> = {
@@ -461,7 +461,7 @@ function VerdictDot({ verdict, hasSim, pinned }: {
 
   const dotColor = verdict ? colorMap[verdict] : 'bg-txt-disabled';
 
-  return <span className={cn('w-2 h-2 rounded-full shrink-0', dotColor)} />;
+  return <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', dotColor)} />;
 }
 
 // ═══ TIER BADGE ═══

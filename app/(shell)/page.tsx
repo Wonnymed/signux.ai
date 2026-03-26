@@ -112,7 +112,12 @@ export default function HomePage() {
                 <span className="text-3xl">🐙</span>
               </div>
             </div>
-            <h1 className="oct-wordmark text-3xl text-txt-primary tracking-wide">OCTUX AI</h1>
+            <h1 className="text-2xl font-light tracking-[0.15em] text-txt-primary lowercase">
+              octux
+            </h1>
+            <p className="text-sm text-txt-tertiary mt-1">
+              Never decide alone again
+            </p>
           </motion.div>
 
           {/* Input */}
@@ -127,6 +132,9 @@ export default function HomePage() {
               showSuggestions
               placeholder="What decision are you facing?"
             />
+            <p className="text-center text-micro text-txt-disabled mt-4">
+              10 AI specialists debate your decisions · Free to start
+            </p>
           </motion.div>
         </div>
       </div>

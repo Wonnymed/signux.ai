@@ -249,3 +249,8 @@
 /* ═══ MARKDOWN RENDERER ═══ */
 .octux-markdown p:last-child { margin-bottom: 0; }
 .octux-markdown ul, .octux-markdown ol { padding-left: 0; }
+.octux-markdown hr {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}

@@ -30,9 +30,10 @@ function parseMarkdown(text: string): string {
 
   let html = escapeHtml(text);
 
-  // Horizontal rules (---, ***, ___)
-  html = html.replace(/^(---|&mdash;{3}|\*\*\*|___)\s*$/gm,
-    '<hr class="my-3 border-t border-border-subtle" />');
+  // Horizontal rules: --- or *** or ___ (on their own line)
+  html = html.replace(/^---\s*$/gm, '<hr class="my-4 border-t border-border-subtle" />');
+  html = html.replace(/^\*\*\*\s*$/gm, '<hr class="my-4 border-t border-border-subtle" />');
+  html = html.replace(/^___\s*$/gm, '<hr class="my-4 border-t border-border-subtle" />');
 
   // Code blocks (```...```)
   html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_match, _lang, code) => {
