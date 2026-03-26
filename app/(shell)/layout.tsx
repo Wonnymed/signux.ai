@@ -3,6 +3,7 @@ import { CommandProvider } from '@/components/command';
 import ShortcutOverlay from '@/components/ui/ShortcutOverlay';
 import ShortcutToast from '@/components/ui/ShortcutToast';
 import OnboardingProvider from '@/components/onboarding/OnboardingProvider';
+import HydrateClient from './HydrateClient';
 import { getAuthUserId } from '@/lib/auth/supabase-server';
 
 export default async function ShellLayout({ children }: { children: React.ReactNode }) {
@@ -13,14 +14,15 @@ export default async function ShellLayout({ children }: { children: React.ReactN
     userId = undefined;
   }
 
-  // ALWAYS render the product shell — sidebar for everyone
   return (
     <OnboardingProvider userId={userId}>
-      <CommandProvider>
-        <ChatLayout>{children}</ChatLayout>
-        <ShortcutOverlay />
-        <ShortcutToast />
-      </CommandProvider>
+      <HydrateClient isAuthenticated={!!userId}>
+        <CommandProvider>
+          <ChatLayout>{children}</ChatLayout>
+          <ShortcutOverlay />
+          <ShortcutToast />
+        </CommandProvider>
+      </HydrateClient>
     </OnboardingProvider>
   );
 }

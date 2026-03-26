@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useAppStore } from '@/lib/store/app';
 import EntityVisual from '@/components/chat/EntityVisual';
 import ChatInput from '@/components/chat/ChatInput';
 import TrustStrip from '@/components/landing/TrustStrip';
@@ -18,6 +20,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const router = useRouter();
+  const addConversation = useAppStore((s) => s.addConversation);
 
   // Recover pending question after auth
   useEffect(() => {
@@ -30,7 +33,9 @@ export default function HomePage() {
   }, [isAuthenticated, isLoading]);
 
   const handleSend = async (message: string, options?: { tier?: string; simulate?: boolean }) => {
-    // Auth gate — triggers on action, not on page load
+    if (!message.trim() || loading) return;
+
+    // Auth gate
     if (!isAuthenticated) {
       try { localStorage.setItem('octux_pending_question', message.substring(0, 200)); } catch {}
       if (!checkGuestLimit()) return;
@@ -40,6 +45,7 @@ export default function HomePage() {
 
     setLoading(true);
     try {
+      // 1. Create conversation
       const res = await fetch('/api/c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,7 +55,23 @@ export default function HomePage() {
       const id = data.id || data.conversation?.id;
       if (!id) throw new Error('No conversation created');
 
-      await fetch(`/api/c/${id}/chat`, {
+      // 2. Add to sidebar immediately (optimistic)
+      addConversation({
+        id,
+        title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+        domain: 'general',
+        has_simulation: false,
+        latest_verdict: null,
+        latest_verdict_probability: null,
+        is_pinned: false,
+        message_count: 1,
+        simulation_count: 0,
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
+
+      // 3. Send first message (fire and forget — conversation page will show response)
+      fetch(`/api/c/${id}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,8 +79,9 @@ export default function HomePage() {
           action: options?.simulate ? 'simulate' : 'chat',
           tier: options?.tier || 'ink',
         }),
-      });
+      }).catch(() => {});
 
+      // 4. Navigate to conversation
       router.push(`/c/${id}`);
     } catch (err) {
       console.error('Failed to create conversation:', err);
@@ -73,18 +96,53 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ABOVE THE FOLD — the product (min-h so marketing scrolls below) */}
+      {/* ═══ ABOVE THE FOLD — Product ═══ */}
       <div className="min-h-dvh flex flex-col">
-        {/* Center: Entity */}
-        <div className="flex-1 flex items-center justify-center">
-          <EntityVisual state="idle" />
-        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
+          {/* Background glow */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent/[0.03] blur-[100px]" />
+          </div>
 
-        {/* Bottom: ChatInput — real, functional, for everyone */}
-        <ChatInput onSend={handleSend} loading={loading} isNewConversation />
+          <div className="relative z-10 max-w-2xl mx-auto text-center w-full">
+            {/* Entity */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="mb-2"
+            >
+              <EntityVisual state="idle" />
+            </motion.div>
+
+            {/* Input */}
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
+            >
+              <ChatInput
+                onSend={handleSend}
+                loading={loading}
+                showSuggestions
+                placeholder="What decision are you facing?"
+              />
+            </motion.div>
+
+            {/* Sub-tagline */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+              className="text-micro text-txt-disabled mt-4"
+            >
+              10 AI specialists debate your decisions · Free to start
+            </motion.p>
+          </div>
+        </div>
       </div>
 
-      {/* BELOW THE FOLD — marketing (scroll to see) */}
+      {/* ═══ BELOW THE FOLD — Marketing ═══ */}
       <TrustStrip />
       <HowItWorks />
       <LiveExample onSignIn={() => setShowAuth(true)} />
@@ -92,7 +150,7 @@ export default function HomePage() {
       <PricingPreview onSignIn={() => setShowAuth(true)} />
       <LandingFooter onSignIn={() => setShowAuth(true)} />
 
-      {/* Auth modal — only appears when user tries to send without auth */}
+      {/* Auth modal */}
       <AuthModal
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
