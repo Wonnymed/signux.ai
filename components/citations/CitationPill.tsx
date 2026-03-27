@@ -121,15 +121,16 @@ export default function CitationPill({
 function PillButton({ id, className, onClick }: { id: number; className: string; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
         'inline-flex items-center justify-center',
-        'w-4 h-4 rounded-sm text-[10px] font-semibold',
-        'cursor-pointer transition-colors duration-normal',
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50',
+        'h-4 w-4 rounded-radius-xs text-[10px] font-semibold',
+        'cursor-pointer transition-colors duration-normal ease-out',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0',
         className,
       )}
-      aria-label={`Citation ${id}`}
+      aria-label={`Open citation ${id} details`}
     >
       {id}
     </button>

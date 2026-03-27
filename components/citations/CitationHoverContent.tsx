@@ -1,5 +1,6 @@
 'use client';
 
+/** Phase 1.2 — citation hover card: Decision OS depth + readable claim width. */
 import { cn } from '@/lib/design/cn';
 import { OctBadge } from '@/components/octux';
 import { OctAvatar } from '@/components/ui';
@@ -22,11 +23,15 @@ export default function CitationHoverContent({
   const isContest = groupType === 'contest';
 
   return (
-    <div className={cn(
-      'bg-surface-raised border border-border-subtle rounded-xl shadow-xl',
-      'min-w-[280px] max-w-[360px]',
-      'text-sm overflow-hidden',
-    )}>
+    <div
+      className={cn(
+        'overflow-hidden rounded-radius-xl border border-border-default bg-surface-raised shadow-premium',
+        'min-w-[280px] max-w-[min(22rem,360px)]',
+        'text-sm',
+      )}
+      role="region"
+      aria-label="Citation details"
+    >
       {/* Contest header */}
       {isContest && (
         <div className="px-4 py-2 bg-confidence-contested/5 border-b border-border-subtle">
@@ -76,7 +81,7 @@ export default function CitationHoverContent({
             </div>
 
             {/* Claim */}
-            <p className="text-xs text-txt-secondary leading-relaxed mb-1.5">
+            <p className="max-w-reading text-xs leading-relaxed text-txt-secondary mb-1.5">
               {citation.claim}
             </p>
 
@@ -104,12 +109,13 @@ export default function CitationHoverContent({
               {/* Chat with agent CTA */}
               {onAgentChat && (
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onAgentChat(citation.agent_id, citation.agent_name);
                     onClose?.();
                   }}
-                  className="text-micro text-accent hover:text-accent-hover transition-colors duration-normal"
+                  className="rounded-md px-1.5 py-0.5 text-micro text-accent transition-colors duration-normal ease-out hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
                 >
                   Chat with agent →
                 </button>

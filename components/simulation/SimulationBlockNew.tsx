@@ -18,6 +18,7 @@ import AgentCardsStream from './AgentCardsStream';
 import AgentScoreboard from './AgentScoreboard';
 import ConsensusTracker from './ConsensusTracker';
 import ConsensusSparkline from './ConsensusSparkline';
+import { getSimulationStatusLabel } from '@/lib/simulation/streamingCopy';
 
 interface SimulationBlockNewProps {
   question: string;
@@ -176,7 +177,7 @@ function SimulationHeader({
               transition={{ duration: 1.5, repeat: Infinity }}
               className="text-micro text-accent"
             >
-              {getStatusLabel(status)}
+              {getSimulationStatusLabel(status)}
             </motion.span>
           )}
           {isComplete && (
@@ -375,16 +376,3 @@ function SimulationError({
   );
 }
 
-// ═══ HELPERS ═══
-
-function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    connecting: 'Connecting...',
-    planning: 'Planning research...',
-    opening: 'Agents analyzing...',
-    adversarial: 'Agents debating...',
-    converging: 'Forming consensus...',
-    verdict: 'Generating verdict...',
-  };
-  return labels[status] || 'Processing...';
-}

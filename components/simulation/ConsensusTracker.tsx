@@ -1,5 +1,6 @@
 'use client';
 
+/** Phase 1.2 — consensus: compact bar uses proportional flex; hover shows full split. */
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeftRight, AlertTriangle } from 'lucide-react';
@@ -37,10 +38,10 @@ export default function ConsensusTracker({
 function FullTracker({ consensus, className }: { consensus: ConsensusState; className?: string }) {
   return (
     <TooltipProvider delayDuration={200}>
-      <div className={cn('rounded-lg border border-border-subtle bg-surface-1 p-3 space-y-3', className)}>
+      <div className={cn('space-y-3 rounded-radius-lg border border-border-subtle bg-surface-1 p-3 shadow-depth-sm', className)}>
         {/* ─── HEADER ─── */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-txt-secondary">
+          <span className="text-card-title text-txt-secondary">
             Consensus
           </span>
           <div className="flex items-center gap-2">
@@ -225,45 +226,60 @@ function CompactTracker({ consensus, className }: { consensus: ConsensusState; c
     return { position: 'abandon' as const, value: consensus.abandon };
   }, [consensus.proceed, consensus.delay, consensus.abandon]);
 
+  const segments = useMemo(() => {
+    const total = consensus.proceed + consensus.delay + consensus.abandon;
+    const safe = total > 0 ? total : 1;
+    return [
+      { key: 'proceed' as const, pct: consensus.proceed, color: verdictColors.proceed.solid },
+      { key: 'delay' as const, pct: consensus.delay, color: verdictColors.delay.solid },
+      { key: 'abandon' as const, pct: consensus.abandon, color: verdictColors.abandon.solid },
+    ].map((s) => ({ ...s, widthPct: (s.pct / safe) * 100 }));
+  }, [consensus.proceed, consensus.delay, consensus.abandon]);
+
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      {/* Mini bar */}
-      <div className="w-20 h-1.5 rounded-full bg-surface-2 overflow-hidden flex shrink-0">
-        <div
-          className="h-full rounded-l-full transition-all duration-500"
-          style={{
-            width: `${consensus.proceed}%`,
-            backgroundColor: verdictColors.proceed.solid,
-          }}
-        />
-        <div
-          className="h-full transition-all duration-500"
-          style={{
-            width: `${consensus.delay}%`,
-            backgroundColor: verdictColors.delay.solid,
-          }}
-        />
-        <div
-          className="h-full rounded-r-full transition-all duration-500"
-          style={{
-            width: `${consensus.abandon}%`,
-            backgroundColor: verdictColors.abandon.solid,
-          }}
-        />
-      </div>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              'flex cursor-default items-center gap-octx-2 rounded-radius-md border border-border-subtle/80 bg-surface-1/80 px-2 py-1.5 transition-colors duration-normal ease-out hover:border-border-default',
+              className,
+            )}
+          >
+            <div className="flex h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-surface-2">
+              {segments.map((s, i) => (
+                <motion.div
+                  key={s.key}
+                  className={cn('h-full', i === 0 && 'rounded-l-full', i === segments.length - 1 && 'rounded-r-full')}
+                  initial={false}
+                  animate={{ width: `${s.widthPct}%` }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
+                  style={{ backgroundColor: s.color }}
+                />
+              ))}
+            </div>
 
-      {/* Leading position */}
-      <span
-        className="text-micro font-bold uppercase tabular-nums"
-        style={{ color: verdictColors[leading.position].solid }}
-      >
-        {leading.position} {leading.value}%
-      </span>
+            <span
+              className="text-micro font-bold uppercase tabular-nums"
+              style={{ color: verdictColors[leading.position].solid }}
+            >
+              {leading.position} {leading.value}%
+            </span>
 
-      {/* Round */}
-      <span className="text-micro text-txt-disabled tabular-nums">
-        R{consensus.round}/{consensus.totalRounds}
-      </span>
-    </div>
+            <span className="text-micro tabular-nums text-txt-disabled">
+              R{consensus.round}/{consensus.totalRounds}
+            </span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <p className="text-xs text-txt-primary">
+            Proceed {consensus.proceed}% · Delay {consensus.delay}% · Abandon {consensus.abandon}%
+          </p>
+          <p className="mt-1 text-micro text-txt-tertiary">
+            Round {consensus.round} of {consensus.totalRounds}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
