@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/design/cn';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/shadcn/hover-card';
 
 interface OctHoverCardProps {
   trigger: ReactNode;
@@ -13,27 +14,35 @@ interface OctHoverCardProps {
   className?: string;
 }
 
-export default function OctHoverCard({ trigger, children, side = 'bottom', align = 'center', width = 320, delay = 300, className }: OctHoverCardProps) {
-  const [visible, setVisible] = useState(false);
-  const enterTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const leaveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const handleEnter = () => { clearTimeout(leaveTimeout.current); enterTimeout.current = setTimeout(() => setVisible(true), delay); };
-  const handleLeave = () => { clearTimeout(enterTimeout.current); leaveTimeout.current = setTimeout(() => setVisible(false), 150); };
-
-  const alignClass: Record<string, string> = { start: 'left-0', center: 'left-1/2 -translate-x-1/2', end: 'right-0' };
-
+/** Shared hover surface: Radix HoverCard (portal, collision, Escape). Touch: opens on trigger press (Radix). */
+export default function OctHoverCard({
+  trigger,
+  children,
+  side = 'bottom',
+  align = 'center',
+  width = 320,
+  delay = 300,
+  className,
+}: OctHoverCardProps) {
   return (
-    <div className="relative inline-flex" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-      {trigger}
-      {visible && (
-        <div onMouseEnter={handleEnter} onMouseLeave={handleLeave}
-          className={cn('absolute z-50 animate-scale-in', side === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2', alignClass[align], className)}
-          style={{ width: `${width}px` }}>
-          <div className="bg-surface-raised border border-border-subtle rounded-xl shadow-lg p-4 text-sm">{children}</div>
-        </div>
-      )}
-    </div>
+    <HoverCard openDelay={delay} closeDelay={150}>
+      <HoverCardTrigger asChild>
+        <span className="inline-flex">{trigger}</span>
+      </HoverCardTrigger>
+      <HoverCardContent
+        side={side}
+        align={align}
+        sideOffset={8}
+        collisionPadding={12}
+        className={cn('w-auto min-w-0 p-4 text-sm text-txt-primary', className)}
+        style={{
+          width: `${width}px`,
+          maxWidth: `min(${width}px, calc(100vw - 24px))`,
+        }}
+      >
+        {children}
+      </HoverCardContent>
+    </HoverCard>
   );
 }
 
