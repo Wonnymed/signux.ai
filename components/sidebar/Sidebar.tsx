@@ -117,14 +117,6 @@ function SidebarCollapsed() {
           <Home size={NAV_ICON} strokeWidth={ICON_STROKE} />
         </CollapsedIconButton>
 
-        <CollapsedIconButton
-          onClick={() => router.push('/tools/journal')}
-          tooltip="Decision Journal"
-          active={pathname === '/tools/journal' || pathname?.startsWith('/tools/journal/')}
-        >
-          <BarChart3 size={NAV_ICON} strokeWidth={ICON_STROKE} />
-        </CollapsedIconButton>
-
         <ToolsFlyoutMenu pathname={pathname} variant="collapsed" toolsActive={toolsActive} />
 
         <CollapsedIconButton onClick={() => setSidebarExpanded(true)} tooltip="Conversations">
@@ -235,7 +227,6 @@ function SidebarExpanded() {
   const pro = TIERS.pro;
 
   const homeActive = pathname === '/';
-  const journalNavActive = pathname === '/tools/journal' || pathname.startsWith('/tools/journal/');
   const toolsNavActive = pathname.startsWith('/tools');
 
   return (
@@ -274,12 +265,6 @@ function SidebarExpanded() {
             label="Home"
             active={homeActive}
             onClick={() => router.push('/')}
-          />
-          <NavItemButton
-            icon={BarChart3}
-            label="Decision Journal"
-            active={journalNavActive}
-            onClick={() => router.push('/tools/journal')}
           />
           <ToolsFlyoutMenu pathname={pathname} variant="expanded" toolsActive={toolsNavActive} />
         </div>
