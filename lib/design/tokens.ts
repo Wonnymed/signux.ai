@@ -160,7 +160,7 @@ export const agentRoleSemantic = {
 } as const;
 
 export const layout = {
-  sidebarCollapsed: 56, sidebarExpanded: 260, chatMaxWidth: 768, headerHeight: 48,
+  sidebarCollapsed: 56, sidebarExpanded: 200, chatMaxWidth: 768, headerHeight: 48,
   agentCardMinHeight: 120, verdictCardMinHeight: 200,
 } as const;
 

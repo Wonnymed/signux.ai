@@ -221,9 +221,9 @@ const config: Config = {
       },
       transitionDuration: {
         instant: 'var(--duration-instant)',
-        fast: '100ms',
-        normal: 'var(--duration-fast)',
-        slow: '250ms',
+        fast: 'var(--duration-fast)',
+        normal: 'var(--duration-medium)',
+        slow: 'var(--duration-slow)',
         slower: 'var(--duration-slow)',
         reveal: 'var(--duration-reveal)',
         entity: '500ms',

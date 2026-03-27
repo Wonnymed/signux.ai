@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion, LayoutGroup } from 'framer-motion';
 import {
   Plus,
@@ -18,7 +18,13 @@ import {
   LogIn,
   LogOut,
   Clock,
+  Hammer,
+  TrendingUp,
+  UserRound,
+  Shield,
+  Swords,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { useAppStore, type ConversationSummary } from '@/lib/store/app';
 import { useBillingStore } from '@/lib/store/billing';
@@ -43,12 +49,26 @@ import InlineRename from './InlineRename';
 import { ThemeToggleCompact } from '@/components/theme/ThemeToggle';
 
 const ICON_STROKE = 1.5;
-/** Okara expanded rail */
-const EXPANDED_W = 256;
-/** Okara collapsed rail (~64px matches reference screenshots) */
-const COLLAPSED_W = 64;
+/** BUILD PLAN §2.1 / §3.1 expanded rail */
+const EXPANDED_W = 200;
+/** BUILD PLAN §2.1 / §3.1 collapsed rail */
+const COLLAPSED_W = 56;
 /** Okara nav icons ~20px outlined */
 const NAV_ICON = 20;
+
+const ENGINE_ITEMS: Array<{
+  slug: 'simulate' | 'build' | 'grow' | 'hire' | 'protect' | 'compete';
+  label: string;
+  icon: LucideIcon;
+  colorClass: string;
+}> = [
+  { slug: 'simulate', label: 'Simulate', icon: Zap, colorClass: 'text-engine-simulate' },
+  { slug: 'build', label: 'Build', icon: Hammer, colorClass: 'text-engine-build' },
+  { slug: 'grow', label: 'Grow', icon: TrendingUp, colorClass: 'text-engine-grow' },
+  { slug: 'hire', label: 'Hire', icon: UserRound, colorClass: 'text-engine-hire' },
+  { slug: 'protect', label: 'Protect', icon: Shield, colorClass: 'text-engine-protect' },
+  { slug: 'compete', label: 'Compete', icon: Swords, colorClass: 'text-engine-compete' },
+];
 
 /** Okara flyout order: Compare → Risk Matrix → Templates → Journal */
 const TOOLS_FLYOUT_ORDER = ['compare', 'risk-matrix', 'templates', 'journal'] as const;
@@ -65,7 +85,7 @@ export default function Sidebar() {
     <motion.aside
       initial={false}
       animate={{ width: expanded ? EXPANDED_W : COLLAPSED_W }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
       className="flex h-dvh shrink-0 flex-col overflow-hidden border-r border-border-subtle bg-sidebar font-sans antialiased select-none"
     >
       {expanded ? <SidebarExpanded /> : <SidebarCollapsed />}
@@ -74,18 +94,20 @@ export default function Sidebar() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Collapsed — 56px icon rail (instant swap, no width animation)
+// Collapsed — 56px icon rail
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SidebarCollapsed() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const setSidebarExpanded = useAppStore((s) => s.setSidebarExpanded);
   const tier = useBillingStore((s) => s.tier);
 
   const toolsActive = pathname.startsWith('/tools');
   const agentLabActive = pathname === '/agents';
+  const activeEngine = pathname === '/' ? searchParams.get('engine') : null;
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -125,6 +147,25 @@ function SidebarCollapsed() {
         >
           <Dna size={NAV_ICON} strokeWidth={ICON_STROKE} />
         </CollapsedIconButton>
+
+        {ENGINE_ITEMS.map((engine) => {
+          const active = activeEngine === engine.slug;
+          const Icon = engine.icon;
+          return (
+            <CollapsedIconButton
+              key={engine.slug}
+              onClick={() => router.push(`/?engine=${engine.slug}`)}
+              tooltip={engine.label}
+              active={active}
+            >
+              <Icon
+                size={NAV_ICON}
+                strokeWidth={ICON_STROKE}
+                className={active ? cn(engine.colorClass, 'drop-shadow-[0_0_6px_rgba(124,58,237,0.2)]') : undefined}
+              />
+            </CollapsedIconButton>
+          );
+        })}
 
         <ToolsFlyoutMenu pathname={pathname} variant="collapsed" toolsActive={toolsActive} />
 
@@ -180,12 +221,13 @@ function CollapsedIconButton({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Expanded — 256px
+// Expanded — 200px
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SidebarExpanded() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const setExpanded = useAppStore((s) => s.setSidebarExpanded);
   const conversations = useAppStore((s) => s.conversations);
@@ -238,6 +280,7 @@ function SidebarExpanded() {
   const homeActive = pathname === '/';
   const agentLabActive = pathname === '/agents';
   const toolsNavActive = pathname.startsWith('/tools');
+  const activeEngine = pathname === '/' ? searchParams.get('engine') : null;
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -283,6 +326,26 @@ function SidebarExpanded() {
             onClick={() => router.push('/agents')}
           />
           <ToolsFlyoutMenu pathname={pathname} variant="expanded" toolsActive={toolsNavActive} />
+        </div>
+
+        <div className="mx-4 my-2 h-px bg-border-subtle" />
+
+        <div className="space-y-1 px-3">
+          <SectionLabel>Engines</SectionLabel>
+          {ENGINE_ITEMS.map((engine) => {
+            const active = activeEngine === engine.slug;
+            const Icon = engine.icon;
+            return (
+              <NavItemButton
+                key={engine.slug}
+                icon={Icon}
+                label={engine.label}
+                active={active}
+                iconClassName={active ? cn(engine.colorClass, 'drop-shadow-[0_0_8px_rgba(124,58,237,0.18)]') : undefined}
+                onClick={() => router.push(`/?engine=${engine.slug}`)}
+              />
+            );
+          })}
         </div>
 
         <div className="mx-4 my-2 h-px bg-border-subtle" />
@@ -426,11 +489,13 @@ function NavItemButton({
   icon: Icon,
   label,
   active = false,
+  iconClassName,
   onClick,
 }: {
   icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
   label: string;
   active?: boolean;
+  iconClassName?: string;
   onClick: () => void;
 }) {
   return (
@@ -447,19 +512,25 @@ function NavItemButton({
       <Icon
         size={NAV_ICON}
         strokeWidth={ICON_STROKE}
-        className={cn('shrink-0', active ? 'text-txt-primary' : 'text-txt-tertiary')}
+        className={cn('shrink-0', active ? 'text-txt-primary' : 'text-txt-tertiary', iconClassName)}
       />
       <span className="flex-1 text-[14px] font-normal leading-5">{label}</span>
     </button>
   );
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mb-1 block px-2 text-[10px] font-medium uppercase tracking-[0.08em] text-txt-disabled">
+      {children}
+    </span>
+  );
+}
+
 function SectionGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-2.5">
-      <span className="mb-1 block px-2 text-[10px] font-medium uppercase tracking-[0.08em] text-txt-disabled">
-        {label}
-      </span>
+      <SectionLabel>{label}</SectionLabel>
       <div className="space-y-0.5">{children}</div>
     </div>
   );

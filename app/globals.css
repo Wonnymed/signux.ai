@@ -227,8 +227,8 @@
   --shadow-depth-md: var(--shadow-md);
   --shadow-depth-lg: var(--shadow-lg);
 
-  --sidebar-width-collapsed: 64px;
-  --sidebar-width-expanded: 256px;
+  --sidebar-width-collapsed: 56px;
+  --sidebar-width-expanded: 200px;
   --sidebar-bg: var(--surface-1);
   --chat-max-width: 768px;
   --container-narrow: var(--chat-max-width);
@@ -820,9 +820,9 @@
 
 :root {
   --duration-instant: 80ms;
-  --duration-fast: 150ms;
-  --duration-medium: 200ms;
-  --duration-slow: 350ms;
+  --duration-fast: 100ms;
+  --duration-medium: 150ms;
+  --duration-slow: 250ms;
   --duration-reveal: 500ms;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
