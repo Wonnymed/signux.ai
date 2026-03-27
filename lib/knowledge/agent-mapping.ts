@@ -102,7 +102,7 @@ export const AGENT_KNOWLEDGE_MAP: Record<string, AgentKnowledgeSources> = {
   },
 
   // ═══ BUSINESS AGENTS ═══
-  reality_check_biz: {
+  reality_check: {
     categories: ['market-intel', 'evaluation-lab'],
     vSeries: ['V27', 'V42', 'V65'],
     maxChunks: 5,
@@ -179,6 +179,64 @@ export const AGENT_KNOWLEDGE_MAP: Record<string, AgentKnowledgeSources> = {
   fear_separator: {
     categories: [],
     vSeries: ['V64', 'V79'],
+    maxChunks: 3,
+  },
+
+  // ═══ HEALTH AGENTS ═══
+  evidence_filter: {
+    categories: ['evaluation-lab'],
+    vSeries: ['V42', 'V65'],
+    maxChunks: 5,
+  },
+  risk_benefit_calculator: {
+    categories: ['risk-intel'],
+    vSeries: ['V24', 'V59'],
+    maxChunks: 4,
+  },
+  second_opinion_engine: {
+    categories: [],
+    vSeries: ['V64', 'V79'],
+    maxChunks: 3,
+  },
+  mental_health_advocate: {
+    categories: [],
+    vSeries: ['V64', 'V79', 'V83'],
+    maxChunks: 4,
+  },
+  long_game: {
+    categories: [],
+    vSeries: ['V42', 'V45'],
+    maxChunks: 3,
+  },
+  habit_architect: {
+    categories: [],
+    vSeries: ['V64', 'V80'],
+    maxChunks: 3,
+  },
+  energy_auditor: {
+    categories: [],
+    vSeries: ['V64', 'V79'],
+    maxChunks: 3,
+  },
+  prevention_calculator: {
+    categories: ['economics'],
+    vSeries: ['V29', 'V47'],
+    maxChunks: 4,
+  },
+  burnout_radar: {
+    categories: ['risk-intel'],
+    vSeries: ['V24', 'V64'],
+    maxChunks: 4,
+  },
+  recovery_strategist: {
+    categories: ['scenario-packs'],
+    vSeries: ['V24', 'V59'],
+    maxChunks: 4,
+  },
+
+  devils_advocate: {
+    categories: ['game-theory'],
+    vSeries: ['V64', 'V46'],
     maxChunks: 3,
   },
 };

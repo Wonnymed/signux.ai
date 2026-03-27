@@ -78,18 +78,20 @@ export async function searchAgents(query: string, limit: number = 20): Promise<L
 
 // ═══ AUTO-SUGGEST — Domain → recommended agents ═══
 
+/** Per simulation: 10 agents total — mix follows AGENT-CATALOG-60 selection examples */
 const DOMAIN_AGENT_MAP: Record<string, { category: string; count: number }[]> = {
-  business:      [{ category: 'business', count: 7 }, { category: 'career', count: 3 }],
-  investment:    [{ category: 'investment', count: 8 }, { category: 'business', count: 2 }],
-  career:        [{ category: 'career', count: 7 }, { category: 'business', count: 3 }],
-  relationships: [{ category: 'relationships', count: 8 }, { category: 'life', count: 2 }],
+  investment:    [{ category: 'investment', count: 10 }],
+  career:        [{ category: 'career', count: 5 }, { category: 'business', count: 5 }],
+  business:      [{ category: 'business', count: 4 }, { category: 'life', count: 3 }, { category: 'career', count: 3 }],
+  health:        [{ category: 'health', count: 7 }, { category: 'life', count: 3 }],
+  relationships: [{ category: 'relationships', count: 10 }],
   legal:         [{ category: 'business', count: 5 }, { category: 'life', count: 3 }, { category: 'career', count: 2 }],
-  health:        [{ category: 'life', count: 7 }, { category: 'relationships', count: 3 }],
   technology:    [{ category: 'business', count: 5 }, { category: 'investment', count: 3 }, { category: 'career', count: 2 }],
   education:     [{ category: 'career', count: 6 }, { category: 'life', count: 4 }],
   real_estate:   [{ category: 'investment', count: 6 }, { category: 'business', count: 4 }],
-  personal:      [{ category: 'life', count: 6 }, { category: 'relationships', count: 4 }],
-  general:       [{ category: 'life', count: 3 }, { category: 'business', count: 3 }, { category: 'investment', count: 2 }, { category: 'career', count: 2 }],
+  /** personal / cross-domain life questions — IVF vs savings style mix */
+  personal:      [{ category: 'investment', count: 4 }, { category: 'health', count: 3 }, { category: 'relationships', count: 3 }],
+  general:       [{ category: 'life', count: 4 }, { category: 'business', count: 2 }, { category: 'investment', count: 2 }, { category: 'career', count: 2 }],
 };
 
 export async function suggestAgentsForDomain(domain: string): Promise<LibraryAgent[]> {

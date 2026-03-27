@@ -18,8 +18,13 @@ import {
   Gauge,
 } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
+import {
+  DOMAIN_COLORS as CATALOG_DOMAIN_COLORS,
+  DOMAIN_LABELS as CATALOG_DOMAIN_LABELS,
+  type AgentDomain as CatalogAgentDomain,
+} from '@/lib/agents/catalog';
 
-type AgentDomain = 'investment' | 'relationships' | 'career' | 'business' | 'life' | 'custom' | 'self';
+type AgentDomain = CatalogAgentDomain | 'custom' | 'self';
 
 interface AgentDef {
   id: string;
@@ -47,21 +52,13 @@ interface AgentOverride {
 }
 
 const FALLBACK_DOMAIN_LABELS: Record<AgentDomain, string> = {
-  investment: 'Investment',
-  relationships: 'Relationships',
-  career: 'Career',
-  business: 'Business',
-  life: 'Life',
+  ...CATALOG_DOMAIN_LABELS,
   custom: 'Custom',
   self: 'Self',
 };
 
 const DOMAIN_COLORS: Record<AgentDomain, string> = {
-  investment: '#10B981',
-  relationships: '#EC4899',
-  career: '#06B6D4',
-  business: '#7C3AED',
-  life: '#F97316',
+  ...CATALOG_DOMAIN_COLORS,
   custom: '#A855F7',
   self: '#8B5CF6',
 };
@@ -216,7 +213,7 @@ export default function AgentLabPage() {
               onChange={setJoker}
               onSave={() => {
                 setJokerEditing(false);
-                save(joker);
+                save({ ...joker } as Record<string, unknown>);
               }}
               onCancel={() => setJokerEditing(false)}
             />
@@ -246,7 +243,7 @@ export default function AgentLabPage() {
               />
             </div>
             <div className="flex flex-wrap gap-1">
-              {(['all', 'investment', 'relationships', 'career', 'business', 'life'] as const).map((domain) => (
+              {(['all', 'investment', 'career', 'business', 'health', 'relationships', 'life'] as const).map((domain) => (
                 <button
                   key={domain}
                   onClick={() => setFilterDomain(domain)}
