@@ -29,7 +29,7 @@ function PositionBadge({ position }: { position: string }) {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-      className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider"
+      className="inline-flex items-center px-1.5 py-0.5 rounded-radius-sm text-[10px] font-bold tracking-wider"
       style={{ backgroundColor: colors.muted, color: colors.solid }}
     >
       {POSITION_LABELS[position] || position.toUpperCase()}
@@ -101,7 +101,7 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
         <div
           className={cn(
             'rounded-radius-lg border transition-colors duration-normal ease-out overflow-hidden',
-            isStreaming && 'border-accent/30 bg-accent-subtle/10 shadow-sm shadow-accent/5',
+            isStreaming && 'border-accent/30 bg-accent-subtle/10 ring-1 ring-inset ring-accent/15 shadow-premium',
             isComplete && 'border-border-subtle bg-surface-1/50',
             !isStreaming && !isComplete && 'border-border-subtle/50 bg-surface-1/30',
           )}

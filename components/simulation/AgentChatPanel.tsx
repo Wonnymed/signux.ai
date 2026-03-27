@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/design/cn';
+import { formatAgentThinking } from '@/lib/simulation/streamingCopy';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -64,45 +66,49 @@ export default function AgentChatPanel({
 
   if (!isOpen) return null;
 
-  const posColor = agentPosition === 'proceed' ? '#10B981' : agentPosition === 'delay' ? '#F59E0B' : '#F43F5E';
+  const posDot =
+    agentPosition === 'proceed' ? 'bg-verdict-proceed' :
+    agentPosition === 'delay' ? 'bg-verdict-delay' :
+    'bg-verdict-abandon';
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, right: 0, bottom: 0, width: '420px', zIndex: 900,
-      background: 'var(--surface-0, #fff)', borderLeft: '1px solid var(--border-subtle)',
-      display: 'flex', flexDirection: 'column',
-      boxShadow: '-8px 0 30px rgba(0,0,0,0.08)',
-      animation: 'slideInRight 0.2s ease',
-    }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)' }}>{agentName}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: posColor, display: 'inline-block' }} />
+    <div
+      className={cn(
+        'fixed inset-y-0 right-0 z-[90] flex w-full max-w-[420px] flex-col',
+        'border-l border-border-subtle bg-surface-0 shadow-premium animate-slide-in-right',
+      )}
+    >
+      <div className="flex items-center gap-3 border-b border-border-subtle px-5 py-4">
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-medium text-txt-primary">{agentName}</div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-txt-tertiary">
+            <span className={cn('inline-block h-1.5 w-1.5 rounded-full', posDot)} />
             {agentPosition.toUpperCase()} ({agentConfidence}/10)
           </div>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--text-tertiary)', padding: '4px' }}>
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1 text-lg leading-none text-txt-tertiary transition-colors hover:text-txt-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded-radius-sm"
+          aria-label="Close panel"
+        >
           ✕
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+      <div className="flex-1 overflow-y-auto px-5 py-4">
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '32px 0' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
+          <div className="py-8 text-center">
+            <div className="mb-3 text-[13px] text-txt-tertiary">
               Ask {agentName} about their analysis
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div className="flex flex-col gap-1.5">
               {getSuggestedQuestions(agentId).map((q, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => { setInput(q); setTimeout(() => inputRef.current?.focus(), 50); }}
-                  style={{
-                    padding: '8px 12px', borderRadius: '8px', fontSize: '12px',
-                    border: '1px solid var(--border-subtle)', background: 'var(--surface-1)',
-                    cursor: 'pointer', textAlign: 'left', color: 'var(--text-secondary)',
-                  }}
+                  className="rounded-radius-md border border-border-subtle bg-surface-1 px-3 py-2 text-left text-xs text-txt-secondary transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                 >
                   {q}
                 </button>
@@ -112,29 +118,34 @@ export default function AgentChatPanel({
         )}
 
         {messages.map((msg, i) => (
-          <div key={i} style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-            <div style={{
-              maxWidth: '85%', padding: '10px 14px', borderRadius: '12px',
-              fontSize: '14px', lineHeight: 1.6,
-              background: msg.role === 'user' ? '#7C3AED' : 'var(--surface-1)',
-              color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
-            }}>
+          <div
+            key={i}
+            className={cn('mb-4 flex flex-col', msg.role === 'user' ? 'items-end' : 'items-start')}
+          >
+            <div
+              className={cn(
+                'max-w-[85%] rounded-radius-xl px-3.5 py-2.5 text-sm leading-relaxed',
+                msg.role === 'user'
+                  ? 'bg-accent text-white'
+                  : 'bg-surface-1 text-txt-primary',
+              )}
+            >
               {msg.content}
             </div>
           </div>
         ))}
 
         {loading && (
-          <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', padding: '8px 0' }}>
-            {agentName} is thinking...
+          <div className="py-2 text-[13px] text-txt-tertiary">
+            {formatAgentThinking(agentName)}
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border-subtle)' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="border-t border-border-subtle px-5 py-3">
+        <div className="flex gap-2">
           <input
             ref={inputRef}
             type="text"
@@ -142,28 +153,18 @@ export default function AgentChatPanel({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
             placeholder={`Ask ${agentName}...`}
-            style={{
-              flex: 1, padding: '10px 14px', borderRadius: '8px',
-              border: '1px solid var(--border-default)', background: 'var(--surface-0)',
-              fontSize: '14px', outline: 'none',
-            }}
+            className="min-w-0 flex-1 rounded-radius-md border border-border-default bg-surface-0 px-3.5 py-2.5 text-sm text-txt-primary outline-none placeholder:text-txt-disabled focus-visible:ring-2 focus-visible:ring-focus-ring"
           />
           <button
+            type="button"
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            style={{
-              padding: '10px 16px', borderRadius: '8px', border: 'none',
-              background: '#7C3AED', color: '#fff', fontSize: '14px',
-              cursor: loading || !input.trim() ? 'default' : 'pointer',
-              opacity: loading || !input.trim() ? 0.5 : 1,
-            }}
+            className="shrink-0 rounded-radius-md bg-accent px-4 py-2.5 text-sm font-medium text-white transition-opacity disabled:opacity-50"
           >
             Send
           </button>
         </div>
       </div>
-
-      <style>{`@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
     </div>
   );
 }

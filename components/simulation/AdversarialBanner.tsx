@@ -25,7 +25,7 @@ export default function AdversarialBanner({ challenges, className }: Adversarial
 
   return (
     <div className={cn(
-      'px-3 py-2 rounded-md border border-verdict-abandon/20 bg-verdict-abandon/5',
+      'px-3 py-2 rounded-radius-md border border-verdict-abandon/20 bg-verdict-abandon/5',
       'flex items-center gap-2 animate-slide-in-up',
       className,
     )}>

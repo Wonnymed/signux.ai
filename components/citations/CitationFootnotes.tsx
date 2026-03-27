@@ -65,7 +65,7 @@ export default function CitationFootnotes({
               className="flex items-start gap-2.5 py-1.5 group"
             >
               {/* Citation number */}
-              <span className="w-4 h-4 rounded-sm bg-accent-muted text-accent text-[10px] font-semibold flex items-center justify-center shrink-0 mt-0.5">
+              <span className="w-4 h-4 rounded-radius-xs bg-accent-muted text-accent text-[10px] font-semibold flex items-center justify-center shrink-0 mt-0.5">
                 {citation.id}
               </span>
 

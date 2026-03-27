@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
-import { cn } from '@/lib/design/cn';
 import { useSimulationStore } from '@/lib/store/simulation';
 import { verdictColors, AGENT_GRADIENTS } from '@/lib/design/tokens';
 
@@ -54,7 +53,7 @@ export default function AgentScoreboard() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-lg border border-border-subtle bg-surface-1/50 p-3 space-y-3"
+      className="rounded-radius-lg border border-border-subtle bg-surface-1/50 p-3 space-y-3"
     >
       {/* ─── HEADER ─── */}
       <div className="flex items-center gap-2">

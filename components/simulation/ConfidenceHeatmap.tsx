@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/lib/design/cn';
+
 type Claim = {
   claim: string;
   confidence_grade: 'green' | 'yellow' | 'red';
@@ -21,39 +23,60 @@ type Heatmap = {
 
 type Props = { heatmap: Heatmap | null };
 
+const gradeStyles: Record<Claim['confidence_grade'], { panel: string; dot: string }> = {
+  green: {
+    panel: 'border-state-success/40 bg-state-success-muted/15',
+    dot: 'bg-state-success',
+  },
+  yellow: {
+    panel: 'border-state-warning/40 bg-state-warning-muted/15',
+    dot: 'bg-state-warning',
+  },
+  red: {
+    panel: 'border-state-error/40 bg-state-error-muted/15',
+    dot: 'bg-state-error',
+  },
+};
+
 export default function ConfidenceHeatmap({ heatmap }: Props) {
   if (!heatmap || heatmap.claims.length === 0) return null;
 
-  const gradeColors = {
-    green: { bg: '#10B98110', border: '#10B98140', dot: '#10B981' },
-    yellow: { bg: '#F59E0B10', border: '#F59E0B40', dot: '#F59E0B' },
-    red: { bg: '#F43F5E10', border: '#F43F5E40', dot: '#F43F5E' },
-  };
-
   return (
-    <div style={{ marginTop: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>Confidence breakdown</div>
-        <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-tertiary)' }}>
+    <div className="mt-5">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="text-sm font-medium text-txt-primary">Confidence breakdown</div>
+        <div className="flex flex-wrap gap-3 text-micro text-txt-tertiary">
           <span>{heatmap.green_count} high</span>
           <span>{heatmap.yellow_count} moderate</span>
           <span>{heatmap.red_count} low</span>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="flex flex-col gap-2">
         {heatmap.claims.map((claim, i) => {
-          const grade = gradeColors[claim.confidence_grade] || gradeColors.yellow;
+          const styles = gradeStyles[claim.confidence_grade] ?? gradeStyles.yellow;
           return (
-            <div key={i} style={{ padding: '12px 16px', borderRadius: '10px', border: `1px solid ${grade.border}`, background: grade.bg }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: grade.dot, flexShrink: 0, marginTop: '6px' }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{claim.claim}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '6px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div
+              key={i}
+              className={cn(
+                'rounded-radius-lg border px-4 py-3',
+                styles.panel,
+              )}
+            >
+              <div className="flex items-start gap-2.5">
+                <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', styles.dot)} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm leading-relaxed text-txt-primary">{claim.claim}</div>
+                  <div className="mt-1.5 flex flex-wrap gap-3 text-micro text-txt-tertiary">
                     <span>Score: {Math.round(claim.confidence_score * 100)}%</span>
                     <span>Evidence: {claim.evidence_quality}</span>
-                    {claim.supporting_agents.length > 0 && <span>Supported by {claim.supporting_agents.length} agent{claim.supporting_agents.length > 1 ? 's' : ''}</span>}
-                    {claim.contested_by.length > 0 && <span style={{ color: '#F43F5E' }}>Contested by {claim.contested_by.length}</span>}
+                    {claim.supporting_agents.length > 0 && (
+                      <span>
+                        Supported by {claim.supporting_agents.length} agent{claim.supporting_agents.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {claim.contested_by.length > 0 && (
+                      <span className="text-state-error">Contested by {claim.contested_by.length}</span>
+                    )}
                   </div>
                 </div>
               </div>

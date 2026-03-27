@@ -6,6 +6,7 @@ import { OctBadge } from '@/components/octux';
 import { OctAvatar } from '@/components/ui';
 import { CitatedText } from '@/components/citations';
 import type { StreamingAgent } from '@/lib/hooks/useSimulationStream';
+import { SIMULATION_UI_LABELS } from '@/lib/simulation/streamingCopy';
 
 interface AgentStreamCardProps {
   agent: StreamingAgent;
@@ -62,7 +63,7 @@ export default function AgentStreamCard({ agent, index, className }: AgentStream
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-txt-primary truncate">{agent.agent_name}</span>
             {isStreaming && (
-              <span className="text-micro text-accent animate-pulse-accent">analyzing...</span>
+              <span className="text-micro text-accent animate-pulse-accent">{SIMULATION_UI_LABELS.agentAnalyzing}</span>
             )}
           </div>
           {agent.round && (

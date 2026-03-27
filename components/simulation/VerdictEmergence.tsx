@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/design/cn';
 import { CircularProgress } from '@/components/ui';
 import { OctBadge } from '@/components/octux';
-import { verdictColors, gradeColors } from '@/lib/design/tokens';
+import { verdictColors, type VerdictType } from '@/lib/design/tokens';
 import type { VerdictState } from '@/lib/hooks/useSimulationStream';
+import { getSimulationStatusLabel } from '@/lib/simulation/streamingCopy';
 
 interface VerdictEmergenceProps {
   verdict: VerdictState;
@@ -42,14 +43,14 @@ export default function VerdictEmergence({ verdict, className }: VerdictEmergenc
   // Still streaming verdict text
   if (verdict.streaming && !verdict.complete) {
     return (
-      <div className={cn('px-4 py-3 rounded-lg border border-accent/20 bg-accent-subtle/30 animate-fade-in', className)}>
+      <div className={cn('px-4 py-3 rounded-radius-lg border border-accent/20 bg-accent-subtle/30 animate-fade-in', className)}>
         <div className="flex items-center gap-2 mb-2">
           <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center animate-pulse-accent">
             <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" className="text-accent">
               <circle cx="5" cy="5" r="3" />
             </svg>
           </div>
-          <span className="text-xs font-medium text-accent">Generating verdict...</span>
+          <span className="text-xs font-medium text-accent">{getSimulationStatusLabel('verdict')}</span>
         </div>
         <p className="text-sm text-txt-primary leading-relaxed">
           {verdict.partial_text}
@@ -61,11 +62,11 @@ export default function VerdictEmergence({ verdict, className }: VerdictEmergenc
 
   if (!verdict.complete) return null;
 
-  const rec = (verdict.recommendation || 'proceed').toLowerCase() as keyof typeof verdictColors;
+  const rec = (verdict.recommendation || 'proceed').toLowerCase() as VerdictType;
   const vColor = verdictColors[rec] || verdictColors.proceed;
 
   return (
-    <div className={cn('rounded-xl border border-accent/20 bg-surface-1 overflow-hidden animate-scale-in', className)}>
+    <div className={cn('rounded-radius-xl border border-accent/20 bg-surface-1 overflow-hidden animate-scale-in', className)}>
       {/* Main verdict area */}
       <div className="p-5 flex items-start gap-5">
         {/* Animated probability ring */}
@@ -88,7 +89,7 @@ export default function VerdictEmergence({ verdict, className }: VerdictEmergenc
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <OctBadge verdict={rec as any} size="md">
+            <OctBadge verdict={rec} size="md">
               {verdict.recommendation?.toUpperCase() || 'ANALYZING'}
             </OctBadge>
             {showGrade && verdict.grade && (

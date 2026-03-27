@@ -1,6 +1,6 @@
 'use client';
 
-/** Phase 1.1 — Deep Simulation shell: Decision OS radius, depth, semantic error surfaces. */
+/** Phase 1 — Deep Simulation shell: Decision OS tokens, streaming copy, semantic surfaces. */
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,7 +18,7 @@ import AgentCardsStream from './AgentCardsStream';
 import AgentScoreboard from './AgentScoreboard';
 import ConsensusTracker from './ConsensusTracker';
 import ConsensusSparkline from './ConsensusSparkline';
-import { getSimulationStatusLabel } from '@/lib/simulation/streamingCopy';
+import { getSimulationStatusLabel, SIMULATION_UI_LABELS } from '@/lib/simulation/streamingCopy';
 
 interface SimulationBlockNewProps {
   question: string;
@@ -181,7 +181,7 @@ function SimulationHeader({
             </motion.span>
           )}
           {isComplete && (
-            <span className="text-micro text-verdict-proceed">Complete</span>
+            <span className="text-micro text-verdict-proceed">{SIMULATION_UI_LABELS.simulationComplete}</span>
           )}
         </div>
         <p className="text-xs text-txt-tertiary truncate mt-0.5">
@@ -200,7 +200,7 @@ function SimulationHeader({
         <button
           type="button"
           onClick={onCancel}
-          className="p-1 rounded-md hover:bg-surface-2 text-txt-disabled hover:text-verdict-abandon transition-colors duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+          className="p-1 rounded-radius-md hover:bg-surface-2 text-txt-disabled hover:text-verdict-abandon transition-colors duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
           title="Cancel simulation"
         >
           <StopCircle size={14} />
@@ -211,7 +211,7 @@ function SimulationHeader({
         <button
           type="button"
           onClick={onToggle}
-          className="p-1 rounded-md hover:bg-surface-2 text-txt-disabled hover:text-txt-secondary transition-colors duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+          className="p-1 rounded-radius-md hover:bg-surface-2 text-txt-disabled hover:text-txt-secondary transition-colors duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
           title={expanded ? 'Collapse' : 'Expand analysis'}
         >
           {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -329,7 +329,7 @@ function CollapsedSummary({
       <button
         type="button"
         onClick={onExpand}
-        className="ml-auto flex items-center gap-1 text-micro text-accent hover:text-accent-hover transition-colors duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 rounded-md"
+        className="ml-auto flex items-center gap-1 text-micro text-accent hover:text-accent-hover transition-colors duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 rounded-radius-md"
       >
         View analysis
         <ChevronDown size={12} />

@@ -1,10 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { cn } from '@/lib/design/cn';
 
 type Props = {
   experienceId: string;
   currentOutcome?: string;
+};
+
+const outcomeDot: Record<string, string> = {
+  success: 'bg-state-success',
+  failure: 'bg-state-error',
+  partial: 'bg-state-warning',
+  cancelled: 'bg-txt-disabled',
 };
 
 export default function OutcomeReporter({ experienceId, currentOutcome }: Props) {
@@ -26,48 +34,74 @@ export default function OutcomeReporter({ experienceId, currentOutcome }: Props)
       setOutcome(selectedOutcome);
       setResult(data);
       setTimeout(() => setIsOpen(false), 2000);
-    } catch {
-    } finally {
+    } catch { /* noop */ } finally {
       setSubmitting(false);
     }
   }
 
   if (outcome && !isOpen) {
-    const outcomeColors: Record<string, string> = { success: '#10B981', failure: '#F43F5E', partial: '#F59E0B', cancelled: '#6B7280' };
     return (
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', background: 'var(--surface-1)', fontSize: '12px', color: 'var(--text-secondary)' }}>
-        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: outcomeColors[outcome] || '#6B7280' }} />
+      <div className="inline-flex items-center gap-1.5 rounded-radius-md bg-surface-1 px-3 py-1.5 text-xs text-txt-secondary">
+        <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', outcomeDot[outcome] ?? 'bg-txt-disabled')} />
         Outcome: {outcome}
-        {result && <span style={{ color: 'var(--text-tertiary)' }}>(Brier: {result.brier.toFixed(3)})</span>}
+        {result && <span className="text-txt-tertiary">(Brier: {result.brier.toFixed(3)})</span>}
       </div>
     );
   }
 
   if (!isOpen) {
     return (
-      <button onClick={() => setIsOpen(true)} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-default)', background: 'transparent', fontSize: '13px', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '16px' }}>◎</span> Did this decision work out?
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="inline-flex items-center gap-1.5 rounded-radius-md border border-border-default bg-transparent px-4 py-2 text-[13px] text-txt-secondary transition-colors hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+      >
+        <span className="text-base leading-none">◎</span> Did this decision work out?
       </button>
     );
   }
 
+  const options = [
+    { value: 'success', label: 'It worked', ring: 'border-state-success/40 bg-state-success-muted/20 text-state-success' },
+    { value: 'partial', label: 'Partially', ring: 'border-state-warning/40 bg-state-warning-muted/20 text-state-warning' },
+    { value: 'failure', label: 'It failed', ring: 'border-state-error/40 bg-state-error-muted/20 text-state-error' },
+    { value: 'cancelled', label: 'Cancelled', ring: 'border-border-default bg-surface-1 text-txt-secondary' },
+  ] as const;
+
   return (
-    <div style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border-subtle)', background: 'var(--surface-0)', marginTop: '12px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '12px' }}>How did this decision turn out?</div>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        {[
-          { value: 'success', label: 'It worked', color: '#10B981' },
-          { value: 'partial', label: 'Partially', color: '#F59E0B' },
-          { value: 'failure', label: 'It failed', color: '#F43F5E' },
-          { value: 'cancelled', label: 'Cancelled', color: '#6B7280' },
-        ].map(opt => (
-          <button key={opt.value} onClick={() => handleSubmit(opt.value)} disabled={submitting} style={{ flex: 1, padding: '10px 8px', borderRadius: '8px', border: `1px solid ${opt.color}33`, background: `${opt.color}08`, fontSize: '13px', color: opt.color, cursor: submitting ? 'wait' : 'pointer', fontWeight: 500 }}>
+    <div className="mt-3 rounded-radius-xl border border-border-subtle bg-surface-0 p-5 shadow-premium">
+      <div className="mb-3 text-sm font-medium text-txt-primary">How did this decision turn out?</div>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => handleSubmit(opt.value)}
+            disabled={submitting}
+            className={cn(
+              'min-w-0 flex-1 rounded-radius-md border px-2 py-2.5 text-[13px] font-medium transition-opacity',
+              opt.ring,
+              submitting && 'cursor-wait opacity-70',
+            )}
+          >
             {opt.label}
           </button>
         ))}
       </div>
-      <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional: what happened? (brief note)" style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-default)', fontSize: '13px', background: 'var(--surface-0)', outline: 'none', boxSizing: 'border-box' }} />
-      <button onClick={() => setIsOpen(false)} style={{ marginTop: '8px', background: 'none', border: 'none', fontSize: '12px', color: 'var(--text-tertiary)', cursor: 'pointer' }}>Cancel</button>
+      <input
+        type="text"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Optional: what happened? (brief note)"
+        className="box-border w-full rounded-radius-md border border-border-default bg-surface-0 px-3 py-2 text-[13px] text-txt-primary outline-none placeholder:text-txt-disabled focus-visible:ring-2 focus-visible:ring-focus-ring"
+      />
+      <button
+        type="button"
+        onClick={() => setIsOpen(false)}
+        className="mt-2 text-xs text-txt-tertiary hover:text-txt-secondary"
+      >
+        Cancel
+      </button>
     </div>
   );
 }

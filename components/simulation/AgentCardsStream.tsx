@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users } from 'lucide-react';
-import { cn } from '@/lib/design/cn';
 import { useSimulationStore } from '@/lib/store/simulation';
 import { verdictColors } from '@/lib/design/tokens';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
@@ -19,7 +18,7 @@ function AgentCardSkeleton({ index }: { index: number }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="rounded-lg border border-border-subtle/50 bg-surface-1/30 p-3"
+      className="rounded-radius-lg border border-border-subtle/50 bg-surface-1/30 p-3"
     >
       <div className="flex items-center gap-2.5">
         <Skeleton className="w-7 h-7 rounded-full" />
@@ -51,7 +50,7 @@ function HiddenAgentsBar({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex items-center justify-center gap-3 py-2 px-3 rounded-lg bg-surface-1/50 border border-border-subtle/50"
+      className="flex items-center justify-center gap-3 py-2 px-3 rounded-radius-lg bg-surface-1/50 border border-border-subtle/50"
     >
       <span className="text-micro text-txt-disabled">
         +{hiddenAgents.length} more
