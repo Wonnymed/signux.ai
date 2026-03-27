@@ -339,6 +339,29 @@
 .oct-citation:hover { background-color: var(--accent-glow); }
 .oct-category-dot { width: 8px; height: 8px; border-radius: 9999px; flex-shrink: 0; }
 
+.field-input {
+  width: 100%;
+  height: auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.field-input::placeholder {
+  color: var(--text-disabled);
+}
+
+.field-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring, rgba(109, 40, 217, 0.12));
+}
+
 /* ═══ ANIMATION UTILITIES ═══ */
 .stagger-1 { animation-delay: 50ms; } .stagger-2 { animation-delay: 100ms; } .stagger-3 { animation-delay: 150ms; }
 .stagger-4 { animation-delay: 200ms; } .stagger-5 { animation-delay: 250ms; } .stagger-6 { animation-delay: 300ms; }

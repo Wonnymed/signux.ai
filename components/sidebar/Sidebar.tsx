@@ -11,7 +11,7 @@ import {
   Pin,
   MoreHorizontal,
   Home,
-  BarChart3,
+  Dna,
   Settings2,
   Zap,
   ChevronRight,
@@ -85,6 +85,7 @@ function SidebarCollapsed() {
   const tier = useBillingStore((s) => s.tier);
 
   const toolsActive = pathname.startsWith('/tools');
+  const agentLabActive = pathname === '/agents';
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -115,6 +116,14 @@ function SidebarCollapsed() {
           active={pathname === '/'}
         >
           <Home size={NAV_ICON} strokeWidth={ICON_STROKE} />
+        </CollapsedIconButton>
+
+        <CollapsedIconButton
+          onClick={() => router.push('/agents')}
+          tooltip="Agent Lab"
+          active={agentLabActive}
+        >
+          <Dna size={NAV_ICON} strokeWidth={ICON_STROKE} />
         </CollapsedIconButton>
 
         <ToolsFlyoutMenu pathname={pathname} variant="collapsed" toolsActive={toolsActive} />
@@ -227,6 +236,7 @@ function SidebarExpanded() {
   const pro = TIERS.pro;
 
   const homeActive = pathname === '/';
+  const agentLabActive = pathname === '/agents';
   const toolsNavActive = pathname.startsWith('/tools');
 
   return (
@@ -265,6 +275,12 @@ function SidebarExpanded() {
             label="Home"
             active={homeActive}
             onClick={() => router.push('/')}
+          />
+          <NavItemButton
+            icon={Dna}
+            label="Agent Lab"
+            active={agentLabActive}
+            onClick={() => router.push('/agents')}
           />
           <ToolsFlyoutMenu pathname={pathname} variant="expanded" toolsActive={toolsNavActive} />
         </div>

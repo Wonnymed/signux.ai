@@ -77,13 +77,15 @@ export async function POST(
 
     const agentIds: string[] | undefined = body.agentIds;
     const includeSelf: boolean | undefined = body.includeSelf;
+    const joker: Record<string, unknown> | null | undefined = body.joker;
+    const agentOverrides: Record<string, unknown> | undefined = body.agentOverrides;
 
     // Save simulation start message
     await addMessage(conversationId, userId, {
       message_type: 'simulation_start',
       role: 'system',
       content: question,
-      structured_data: { tier, question, agentIds, includeSelf },
+      structured_data: { tier, question, agentIds, includeSelf, joker, agentOverrides },
     });
 
     // Build stream URL with optional params
@@ -99,6 +101,8 @@ export async function POST(
       tier,
       agentIds,
       includeSelf,
+      joker,
+      agentOverrides,
       streamUrl,
     });
   }

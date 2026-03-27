@@ -168,10 +168,42 @@ export function useSimulationStream(
       completedRef.current = false;
 
       try {
+        let jokerPayload: Record<string, unknown> | null = null;
+        let agentOverridesPayload: Record<string, unknown> = {};
+        try {
+          const profileRes = await fetch('/api/agents?action=profile');
+          if (profileRes.ok) {
+            const profileJson = await profileRes.json();
+            const profile = profileJson?.data;
+            if (profile?.joker_enabled) {
+              jokerPayload = {
+                id: 'joker',
+                name: profile.joker_name || 'The Joker',
+                role: profile.joker_role || '',
+                bio: profile.joker_bio || '',
+                risk_tolerance: profile.joker_risk_tolerance || 'moderate',
+                priorities: profile.joker_priorities || [],
+                biases: profile.joker_biases || '',
+                isJoker: true,
+              };
+            }
+            agentOverridesPayload = profile?.agent_overrides || {};
+          }
+        } catch {
+          jokerPayload = null;
+          agentOverridesPayload = {};
+        }
+
         const res = await fetch(`/api/c/${conversationId}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'simulate', question, tier }),
+          body: JSON.stringify({
+            action: 'simulate',
+            question,
+            tier,
+            joker: jokerPayload,
+            agentOverrides: agentOverridesPayload,
+          }),
         });
 
         if (!res.ok) {

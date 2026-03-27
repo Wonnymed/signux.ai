@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { question, engine, enableCrowdWisdom, advisorGuidance, advisorCount, tier, threadId, conversationId, agentIds, includeSelf } = body as {
+  const { question, engine, enableCrowdWisdom, advisorGuidance, advisorCount, tier, threadId, conversationId, agentIds, includeSelf, joker, agentOverrides } = body as {
     question: string;
     engine: string;
     enableCrowdWisdom?: boolean;
@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
     conversationId?: string;
     agentIds?: string[];
     includeSelf?: boolean;
+    joker?: Record<string, unknown> | null;
+    agentOverrides?: Record<string, unknown>;
   };
 
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -103,6 +105,8 @@ export async function POST(req: NextRequest) {
           onHITLCheckpoint,
           agentIds: agentIds || undefined,
           includeSelf: includeSelf || undefined,
+          joker: joker || undefined,
+          agentOverrides: agentOverrides || undefined,
         });
 
         let finalVerdict: any = null;

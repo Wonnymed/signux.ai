@@ -347,7 +347,19 @@ async function callAgent(
 export async function* runSimulation(
   question: string,
   engine: string,
-  options?: { enableCrowdWisdom?: boolean; advisorGuidance?: string; advisorCount?: number; tier?: string; userId?: string; threadId?: string; onHITLCheckpoint?: (checkpoint: any) => Promise<HITLResponse>; agentIds?: string[]; includeSelf?: boolean },
+  options?: {
+    enableCrowdWisdom?: boolean;
+    advisorGuidance?: string;
+    advisorCount?: number;
+    tier?: string;
+    userId?: string;
+    threadId?: string;
+    onHITLCheckpoint?: (checkpoint: any) => Promise<HITLResponse>;
+    agentIds?: string[];
+    includeSelf?: boolean;
+    joker?: Record<string, unknown>;
+    agentOverrides?: Record<string, unknown>;
+  },
 ): AsyncGenerator<SimulationSSEEvent> {
   const kernel = createKernel();
   const simId = `sim_${Date.now()}`;
@@ -566,7 +578,59 @@ export async function* runSimulation(
   }
 
   // Add self-agent if requested
-  if (options?.includeSelf && options?.userId) {
+  if (options?.joker && options?.userId) {
+    try {
+      const jokerName = typeof options.joker.name === 'string' ? options.joker.name : 'The Joker';
+      const jokerRole = typeof options.joker.role === 'string' ? options.joker.role : 'Decision-maker perspective';
+      const jokerBio = typeof options.joker.bio === 'string' ? options.joker.bio : '';
+      const jokerRisk = typeof options.joker.risk_tolerance === 'string' ? options.joker.risk_tolerance : 'moderate';
+      const jokerPriorities = Array.isArray(options.joker.priorities) ? options.joker.priorities.join(', ') : '';
+      const jokerBiases = typeof options.joker.biases === 'string' ? options.joker.biases : '';
+      const jokerId = 'joker' as AgentId;
+
+      dynamicAgentMap.set(jokerId, {
+        id: jokerId,
+        name: jokerName,
+        role: jokerRole || 'Decision-maker perspective',
+        icon: '🃏',
+        color: '#8B5CF6',
+        goal: 'Represent the real decision-maker context in the debate',
+        backstory: `This is the user participating in the simulation.\nContext: ${jokerBio}\nRisk tolerance: ${jokerRisk}\nPriorities: ${jokerPriorities || 'not specified'}\nKnown biases: ${jokerBiases || 'not specified'}`,
+        constraints: [
+          'Speak from personal context and lived constraints',
+          'Be explicit about emotional and practical trade-offs',
+          'Challenge specialists when advice conflicts with user goals',
+        ],
+        sop: [
+          '1. State the user context and non-negotiables',
+          '2. Evaluate proposals against risk tolerance and priorities',
+          '3. Surface practical constraints specialists may miss',
+          '4. Clarify what would make the user comfortable proceeding',
+          '5. Provide a clear position with confidence and rationale',
+        ],
+        systemPrompt: `You are ${jokerName}, the decision-maker, participating directly in this simulation.
+
+ROLE: ${jokerRole || 'Decision-maker perspective'}
+CONTEXT: ${jokerBio || 'No additional context provided'}
+RISK TOLERANCE: ${jokerRisk}
+PRIORITIES: ${jokerPriorities || 'not specified'}
+KNOWN BIASES: ${jokerBiases || 'not specified'}
+
+Respond with valid JSON only:
+{
+  "position": "proceed" | "delay" | "abandon",
+  "confidence": 1-10,
+  "key_argument": "2-3 sentences with concrete reasons",
+  "evidence": ["specific evidence 1", "specific evidence 2"],
+  "risks_identified": ["specific risk"],
+  "recommendation": "one sentence, specific action"
+}`,
+      });
+      console.log('AGENTS(P41): joker agent added to simulation');
+    } catch (err) {
+      console.error('AGENTS(P41): failed to add joker agent:', err);
+    }
+  } else if (options?.includeSelf && options?.userId) {
     try {
       const behavioral = await getOrCreateProfile(options.userId);
       const selfAgent = await buildSelfAgent(options.userId, memory.coreMemory, behavioral);
@@ -578,10 +642,29 @@ export async function* runSimulation(
   }
 
   // Helper: resolve agent by ID from dynamic map first, then hardcoded fallback
+  const getOverrideForAgent = (id: string): { weight?: number; perspective?: string; notes?: string } | null => {
+    const allOverrides = (options?.agentOverrides || {}) as Record<string, { weight?: number; perspective?: string; notes?: string }>;
+    return allOverrides[id] || null;
+  };
+
   const resolveAgent = (id: string): AgentConfig => {
     const fromMap = dynamicAgentMap.get(id);
-    if (fromMap) return fromMap;
-    return getAgentById(id as AgentId);
+    const base = fromMap || getAgentById(id as AgentId);
+    const override = getOverrideForAgent(id);
+    if (!override || (!override.perspective && !override.notes && !override.weight)) return base;
+
+    const extraContext = [
+      override.perspective ? `CUSTOM PERSPECTIVE: ${override.perspective}` : '',
+      override.notes ? `USER NOTES: ${override.notes}` : '',
+      override.weight ? `INFLUENCE WEIGHT: ${override.weight}x` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      ...base,
+      systemPrompt: `${base.systemPrompt}\n\n${extraContext}`,
+    };
   };
 
   // ═══ RAG: Pre-compute knowledge context for each agent (P43) ═══
