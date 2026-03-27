@@ -18,6 +18,7 @@ interface ChatLayoutProps {
 
 export default function ChatLayout({ children }: ChatLayoutProps) {
   const pathname = usePathname();
+  const isHome = pathname === '/';
   const [viewport, setViewport] = useState<'mobile' | 'desktop' | null>(null);
 
   const sidebarExpanded = useAppStore((s) => s.sidebarExpanded);
@@ -90,8 +91,8 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
 
   const showAuthButtons = !isLoading && !isAuthenticated;
 
-  const showDesktopSidebar = viewport === 'desktop';
-  const showMobileDrawer = viewport === 'mobile' && sidebarExpanded;
+  const showDesktopSidebar = !isHome && viewport === 'desktop';
+  const showMobileDrawer = !isHome && viewport === 'mobile' && sidebarExpanded;
 
   return (
     <div className="flex min-h-0 h-[100dvh] overflow-x-hidden bg-surface-0">
@@ -112,7 +113,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             isMobile && 'border-b border-border-subtle/60',
           )}
         >
-          {isMobile && (
+          {isMobile && !isHome && (
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <button
                 type="button"

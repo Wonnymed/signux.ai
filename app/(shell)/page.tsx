@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { ArrowDown } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/lib/store/app';
-import ChatInput from '@/components/chat/ChatInput';
+import HomeComposer from '@/components/chat/HomeComposer';
 import AuthModal from '@/components/auth/AuthModal';
 // Marketing sections (below the fold)
 import TrustStrip from '@/components/landing/TrustStrip';
@@ -97,73 +98,35 @@ export default function HomePage() {
   return (
     <>
       {/* ═══ MAIN CHAT VIEW ═══ */}
-      <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-x-hidden px-4 pb-8 pt-4 sm:px-6 sm:pb-12 sm:pt-8">
-        <div className="relative z-10 mx-auto w-full max-w-3xl text-center">
-          {/* Large Logo + Branding */}
+      <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-x-hidden px-4 pb-10 pt-20 sm:px-6">
+        <div className="relative z-10 mx-auto w-full max-w-[980px] text-center">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8 flex flex-col items-center"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+            className="mb-10 flex flex-col items-center"
           >
-            <div className="relative mb-4">
-              <div className="absolute inset-0 oct-entity-bg scale-150 opacity-50" />
-              <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-accent/80 to-entity-bioluminescent/60 animate-breathe entity-ring">
-                <span className="text-3xl">🐙</span>
-              </div>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-accent/80 to-entity-bioluminescent/60 shadow-accent-ring">
+              <span className="text-2xl">🐙</span>
             </div>
-            <h1 className="text-2xl font-light tracking-[0.15em] text-txt-primary lowercase">
-              octux
+            <h1 className="mt-4 text-[34px] font-semibold tracking-[-0.02em] text-txt-primary">
+              OCTUX AI
             </h1>
-            <p className="mt-2 max-w-2xl text-base text-txt-secondary sm:text-lg">
-              Transforme incerteza em decisao estruturada.
-            </p>
-            <p className="mt-1 text-sm text-txt-tertiary">
-              10 perspectivas · dados citados · perfil que evolui com o tempo.
-            </p>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <span className="rounded-radius-pill border border-border-subtle bg-surface-1 px-2.5 py-1 text-micro text-txt-tertiary">
-                10 especialistas
-              </span>
-              <span className="rounded-radius-pill border border-border-subtle bg-surface-1 px-2.5 py-1 text-micro text-txt-tertiary">
-                60s para veredito
-              </span>
-              <span className="rounded-radius-pill border border-border-subtle bg-surface-1 px-2.5 py-1 text-micro text-txt-tertiary">
-                Risco + proxima acao
-              </span>
-            </div>
           </motion.div>
 
-          {/* Input */}
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
           >
-            <ChatInput
-              onSend={handleSend}
-              loading={loading}
-              showSuggestions
-              placeholder="What decision are you facing?"
-            />
-            <p className="text-micro mt-4 text-center text-txt-tertiary">
-              10 AI specialists debate your decisions · Free to start
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-3">
-              <a
-                href="#live-example"
-                className="rounded-radius-md border border-border-default px-4 py-2 text-sm text-txt-secondary transition-colors hover:bg-surface-1 hover:text-txt-primary"
-              >
-                Ver exemplo
-              </a>
-              <a
-                href="/pricing"
-                className="rounded-radius-md bg-accent px-4 py-2 text-sm font-medium text-txt-on-accent transition-colors hover:bg-accent-hover"
-              >
-                Ver planos
-              </a>
-            </div>
+            <HomeComposer onSend={handleSend} loading={loading} />
           </motion.div>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 text-txt-tertiary">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-surface-1/80">
+            <ArrowDown size={18} />
+          </div>
         </div>
       </div>
 
