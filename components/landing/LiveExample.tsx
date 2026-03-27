@@ -46,6 +46,12 @@ export default function LiveExample({ onSignIn }: LiveExampleProps) {
 
         {/* Verdict card */}
         <div className="rounded-radius-xl border border-accent/15 bg-surface-1 overflow-hidden shadow-premium">
+          <div className="grid grid-cols-2 gap-0 border-b border-border-subtle sm:grid-cols-4">
+            <Metric label="Probabilidade" value={`${verdict.probability}%`} />
+            <Metric label="Grau" value={verdict.grade} />
+            <Metric label="Posicao" value={verdict.recommendation} />
+            <Metric label="Agentes" value="10" />
+          </div>
           <div className="p-6 flex flex-col sm:flex-row items-start gap-6">
             <div className="w-20 h-20 rounded-full border-4 border-verdict-proceed flex items-center justify-center shrink-0">
               <span className="text-2xl font-bold text-verdict-proceed">{verdict.probability}%</span>
@@ -99,5 +105,14 @@ export default function LiveExample({ onSignIn }: LiveExampleProps) {
         </div>
       </div>
     </section>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="px-3 py-2 text-center">
+      <div className="text-micro text-txt-disabled">{label}</div>
+      <div className="mt-0.5 text-xs font-medium text-txt-primary">{value}</div>
+    </div>
   );
 }

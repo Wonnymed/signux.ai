@@ -158,7 +158,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
 
         {children}
         <GlobalFooter
-          compact
+          compact={pathname !== '/'}
           className="mt-auto"
           ctaLabel="Ver planos"
           ctaHref="/pricing"

@@ -123,6 +123,9 @@ export default function WhyNotChatGPT() {
           <p className="mx-auto max-w-reading text-base leading-relaxed text-txt-tertiary sm:text-lg">
             Ask a chatbot. Hire a consultant. Or let 10 specialists debate it.
           </p>
+          <p className="mx-auto mt-3 max-w-reading text-sm text-txt-secondary">
+            Leia na vertical: se precisa de decisao com risco e acao, a coluna Octux deve vencer em 15 segundos.
+          </p>
         </motion.div>
 
         {/* ─── COLUMN HEADERS (desktop) ─── */}

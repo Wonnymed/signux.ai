@@ -120,6 +120,17 @@ export default function HomePage() {
             <p className="mt-1 text-sm text-txt-tertiary">
               10 perspectivas · dados citados · perfil que evolui com o tempo.
             </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <span className="rounded-radius-pill border border-border-subtle bg-surface-1 px-2.5 py-1 text-micro text-txt-tertiary">
+                10 especialistas
+              </span>
+              <span className="rounded-radius-pill border border-border-subtle bg-surface-1 px-2.5 py-1 text-micro text-txt-tertiary">
+                60s para veredito
+              </span>
+              <span className="rounded-radius-pill border border-border-subtle bg-surface-1 px-2.5 py-1 text-micro text-txt-tertiary">
+                Risco + proxima acao
+              </span>
+            </div>
           </motion.div>
 
           {/* Input */}
