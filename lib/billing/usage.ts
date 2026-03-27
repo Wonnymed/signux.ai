@@ -77,15 +77,24 @@ export async function getTokenBalance(userId: string): Promise<{
   tokensTotal: number;
   tokensRemaining: number;
   tier: TierType;
+  currentPeriodEnd: string | null;
+  stripeCustomerId: string | null;
 }> {
   const { data: sub } = await getSupabase()
     .from('user_subscriptions')
-    .select('tier, tokens_used, tokens_total')
+    .select('tier, tokens_used, tokens_total, current_period_end, stripe_customer_id')
     .eq('user_id', userId)
     .single();
 
   if (!sub) {
-    return { tokensUsed: 0, tokensTotal: 1, tokensRemaining: 1, tier: 'free' };
+    return {
+      tokensUsed: 0,
+      tokensTotal: 1,
+      tokensRemaining: 1,
+      tier: 'free',
+      currentPeriodEnd: null,
+      stripeCustomerId: null,
+    };
   }
 
   const tier = (sub.tier as TierType) || 'free';
@@ -97,6 +106,8 @@ export async function getTokenBalance(userId: string): Promise<{
     tokensTotal,
     tokensRemaining: Math.max(0, tokensTotal - tokensUsed),
     tier,
+    currentPeriodEnd: (sub as { current_period_end?: string }).current_period_end || null,
+    stripeCustomerId: (sub as { stripe_customer_id?: string }).stripe_customer_id || null,
   };
 }
 

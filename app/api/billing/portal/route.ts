@@ -21,7 +21,16 @@ export async function POST(request: NextRequest) {
     }
 
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const url = await createPortalSession(sub.stripe_customer_id, `${origin}/c`);
+    let returnPath = '/settings/billing';
+    try {
+      const body = await request.json().catch(() => ({}));
+      if (typeof body?.returnUrl === 'string' && body.returnUrl.startsWith('/')) {
+        returnPath = body.returnUrl;
+      }
+    } catch {
+      /* use default */
+    }
+    const url = await createPortalSession(sub.stripe_customer_id, `${origin}${returnPath}`);
 
     return NextResponse.json({ url });
   } catch (error) {

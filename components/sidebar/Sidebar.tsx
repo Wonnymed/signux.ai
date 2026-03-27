@@ -689,7 +689,9 @@ function ProfileMenu({ variant, tier }: { variant: 'expanded' | 'collapsed'; tie
             />
             <DropdownMenuItem
               className="cursor-pointer rounded-lg px-3 py-2 text-txt-secondary focus:bg-surface-2/80"
-              onSelect={() => router.push('/pricing')}
+              onSelect={() => {
+                router.push('/settings');
+              }}
             >
               <span className="flex items-center gap-2.5 text-[13px]">
                 <Settings2 size={15} strokeWidth={ICON_STROKE} />
