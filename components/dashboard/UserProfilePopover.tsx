@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Globe, Sun, Monitor, Moon, Gem, LogOut } from 'lucide-react';
+import { Settings, Globe, Gem, LogOut } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useBillingStore } from '@/lib/store/billing';
 import { useThemeStore, type ThemeMode } from '@/lib/store/theme';
@@ -150,25 +150,50 @@ export default function UserProfilePopover() {
 
             <div className="my-1 h-px" style={{ backgroundColor: DIVIDER }} />
 
-            <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-white/35">Theme</p>
-            <ThemeRow
-              icon={<Sun size={16} strokeWidth={1.75} />}
-              label="Light"
-              selected={mode === 'light'}
-              onClick={() => onPickTheme('light')}
-            />
-            <ThemeRow
-              icon={<Monitor size={16} strokeWidth={1.75} />}
-              label="System (default)"
-              selected={mode === 'system'}
-              onClick={() => onPickTheme('system')}
-            />
-            <ThemeRow
-              icon={<Moon size={16} strokeWidth={1.75} />}
-              label="Dark"
-              selected={mode === 'dark'}
-              onClick={() => onPickTheme('dark')}
-            />
+            <div style={{ padding: '8px 12px' }}>
+              <div
+                style={{
+                  fontSize: '10px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.5px',
+                  color: 'rgba(255,255,255,0.25)',
+                  marginBottom: '6px',
+                }}
+              >
+                Theme
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '2px',
+                  background: 'rgba(255,255,255,0.04)',
+                  borderRadius: '8px',
+                  padding: '2px',
+                }}
+              >
+                {(['light', 'system', 'dark'] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => onPickTheme(t)}
+                    style={{
+                      flex: 1,
+                      padding: '5px 0',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      background: mode === t ? 'rgba(255,255,255,0.1)' : 'transparent',
+                      color: mode === t ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.35)',
+                    }}
+                  >
+                    {t === 'light' ? '☀ Light' : t === 'system' ? 'System' : '🌙 Dark'}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="my-1 h-px" style={{ backgroundColor: DIVIDER }} />
 
@@ -195,30 +220,5 @@ export default function UserProfilePopover() {
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function ThemeRow({
-  icon,
-  label,
-  selected,
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-colors hover:bg-white/[0.06]"
-      style={{ color: selected ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)' }}
-    >
-      <span className="flex w-4 shrink-0 justify-center text-white/70">{icon}</span>
-      <span className="flex-1">{label}</span>
-      {selected ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#e8593c]" aria-hidden /> : null}
-    </button>
   );
 }
