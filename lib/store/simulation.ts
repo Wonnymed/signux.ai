@@ -139,6 +139,20 @@ function freshPhases(): SimPhase[] {
   return INITIAL_PHASES.map((p) => ({ ...p }));
 }
 
+/** Default copy when SSE `verdict_generating` omits `message`. */
+export function defaultVerdictGeneratingMessage(ct: SimulationChargeType | null): string {
+  switch (ct) {
+    case 'compare':
+      return 'Chief is comparing all perspectives…';
+    case 'stress_test':
+      return 'Compiling vulnerability audit…';
+    case 'premortem':
+      return 'Writing the failure autopsy…';
+    default:
+      return 'Synthesizing verdict…';
+  }
+}
+
 function wrapSsePayload(
   eventName: string,
   parsed: unknown,
@@ -459,8 +473,10 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
             case 'verdict_generating': {
               const d = (data.data || {}) as { message?: string };
+              const raw = typeof d.message === 'string' ? d.message.trim() : '';
               set({
-                verdictGeneratingMessage: typeof d.message === 'string' ? d.message : 'Chief is analyzing…',
+                verdictGeneratingMessage:
+                  raw.length > 0 ? raw : defaultVerdictGeneratingMessage(get().activeChargeType),
               });
               break;
             }

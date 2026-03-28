@@ -13,6 +13,11 @@ type SimSlice = {
   activeChargeType: SimulationChargeType | null;
   /** Count of streamed God's View crowd voices (drives particle density on canvas). */
   crowdVoiceCount?: number;
+  crowdVoices?: Array<{
+    sentiment: string;
+    persona?: string;
+    team?: 'A' | 'B';
+  }>;
 };
 
 function effectiveModeTier(
@@ -40,26 +45,33 @@ const RUNNING: CanvasSimStatus[] = [
   'verdict',
 ];
 
-function mapAgents(map: Map<string, AgentStreamState>): AgentNode[] {
-  return [...map.values()]
-    .sort((a, b) => a.agent_id.localeCompare(b.agent_id))
-    .map((a) => ({
-      id: a.agent_id,
-      name: a.agent_name || a.agent_id,
-      position:
-        a.status === 'complete' && a.position
-          ? a.position
-          : a.status === 'streaming'
-            ? 'pending'
-            : a.position || 'pending',
-      confidence: typeof a.confidence === 'number' ? a.confidence : 5,
-      argument: (a.partialResponse || '').slice(0, 160),
-      isActive: a.status === 'streaming',
-      webSourceCount:
-        typeof a.webSearchSourceCount === 'number' && a.webSearchSourceCount > 0
-          ? a.webSearchSourceCount
-          : undefined,
-    }));
+function mapAgents(map: Map<string, AgentStreamState>, compareMode: boolean): AgentNode[] {
+  const rows = [...map.values()].sort((a, b) => a.agent_id.localeCompare(b.agent_id));
+  const n = rows.length;
+  return rows.map((a, i) => ({
+    id: a.agent_id,
+    name: a.agent_name || a.agent_id,
+    position:
+      a.status === 'complete' && a.position
+        ? a.position
+        : a.status === 'streaming'
+          ? 'pending'
+          : a.position || 'pending',
+    confidence: typeof a.confidence === 'number' ? a.confidence : 5,
+    argument: (a.partialResponse || '').slice(0, 160),
+    isActive: a.status === 'streaming',
+    webSourceCount:
+      typeof a.webSearchSourceCount === 'number' && a.webSearchSourceCount > 0
+        ? a.webSearchSourceCount
+        : undefined,
+    isOperator: a.agent_id === 'chief_operator',
+    team:
+      compareMode && n > 0
+        ? i < Math.ceil(n / 2)
+          ? 'A'
+          : 'B'
+        : undefined,
+  }));
 }
 
 function padSpecialistSlots(agents: AgentNode[], running: boolean, minSlots: number): AgentNode[] {
@@ -69,6 +81,59 @@ function padSpecialistSlots(agents: AgentNode[], running: boolean, minSlots: num
     out.push({
       id: `placeholder-${i}`,
       name: `Specialist ${i + 1}`,
+      position: 'pending',
+      confidence: 0,
+      argument: '',
+      isActive: false,
+    });
+  }
+  return out;
+}
+
+function padCompareSlots(agents: AgentNode[], running: boolean, minSlots: number): AgentNode[] {
+  if (!running || agents.length >= minSlots) return agents;
+  const out = [...agents];
+  for (let i = out.length; i < minSlots; i++) {
+    const team: 'A' | 'B' = i < Math.ceil(minSlots / 2) ? 'A' : 'B';
+    out.push({
+      id: `placeholder-${i}`,
+      name: `Expert ${i + 1}`,
+      position: 'pending',
+      confidence: 0,
+      argument: '',
+      isActive: false,
+      team,
+    });
+  }
+  return out;
+}
+
+function padStressAttackers(agents: AgentNode[], running: boolean, minAttackers: number): AgentNode[] {
+  if (!running) return agents;
+  const out = [...agents];
+  let k = 0;
+  while (out.filter((a) => !a.isOperator).length < minAttackers) {
+    const n = out.filter((a) => !a.isOperator).length;
+    out.push({
+      id: `placeholder-stress-${k}`,
+      name: `Attacker ${n + 1}`,
+      position: 'pending',
+      confidence: 0,
+      argument: '',
+      isActive: false,
+    });
+    k++;
+  }
+  return out;
+}
+
+function padPremortemSlots(agents: AgentNode[], running: boolean, minSlots: number): AgentNode[] {
+  if (!running || agents.length >= minSlots) return agents;
+  const out = [...agents];
+  for (let i = out.length; i < minSlots; i++) {
+    out.push({
+      id: `placeholder-pm-${i}`,
+      name: `Analyst ${i + 1}`,
       position: 'pending',
       confidence: 0,
       argument: '',
@@ -141,10 +206,19 @@ export function buildCanvasSnapshot(dash: SimulationDashboardState, sim: SimSlic
   const { mode: viewMode, tier: viewTier } = effectiveModeTier(dash, sim);
   const simStatus = sim.status;
   const isRunning = RUNNING.includes(simStatus);
-  let agents = mapAgents(sim.agents);
+  let agents = mapAgents(sim.agents, viewMode === 'compare');
 
   if (viewMode === 'simulate' && viewTier === 'specialist') {
     agents = padSpecialistSlots(agents, isRunning, 10);
+  }
+  if (viewMode === 'compare' && viewTier === 'specialist') {
+    agents = padCompareSlots(agents, isRunning, 10);
+  }
+  if (viewMode === 'stress') {
+    agents = padStressAttackers(agents, isRunning, 9);
+  }
+  if (viewMode === 'premortem') {
+    agents = padPremortemSlots(agents, isRunning, 8);
   }
 
   const totalRounds = sim.consensus?.totalRounds ?? 10;
@@ -159,12 +233,22 @@ export function buildCanvasSnapshot(dash: SimulationDashboardState, sim: SimSlic
 
   const completed = agents.filter((a) => a.position !== 'pending').length;
   const nCrowd = sim.crowdVoiceCount ?? 0;
+  const swarmCap =
+    viewTier === 'swarm' && (viewMode === 'simulate' || viewMode === 'compare') ? 1000 : 520;
   const voiceCount = Math.min(
-    viewTier === 'swarm' && viewMode === 'simulate' ? 1000 : 520,
+    swarmCap,
     nCrowd > 0
-      ? Math.min(520, 48 + nCrowd * 5)
+      ? Math.min(swarmCap, 48 + nCrowd * 5)
       : completed * 14 + Math.floor(sim.elapsed * 6),
   );
+
+  const cq = dash.inputA.trim();
+  const centerQuestion =
+    cq.length > 0
+      ? cq.length > 140
+        ? `${cq.slice(0, 137)}…`
+        : cq
+      : undefined;
 
   return {
     mode: viewMode,
@@ -181,10 +265,30 @@ export function buildCanvasSnapshot(dash: SimulationDashboardState, sim: SimSlic
     verdict: verdictFromResult(sim.result),
     voiceCount,
     elapsedSec: sim.elapsed,
+    centerQuestion,
+    crowdVoices: sim.crowdVoices?.slice(-80).map((v) => ({
+      sentiment: v.sentiment,
+      persona: v.persona,
+      team: v.team,
+    })),
   };
 }
 
 /** Idle demo specialists — named ring layout (matches product storytelling). */
+/** Idle compare (specialist): two teams of five for split-arena demo. */
+export const DEMO_COMPARE_AGENTS: AgentNode[] = [
+  { id: 'ca1', name: 'Demand', position: 'proceed', confidence: 7, argument: '', isActive: false, team: 'A' },
+  { id: 'ca2', name: 'Unit econ', position: 'proceed', confidence: 8, argument: '', isActive: false, team: 'A' },
+  { id: 'ca3', name: 'Brand', position: 'delay', confidence: 6, argument: '', isActive: false, team: 'A' },
+  { id: 'ca4', name: 'Ops', position: 'proceed', confidence: 7, argument: '', isActive: false, team: 'A' },
+  { id: 'ca5', name: 'Legal', position: 'delay', confidence: 5, argument: '', isActive: false, team: 'A' },
+  { id: 'cb1', name: 'Risk', position: 'abandon', confidence: 5, argument: '', isActive: false, team: 'B' },
+  { id: 'cb2', name: 'Competition', position: 'delay', confidence: 6, argument: '', isActive: false, team: 'B' },
+  { id: 'cb3', name: 'Timing', position: 'proceed', confidence: 6, argument: '', isActive: false, team: 'B' },
+  { id: 'cb4', name: 'Capital', position: 'delay', confidence: 5, argument: '', isActive: false, team: 'B' },
+  { id: 'cb5', name: 'GTM', position: 'proceed', confidence: 7, argument: '', isActive: false, team: 'B' },
+];
+
 export const DEMO_AGENTS: AgentNode[] = [
   { id: 'd1', name: 'Base Rate', position: 'delay', confidence: 6, argument: 'Historical failure rate elevated.', isActive: false },
   { id: 'd2', name: 'Demand', position: 'proceed', confidence: 7, argument: 'Strong pull from core segments.', isActive: false },
@@ -207,18 +311,32 @@ export function demoSnapshot(dash: SimulationDashboardState): CanvasSnapshot {
     dash.activeMode === 'simulate' ? dash.previewTier : dash.activeTier;
 
   const swarmSimulate = dash.activeMode === 'simulate' && simulateTier === 'swarm';
+  const compareSpecialistDemo = dash.activeMode === 'compare' && dash.activeTier === 'specialist';
+  const compareSwarmDemo = dash.activeMode === 'compare' && dash.activeTier === 'swarm';
   const layoutDemo =
     swarmSimulate ||
     dash.activeMode === 'compare' ||
     dash.activeMode === 'stress' ||
     dash.activeMode === 'premortem';
 
-  const agents = layoutDemo ? [] : DEMO_AGENTS;
-  const edges = layoutDemo ? [] : buildEdges(DEMO_AGENTS, 9, 10);
+  const agents = layoutDemo
+    ? compareSpecialistDemo
+      ? DEMO_COMPARE_AGENTS
+      : []
+    : DEMO_AGENTS;
+  const edges = layoutDemo
+    ? compareSpecialistDemo
+      ? buildEdges(DEMO_COMPARE_AGENTS, 9, 10)
+      : []
+    : buildEdges(DEMO_AGENTS, 9, 10);
 
   let voiceCount = 127;
-  if (swarmSimulate) voiceCount = 1000;
+  if (swarmSimulate || compareSwarmDemo) voiceCount = 1000;
   else if (dash.activeMode === 'simulate' && simulateTier === 'specialist') voiceCount = 80;
+
+  const dq = dash.inputA.trim();
+  const centerQuestion =
+    dq.length > 0 ? (dq.length > 140 ? `${dq.slice(0, 137)}…` : dq) : 'Your decision in the center';
 
   return {
     mode: dash.activeMode,
@@ -240,6 +358,7 @@ export function demoSnapshot(dash: SimulationDashboardState): CanvasSnapshot {
     },
     voiceCount,
     elapsedSec: 0,
+    centerQuestion,
   };
 }
 

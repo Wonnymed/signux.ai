@@ -25,6 +25,8 @@ export interface FreeParticle {
   size: number;
   palette: ParticlePalette;
   spawnAt: number;
+  /** Compare swarm: 0 = Option A mass, 1 = Option B mass */
+  compareTeam?: 0 | 1;
 }
 
 const TAU = Math.PI * 2;
@@ -102,6 +104,61 @@ export function stepFree(p: FreeParticle, w: number, h: number, speedMul: number
   if (p.y < 0 || p.y > h) p.vy *= -1;
   p.x = Math.max(0, Math.min(w, p.x));
   p.y = Math.max(0, Math.min(h, p.y));
+}
+
+/** Two facing crowds for compare swarm; sentiment biases vertical drift. */
+export function createCompareSwarmParticle(w: number, h: number, team: 0 | 1, now: number): FreeParticle {
+  const left = team === 0;
+  const x = left ? randomBetween(w * 0.02, w * 0.4) : randomBetween(w * 0.6, w * 0.98);
+  const y = randomBetween(h * 0.14, h * 0.86);
+  const roll = Math.random();
+  const palette: ParticlePalette = roll < 0.36 ? 'positive' : roll < 0.7 ? 'negative' : 'neutral';
+  return {
+    x,
+    y,
+    vx: randomBetween(-0.28, 0.28) * (left ? 1 : -1) * 0.4,
+    vy: randomBetween(-0.2, 0.2),
+    size: randomBetween(1.1, 3),
+    palette,
+    spawnAt: now,
+    compareTeam: team,
+  };
+}
+
+export function stepCompareSwarm(p: FreeParticle, w: number, h: number, speedMul: number): void {
+  const pull = p.palette === 'positive' ? -0.045 : p.palette === 'negative' ? 0.045 : 0;
+  p.vy += pull * speedMul;
+  p.vy = Math.max(-0.55, Math.min(0.55, p.vy));
+  p.x += p.vx * speedMul;
+  p.y += p.vy * speedMul;
+  const mid = w / 2;
+  const margin = 8;
+  if (p.compareTeam === 0 && p.x > mid - margin) {
+    p.x = mid - margin;
+    p.vx = -Math.abs(p.vx) - 0.05;
+  }
+  if (p.compareTeam === 1 && p.x < mid + margin) {
+    p.x = mid + margin;
+    p.vx = Math.abs(p.vx) + 0.05;
+  }
+  if (p.y < h * 0.1 || p.y > h * 0.9) p.vy *= -0.85;
+  p.y = Math.max(h * 0.08, Math.min(h * 0.92, p.y));
+  p.x = Math.max(0, Math.min(w, p.x));
+}
+
+/** Swarm particle tinted by segment hash (market cloud). */
+export function createSwarmParticleForSegment(
+  w: number,
+  h: number,
+  now: number,
+  segmentKey: string,
+): FreeParticle {
+  const p = createSwarmParticle(w, h, now);
+  let h0 = 0;
+  for (let i = 0; i < segmentKey.length; i++) h0 = (h0 * 31 + segmentKey.charCodeAt(i)) >>> 0;
+  const palettes: ParticlePalette[] = ['swarmBlue', 'positive', 'neutral', 'negative', 'anchorBlue', 'anchorRed'];
+  p.palette = palettes[h0 % palettes.length];
+  return p;
 }
 
 export function fadeAlpha(spawnAt: number, now: number, dur = 320): number {

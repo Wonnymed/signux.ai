@@ -22,6 +22,10 @@ export interface AgentNode {
   isActive: boolean;
   /** Specialist used web search (count > 0). */
   webSourceCount?: number;
+  /** Compare mode: debate team (inferred if omitted). */
+  team?: 'A' | 'B';
+  /** Chief operator “you” in the simulation. */
+  isOperator?: boolean;
 }
 
 export interface CrowdParticle {
@@ -62,6 +66,10 @@ export interface CanvasSnapshot {
   elapsedSec: number;
   /** Specialist node to emphasize (e.g. deep-dive panel open for this agent). */
   highlightAgentId?: string | null;
+  /** Dashboard question — center of boardroom / context label. */
+  centerQuestion?: string;
+  /** Recent crowd voices (sentiment / team for particle coloring). */
+  crowdVoices?: Array<{ sentiment: string; persona?: string; team?: 'A' | 'B' }>;
 }
 
 export interface SimulationCanvasProps {

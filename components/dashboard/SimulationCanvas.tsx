@@ -40,8 +40,6 @@ export default function SimulationCanvas() {
 
   const activeChargeType = useSimulationStore((s) => s.activeChargeType);
   const chiefAssembly = useSimulationStore((s) => s.chiefAssembly);
-  const verdictGeneratingMessage = useSimulationStore((s) => s.verdictGeneratingMessage);
-
   const deepDiveOpen = useDeepDiveStore((s) => s.isOpen);
   const activeMode = useDashboardUiStore((s) => s.activeMode);
   /** Subscribe so idle demo updates when tier preview toggles. */
@@ -62,6 +60,11 @@ export default function SimulationCanvas() {
         elapsed: sim.elapsed,
         activeChargeType: sim.activeChargeType,
         crowdVoiceCount: sim.crowdVoices.length,
+        crowdVoices: sim.crowdVoices.map((v) => ({
+          sentiment: v.sentiment,
+          persona: v.persona,
+          team: v.team,
+        })),
       }),
       highlightAgentId: dd.isOpen && dd.selectedAgentId ? dd.selectedAgentId : null,
     };
@@ -107,6 +110,7 @@ export default function SimulationCanvas() {
   }, []);
 
   const showFullVerdict = simStatus === 'complete' && result != null;
+  const showVerdictPanel = showFullVerdict || simStatus === 'verdict';
   const showOverlays =
     snap.demo || RUNNING.includes(snap.simStatus) || (snap.simStatus === 'complete' && !showFullVerdict);
   const showMiniVerdictHud =
@@ -227,7 +231,7 @@ export default function SimulationCanvas() {
         </div>
       ) : null}
 
-      <VerdictPanel visible={showFullVerdict} />
+      <VerdictPanel visible={showVerdictPanel} />
       <DeepDivePanel />
 
       <AnimatePresence initial={false}>
@@ -329,24 +333,6 @@ export default function SimulationCanvas() {
               ))}
             </ul>
           </div>
-
-          {simStatus === 'verdict' && verdictGeneratingMessage ? (
-            <div
-              className={cn(
-                'pointer-events-none absolute bottom-14 left-1/2 z-[12] w-[min(340px,92vw)] -translate-x-1/2 border px-4 py-2.5 text-center shadow-lg backdrop-blur-md',
-                glass,
-              )}
-              style={glassStyle}
-              aria-live="polite"
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: DARK_THEME.accent }}>
-                Chief verdict
-              </p>
-              <p className="mt-1 text-[13px] leading-snug" style={{ color: DARK_THEME.text_primary }}>
-                {verdictGeneratingMessage}
-              </p>
-            </div>
-          ) : null}
 
           {showMiniVerdictHud && snap.verdict && (
             <div className={cn('pointer-events-none absolute bottom-3 left-3 z-10 w-[min(220px,88vw)]', glass)} style={glassStyle}>
