@@ -9,7 +9,10 @@ import {
   MessageSquare,
   MoreHorizontal,
   Dna,
+  Settings,
   Settings2,
+  Globe,
+  List,
   Zap,
   ChevronRight,
   LogIn,
@@ -32,6 +35,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/shadcn/dropdown-menu';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/shadcn/hover-card';
@@ -665,10 +674,15 @@ function ProjectsFlyoutMenu({
 // Profile — popover above (DropdownMenu side=top)
 // ═══════════════════════════════════════════════════════════════════════════
 
+const PROFILE_MENU_W =
+  'w-[min(100vw-24px,280px)] min-w-[260px] max-w-[300px] rounded-2xl border border-[#E8E4DE] bg-white p-0 shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:border-border-default dark:bg-surface-raised dark:shadow-lg';
+const PROFILE_MENU_ITEM =
+  'cursor-pointer gap-3 rounded-lg px-4 py-2.5 text-[14px] leading-snug text-[#1A1A1A] focus:bg-[#F5F3EF] data-[highlighted]:bg-[#F5F3EF] dark:text-txt-primary dark:focus:bg-surface-2 dark:data-[highlighted]:bg-surface-2 [&_svg]:size-[15px] [&_svg]:shrink-0 [&_svg]:text-[#6B6560] dark:[&_svg]:text-icon-secondary';
+
 function ProfileMenu({ variant, tier }: { variant: 'expanded' | 'collapsed'; tier: TierType }) {
   const router = useRouter();
   const { user, isAuthenticated, signOut } = useAuth();
-  const tokensRemaining = useBillingStore((s) => s.tokensRemaining);
+  const [language, setLanguage] = useState('en');
   const displayName =
     isAuthenticated && typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name
       ? user.user_metadata.full_name
@@ -722,85 +736,100 @@ function ProfileMenu({ variant, tier }: { variant: 'expanded' | 'collapsed'; tie
         side="top"
         align="start"
         sideOffset={8}
-        className="z-[100] min-w-[220px] rounded-xl border border-border-default bg-surface-raised p-1.5 shadow-lg"
+        className={cn('z-[100] overflow-hidden p-0', PROFILE_MENU_W)}
       >
         {isAuthenticated ? (
           <>
-            <div className="px-3 py-2">
-              <p className="text-[13px] font-medium text-txt-primary">{displayName}</p>
-              {user?.email && <p className="text-[11px] text-txt-tertiary">{user.email}</p>}
+            <div className="px-4 pb-3 pt-4">
+              <p className="text-[15px] font-semibold leading-tight text-[#1A1A1A] dark:text-txt-primary">
+                {displayName}
+              </p>
+              {user?.email && (
+                <p className="mt-1 text-[13px] leading-snug text-[#6B6560] dark:text-txt-secondary">{user.email}</p>
+              )}
             </div>
-            <div className="mx-2 my-1 h-px bg-border-subtle" />
-            <PopoverRow
-              icon={Zap}
-              label={`${tier === 'free' ? 'Free' : tier === 'pro' ? 'Pro' : tier === 'max' ? 'Max' : 'Octopus'} plan · ${tokensRemaining} token${tokensRemaining === 1 ? '' : 's'}`}
-              sub
-            />
-            <DropdownMenuItem
-              className="cursor-pointer rounded-lg px-3 py-2 text-txt-secondary focus:bg-surface-2/80"
-              onSelect={() => {
-                router.push('/settings');
-              }}
-            >
-              <span className="flex items-center gap-2.5 text-[13px]">
-                <Settings2 size={15} strokeWidth={ICON_STROKE} />
+            <DropdownMenuSeparator className="m-0 bg-[#E5E5E5] dark:bg-border-subtle" />
+            <div className="p-1.5">
+              <DropdownMenuItem
+                className={PROFILE_MENU_ITEM}
+                onSelect={() => {
+                  router.push('/settings');
+                }}
+              >
+                <Settings strokeWidth={ICON_STROKE} aria-hidden />
                 Settings
-              </span>
-            </DropdownMenuItem>
-            <div className="px-1 py-1" onPointerDown={(e) => e.preventDefault()}>
-              <ThemeToggleCompact />
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className={cn(PROFILE_MENU_ITEM, 'h-auto w-full')}>
+                  <Globe strokeWidth={ICON_STROKE} aria-hidden />
+                  Language
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent
+                  className="min-w-[180px] rounded-xl border border-[#E8E4DE] bg-white p-1 shadow-lg dark:border-border-default dark:bg-surface-raised"
+                  sideOffset={6}
+                >
+                  <DropdownMenuRadioGroup value={language} onValueChange={setLanguage}>
+                    <DropdownMenuRadioItem
+                      value="en"
+                      className="rounded-lg py-2 pl-8 pr-3 text-[13px] focus:bg-[#F5F3EF] dark:focus:bg-surface-2"
+                    >
+                      English
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuItem
+                className={PROFILE_MENU_ITEM}
+                onSelect={() => {
+                  router.push('/pricing');
+                }}
+              >
+                <List strokeWidth={ICON_STROKE} aria-hidden />
+                View all plans
+              </DropdownMenuItem>
             </div>
-            <div className="mx-2 my-1 h-px bg-border-subtle" />
-            <DropdownMenuItem
-              className="cursor-pointer rounded-lg px-3 py-2 text-red-400/80 focus:bg-red-500/[0.06]"
-              onSelect={async () => {
-                await signOut();
-                router.push('/');
-              }}
-            >
-              <span className="flex items-center gap-2.5 text-[13px]">
-                <LogOut size={15} strokeWidth={ICON_STROKE} />
-                Sign out
-              </span>
-            </DropdownMenuItem>
+            <DropdownMenuSeparator className="m-0 bg-[#E5E5E5] dark:bg-border-subtle" />
+            <div className="p-1.5">
+              <DropdownMenuItem
+                className={cn(
+                  PROFILE_MENU_ITEM,
+                  'text-rose-500 focus:bg-rose-500/[0.06] data-[highlighted]:bg-rose-500/[0.06] [&_svg]:text-rose-500',
+                )}
+                onSelect={async () => {
+                  await signOut();
+                  router.push('/');
+                }}
+              >
+                <LogOut strokeWidth={ICON_STROKE} aria-hidden />
+                Log out
+              </DropdownMenuItem>
+            </div>
           </>
         ) : (
           <>
-            <div className="px-1 py-1" onPointerDown={(e) => e.preventDefault()}>
-              <ThemeToggleCompact />
+            <div className="px-4 pb-2 pt-4">
+              <p className="text-[15px] font-semibold text-[#1A1A1A] dark:text-txt-primary">Guest</p>
+              <p className="mt-1 text-[13px] text-[#6B6560] dark:text-txt-secondary">Sign in to sync your account</p>
             </div>
-            <DropdownMenuItem
-              className="cursor-pointer rounded-lg px-3 py-2 text-txt-secondary focus:bg-surface-2/80"
-              onSelect={() =>
-                window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'login' } }))
-              }
-            >
-              <span className="flex items-center gap-2.5 text-[13px]">
-                <LogIn size={15} strokeWidth={ICON_STROKE} />
+            <DropdownMenuSeparator className="m-0 bg-[#E5E5E5] dark:bg-border-subtle" />
+            <div className="p-1.5">
+              <div className="px-3 py-1" onPointerDown={(e) => e.preventDefault()}>
+                <ThemeToggleCompact />
+              </div>
+              <DropdownMenuItem
+                className={PROFILE_MENU_ITEM}
+                onSelect={() =>
+                  window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'login' } }))
+                }
+              >
+                <LogIn strokeWidth={ICON_STROKE} aria-hidden />
                 Sign in to your account
-              </span>
-            </DropdownMenuItem>
+              </DropdownMenuItem>
+            </div>
           </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function PopoverRow({
-  icon: Icon,
-  label,
-  sub,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-  label: string;
-  sub?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-txt-tertiary">
-      <Icon size={15} className={sub ? 'text-accent/70' : undefined} strokeWidth={ICON_STROKE} />
-      {label}
-    </div>
   );
 }
 
