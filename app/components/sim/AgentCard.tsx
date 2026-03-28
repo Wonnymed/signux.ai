@@ -5,32 +5,32 @@ import { ChevronDown } from "lucide-react";
 import type { AgentReport } from "@/app/lib/types/simulation";
 
 const AGENT_COLORS: Record<string, string> = {
-  decision_chair: "#7C3AED",
-  base_rate_archivist: "#6366F1",
+  decision_chair: "#C75B2A",
+  base_rate_archivist: "#8B6F4E",
   demand_signal_analyst: "#F59E0B",
   unit_economics_auditor: "#10B981",
-  regulatory_gatekeeper: "#F43F5E",
+  regulatory_gatekeeper: "#C9970D",
   competitive_intel: "#F97316",
-  execution_operator: "#8B5CF6",
+  execution_operator: "#E8784A",
   capital_allocator: "#06B6D4",
-  scenario_planner: "#EC4899",
+  scenario_planner: "#B8860B",
   intervention_optimizer: "#14B8A6",
-  customer_reality: "#8B5CF6",
+  customer_reality: "#E8784A",
   // Legacy mock IDs
-  "base-rate": "#6366F1",
+  "base-rate": "#8B6F4E",
   "demand-signal": "#F59E0B",
   "unit-econ": "#10B981",
-  regulatory: "#F43F5E",
+  regulatory: "#C9970D",
   "competitive-intel": "#F97316",
-  execution: "#8B5CF6",
+  execution: "#E8784A",
   capital: "#06B6D4",
-  scenario: "#EC4899",
+  scenario: "#B8860B",
   intervention: "#14B8A6",
-  chair: "#7C3AED",
+  chair: "#C75B2A",
 };
 
 function getAgentColor(id: string): string {
-  return AGENT_COLORS[id] || "#7C3AED";
+  return AGENT_COLORS[id] || "#C75B2A";
 }
 
 function getPositionStyle(position: string) {
@@ -40,7 +40,7 @@ function getPositionStyle(position: string) {
     case "delay":
       return { bg: "rgba(245,158,11,0.12)", color: "#F59E0B", label: "DELAY" };
     case "abandon":
-      return { bg: "rgba(244,63,94,0.12)", color: "#F43F5E", label: "ABANDON" };
+      return { bg: "rgba(244,63,94,0.12)", color: "#C9970D", label: "ABANDON" };
     default:
       return { bg: "var(--surface-2)", color: "var(--text-secondary)", label: position.toUpperCase() };
   }
@@ -49,7 +49,7 @@ function getPositionStyle(position: string) {
 function getConfidenceColor(c: number) {
   if (c >= 7) return "#10B981";
   if (c >= 4) return "#F59E0B";
-  return "#F43F5E";
+  return "#C9970D";
 }
 
 type AgentCardProps = {

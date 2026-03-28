@@ -15,8 +15,8 @@ export interface SuggestionChipConfig {
 
 /** Shared hero + chat suggestion chips — category color + icon */
 export const SUGGESTION_CHIP_CONFIG: SuggestionChipConfig[] = [
-  { text: 'Should I invest $10K in NVIDIA?', color: '#6366f1', Icon: TrendingUp },
-  { text: 'Time to break up or work on it?', color: '#ec4899', Icon: Heart },
+  { text: 'Should I invest $10K in NVIDIA?', color: '#8B6F4E', Icon: TrendingUp },
+  { text: 'Time to break up or work on it?', color: '#B8860B', Icon: Heart },
   { text: 'Quit my 9-5 for a startup?', color: '#f59e0b', Icon: Briefcase },
   { text: 'Open a restaurant in Gangnam?', color: '#10b981', Icon: Store },
   { text: 'Move abroad or stay close to family?', color: '#06b6d4', Icon: Globe },

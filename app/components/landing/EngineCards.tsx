@@ -24,7 +24,7 @@ const ENGINES: EngineCard[] = [
     id: "simulate",
     label: "Simulate",
     icon: Zap,
-    color: "#7C3AED",
+    color: "#C75B2A",
     description: "Pressure-test any decision with adversarial debate",
   },
   {
@@ -52,7 +52,7 @@ const ENGINES: EngineCard[] = [
     id: "protect",
     label: "Protect",
     icon: Shield,
-    color: "#F43F5E",
+    color: "#C9970D",
     description: "Find what could break your business",
   },
   {

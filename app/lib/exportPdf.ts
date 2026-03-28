@@ -23,7 +23,7 @@ const AGENT_COLORS: Record<string, string> = {
   operator: "#FCD34D", operations: "#FCD34D", execution: "#FCD34D",
   market: "#6EE7B7", demand: "#6EE7B7",
   risk: "#FCA5A5", regulatory: "#FCA5A5", regime: "#FCA5A5",
-  innovator: "#C4B5FD", innovation: "#C4B5FD", intervention: "#C4B5FD",
+  innovator: "#F09A72", innovation: "#F09A72", intervention: "#F09A72",
   devil: "#FDBA74", adversary: "#FDBA74", competitive: "#FDBA74",
   global: "#5EEAD4",
   human: "#F9A8D4", customer: "#F9A8D4",
@@ -450,7 +450,7 @@ export function exportSimulationPdf(data: {
     emerging_risk: NEGATIVE,
     blind_spot: "#F59E0B",
     opportunity: "#3B82F6",
-    tension: "#EC4899",
+    tension: "#B8860B",
   };
 
   const patterns = verdict?.patterns || [];

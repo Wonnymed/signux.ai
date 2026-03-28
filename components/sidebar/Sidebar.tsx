@@ -119,7 +119,7 @@ function SidebarCollapsed() {
                 type="button"
                 onClick={toggleSidebar}
                 className={cn(
-                  'flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/70 to-cyan-500/40 shadow-sm transition-transform hover:scale-[1.02]',
+                  'flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/70 to-amber-600/40 shadow-sm transition-transform hover:scale-[1.02]',
                   BRAND_LOGO_BOX,
                 )}
                 aria-label="Open sidebar"
@@ -257,7 +257,7 @@ function SidebarExpanded() {
           <div className="flex min-w-0 items-center gap-3">
             <div
               className={cn(
-                'flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/70 to-cyan-500/40 shadow-sm',
+                'flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/70 to-amber-600/40 shadow-sm',
                 BRAND_LOGO_BOX,
               )}
             >

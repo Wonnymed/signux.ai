@@ -62,7 +62,7 @@ export default function FieldIntelligenceBar({ fieldScans, personaCount }: Props
             <span style={{ color: "#10B981" }}>+{positive}</span>
           )}
           {negative > 0 && (
-            <span style={{ color: "#F43F5E" }}>-{negative}</span>
+            <span style={{ color: "#C9970D" }}>-{negative}</span>
           )}
           {neutral > 0 && (
             <span style={{ color: "var(--text-tertiary)" }}>{neutral} neutral</span>
@@ -123,7 +123,7 @@ export default function FieldIntelligenceBar({ fieldScans, personaCount }: Props
                         insight.sentiment === "positive"
                           ? "#10B981"
                           : insight.sentiment === "negative"
-                            ? "#F43F5E"
+                            ? "#C9970D"
                             : "var(--text-tertiary)",
                     }}
                   />

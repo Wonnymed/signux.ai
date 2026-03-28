@@ -83,7 +83,7 @@ export default function VerdictCard({
                 </span>
                 <span
                   className="text-sm font-semibold px-1.5 py-0.5 rounded"
-                  style={{ color: '#7C3AED', backgroundColor: 'rgba(124,58,237,0.1)' }}
+                  style={{ color: '#C75B2A', backgroundColor: 'rgba(124,58,237,0.1)' }}
                 >
                   {grade}
                 </span>

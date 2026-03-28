@@ -7,7 +7,7 @@ const DOMAINS = [
   {
     id: 'investment',
     label: 'Investment',
-    color: '#6366f1',
+    color: '#8B6F4E',
     blurb: 'Capital allocation, diversification, entry/exit.',
   },
   {
@@ -25,7 +25,7 @@ const DOMAINS = [
   {
     id: 'relationships',
     label: 'Relationships',
-    color: '#ec4899',
+    color: '#B8860B',
     blurb: 'Commitment, boundaries, major conversations.',
   },
   {

@@ -19,11 +19,11 @@ type Props = {
 };
 
 const ENGINE_COLORS: Record<string, string> = {
-  simulate: '#7C3AED',
+  simulate: '#C75B2A',
   build: '#10B981',
   grow: '#F59E0B',
   hire: '#06B6D4',
-  protect: '#F43F5E',
+  protect: '#C9970D',
   compete: '#F97316',
 };
 
@@ -254,10 +254,10 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
                       width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '14px', borderRadius: '6px',
                       background: item.section === 'engine'
-                        ? (ENGINE_COLORS[item.id.replace('engine-', '')] || '#7C3AED') + '18'
+                        ? (ENGINE_COLORS[item.id.replace('engine-', '')] || '#C75B2A') + '18'
                         : 'var(--surface-2, #f2f2ef)',
                       color: item.section === 'engine'
-                        ? ENGINE_COLORS[item.id.replace('engine-', '')] || '#7C3AED'
+                        ? ENGINE_COLORS[item.id.replace('engine-', '')] || '#C75B2A'
                         : 'var(--text-secondary)',
                     }}>
                       {item.icon}

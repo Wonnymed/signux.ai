@@ -16,8 +16,8 @@ export const DOMAIN_COLORS: Record<AgentDomain, string> = {
   career: '#10B981',
   business: '#F59E0B',
   health: '#EF4444',
-  relationships: '#EC4899',
-  life: '#8B5CF6',
+  relationships: '#B8860B',
+  life: '#E8784A',
 };
 
 export const DOMAIN_LABELS: Record<AgentDomain, string> = {

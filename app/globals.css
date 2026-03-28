@@ -1,10 +1,12 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
 :root {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
-  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* ═══ DECISION OS — semantic tokens (Phase 0.1) ═══
@@ -24,10 +26,10 @@
   /* Film grain (body::after uses --grain-opacity) */
   --grain-opacity: 0.018;
 
-  /* Ambient canvas: violet mist + cool highlight — sits above solid --surface-0 */
+  /* Ambient canvas: warm terracotta mist + subtle highlight */
   --canvas-gradient:
-    radial-gradient(ellipse 90% 55% at 50% -15%, rgba(109, 40, 217, 0.09) 0%, transparent 52%),
-    radial-gradient(ellipse 50% 35% at 100% 0%, rgba(6, 182, 212, 0.05) 0%, transparent 45%);
+    radial-gradient(ellipse 90% 55% at 50% -15%, rgba(199, 91, 42, 0.06) 0%, transparent 52%),
+    radial-gradient(ellipse 50% 35% at 100% 0%, rgba(184, 134, 11, 0.04) 0%, transparent 45%);
 
   /* Payoff moments: verdict card, primary CTA container */
   --shadow-premium:
@@ -38,14 +40,14 @@
     0 4px 6px -2px rgba(0, 0, 0, 0.05),
     0 16px 40px -12px rgba(0, 0, 0, 0.12);
   --shadow-accent-ring:
-    0 0 0 1px rgba(109, 40, 217, 0.12),
-    0 8px 32px -8px rgba(109, 40, 217, 0.18);
+    0 0 0 1px rgba(199, 91, 42, 0.12),
+    0 8px 32px -8px rgba(199, 91, 42, 0.18);
 
   /* BUILD PLAN §2.3 — gradient text stops (logo + key headlines; use sparingly) */
-  --gradient-text-from: #7c3aed;
-  --gradient-text-via: #e8d48e;
-  --gradient-text-to: #7c3aed;
-  --gradient-text-via-cyan: #00e5ff;
+  --gradient-text-from: #C75B2A;
+  --gradient-text-via: #D4A843;
+  --gradient-text-to: #C75B2A;
+  --gradient-text-via-cyan: #2E7D6F;
 }
 
 /* ═══ BUILD PLAN §2.2 — typography scale + rhythm ═══
@@ -149,31 +151,31 @@
   --icon-primary: rgba(0, 0, 0, 0.7);
   --icon-secondary: rgba(0, 0, 0, 0.45);
   --icon-disabled: rgba(0, 0, 0, 0.2);
-  --icon-active: #6d28d9;
+  --icon-active: #C75B2A;
 
   --border-subtle: #e6e6ea;
   --border-default: #d2d2d8;
   --border-strong: #bdbdc6;
-  --border-accent: rgba(109, 40, 217, 0.35);
+  --border-accent: rgba(199, 91, 42, 0.35);
 
-  --accent: #6d28d9;
-  --accent-hover: #5b21b6;
-  --accent-active: #4c1d95;
-  --accent-light: #7c3aed;
-  --accent-subtle: rgba(109, 40, 217, 0.05);
-  --accent-muted: rgba(109, 40, 217, 0.1);
-  --accent-ring: rgba(109, 40, 217, 0.25);
-  --accent-glow: rgba(109, 40, 217, 0.2);
+  --accent: #C75B2A;
+  --accent-hover: #B5501F;
+  --accent-active: #9A4318;
+  --accent-light: #D4713F;
+  --accent-subtle: rgba(199, 91, 42, 0.05);
+  --accent-muted: rgba(199, 91, 42, 0.1);
+  --accent-ring: rgba(199, 91, 42, 0.25);
+  --accent-glow: rgba(199, 91, 42, 0.2);
 
-  --entity-from: rgba(109, 40, 217, 0.75);
-  --entity-to: rgba(6, 182, 212, 0.35);
+  --entity-from: rgba(199, 91, 42, 0.75);
+  --entity-to: rgba(184, 134, 11, 0.35);
 
-  --entity-dormant: rgba(109, 40, 217, 0.1);
-  --entity-active: rgba(109, 40, 217, 0.22);
-  --entity-engaged: rgba(109, 40, 217, 0.45);
-  --entity-maximum: rgba(109, 40, 217, 0.85);
-  --entity-bioluminescent: #06b6d4;
-  --entity-neural: #7c3aed;
+  --entity-dormant: rgba(199, 91, 42, 0.1);
+  --entity-active: rgba(199, 91, 42, 0.22);
+  --entity-engaged: rgba(199, 91, 42, 0.45);
+  --entity-maximum: rgba(199, 91, 42, 0.85);
+  --entity-bioluminescent: #B8860B;
+  --entity-neural: #C75B2A;
   --entity-void: #f4f4f5;
 
   --verdict-proceed: #059669;
@@ -197,12 +199,12 @@
   --grade-d: #ea580c;
   --grade-f: #dc2626;
 
-  --cat-investment: #6366f1;
-  --cat-relationships: #ec4899;
-  --cat-career: #059669;
-  --cat-business: #d97706;
-  --cat-health: #ef4444;
-  --cat-life: #7c3aed;
+  --cat-investment: #8B6F4E;
+  --cat-relationships: #B8860B;
+  --cat-career: #2E7D6F;
+  --cat-business: #3A6B9F;
+  --cat-health: #6B8E5A;
+  --cat-life: #C75B2A;
 
   --confidence-high: #059669;
   --confidence-medium: #d97706;
@@ -210,9 +212,9 @@
   --confidence-contested: #db2777;
 
   --tier-free: #71717a;
-  --tier-pro: #6d28d9;
+  --tier-pro: #C75B2A;
   --tier-max: #d97706;
-  --tier-kraken: #0891b2;
+  --tier-kraken: #2E7D6F;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -236,76 +238,76 @@
   --container-reading: 65ch;
   --header-height: 48px;
 
-  --agent-inv-1: #6366f1;
-  --agent-inv-2: #3b82f6;
-  --agent-inv-3: #06b6d4;
-  --agent-inv-4: #8b5cf6;
-  --agent-inv-5: #14b8a6;
-  --agent-inv-6: #2563eb;
-  --agent-inv-7: #6d28d9;
-  --agent-inv-8: #0ea5e9;
-  --agent-inv-9: #4f46e5;
-  --agent-inv-10: #0d9488;
-  --agent-rel-1: #ec4899;
-  --agent-rel-2: #f43f5e;
-  --agent-rel-3: #e879f9;
-  --agent-rel-4: #fb7185;
-  --agent-rel-5: #d946ef;
-  --agent-rel-6: #f472b6;
-  --agent-rel-7: #c084fc;
-  --agent-rel-8: #fb923c;
-  --agent-rel-9: #a855f7;
-  --agent-rel-10: #f87171;
-  --agent-car-1: #059669;
-  --agent-car-2: #16a34a;
-  --agent-car-3: #14b8a6;
-  --agent-car-4: #34d399;
-  --agent-car-5: #06b6d4;
-  --agent-car-6: #2dd4bf;
-  --agent-car-7: #4ade80;
-  --agent-car-8: #047857;
-  --agent-car-9: #0d9488;
-  --agent-car-10: #16a34a;
-  --agent-bus-1: #d97706;
-  --agent-bus-2: #ea580c;
-  --agent-bus-3: #ca8a04;
-  --agent-bus-4: #fb923c;
-  --agent-bus-5: #fbbf24;
-  --agent-bus-6: #b45309;
-  --agent-bus-7: #c2410c;
-  --agent-bus-8: #a16207;
-  --agent-bus-9: #dc2626;
-  --agent-bus-10: #9a3412;
-  --agent-life-1: #7c3aed;
-  --agent-life-2: #8b5cf6;
-  --agent-life-3: #a78bfa;
-  --agent-life-4: #6d28d9;
-  --agent-life-5: #5b21b6;
-  --agent-life-6: #c026d3;
-  --agent-life-7: #d946ef;
-  --agent-life-8: #4f46e5;
-  --agent-life-9: #7e22ce;
-  --agent-life-10: #6d28d9;
+  --agent-inv-1: #8B6F4E;
+  --agent-inv-2: #7A6245;
+  --agent-inv-3: #9C7E5A;
+  --agent-inv-4: #6B5A3E;
+  --agent-inv-5: #A08B6C;
+  --agent-inv-6: #5C4D35;
+  --agent-inv-7: #B09A7D;
+  --agent-inv-8: #8B7A62;
+  --agent-inv-9: #6E5F49;
+  --agent-inv-10: #9A8568;
+  --agent-rel-1: #B8860B;
+  --agent-rel-2: #A67A0A;
+  --agent-rel-3: #C9970D;
+  --agent-rel-4: #D4A843;
+  --agent-rel-5: #9B7209;
+  --agent-rel-6: #BFA07A;
+  --agent-rel-7: #8E6708;
+  --agent-rel-8: #C4A035;
+  --agent-rel-9: #A88E2E;
+  --agent-rel-10: #D1B05A;
+  --agent-car-1: #2E7D6F;
+  --agent-car-2: #267062;
+  --agent-car-3: #368A7C;
+  --agent-car-4: #4BBEAB;
+  --agent-car-5: #1E6355;
+  --agent-car-6: #3D9688;
+  --agent-car-7: #44A595;
+  --agent-car-8: #1B5A4D;
+  --agent-car-9: #2A7468;
+  --agent-car-10: #338578;
+  --agent-bus-1: #3A6B9F;
+  --agent-bus-2: #325E8C;
+  --agent-bus-3: #4278B2;
+  --agent-bus-4: #5A9DD6;
+  --agent-bus-5: #2B5179;
+  --agent-bus-6: #4A85C0;
+  --agent-bus-7: #3568A3;
+  --agent-bus-8: #234466;
+  --agent-bus-9: #5090C8;
+  --agent-bus-10: #2D5B87;
+  --agent-life-1: #C75B2A;
+  --agent-life-2: #D4713F;
+  --agent-life-3: #E8784A;
+  --agent-life-4: #B5501F;
+  --agent-life-5: #9A4318;
+  --agent-life-6: #D06535;
+  --agent-life-7: #E08858;
+  --agent-life-8: #A84D22;
+  --agent-life-9: #BC5726;
+  --agent-life-10: #C46030;
 
   /* ═══ BUILD PLAN §2.1 — product engines + canonical agent roles (semantic aliases) ═══ */
   --engine-simulate: var(--accent);
-  --engine-build: #10b981;
-  --engine-grow: #8b5cf6;
-  --engine-hire: #f59e0b;
-  --engine-protect: #ef4444;
-  --engine-compete: #f97316;
+  --engine-build: #2E7D6F;
+  --engine-grow: #B8860B;
+  --engine-hire: #3A6B9F;
+  --engine-protect: #dc2626;
+  --engine-compete: #8B6F4E;
 
-  --agent-base-rate: #6366f1;
-  --agent-unit-econ: #10b981;
-  --agent-demand: #f59e0b;
-  --agent-competitive: #f97316;
-  --agent-regulatory: #ef4444;
-  --agent-execution: #8b5cf6;
-  --agent-capital: #06b6d4;
-  --agent-scenario: #ec4899;
-  --agent-intervention: #14b8a6;
-  /* Chair aligns with BUILD PLAN accent purple */
-  --agent-chair: #7c3aed;
+  --agent-base-rate: #8B6F4E;
+  --agent-unit-econ: #2E7D6F;
+  --agent-demand: #B8860B;
+  --agent-competitive: #3A6B9F;
+  --agent-regulatory: #dc2626;
+  --agent-execution: #6B8E5A;
+  --agent-capital: #8B6F4E;
+  --agent-scenario: #D4A843;
+  --agent-intervention: #2E7D6F;
+  /* Chair aligns with accent terracotta */
+  --agent-chair: #C75B2A;
 }
 
 /* ═══ DARK — cool neutrals, restrained purple signature ═══ */
@@ -314,8 +316,8 @@
 
   --grain-opacity: 0.028;
   --canvas-gradient:
-    radial-gradient(ellipse 85% 50% at 50% -10%, rgba(139, 92, 246, 0.14) 0%, transparent 50%),
-    radial-gradient(ellipse 45% 30% at 100% 0%, rgba(34, 211, 238, 0.06) 0%, transparent 42%);
+    radial-gradient(ellipse 85% 50% at 50% -10%, rgba(232, 120, 74, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 45% 30% at 100% 0%, rgba(212, 168, 67, 0.05) 0%, transparent 42%);
   --shadow-premium:
     0 1px 2px rgba(0, 0, 0, 0.35),
     0 12px 32px -8px rgba(0, 0, 0, 0.55),
@@ -324,8 +326,8 @@
     0 8px 16px -4px rgba(0, 0, 0, 0.45),
     0 24px 48px -16px rgba(0, 0, 0, 0.55);
   --shadow-accent-ring:
-    0 0 0 1px rgba(139, 92, 246, 0.2),
-    0 12px 40px -10px rgba(139, 92, 246, 0.25);
+    0 0 0 1px rgba(232, 120, 74, 0.2),
+    0 12px 40px -10px rgba(232, 120, 74, 0.25);
 
   --focus-ring-color: var(--accent-light);
 
@@ -355,31 +357,31 @@
   --icon-primary: rgba(255, 255, 255, 0.78);
   --icon-secondary: rgba(255, 255, 255, 0.5);
   --icon-disabled: rgba(255, 255, 255, 0.22);
-  --icon-active: #a78bfa;
+  --icon-active: #E8784A;
 
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-default: rgba(255, 255, 255, 0.13);
   --border-strong: rgba(255, 255, 255, 0.2);
-  --border-accent: rgba(139, 92, 246, 0.35);
+  --border-accent: rgba(232, 120, 74, 0.35);
 
-  --accent: #8b5cf6;
-  --accent-hover: #7c3aed;
-  --accent-active: #6d28d9;
-  --accent-light: #a78bfa;
-  --accent-subtle: rgba(139, 92, 246, 0.07);
-  --accent-muted: rgba(139, 92, 246, 0.14);
-  --accent-ring: rgba(139, 92, 246, 0.3);
-  --accent-glow: rgba(139, 92, 246, 0.22);
+  --accent: #E8784A;
+  --accent-hover: #F08A5E;
+  --accent-active: #D06535;
+  --accent-light: #F09A72;
+  --accent-subtle: rgba(232, 120, 74, 0.07);
+  --accent-muted: rgba(232, 120, 74, 0.14);
+  --accent-ring: rgba(232, 120, 74, 0.3);
+  --accent-glow: rgba(232, 120, 74, 0.22);
 
-  --entity-from: rgba(139, 92, 246, 0.75);
-  --entity-to: rgba(6, 182, 212, 0.4);
+  --entity-from: rgba(232, 120, 74, 0.75);
+  --entity-to: rgba(212, 168, 67, 0.4);
 
-  --entity-dormant: rgba(139, 92, 246, 0.12);
-  --entity-active: rgba(139, 92, 246, 0.35);
-  --entity-engaged: rgba(139, 92, 246, 0.65);
-  --entity-maximum: rgba(139, 92, 246, 0.95);
-  --entity-bioluminescent: #22d3ee;
-  --entity-neural: #c084fc;
+  --entity-dormant: rgba(232, 120, 74, 0.12);
+  --entity-active: rgba(232, 120, 74, 0.35);
+  --entity-engaged: rgba(232, 120, 74, 0.65);
+  --entity-maximum: rgba(232, 120, 74, 0.95);
+  --entity-bioluminescent: #D4A843;
+  --entity-neural: #E8784A;
   --entity-void: #0a0a0f;
 
   --verdict-proceed: #10b981;
@@ -398,11 +400,11 @@
   --marketing-bg-alt: #141418;
 
   --tier-free: rgba(255, 255, 255, 0.4);
-  --tier-pro: #a78bfa;
+  --tier-pro: #E8784A;
   --tier-max: #fbbf24;
-  --tier-kraken: #22d3ee;
+  --tier-kraken: #4BBEAB;
 
-  --cat-health: #f87171;
+  --cat-health: #8AB878;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
@@ -414,10 +416,10 @@
   --shadow-accent: 0 2px 12px rgba(0, 0, 0, 0.35);
 
   /* §2.3 — lighter ends for gradient text on dark canvas */
-  --gradient-text-from: #c4b5fd;
-  --gradient-text-via: #e8d48e;
-  --gradient-text-to: #c4b5fd;
-  --gradient-text-via-cyan: #67e8f9;
+  --gradient-text-from: #F09A72;
+  --gradient-text-via: #D4A843;
+  --gradient-text-to: #F09A72;
+  --gradient-text-via-cyan: #4BBEAB;
 }
 
 /* ═══ BASE STYLES ═══ */
@@ -479,7 +481,7 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.entity-gradient-text { background: linear-gradient(135deg, #7C3AED 0%, #FF006E 30%, #00E5FF 60%, #7C3AED 100%); background-size: 300% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shimmer 4s linear infinite; }
+.entity-gradient-text { background: linear-gradient(135deg, #C75B2A 0%, #D4A843 30%, #2E7D6F 60%, #C75B2A 100%); background-size: 300% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shimmer 4s linear infinite; }
 
 .octx-text-page-title {
   font-size: var(--text-page-title-size);
@@ -676,7 +678,7 @@
 
 .field-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-ring, rgba(109, 40, 217, 0.12));
+  box-shadow: 0 0 0 3px var(--accent-ring, rgba(199, 91, 42, 0.12));
 }
 
 /* ═══ ANIMATION UTILITIES ═══ */
@@ -769,7 +771,7 @@
   z-index: 0;
 }
 .dark .hero-glow {
-  background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(232, 120, 74, 0.12) 0%, transparent 70%);
 }
 
 .sidebar-item-active {

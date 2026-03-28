@@ -97,7 +97,7 @@ export default async function BoardroomReportPage({ params }: Props) {
             <p className="text-sm text-gray-500 mt-1">{createdAt} · 10 specialist analysts</p>
           </div>
           <div className="print:hidden">
-            <a href="/" className="text-sm text-purple-600 hover:text-purple-700">octux.ai →</a>
+            <a href="/" className="text-sm text-accent hover:text-accent-hover">octux.ai →</a>
           </div>
         </div>
 
@@ -178,7 +178,7 @@ export default async function BoardroomReportPage({ params }: Props) {
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Claim Confidence</h2>
             <div className="space-y-2">
               {claims.map((claim: any, i: number) => {
-                const colors: Record<string, string> = { consensus: '#10B981', majority: '#3B82F6', contested: '#EC4899', unsupported: '#9CA3AF' };
+                const colors: Record<string, string> = { consensus: '#10B981', majority: '#3B82F6', contested: '#B8860B', unsupported: '#9CA3AF' };
                 const color = colors[claim.grade] || colors.unsupported;
                 return (
                   <div key={i} className="flex items-center gap-3 py-1.5">
@@ -208,7 +208,7 @@ export default async function BoardroomReportPage({ params }: Props) {
           <p className="text-sm text-gray-500 mb-3">Powered by Octux AI — 10 specialists debate your decisions</p>
           <a
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors"
           >
             Run your own analysis →
           </a>

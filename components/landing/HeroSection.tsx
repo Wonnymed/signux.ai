@@ -45,7 +45,7 @@ export default function HeroSection({ onSignIn }: HeroSectionProps) {
       <div className="relative z-10 max-w-2xl mx-auto text-center">
         <div className="relative mb-10 flex justify-center">
           <div className="absolute inset-0 rounded-full bg-accent/10 blur-2xl scale-150 animate-pulse pointer-events-none" aria-hidden />
-          <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-accent/70 via-purple-500/50 to-cyan-500/30 p-[2px] shadow-lg shadow-black/30">
+          <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-accent/70 via-purple-500/50 to-amber-600/30 p-[2px] shadow-lg shadow-black/30">
             <div className="w-full h-full rounded-full bg-[var(--surface-0)] flex items-center justify-center">
               <span className="text-3xl">&#x1F419;</span>
             </div>

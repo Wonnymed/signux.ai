@@ -33,7 +33,7 @@ export default function ThreadList() {
 
   if (threads.length === 0) return null;
 
-  const verdictColors: Record<string, string> = { proceed: '#10B981', delay: '#F59E0B', abandon: '#F43F5E' };
+  const verdictColors: Record<string, string> = { proceed: '#10B981', delay: '#F59E0B', abandon: '#C9970D' };
 
   return (
     <div style={{ padding: '8px 0' }}>

@@ -13,7 +13,7 @@ export default function ToolHeader({
   title,
   description,
   icon: Icon,
-  iconColor = '#7C3AED',
+  iconColor = '#C75B2A',
   className,
 }: ToolHeaderProps) {
   return (

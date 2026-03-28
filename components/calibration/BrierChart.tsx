@@ -32,7 +32,7 @@ export default function BrierChart({ outcomes, overallBrier }: { outcomes: Outco
         <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
           Brier score per prediction (lower = better)
         </div>
-        <div style={{ fontSize: '13px', fontWeight: 500, color: overallBrier < 0.2 ? '#10B981' : overallBrier < 0.3 ? '#F59E0B' : '#F43F5E' }}>
+        <div style={{ fontSize: '13px', fontWeight: 500, color: overallBrier < 0.2 ? '#10B981' : overallBrier < 0.3 ? '#F59E0B' : '#C9970D' }}>
           Overall: {overallBrier.toFixed(3)}
         </div>
       </div>
@@ -42,7 +42,7 @@ export default function BrierChart({ outcomes, overallBrier }: { outcomes: Outco
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
           <ReferenceArea y1={0} y2={0.2} fill="#10B981" fillOpacity={0.06} />
           <ReferenceArea y1={0.2} y2={0.35} fill="#F59E0B" fillOpacity={0.06} />
-          <ReferenceArea y1={0.35} y2={1} fill="#F43F5E" fillOpacity={0.06} />
+          <ReferenceArea y1={0.35} y2={1} fill="#C9970D" fillOpacity={0.06} />
 
           <XAxis dataKey="index" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} />
           <YAxis domain={[0, 1]} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} />
@@ -58,9 +58,9 @@ export default function BrierChart({ outcomes, overallBrier }: { outcomes: Outco
           <Line
             type="monotone"
             dataKey="brier"
-            stroke="#7C3AED"
+            stroke="#C75B2A"
             strokeWidth={2}
-            dot={{ fill: '#7C3AED', r: 3 }}
+            dot={{ fill: '#C75B2A', r: 3 }}
             activeDot={{ r: 5 }}
           />
         </LineChart>
@@ -69,7 +69,7 @@ export default function BrierChart({ outcomes, overallBrier }: { outcomes: Outco
       <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: '11px', color: 'var(--text-tertiary)' }}>
         <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: '#10B98130', marginRight: '4px' }}></span>Good (&lt;0.2)</span>
         <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: '#F59E0B30', marginRight: '4px' }}></span>Fair (0.2-0.35)</span>
-        <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: '#F43F5E30', marginRight: '4px' }}></span>Poor (&gt;0.35)</span>
+        <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: '#C9970D30', marginRight: '4px' }}></span>Poor (&gt;0.35)</span>
       </div>
     </div>
   );

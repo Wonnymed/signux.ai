@@ -28,7 +28,7 @@ export default function DecisionCard({
     >
       <div className="flex items-start gap-3 max-w-[min(85%,42rem)] w-full">
         <div
-          className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/60 to-cyan-500/40 flex items-center justify-center shrink-0 mt-0.5 border border-border-default shadow-sm shadow-black/20"
+          className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/60 to-amber-600/40 flex items-center justify-center shrink-0 mt-0.5 border border-border-default shadow-sm shadow-black/20"
           aria-hidden
         >
           <span className="text-[10px] leading-none">🐙</span>

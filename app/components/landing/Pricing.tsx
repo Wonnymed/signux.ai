@@ -122,7 +122,7 @@ export default function Pricing() {
             height: 24,
             borderRadius: 12,
             border: "none",
-            background: annual ? "#7C3AED" : "var(--surface-3)",
+            background: annual ? "#C75B2A" : "var(--surface-3)",
             cursor: "pointer",
             position: "relative",
             transition: "background 150ms ease-out",
@@ -156,7 +156,7 @@ export default function Pricing() {
             style={{
               fontSize: 11,
               fontWeight: 500,
-              color: "#7C3AED",
+              color: "#C75B2A",
               opacity: annual ? 1 : 0.6,
             }}
           >
@@ -181,7 +181,7 @@ export default function Pricing() {
                 padding: 32,
                 borderRadius: 12,
                 border: plan.featured
-                  ? "2px solid #7C3AED"
+                  ? "2px solid #C75B2A"
                   : `1px solid ${isHovered ? "var(--border-strong)" : "var(--border-default)"}`,
                 background: "#FFFFFF",
                 display: "flex",
@@ -203,7 +203,7 @@ export default function Pricing() {
                     transform: "translateX(-50%)",
                     padding: "4px 14px",
                     borderRadius: "var(--radius-full)",
-                    background: "#7C3AED",
+                    background: "#C75B2A",
                     color: "#FFFFFF",
                     fontSize: 11,
                     fontWeight: 600,
@@ -300,7 +300,7 @@ export default function Pricing() {
                       size={15}
                       strokeWidth={2}
                       style={{
-                        color: plan.featured ? "#7C3AED" : "var(--icon-secondary)",
+                        color: plan.featured ? "#C75B2A" : "var(--icon-secondary)",
                         flexShrink: 0,
                         marginTop: 2,
                       }}
@@ -326,7 +326,7 @@ export default function Pricing() {
                   ...(plan.featured
                     ? {
                         background:
-                          hoveredBtn === plan.name ? "#6D28D9" : "#7C3AED",
+                          hoveredBtn === plan.name ? "#C75B2A" : "#C75B2A",
                         color: "#FFFFFF",
                         border: "none",
                       }
@@ -334,9 +334,9 @@ export default function Pricing() {
                         background: "transparent",
                         color:
                           hoveredBtn === plan.name
-                            ? "#7C3AED"
+                            ? "#C75B2A"
                             : "var(--text-primary)",
-                        border: `1px solid ${hoveredBtn === plan.name ? "#7C3AED" : "var(--border-default)"}`,
+                        border: `1px solid ${hoveredBtn === plan.name ? "#C75B2A" : "var(--border-default)"}`,
                       }),
                 }}
               >

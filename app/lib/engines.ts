@@ -34,7 +34,7 @@ export const ENGINES = {
     cta: "Find Growth Levers",
     placeholder: "Describe the business, current traction, and growth challenge...",
     icon: "TrendingUp",
-    color: "#8B5CF6",
+    color: "#E8784A",
     chips: ["Growth levers", "Revenue bottlenecks", "Channel prioritization", "Pricing opportunities", "Experiment roadmap"],
   },
   hire: {

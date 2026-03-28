@@ -13,7 +13,7 @@ const DOMAIN_SETS = [
   {
     key: "game_theory",
     label: "Game Theory",
-    color: "#8B5CF6",
+    color: "#E8784A",
     prompt: "Analyze this situation purely through game theory. Who are the players? What are their incentives? What's the Nash equilibrium? What move maximizes your advantage?",
   },
   {

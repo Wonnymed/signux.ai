@@ -31,7 +31,7 @@ export default function AgentPerformanceTable({ agents }: { agents: Agent[] }) {
         <tbody>
           {sorted.map((agent, i) => {
             const score = agent.avgScore ?? 0;
-            const scoreColor = score >= 7.5 ? '#10B981' : score >= 6 ? '#F59E0B' : score > 0 ? '#F43F5E' : 'var(--text-tertiary)';
+            const scoreColor = score >= 7.5 ? '#10B981' : score >= 6 ? '#F59E0B' : score > 0 ? '#C9970D' : 'var(--text-tertiary)';
             const isOptimized = agent.currentVersion > 0;
             const hasRollback = agent.versionHistory.some(v => v.source === 'rollback');
 
@@ -44,8 +44,8 @@ export default function AgentPerformanceTable({ agents }: { agents: Agent[] }) {
                 <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                   <span style={{
                     padding: '2px 8px', borderRadius: '4px', fontSize: '12px',
-                    background: isOptimized ? '#7C3AED18' : 'var(--surface-2)',
-                    color: isOptimized ? '#7C3AED' : 'var(--text-tertiary)',
+                    background: isOptimized ? '#C75B2A18' : 'var(--surface-2)',
+                    color: isOptimized ? '#C75B2A' : 'var(--text-tertiary)',
                   }}>
                     v{agent.currentVersion}
                   </span>
@@ -57,7 +57,7 @@ export default function AgentPerformanceTable({ agents }: { agents: Agent[] }) {
                   {agent.simCount}
                 </td>
                 <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                  {hasRollback && <span style={{ fontSize: '11px', color: '#F43F5E' }}>rolled back</span>}
+                  {hasRollback && <span style={{ fontSize: '11px', color: '#C9970D' }}>rolled back</span>}
                   {isOptimized && !hasRollback && <span style={{ fontSize: '11px', color: '#10B981' }}>optimized</span>}
                   {!isOptimized && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>default</span>}
                 </td>

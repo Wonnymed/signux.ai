@@ -27,7 +27,7 @@ function getPositionStyle(position: string) {
     case "support":
       return { bg: "rgba(16,185,129,0.12)", color: "#10B981", label: "SUPPORT" };
     case "concern":
-      return { bg: "rgba(244,63,94,0.12)", color: "#F43F5E", label: "CONCERN" };
+      return { bg: "rgba(244,63,94,0.12)", color: "#C9970D", label: "CONCERN" };
     default:
       return { bg: "rgba(0,0,0,0.06)", color: "var(--text-tertiary)", label: "NEUTRAL" };
   }
@@ -36,7 +36,7 @@ function getPositionStyle(position: string) {
 function getConfidenceColor(c: number) {
   if (c >= 7) return "#10B981";
   if (c >= 4) return "#F59E0B";
-  return "#F43F5E";
+  return "#C9970D";
 }
 
 export default function CrowdWisdomPanel({ crowdResult, personas, isLoading }: CrowdWisdomPanelProps) {
@@ -168,7 +168,7 @@ export default function CrowdWisdomPanel({ crowdResult, personas, isLoading }: C
                         initial={{ width: 0 }}
                         animate={{ width: `${crowdResult.sentiment.concern}%` }}
                         transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-                        style={{ background: "#F43F5E", height: "100%" }}
+                        style={{ background: "#C9970D", height: "100%" }}
                       />
                     </div>
                     <div
@@ -181,7 +181,7 @@ export default function CrowdWisdomPanel({ crowdResult, personas, isLoading }: C
                     >
                       <span style={{ color: "#10B981" }}>Support {crowdResult.sentiment.support}%</span>
                       <span style={{ color: "var(--text-tertiary)" }}>Neutral {crowdResult.sentiment.neutral}%</span>
-                      <span style={{ color: "#F43F5E" }}>Concern {crowdResult.sentiment.concern}%</span>
+                      <span style={{ color: "#C9970D" }}>Concern {crowdResult.sentiment.concern}%</span>
                     </div>
                   </div>
 

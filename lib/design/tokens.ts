@@ -97,22 +97,22 @@ export const gradeColors: Record<string, string> = {
 };
 
 export const categoryColors = {
-  investment: '#6366F1',
-  relationships: '#EC4899',
+  investment: '#8B6F4E',
+  relationships: '#B8860B',
   career: '#10B981',
   business: '#F59E0B',
   health: '#EF4444',
-  life: '#8B5CF6',
+  life: '#E8784A',
 } as const;
 export type CategoryType = keyof typeof categoryColors;
 
 export const agentPalettes: Record<CategoryType, string[]> = {
-  investment: ['#6366F1', '#3B82F6', '#06B6D4', '#8B5CF6', '#14B8A6', '#2563EB', '#7C3AED', '#0EA5E9', '#4F46E5', '#0D9488'],
-  relationships: ['#EC4899', '#F43F5E', '#E879F9', '#FB7185', '#D946EF', '#F472B6', '#C084FC', '#FB923C', '#A855F7', '#F87171'],
+  investment: ['#8B6F4E', '#3B82F6', '#06B6D4', '#E8784A', '#14B8A6', '#2563EB', '#C75B2A', '#0EA5E9', '#6B5A3E', '#0D9488'],
+  relationships: ['#B8860B', '#C9970D', '#D4A843', '#FB7185', '#BFA07A', '#D4A843', '#F09A72', '#FB923C', '#D4A843', '#F87171'],
   career: ['#10B981', '#22C55E', '#14B8A6', '#34D399', '#06B6D4', '#2DD4BF', '#4ADE80', '#059669', '#0D9488', '#16A34A'],
   business: ['#F59E0B', '#F97316', '#EAB308', '#FB923C', '#FBBF24', '#D97706', '#EA580C', '#CA8A04', '#DC2626', '#B45309'],
-  health: ['#EF4444', '#F87171', '#FB7185', '#F43F5E', '#DC2626', '#E11D48', '#BE123C', '#F97316', '#EA580C', '#F59E0B'],
-  life: ['#8B5CF6', '#A855F7', '#C084FC', '#7C3AED', '#6D28D9', '#D946EF', '#E879F9', '#4F46E5', '#9333EA', '#7E22CE'],
+  health: ['#EF4444', '#F87171', '#FB7185', '#C9970D', '#DC2626', '#E11D48', '#BE123C', '#F97316', '#EA580C', '#F59E0B'],
+  life: ['#E8784A', '#D4A843', '#F09A72', '#C75B2A', '#C75B2A', '#BFA07A', '#D4A843', '#6B5A3E', '#D4713F', '#B5501F'],
 };
 
 export function getAgentColor(category: CategoryType, index: number): string {
@@ -130,9 +130,9 @@ export type EntityState = keyof typeof entityStates;
 
 export const tierConfig = {
   free: { label: 'Free', color: 'rgba(255,255,255,0.40)', badgeClass: 'oct-badge-free' },
-  pro: { label: 'Pro', color: '#7C3AED', badgeClass: 'oct-badge-pro' },
+  pro: { label: 'Pro', color: '#C75B2A', badgeClass: 'oct-badge-pro' },
   max: { label: 'Max', color: '#F59E0B', badgeClass: 'oct-badge-max' },
-  kraken: { label: 'Kraken', color: '#00E5FF', badgeClass: 'oct-badge-kraken' },
+  kraken: { label: 'Kraken', color: '#4BBEAB', badgeClass: 'oct-badge-kraken' },
 } as const;
 
 /** BUILD PLAN §2.1 — product engines (CSS vars; use in motion/SVG). */
@@ -182,14 +182,14 @@ export function getConfidenceColor(confidence: number): string {
 
 // Deterministic avatar gradient from agent index
 export const AGENT_GRADIENTS = [
-  ['#6366F1', '#8B5CF6'],
-  ['#EC4899', '#F43F5E'],
+  ['#8B6F4E', '#E8784A'],
+  ['#B8860B', '#C9970D'],
   ['#10B981', '#14B8A6'],
   ['#F59E0B', '#F97316'],
   ['#3B82F6', '#06B6D4'],
-  ['#D946EF', '#E879F9'],
+  ['#BFA07A', '#D4A843'],
   ['#EF4444', '#F87171'],
   ['#22C55E', '#4ADE80'],
   ['#0EA5E9', '#38BDF8'],
-  ['#A855F7', '#C084FC'],
+  ['#D4A843', '#F09A72'],
 ] as const;

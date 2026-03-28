@@ -137,7 +137,7 @@ export default function Sidebar({ activeEngine, onSelectEngine }: SidebarProps) 
         icon={Home}
         label="Home"
         active={resolvedActive === null}
-        color="#7C3AED"
+        color="#C75B2A"
         expanded={isExpanded}
         hovered={hoveredItem === "home"}
         onHover={(h) => setHoveredItem(h ? "home" : null)}

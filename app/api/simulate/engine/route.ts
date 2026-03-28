@@ -167,7 +167,7 @@ Behavior rules:
   {
     id: "strategic-architect",
     name: "Strategic Architect",
-    color: "#C4B5FD",
+    color: "#F09A72",
     system: SECURITY_PREFIX + `You are the Strategic Architect inside SIGNUX AI.
 Your role is to evaluate whether the proposed plan is strategically coherent. You care about wedge selection, sequencing, positioning, focus, compounding advantage, and what not to do yet.
 Your priorities:

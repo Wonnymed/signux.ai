@@ -81,7 +81,7 @@ export default async function PublicSimPage({ params }: Props) {
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🐙</div>
           <div style={{ fontSize: '20px', fontWeight: 300, color: 'var(--text-primary)' }}>Decision not found</div>
           <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginTop: '8px' }}>This tentacle doesn&apos;t reach that far.</div>
-          <a href="/" style={{ display: 'inline-block', marginTop: '24px', padding: '10px 24px', borderRadius: '8px', background: '#7C3AED', color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
+          <a href="/" style={{ display: 'inline-block', marginTop: '24px', padding: '10px 24px', borderRadius: '8px', background: '#C75B2A', color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
             Try Octux
           </a>
         </div>
@@ -100,8 +100,8 @@ export default async function PublicSimPage({ params }: Props) {
   const domain = (sim.domain || 'business').toUpperCase();
   const disclaimer = sim.disclaimer || '';
 
-  const recColor = rec === 'PROCEED' ? '#10B981' : rec === 'DELAY' ? '#F59E0B' : rec === 'ABANDON' ? '#F43F5E' : '#6B7280';
-  const recBg = rec === 'PROCEED' ? '#10B98115' : rec === 'DELAY' ? '#F59E0B15' : '#F43F5E15';
+  const recColor = rec === 'PROCEED' ? '#10B981' : rec === 'DELAY' ? '#F59E0B' : rec === 'ABANDON' ? '#C9970D' : '#6B7280';
+  const recBg = rec === 'PROCEED' ? '#10B98115' : rec === 'DELAY' ? '#F59E0B15' : '#C9970D15';
 
   const dateStr = new Date(sim.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -109,10 +109,10 @@ export default async function PublicSimPage({ params }: Props) {
     <div style={{ minHeight: '100vh', background: 'var(--surface-0, #fff)', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       {/* Top bar */}
       <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-subtle, rgba(0,0,0,0.06))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/" style={{ textDecoration: 'none', fontSize: '16px', fontWeight: 500, color: '#7C3AED' }}>
+        <a href="/" style={{ textDecoration: 'none', fontSize: '16px', fontWeight: 500, color: '#C75B2A' }}>
           octux ai
         </a>
-        <a href="/" style={{ padding: '8px 20px', borderRadius: '8px', background: '#7C3AED', color: '#fff', textDecoration: 'none', fontSize: '13px', fontWeight: 500 }}>
+        <a href="/" style={{ padding: '8px 20px', borderRadius: '8px', background: '#C75B2A', color: '#fff', textDecoration: 'none', fontSize: '13px', fontWeight: 500 }}>
           Try Octux free
         </a>
       </div>
@@ -121,7 +121,7 @@ export default async function PublicSimPage({ params }: Props) {
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '48px 24px' }}>
         {/* Domain + Date */}
         <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
-          <span style={{ padding: '3px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 500, background: 'rgba(124,58,237,0.08)', color: '#7C3AED' }}>{domain}</span>
+          <span style={{ padding: '3px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 500, background: 'rgba(124,58,237,0.08)', color: '#C75B2A' }}>{domain}</span>
           <span style={{ fontSize: '12px', color: 'var(--text-tertiary, rgba(0,0,0,0.35))' }}>{dateStr}</span>
         </div>
 
@@ -137,7 +137,7 @@ export default async function PublicSimPage({ params }: Props) {
               {rec}
             </span>
             <span style={{ fontSize: '36px', fontWeight: 300, color: 'var(--text-primary)' }}>{prob}%</span>
-            <span style={{ marginLeft: 'auto', fontSize: '24px', fontWeight: 500, color: '#7C3AED' }}>{grade}</span>
+            <span style={{ marginLeft: 'auto', fontSize: '24px', fontWeight: 500, color: '#C75B2A' }}>{grade}</span>
           </div>
           {oneLiner && (
             <div style={{ fontSize: '15px', color: 'var(--text-secondary, rgba(0,0,0,0.55))', lineHeight: 1.6 }}>{oneLiner}</div>
@@ -167,7 +167,7 @@ export default async function PublicSimPage({ params }: Props) {
               Confidence breakdown ({heatmap.green_count} strong, {heatmap.yellow_count} moderate, {heatmap.red_count} needs verification)
             </div>
             {heatmap.claims.slice(0, 6).map((claim: any, i: number) => {
-              const claimColor = claim.confidence_grade === 'green' ? '#10B981' : claim.confidence_grade === 'yellow' ? '#F59E0B' : '#F43F5E';
+              const claimColor = claim.confidence_grade === 'green' ? '#10B981' : claim.confidence_grade === 'yellow' ? '#F59E0B' : '#C9970D';
               return (
                 <div key={i} style={{ padding: '10px 14px', marginBottom: '6px', borderRadius: '8px', borderLeft: `3px solid ${claimColor}`, background: 'var(--surface-1, #f9f9f8)' }}>
                   <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{claim.claim}</div>
@@ -194,7 +194,7 @@ export default async function PublicSimPage({ params }: Props) {
           <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginBottom: '16px' }}>
             10 AI specialists debated this decision on Octux
           </div>
-          <a href="/" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: '8px', background: '#7C3AED', color: '#fff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
+          <a href="/" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: '8px', background: '#C75B2A', color: '#fff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
             Ask Octux your decision
           </a>
           <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '12px' }}>Free. No login required for your first decision.</div>

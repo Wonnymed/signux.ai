@@ -24,7 +24,7 @@ export default function OutcomeTracker({ outcomes }: { outcomes: Outcome[] }) {
       {outcomes.slice(0, 6).map((o, i) => {
         const isCorrect = (o.predicted === 'proceed' && o.outcome === 'success') ||
                           (o.predicted !== 'proceed' && o.outcome !== 'success');
-        const outcomeColor = o.outcome === 'success' ? '#10B981' : o.outcome === 'failure' ? '#F43F5E' : '#F59E0B';
+        const outcomeColor = o.outcome === 'success' ? '#10B981' : o.outcome === 'failure' ? '#C9970D' : '#F59E0B';
 
         return (
           <div
@@ -45,7 +45,7 @@ export default function OutcomeTracker({ outcomes }: { outcomes: Outcome[] }) {
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
                 Predicted: {o.predicted.toUpperCase()} ({o.probability}%) → Actual: {o.outcome.toUpperCase()}
-                {' '}<span style={{ color: isCorrect ? '#10B981' : '#F43F5E' }}>{isCorrect ? 'correct' : 'wrong'}</span>
+                {' '}<span style={{ color: isCorrect ? '#10B981' : '#C9970D' }}>{isCorrect ? 'correct' : 'wrong'}</span>
                 {' '}(Brier: {o.brier.toFixed(3)})
               </div>
             </div>

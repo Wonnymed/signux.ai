@@ -71,7 +71,7 @@ export default function Manifesto() {
             marginTop: 40,
             fontSize: 16,
             fontWeight: 500,
-            color: "#8B5CF6",
+            color: "#E8784A",
             textDecoration: hovered ? "underline" : "none",
             textUnderlineOffset: 4,
             cursor: "pointer",

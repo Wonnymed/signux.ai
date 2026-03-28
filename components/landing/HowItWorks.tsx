@@ -92,7 +92,7 @@ function StepVisual({ type }: { type: string }) {
 
   if (type === 'agents') {
     const agents = [
-      { name: 'Base Rate Archivist', pos: 'PROCEED', conf: 8, color: '#6366F1' },
+      { name: 'Base Rate Archivist', pos: 'PROCEED', conf: 8, color: '#8B6F4E' },
       { name: 'Regulatory Gatekeeper', pos: 'DELAY', conf: 9, color: '#F59E0B' },
       { name: 'Demand Signal Analyst', pos: 'PROCEED', conf: 7, color: '#10B981' },
     ];

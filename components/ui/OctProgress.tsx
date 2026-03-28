@@ -36,7 +36,7 @@ interface CircularProgressProps {
   className?: string;
 }
 
-export function CircularProgress({ value, size = 64, strokeWidth = 4, color = '#7C3AED', trackColor = 'var(--surface-2)', children, className }: CircularProgressProps) {
+export function CircularProgress({ value, size = 64, strokeWidth = 4, color = '#C75B2A', trackColor = 'var(--surface-2)', children, className }: CircularProgressProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;

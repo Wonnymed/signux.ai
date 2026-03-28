@@ -18,7 +18,7 @@ const AGENTS = [
   { id: "your_company", name: "Your Company", role: "Defending your strategy", color: "#3B82F6" },
   { id: "competitor_alpha", name: "Competitor Alpha", role: "Strongest direct competitor", color: "#EF4444" },
   { id: "competitor_beta", name: "Competitor Beta", role: "Different strategy competitor", color: "#F59E0B" },
-  { id: "disruptor", name: "Disruptor", role: "Innovative new entrant", color: "#8B5CF6" },
+  { id: "disruptor", name: "Disruptor", role: "Innovative new entrant", color: "#E8784A" },
   { id: "regulator", name: "Regulator", role: "Authority that can change rules", color: "#6B7280" },
 ];
 

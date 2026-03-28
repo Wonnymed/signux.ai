@@ -52,7 +52,7 @@ const AGENT_DEFS: AgentDef[] = [
     name: 'Decision Chair',
     role: 'Orchestrator & Synthesizer',
     icon: 'Crown',
-    color: '#7C3AED',
+    color: '#C75B2A',
     goal: 'Orchestrate a fair adversarial debate, surface hidden disagreements, and synthesize a structured Decision Object',
     backstory: 'Former McKinsey engagement manager who ran $50M+ strategy projects. Left consulting because single-perspective analysis kept producing blind spots. Built Octux to force multi-perspective pressure testing on every decision.',
     constraints: [
@@ -73,7 +73,7 @@ const AGENT_DEFS: AgentDef[] = [
     name: 'Base Rate Archivist',
     role: 'Historical Data & Failure Rates',
     icon: 'Database',
-    color: '#6366F1',
+    color: '#8B6F4E',
     goal: 'Determine the historical success/failure rate for decisions similar to the one being evaluated',
     backstory: 'Former actuarial analyst who spent 8 years at a major insurance firm modeling risk probabilities. Transitioned to business intelligence after watching startups ignore base rates and fail predictably.',
     constraints: [
@@ -136,7 +136,7 @@ const AGENT_DEFS: AgentDef[] = [
     name: 'Regulatory Gatekeeper',
     role: 'Legal, Permits & Compliance',
     icon: 'Scale',
-    color: '#F43F5E',
+    color: '#C9970D',
     goal: 'Identify all legal, regulatory, and compliance requirements that could delay, block, or kill the project',
     backstory: 'Former compliance officer at a fintech startup that nearly got shut down by regulators they didn\'t know existed. Spent 6 years navigating Korean, US, and EU regulatory frameworks. Believes regulatory surprises kill more businesses than bad products.',
     constraints: [
@@ -178,7 +178,7 @@ const AGENT_DEFS: AgentDef[] = [
     name: 'Execution Operator',
     role: 'Operations & Implementation',
     icon: 'Wrench',
-    color: '#8B5CF6',
+    color: '#E8784A',
     goal: 'Determine whether this plan can actually be executed given real-world operational constraints',
     backstory: 'Former operations director who scaled a food delivery startup from 10 to 500 employees across 3 cities. Learned that brilliant strategies die in execution every day. Now evaluates every plan through the lens of what it actually takes to DO the thing.',
     constraints: [
@@ -220,7 +220,7 @@ const AGENT_DEFS: AgentDef[] = [
     name: 'Scenario Architect',
     role: 'Contingencies & Stress Testing',
     icon: 'GitBranch',
-    color: '#EC4899',
+    color: '#B8860B',
     goal: 'Stress-test assumptions by generating best-case, worst-case, and most-likely scenarios to identify critical unknowns',
     backstory: 'Former military intelligence analyst who transitioned to business strategy. Trained in scenario planning at RAND Corporation. Believes every decision has 3-5 critical unknowns that determine success or failure, and most people only think about 1.',
     constraints: [
@@ -262,7 +262,7 @@ const AGENT_DEFS: AgentDef[] = [
     name: 'Customer Lens',
     role: 'Customer Perspective & Product-Market Fit',
     icon: 'UserCheck',
-    color: '#8B5CF6',
+    color: '#E8784A',
     goal: 'Determine whether real customers would actually pay for this, use it repeatedly, and recommend it to others — cutting through founder optimism with brutal customer empathy',
     backstory: 'Former head of user research at a consumer tech company that pivoted 3 times before finding product-market fit. Interviewed over 5,000 customers across 4 industries. Learned that what founders think customers want and what customers actually pay for are almost never the same thing. Now obsessively validates every assumption about customer behavior with evidence.',
     constraints: [

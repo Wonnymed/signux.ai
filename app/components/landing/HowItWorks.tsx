@@ -103,7 +103,7 @@ export default function HowItWorks() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#A78BFA",
+                  color: "#F09A72",
                   flexShrink: 0,
                 }}
               >

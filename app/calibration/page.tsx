@@ -65,7 +65,7 @@ export default function CalibrationPage() {
   const totalOutcomes = calData?.totalOutcomes ?? 0;
 
   const brierGrade = brierScore < 0.15 ? 'A' : brierScore < 0.2 ? 'B' : brierScore < 0.25 ? 'C' : brierScore < 0.35 ? 'D' : 'F';
-  const brierColor = brierScore < 0.2 ? '#10B981' : brierScore < 0.3 ? '#F59E0B' : '#F43F5E';
+  const brierColor = brierScore < 0.2 ? '#10B981' : brierScore < 0.3 ? '#F59E0B' : '#C9970D';
 
   return (
     <div style={{ padding: '40px', maxWidth: '1100px', margin: '0 auto' }}>

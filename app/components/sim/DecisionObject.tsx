@@ -9,9 +9,9 @@ import InlineCitation from "./InlineCitation";
 
 const RECOMMENDATION_LABELS: Record<string, { label: string; color: string }> = {
   proceed: { label: "PROCEED", color: "#10B981" },
-  proceed_with_conditions: { label: "PROCEED WITH CONDITIONS", color: "#7C3AED" },
+  proceed_with_conditions: { label: "PROCEED WITH CONDITIONS", color: "#C75B2A" },
   delay: { label: "DELAY", color: "#F59E0B" },
-  abandon: { label: "ABANDON", color: "#F43F5E" },
+  abandon: { label: "ABANDON", color: "#C9970D" },
 };
 
 type DecisionObjectProps = {
@@ -38,7 +38,7 @@ const DecisionObjectCard = forwardRef<HTMLDivElement, DecisionObjectProps>(funct
       transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
       style={{
         border: "1px solid var(--border-default)",
-        borderTop: "3px solid #7C3AED",
+        borderTop: "3px solid #C75B2A",
         borderRadius: "var(--radius-lg)",
         padding: 28,
         background: "var(--surface-raised)",
@@ -87,7 +87,7 @@ const DecisionObjectCard = forwardRef<HTMLDivElement, DecisionObjectProps>(funct
               cy={40}
               r={34}
               fill="none"
-              stroke="#7C3AED"
+              stroke="#C75B2A"
               strokeWidth={6}
               strokeLinecap="round"
               strokeDasharray={`${(verdict.probability / 100) * 213.6} 213.6`}
@@ -189,7 +189,7 @@ const DecisionObjectCard = forwardRef<HTMLDivElement, DecisionObjectProps>(funct
             border: "1px solid rgba(124,58,237,0.12)",
           }}
         >
-          <p style={{ fontSize: 11, fontWeight: 500, color: "#7C3AED", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 4px" }}>
+          <p style={{ fontSize: 11, fontWeight: 500, color: "#C75B2A", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 4px" }}>
             Next Action
           </p>
           <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)", margin: 0, lineHeight: 1.5 }}>

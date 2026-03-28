@@ -61,7 +61,7 @@ export default function MemoryHealth() {
               )}
               {row.total > 0 && row.total !== row.active && (
                 <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'var(--surface-2)' }}>
-                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: '2px', background: pct > 70 ? '#10B981' : pct > 40 ? '#F59E0B' : '#F43F5E' }} />
+                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: '2px', background: pct > 70 ? '#10B981' : pct > 40 ? '#F59E0B' : '#C9970D' }} />
                 </div>
               )}
             </div>

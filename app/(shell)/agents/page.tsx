@@ -61,8 +61,8 @@ const FALLBACK_DOMAIN_LABELS: Record<AgentDomain, string> = {
 
 const DOMAIN_COLORS: Record<AgentDomain, string> = {
   ...CATALOG_DOMAIN_COLORS,
-  custom: '#A855F7',
-  self: '#8B5CF6',
+  custom: '#D4A843',
+  self: '#E8784A',
 };
 
 /** Stable order for catalog agents (symmetric 5×2 grids per category). */
@@ -361,7 +361,7 @@ function JokerCard({ joker, onEdit }: { joker: JokerProfile; onEdit: () => void 
   return (
     <div className={cn('rounded-xl border p-5 transition-all', joker.joker_enabled ? 'border-accent/15 bg-accent-subtle' : 'border-border-subtle bg-surface-1')}>
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/60 to-cyan-500/30">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/60 to-amber-600/30">
           <span className="text-xl">🃏</span>
         </div>
         <div className="min-w-0 flex-1">

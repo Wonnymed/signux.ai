@@ -56,7 +56,7 @@ export default function ConsensusTracker({ consensus }: ConsensusTrackerProps) {
           initial={{ width: 0 }}
           animate={{ width: `${consensus.abandon}%` }}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-          style={{ background: "#F43F5E", height: "100%" }}
+          style={{ background: "#C9970D", height: "100%" }}
         />
       </div>
 
@@ -72,7 +72,7 @@ export default function ConsensusTracker({ consensus }: ConsensusTrackerProps) {
       >
         <span style={{ color: "#10B981" }}>Proceed {consensus.proceed}%</span>
         <span style={{ color: "#F59E0B" }}>Delay {consensus.delay}%</span>
-        <span style={{ color: "#F43F5E" }}>Abandon {consensus.abandon}%</span>
+        <span style={{ color: "#C9970D" }}>Abandon {consensus.abandon}%</span>
       </div>
 
       {/* Avg confidence */}

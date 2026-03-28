@@ -11,7 +11,7 @@ type InlineCitationProps = {
 function getConfidenceColor(c: number) {
   if (c >= 7) return "#10B981";
   if (c >= 4) return "#F59E0B";
-  return "#F43F5E";
+  return "#C9970D";
 }
 
 export default function InlineCitation({ citation }: InlineCitationProps) {
@@ -33,7 +33,7 @@ export default function InlineCitation({ citation }: InlineCitationProps) {
             background: hovered
               ? "rgba(124,58,237,0.20)"
               : "rgba(124,58,237,0.10)",
-            color: "#7C3AED",
+            color: "#C75B2A",
             fontSize: 10,
             fontWeight: 600,
             cursor: "pointer",
@@ -79,7 +79,7 @@ export default function InlineCitation({ citation }: InlineCitationProps) {
                 height: 24,
                 borderRadius: "50%",
                 background: "rgba(124,58,237,0.12)",
-                color: "#7C3AED",
+                color: "#C75B2A",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

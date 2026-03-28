@@ -39,8 +39,8 @@ export default function OptimizationLog({ cycles }: { cycles: Cycle[] }) {
           disabled={triggering}
           style={{
             padding: '8px 16px', borderRadius: '8px',
-            border: '1px solid #7C3AED', background: 'transparent',
-            color: '#7C3AED', fontSize: '13px', fontWeight: 500,
+            border: '1px solid #C75B2A', background: 'transparent',
+            color: '#C75B2A', fontSize: '13px', fontWeight: 500,
             cursor: triggering ? 'wait' : 'pointer',
             opacity: triggering ? 0.6 : 1,
           }}
@@ -82,7 +82,7 @@ export default function OptimizationLog({ cycles }: { cycles: Cycle[] }) {
                 )}
                 {cycle.agentsRolledBack.length > 0 && (
                   <span>
-                    <span style={{ color: '#F43F5E' }}>Rolled back:</span> {cycle.agentsRolledBack.map(a => a.replace(/_/g, ' ')).join(', ')}
+                    <span style={{ color: '#C9970D' }}>Rolled back:</span> {cycle.agentsRolledBack.map(a => a.replace(/_/g, ' ')).join(', ')}
                   </span>
                 )}
                 {cycle.totalImprovement !== null && cycle.totalImprovement > 0 && (

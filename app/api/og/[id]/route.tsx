@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const grade = verdict?.grade || '';
   const oneLiner = verdict?.one_liner || verdict?.summary || 'AI-powered decision analysis';
 
-  const recColor = recommendation === 'PROCEED' ? '#10B981' : recommendation === 'DELAY' ? '#F59E0B' : recommendation === 'ABANDON' ? '#EF4444' : '#7C3AED';
+  const recColor = recommendation === 'PROCEED' ? '#10B981' : recommendation === 'DELAY' ? '#F59E0B' : recommendation === 'ABANDON' ? '#EF4444' : '#C75B2A';
 
   const imageResponse = new ImageResponse(
     (
@@ -89,7 +89,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         {/* Footer */}
         <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.25)' }}>Analyzed by 10 AI specialists</span>
-          <span style={{ fontSize: '14px', color: '#7C3AED', fontWeight: 500 }}>octux.ai</span>
+          <span style={{ fontSize: '14px', color: '#C75B2A', fontWeight: 500 }}>octux.ai</span>
         </div>
       </div>
     ),

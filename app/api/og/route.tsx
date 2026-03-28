@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const typeColors: Record<string, string> = {
     simulate: "#D4AF37",
     intel: "#DC2626",
-    invest: "#8B5CF6",
+    invest: "#E8784A",
     launchpad: "#14B8A6",
   };
   const accentColor = typeColors[type] || "#D4AF37";

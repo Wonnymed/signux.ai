@@ -16,7 +16,7 @@ export default function ChatError({
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-6">
       <div className="text-center max-w-md">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#7c3aed]/80 to-[#00e5ff]/60 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#C75B2A]/80 to-[#4BBEAB]/60 flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl">🐙</span>
         </div>
         <h1 className="text-xl font-medium text-white/90 mb-2">Something went wrong</h1>
@@ -26,7 +26,7 @@ export default function ChatError({
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={reset}
-            className="px-5 py-2.5 rounded-lg bg-[#7c3aed] text-white text-sm font-medium hover:bg-[#6d28d9] transition-colors"
+            className="px-5 py-2.5 rounded-lg bg-[#C75B2A] text-white text-sm font-medium hover:bg-[#C75B2A] transition-colors"
           >
             Try again
           </button>

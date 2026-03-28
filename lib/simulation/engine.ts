@@ -593,7 +593,7 @@ export async function* runSimulation(
         name: jokerName,
         role: jokerRole || 'Decision-maker perspective',
         icon: '🃏',
-        color: '#8B5CF6',
+        color: '#E8784A',
         goal: 'Represent the real decision-maker context in the debate',
         backstory: `This is the user participating in the simulation.\nContext: ${jokerBio}\nRisk tolerance: ${jokerRisk}\nPriorities: ${jokerPriorities || 'not specified'}\nKnown biases: ${jokerBiases || 'not specified'}`,
         constraints: [

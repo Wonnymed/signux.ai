@@ -16,7 +16,7 @@ export const OCTUX_TOOLS: OctuxTool[] = [
     name: 'Decision Journal',
     href: '/tools/journal',
     icon: BookOpen,
-    color: '#7C3AED',
+    color: '#C75B2A',
     description:
       'Track every decision you make. See patterns over time. Learn from outcomes.',
   },
@@ -43,7 +43,7 @@ export const OCTUX_TOOLS: OctuxTool[] = [
     name: 'Decision Templates',
     href: '/tools/templates',
     icon: FileText,
-    color: '#6366f1',
+    color: '#8B6F4E',
     description:
       'Pre-built frameworks for common decisions. Fill in the blanks.',
   },
