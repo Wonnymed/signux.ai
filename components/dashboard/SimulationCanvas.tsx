@@ -33,6 +33,7 @@ export default function SimulationCanvas() {
   const consensus = useSimulationStore((s) => s.consensus);
   const result = useSimulationStore((s) => s.result);
   const elapsed = useSimulationStore((s) => s.elapsed);
+  useSimulationStore((s) => s.crowdVoices.length);
 
   const activeChargeType = useSimulationStore((s) => s.activeChargeType);
 
@@ -51,6 +52,7 @@ export default function SimulationCanvas() {
         result: sim.result,
         elapsed: sim.elapsed,
         activeChargeType: sim.activeChargeType,
+        crowdVoiceCount: sim.crowdVoices.length,
       }),
       highlightAgentId: dd.isOpen && dd.selectedAgentId ? dd.selectedAgentId : null,
     };

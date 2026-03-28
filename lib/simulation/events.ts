@@ -128,6 +128,16 @@ export interface SimulationCompleteEvent {
   data: VerdictResult;
 }
 
+/** God's View — Haiku market voice aggregate (optional on verdict). */
+export interface GodViewVerdictSlice {
+  totalVoices: number;
+  positive: number;
+  negative: number;
+  neutral: number;
+  topPositive: string;
+  topNegative: string;
+}
+
 export interface VerdictResult {
   simulation_id?: string;
   recommendation: 'proceed' | 'delay' | 'abandon';
@@ -141,6 +151,7 @@ export interface VerdictResult {
   agent_scoreboard?: AgentScoreEntry[];
   risk_matrix?: RiskEntry[];
   action_plan?: string[];
+  god_view?: GodViewVerdictSlice;
 }
 
 export interface Citation {

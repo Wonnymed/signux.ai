@@ -172,19 +172,48 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
   }, [verdict]);
 
   const godsView = useMemo(() => {
+    const gv = verdict?.god_view;
+    if (gv && gv.totalVoices > 0) {
+      const sum = gv.positive + gv.negative + gv.neutral;
+      const denom = sum > 0 ? sum : gv.totalVoices;
+      return {
+        total: gv.totalVoices,
+        source: 'market' as const,
+        themes: { pos: gv.topPositive, neg: gv.topNegative },
+        rows: [
+          {
+            pct: Math.round((100 * gv.positive) / denom),
+            label: 'Positive / supportive',
+            fill: DARK_THEME.success,
+          },
+          {
+            pct: Math.round((100 * gv.neutral) / denom),
+            label: 'Neutral / mixed',
+            fill: 'rgba(148,163,184,0.85)',
+          },
+          {
+            pct: Math.round((100 * gv.negative) / denom),
+            label: 'Negative / concerned',
+            fill: DARK_THEME.danger,
+          },
+        ],
+      };
+    }
     if (!consensus) return null;
     const { proceed, delay, abandon } = consensus;
     const sum = proceed + delay + abandon;
     if (sum <= 0) return null;
     return {
       total: sum,
+      source: 'specialists' as const,
+      themes: null,
       rows: [
         { pct: Math.round((100 * proceed) / sum), label: 'Would buy / proceed', fill: DARK_THEME.success },
         { pct: Math.round((100 * delay) / sum), label: 'Concerned / delay', fill: DARK_THEME.warning },
         { pct: Math.round((100 * abandon) / sum), label: 'Against / abandon', fill: DARK_THEME.danger },
       ],
     };
-  }, [consensus]);
+  }, [verdict, consensus]);
 
   const onNewSimulation = useCallback(() => {
     useSimulationStore.getState().reset();
@@ -384,7 +413,10 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
             {/* God's view */}
             {godsView && (
               <div className="mb-6">
-                <p className={HEADER}>God&apos;s view · {godsView.total} market voices</p>
+                <p className={HEADER}>
+                  God&apos;s view · {godsView.total}{' '}
+                  {godsView.source === 'market' ? 'market voices (Haiku)' : 'specialist-weighted view'}
+                </p>
                 <div className="mt-3 space-y-3">
                   {godsView.rows.map((row) => (
                     <div key={row.label} className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:flex-nowrap">
@@ -401,6 +433,22 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
                     </div>
                   ))}
                 </div>
+                {godsView.themes && (godsView.themes.pos || godsView.themes.neg) && (
+                  <div className="mt-4 space-y-2 border-t border-white/[0.06] pt-3 text-[12px] leading-relaxed text-white/50">
+                    {godsView.themes.pos ? (
+                      <p>
+                        <span className="font-semibold text-emerald-300/90">Top positive theme: </span>
+                        {godsView.themes.pos}
+                      </p>
+                    ) : null}
+                    {godsView.themes.neg ? (
+                      <p>
+                        <span className="font-semibold text-red-300/90">Top concern: </span>
+                        {godsView.themes.neg}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
               </div>
             )}
 

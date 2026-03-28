@@ -11,6 +11,8 @@ type SimSlice = {
   result: unknown;
   elapsed: number;
   activeChargeType: SimulationChargeType | null;
+  /** Count of streamed God's View crowd voices (drives particle density on canvas). */
+  crowdVoiceCount?: number;
 };
 
 function effectiveModeTier(
@@ -152,9 +154,12 @@ export function buildCanvasSnapshot(dash: SimulationDashboardState, sim: SimSlic
   }
 
   const completed = agents.filter((a) => a.position !== 'pending').length;
+  const nCrowd = sim.crowdVoiceCount ?? 0;
   const voiceCount = Math.min(
     viewTier === 'swarm' && viewMode === 'simulate' ? 1000 : 520,
-    completed * 14 + Math.floor(sim.elapsed * 6),
+    nCrowd > 0
+      ? Math.min(520, 48 + nCrowd * 5)
+      : completed * 14 + Math.floor(sim.elapsed * 6),
   );
 
   return {

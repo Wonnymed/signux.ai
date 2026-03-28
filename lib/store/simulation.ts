@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { SimulationChargeType } from '@/lib/billing/token-costs';
 import { parseSimulationChargeType } from '@/lib/billing/token-costs';
+import type { GodViewVerdictSlice } from '@/lib/simulation/events';
 
 export type SimPhaseStatus = 'pending' | 'active' | 'complete';
 
@@ -36,6 +37,14 @@ export interface ConsensusState {
   totalRounds: number;
 }
 
+export interface CrowdVoiceStreamEntry {
+  id: string;
+  persona: string;
+  role: string;
+  sentiment: string;
+  statement: string;
+}
+
 type SimStatus =
   | 'idle'
   | 'connecting'
@@ -61,6 +70,10 @@ interface SimulationState {
 
   consensus: ConsensusState | null;
   setConsensus: (consensus: ConsensusState) => void;
+
+  /** Streamed market voices (God's View) — used for canvas particle density. */
+  crowdVoices: CrowdVoiceStreamEntry[];
+  godViewSummary: GodViewVerdictSlice | null;
 
   verdictText: string;
   appendVerdictToken: (token: string) => void;
@@ -168,6 +181,9 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   consensus: null,
   setConsensus: (consensus) => set({ consensus }),
 
+  crowdVoices: [],
+  godViewSummary: null,
+
   verdictText: '',
   appendVerdictToken: (token) =>
     set((s) => ({ verdictText: s.verdictText + token })),
@@ -198,6 +214,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       phases: freshPhases(),
       agents: new Map(),
       consensus: null,
+      crowdVoices: [],
+      godViewSummary: null,
       verdictText: '',
       result: null,
       simulationId: null,
@@ -320,6 +338,39 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
               setConsensus(data.data as ConsensusState);
               break;
 
+            case 'crowd_round_started':
+              set({ crowdVoices: [], godViewSummary: null });
+              break;
+
+            case 'crowd_voice': {
+              const d = data.data as {
+                persona?: string;
+                role?: string;
+                sentiment?: string;
+                statement?: string;
+              };
+              set((s) => ({
+                crowdVoices: [
+                  ...s.crowdVoices,
+                  {
+                    id: `cv_${s.crowdVoices.length}_${Date.now()}`,
+                    persona: String(d.persona || ''),
+                    role: String(d.role || ''),
+                    sentiment: String(d.sentiment || 'neutral'),
+                    statement: String(d.statement || ''),
+                  },
+                ],
+              }));
+              break;
+            }
+
+            case 'crowd_summary':
+              set({ godViewSummary: data.data as GodViewVerdictSlice });
+              break;
+
+            case 'crowd_round_complete':
+              break;
+
             case 'verdict_token':
               appendVerdictToken((data.data as { token?: string })?.token || '');
               break;
@@ -400,6 +451,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       phases: freshPhases(),
       agents: new Map(),
       consensus: null,
+      crowdVoices: [],
+      godViewSummary: null,
       verdictText: '',
       result: null,
       simulationId: null,

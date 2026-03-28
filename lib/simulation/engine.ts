@@ -32,7 +32,14 @@ import {
 import { buildSystemPromptFromOverride } from '../memory/prompt-optimizer';
 import { searchKnowledge, formatKnowledgeForAgent } from '../knowledge/search';
 import { getAgentKnowledgeSources } from '../knowledge/agent-mapping';
-import { generateCrowdAdvisors, runCrowdRound, synthesizeCrowdSignal, formatCrowdSignal, type CrowdSignal } from './crowd';
+import {
+  runGodViewMarketPipeline,
+  synthesizeCrowdSignal,
+  formatCrowdSignal,
+  type CrowdSignal,
+  type GodViewCrowdSummary,
+  type CrowdVote,
+} from './crowd';
 import { selectRelevantAgents, calculateAgentBudget, type AgentSelection } from './agent-selection';
 import { extractVerdictClaims, type ConfidenceHeatmap } from './confidence-heatmap';
 import { generateCheckpoint, formatUserCorrection, HITL_CONFIG, type HITLResponse } from './hitl';
@@ -72,6 +79,11 @@ export type SimulationSSEEvent =
   | { event: 'confidence_heatmap'; data: ConfidenceHeatmap }
   | { event: 'agents_selected'; data: { active: { id: string; reason: string; priority: string }[]; skipped: { id: string; reason: string }[]; tokensPerAgent: number } }
   | { event: 'crowd_round_started'; data: { advisorCount: number } }
+  | {
+      event: 'crowd_voice';
+      data: { persona: string; role: string; sentiment: string; statement: string };
+    }
+  | { event: 'crowd_summary'; data: GodViewCrowdSummary }
   | { event: 'crowd_round_complete'; data: CrowdSignal }
   | { event: 'state_summary'; data: any }
   | { event: 'hitl_checkpoint'; data: { simulationId: string; assumptions: string[]; summary: string; agentPositions: { agent: string; position: string; confidence: number }[]; timeoutMs: number } }
@@ -83,6 +95,28 @@ export type SimulationSSEEvent =
 // ── Helpers ──────────────────────────────────────────────────
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Target count for God's View Haiku market voices (swarm = large; specialist = 50–100). */
+function resolveGodViewVoiceTarget(options?: {
+  enableCrowdWisdom?: boolean;
+  simMode?: SimulationChargeType;
+  advisorCount?: number;
+}): number {
+  if (!options?.enableCrowdWisdom) return 0;
+  const raw = options.advisorCount ?? 0;
+  const mode = options.simMode;
+  if (mode === 'swarm') {
+    return Math.min(1000, Math.max(200, raw > 0 ? raw : 500));
+  }
+  if (mode === 'specialist') {
+    const n = raw > 0 ? raw : 75;
+    return Math.min(100, Math.max(50, Math.floor(n)));
+  }
+  if (mode === 'compare') {
+    return Math.min(100, Math.max(40, raw > 0 ? raw : 50));
+  }
+  return 0;
+}
 
 /** Snapshot current agent positions for working buffer. */
 function getCurrentPositions(state: SimulationState): Record<string, string> {
@@ -377,6 +411,15 @@ export async function* runSimulation(
   const state = createInitialState(simId, question, engine, options?.tier || 'free');
   const roundDiscoveries: RoundLearning[] = [];
   const allSearchCitations: SearchCitation[] = [];
+
+  const crowdSseQueue: SimulationSSEEvent[] = [];
+  const enqueueCrowdSse = (e: SimulationSSEEvent) => {
+    crowdSseQueue.push(e);
+  };
+  function* drainCrowdSse(): Generator<SimulationSSEEvent> {
+    while (crowdSseQueue.length) yield crowdSseQueue.shift()!;
+  }
+  let godViewPipeline: Promise<{ votes: CrowdVote[]; summary: GodViewCrowdSummary } | null> | null = null;
 
   // ═══ MEMORY SYSTEM — Single hook replaces 7+ individual operations ═══
   let preSim: PreSimResult = {
@@ -1059,6 +1102,36 @@ Respond with valid JSON only:
   yield { event: 'round_complete', data: { round: 5 } };
   saveToWorkingBuffer(simId, options?.userId || 'anon', 5, 'specialist_analysis', `Specialist wave 2: ${allReports.length} total reports`, null, getCurrentPositions(state));
 
+  const godTarget = resolveGodViewVoiceTarget(options);
+  if (godTarget > 0 && !godViewPipeline) {
+    const specSummary =
+      Array.from(state.latest_reports.entries())
+        .map(([id, r]) => `${id}: ${r.position} (${r.confidence}/10)`)
+        .join('; ') || 'Specialist analysis in progress; partial positions forming.';
+    enqueueCrowdSse({ event: 'crowd_round_started', data: { advisorCount: godTarget } });
+    godViewPipeline = runGodViewMarketPipeline({
+      question,
+      specialistSummary: specSummary,
+      targetCount: godTarget,
+      onVoice: (v) =>
+        enqueueCrowdSse({
+          event: 'crowd_voice',
+          data: {
+            persona: v.persona,
+            role: v.role,
+            sentiment: v.sentiment,
+            statement: v.statement,
+          },
+        }),
+    })
+      .then(({ votes, summary }) => ({ votes, summary }))
+      .catch((err) => {
+        console.error('[god_view] pipeline failed:', err);
+        return null;
+      });
+  }
+  yield* drainCrowdSse();
+
   // MiroFish PERSIST: discoveries from rounds 1-5 available to rounds 6+
   const discoveryContext = formatRoundDiscoveries(roundDiscoveries, 6);
   const networkMemoryWithDiscoveries = discoveryContext
@@ -1163,6 +1236,7 @@ Respond with valid JSON only:
 
   yield { event: 'round_complete', data: { round: 6 } };
   saveToWorkingBuffer(simId, options?.userId || 'anon', 6, 'rapid_assessment', `Rapid assessment: ${allReports.length} total reports`, null, getCurrentPositions(state));
+  yield* drainCrowdSse();
 
   const quickConsensus = calculateConsensus(allReports);
   state.consensus_history.push({ phase: 'quick_takes', ...quickConsensus });
@@ -1336,6 +1410,7 @@ Respond with valid JSON only:
   const adversarialConsensus = calculateConsensus(allReports);
   state.consensus_history.push({ phase: 'adversarial', ...adversarialConsensus });
   yield { event: 'consensus_update', data: adversarialConsensus };
+  yield* drainCrowdSse();
 
   // MagenticOne #9: Ledger update after adversarial debate (rounds 7-8)
   {
@@ -1425,6 +1500,7 @@ Respond with valid JSON only:
   yield { event: 'consensus_update', data: convergenceConsensus };
   yield { event: 'round_complete', data: { round: 9 } };
   saveToWorkingBuffer(simId, options?.userId || 'anon', 9, 'convergence', `Convergence: ${finalReports.length} final positions`, null, getCurrentPositions(state));
+  yield* drainCrowdSse();
 
   console.log(`[convergence] ${finalReports.length}/${activeAgentCount} convergence reports, using ${consensusReports.length} for consensus`);
 
@@ -1442,24 +1518,23 @@ Respond with valid JSON only:
     console.warn(`[engine] WARNING: Only ${uniqueAgentsAfterR9}/${activeAgentCount} agents have reports after convergence`);
   }
 
-  // ═══ CROWD ROUND (Pro/Max tiers only) ═══
+  // ═══ GOD'S VIEW — await Haiku market voices (started in parallel after round 5) ═══
   let crowdSignalText = '';
-  const crowdCount = options?.tier === 'max' ? 50 : options?.tier === 'pro' ? 20 : 0;
+  let godViewSummaryForVerdict: GodViewCrowdSummary | undefined;
 
-  if (crowdCount > 0) {
-    const advisors = generateCrowdAdvisors(crowdCount);
-    const specialistSummary = Array.from(state.latest_reports.entries())
-      .map(([id, r]) => `${id}: ${r.position} (${r.confidence}/10)`)
-      .join(', ');
-
-    yield { event: 'crowd_round_started', data: { advisorCount: crowdCount } };
-
-    const votes = await runCrowdRound(question, advisors, memory.coreMemory?.human || '', specialistSummary);
-    const signal = synthesizeCrowdSignal(votes);
-    crowdSignalText = formatCrowdSignal(signal);
-
-    yield { event: 'crowd_round_complete', data: signal };
-    console.log(`[crowd] ${votes.length}/${crowdCount} advisors responded, verdict: ${signal.crowd_verdict} (${signal.consensus_strength})`);
+  if (godViewPipeline) {
+    yield* drainCrowdSse();
+    const packed = await godViewPipeline;
+    yield* drainCrowdSse();
+    if (packed && packed.votes.length > 0) {
+      godViewSummaryForVerdict = packed.summary;
+      const signal = synthesizeCrowdSignal(packed.votes, packed.summary);
+      crowdSignalText = formatCrowdSignal(signal);
+      yield { event: 'crowd_round_complete', data: signal };
+      console.log(
+        `[god_view] ${packed.votes.length} voices · +${packed.summary.positive} / -${packed.summary.negative} / ~${packed.summary.neutral}`,
+      );
+    }
   }
 
   transitionPhase(state, 'verdict');
@@ -1527,6 +1602,9 @@ DEBATE PROGRESS:
     });
     console.log(`[decision_chair] verdict: ${verdictRaw.length} chars`);
     verdict = parseJSON<DecisionObject>(verdictRaw);
+    if (godViewSummaryForVerdict) {
+      (verdict as Record<string, unknown>).god_view = godViewSummaryForVerdict;
+    }
   } catch (error) {
     console.error('Verdict synthesis failed:', error);
     verdict = {
@@ -1545,6 +1623,9 @@ DEBATE PROGRESS:
         confidence: r.confidence,
       })),
     };
+    if (godViewSummaryForVerdict) {
+      (verdict as Record<string, unknown>).god_view = godViewSummaryForVerdict;
+    }
   }
 
   // Apply output filters (Semantic Kernel #19)
