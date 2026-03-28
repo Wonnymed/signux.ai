@@ -50,8 +50,7 @@ export async function extractFacts(
     .join('\n');
 
   const response = await callClaude({
-    tier: 'extraction',
-    systemPrompt: `You are a fact extraction system for Sukgo AI. After each simulation, you extract BUSINESS FACTS about the user that would be useful in future simulations.
+    systemPrompt: `You are a fact extraction system for Octux AI. After each simulation, you extract BUSINESS FACTS about the user that would be useful in future simulations.
 
 WHAT TO EXTRACT:
 - Business details: industry, location, target market, business model
@@ -224,8 +223,7 @@ export async function parseQuestionForFacts(
     : 'No existing facts.';
 
   const response = await callClaude({
-    tier: 'extraction',
-    systemPrompt: `You are a fact pre-processor for Sukgo AI. Before a simulation runs, you scan the user's question for EXPLICIT facts about them or their situation.
+    systemPrompt: `You are a fact pre-processor for Octux AI. Before a simulation runs, you scan the user's question for EXPLICIT facts about them or their situation.
 
 EXTRACT ONLY facts that are DIRECTLY STATED in the question:
 - Budget amounts: "$50K budget" → ADD financial fact
@@ -271,89 +269,22 @@ Extract facts from the question. If a fact contradicts an existing one, use UPDA
 
 // ── Background Entrypoint ──────────────────────────────────
 
-/**
- * Incremental extraction after a single agent report (postAgentHook).
- * Conservative: high-confidence ADD only, max 2 facts — avoids flooding vs post-sim extractFacts.
- */
-export async function extractFactsFromAgentReport(
-  userId: string,
-  simulationId: string,
-  question: string,
-  agentName: string,
-  report: Record<string, unknown>,
-): Promise<number> {
-  const evidence = Array.isArray(report.evidence) ? (report.evidence as unknown[]).slice(0, 4) : [];
-  const evText = evidence
-    .map((e) => (typeof e === 'string' ? e : JSON.stringify(e)))
-    .join('\n');
-  const blob = [report.key_argument, evText].filter(Boolean).join('\n');
-  if (typeof blob !== 'string' || blob.trim().length < 60) return 0;
-
-  const existingFacts = await getUserFacts(userId, 12);
-  const existingFactsText = existingFacts
-    .map((f) => `[${f.id}] ${f.content} (${f.category}, confidence: ${f.confidence})`)
-    .join('\n');
-
-  const response = await callClaude({
-    tier: 'extraction',
-    systemPrompt: `You extract at most 2 NEW business facts about the USER from one specialist report (not generic analysis).
-Only ADD if the fact is explicit or strongly implied about the user's situation, numbers, market, or constraints.
-Skip opinions, agent meta-commentary, and anything already in EXISTING USER FACTS.
-Return JSON array only. Empty [] if nothing qualifies.`,
-    userMessage: `USER QUESTION (context): "${question.slice(0, 500)}"
-
-AGENT: ${agentName}
-
-REPORT (key argument + evidence):
-${blob.slice(0, 3500)}
-
-EXISTING USER FACTS:
-${existingFactsText || 'None.'}
-
-Return 0-2 actions, only ADD with confidence >= 0.78:
-[
-  {
-    "action": "ADD",
-    "fact": "specific statement about the user/business",
-    "category": "business_info|market_context|financial|personal|preference|decision_history",
-    "confidence": 0.8,
-    "reason": "why it helps future sims"
-  }
-]`,
-    maxTokens: 400,
-  });
-
-  try {
-    const actions = parseJSON<FactAction[]>(response);
-    if (!actions?.length) return 0;
-    const adds = actions
-      .filter((a) => a.action === 'ADD' && (a.confidence ?? 0) >= 0.78 && typeof a.fact === 'string')
-      .slice(0, 2);
-    if (adds.length === 0) return 0;
-    return applyFactActions(userId, simulationId, adds);
-  } catch {
-    return 0;
-  }
-}
-
 export async function extractAndSaveFacts(
   userId: string,
   simulationId: string,
   question: string,
   verdict: unknown,
   agentReports: Record<string, unknown>,
-): Promise<number> {
+): Promise<void> {
   try {
     const actions = await extractFacts(userId, simulationId, question, verdict, agentReports);
     if (actions.length > 0) {
       const applied = await applyFactActions(userId, simulationId, actions);
       console.log(`[facts] Extracted ${actions.length} facts, applied ${applied} for user ${userId}`);
-      return applied;
+    } else {
+      console.log(`[facts] No facts extracted for simulation ${simulationId}`);
     }
-    console.log(`[facts] No facts extracted for simulation ${simulationId}`);
-    return 0;
   } catch (err) {
     console.error('[facts] Extraction failed (non-blocking):', err);
-    return 0;
   }
 }

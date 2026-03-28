@@ -8,7 +8,7 @@
  * CATEGORIES:
  *   Memory (10):    facts, temporal, core memory, recall, behavioral
  *   Simulation (9): domain detection, agent selection, heatmap
- *   Chat (7):       tiers, chat with memory, routing
+ *   Chat (7):       tiers, chat with memory, kraken
  *   Auth (4):       tier access, userId resolution
  */
 

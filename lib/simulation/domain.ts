@@ -39,9 +39,9 @@ export type DomainClassification = {
 // ═══════════════════════════════════════════
 
 export const DOMAIN_DISCLAIMERS: Record<string, string> = {
-  investment: '⚠ Sukgo provides decision analysis, not financial advice. Past performance does not guarantee future results. Consult a licensed financial advisor before making investment decisions.',
-  legal: '⚠ Sukgo provides decision analysis, not legal advice. This analysis does not constitute legal counsel. Consult a licensed attorney for legal matters.',
-  health: '⚠ Sukgo provides decision analysis, not medical advice. This analysis is informational only. Consult a qualified healthcare professional for medical decisions.',
+  investment: '⚠ Octux provides decision analysis, not financial advice. Past performance does not guarantee future results. Consult a licensed financial advisor before making investment decisions.',
+  legal: '⚠ Octux provides decision analysis, not legal advice. This analysis does not constitute legal counsel. Consult a licensed attorney for legal matters.',
+  health: '⚠ Octux provides decision analysis, not medical advice. This analysis is informational only. Consult a qualified healthcare professional for medical decisions.',
 };
 
 // ═══════════════════════════════════════════
@@ -177,7 +177,6 @@ export async function detectDomain(question: string): Promise<DomainClassificati
   // ── SLOW PATH: LLM classification for ambiguous questions ──
   try {
     const response = await callClaude({
-      tier: 'extraction',
       systemPrompt: `Classify this question into exactly ONE domain.
 Domains: business, investment, career, health, legal, education, real_estate, personal, technology, general.
 Return ONLY JSON: {"domain":"...","subdomain":"specific area","confidence":0.0-1.0}`,

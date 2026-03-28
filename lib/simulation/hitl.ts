@@ -48,7 +48,6 @@ export async function generateCheckpoint(
 
   try {
     const response = await callClaude({
-      tier: 'orchestrator',
       systemPrompt: `You are the Decision Chair reviewing analysis so far.
 Extract the KEY ASSUMPTIONS that agents are making about the user's situation.
 These are things the user might want to CORRECT (wrong market, wrong budget, wrong timeline, etc.)

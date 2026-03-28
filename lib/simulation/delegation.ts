@@ -106,7 +106,6 @@ export async function executeDelegation(
   }
 
   const response = await callClaude({
-    tier: 'specialist',
     systemPrompt: `You are ${targetAgent.name}. Another specialist agent needs specific data from your expertise area. Provide a CONCISE, DATA-FOCUSED answer. No fluff — just the specific information requested. Include numbers, percentages, timelines where possible. Maximum 100 words.`,
     userMessage: `Original question being analyzed: "${question}"
 

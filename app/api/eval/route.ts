@@ -13,15 +13,15 @@ export async function POST(req: NextRequest) {
   const { question, expectedTopics, domain } = await req.json();
 
   try {
-    const anthropicResponse = await anthropic.messages.create({
+    const signuxResponse = await anthropic.messages.create({
       model: DEFAULT_MODEL,
       max_tokens: 2000,
       system: "You are Sukgo AI, a decision intelligence platform for global operators. Provide specific, actionable business intelligence with real numbers and frameworks.",
       messages: [{ role: "user", content: question }],
     });
 
-    const answer = anthropicResponse.content[0].type === "text"
-      ? anthropicResponse.content[0].text
+    const answer = signuxResponse.content[0].type === "text"
+      ? signuxResponse.content[0].text
       : "";
 
     const evalResponse = await anthropic.messages.create({

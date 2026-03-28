@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/memory/supabase';
-import { Sparkles } from 'lucide-react';
 import { Metadata } from 'next';
 
 type Props = { params: Promise<{ id: string }> };
@@ -9,7 +8,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
 
   if (!supabase) {
-    return { title: 'Sukgo AI — Decision Not Found' };
+    return { title: 'Octux AI — Decision Not Found' };
   }
 
   const { data: sim } = await supabase
@@ -19,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single();
 
   if (!sim) {
-    return { title: 'Sukgo AI — Decision Not Found' };
+    return { title: 'Octux AI — Decision Not Found' };
   }
 
   const verdict = sim.verdict as any;
@@ -28,13 +27,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const question = (sim.question || '').substring(0, 100);
   const digest = sim.share_digest || `${question} → ${rec} (${prob}%)`;
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sukgo.ai';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://octux.ai';
 
   return {
-    title: `${rec} (${prob}%) — Sukgo AI`,
+    title: `${rec} (${prob}%) — Octux AI`,
     description: digest,
     openGraph: {
-      title: `Sukgo: ${rec} (${prob}%)`,
+      title: `Octux: ${rec} (${prob}%)`,
       description: digest,
       type: 'article',
       url: `${baseUrl}/c/${id}/public`,
@@ -43,14 +42,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: `${baseUrl}/api/og/${id}`,
           width: 1200,
           height: 630,
-          alt: `Sukgo AI verdict: ${rec} (${prob}%)`,
+          alt: `Octux AI verdict: ${rec} (${prob}%)`,
         },
       ],
-      siteName: 'Sukgo AI',
+      siteName: 'Octux AI',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `Sukgo: ${rec} (${prob}%)`,
+      title: `Octux: ${rec} (${prob}%)`,
       description: digest,
       images: [`${baseUrl}/api/og/${id}`],
     },
@@ -79,13 +78,11 @@ export default async function PublicSimPage({ params }: Props) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-0, #fff)' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center', color: 'var(--accent, #e8593c)' }}>
-            <Sparkles size={48} strokeWidth={1.25} aria-hidden />
-          </div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🐙</div>
           <div style={{ fontSize: '20px', fontWeight: 300, color: 'var(--text-primary)' }}>Decision not found</div>
           <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginTop: '8px' }}>This tentacle doesn&apos;t reach that far.</div>
           <a href="/" style={{ display: 'inline-block', marginTop: '24px', padding: '10px 24px', borderRadius: '8px', background: '#1A1815', color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
-            Try Sukgo
+            Try Octux
           </a>
         </div>
       </div>
@@ -113,10 +110,10 @@ export default async function PublicSimPage({ params }: Props) {
       {/* Top bar */}
       <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-subtle, rgba(0,0,0,0.06))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/" style={{ textDecoration: 'none', fontSize: '16px', fontWeight: 500, color: '#1A1815' }}>
-          sukgo
+          octux ai
         </a>
         <a href="/" style={{ padding: '8px 20px', borderRadius: '8px', background: '#1A1815', color: '#fff', textDecoration: 'none', fontSize: '13px', fontWeight: 500 }}>
-          Try Sukgo free
+          Try Octux free
         </a>
       </div>
 
@@ -195,10 +192,10 @@ export default async function PublicSimPage({ params }: Props) {
         {/* Social proof + CTA */}
         <div style={{ textAlign: 'center', padding: '32px 0', borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
           <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginBottom: '16px' }}>
-            10 AI specialists debated this decision on Sukgo
+            10 AI specialists debated this decision on Octux
           </div>
           <a href="/" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: '8px', background: '#1A1815', color: '#fff', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
-            Ask Sukgo your decision
+            Ask Octux your decision
           </a>
           <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '12px' }}>Free. No login required for your first decision.</div>
         </div>

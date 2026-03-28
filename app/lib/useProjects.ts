@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { sukgoFetch } from "./api-client";
+import { signuxFetch } from "./api-client";
 
 export type Project = {
   id: string;
@@ -15,7 +15,7 @@ export type Project = {
   updated_at: string;
 };
 
-const STORAGE_KEY = "sukgo_active_project";
+const STORAGE_KEY = "signux_active_project";
 
 export function useProjects(isLoggedIn: boolean) {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,7 +33,7 @@ export function useProjects(isLoggedIn: boolean) {
   useEffect(() => {
     if (!isLoggedIn) { setProjects([]); return; }
     setLoading(true);
-    sukgoFetch("/api/projects")
+    signuxFetch("/api/projects")
       .then(r => r.json())
       .then((data) => {
         if (Array.isArray(data)) setProjects(data);
@@ -50,7 +50,7 @@ export function useProjects(isLoggedIn: boolean) {
 
   const createProject = useCallback(async (name: string, description?: string, color?: string) => {
     try {
-      const res = await sukgoFetch("/api/projects", {
+      const res = await signuxFetch("/api/projects", {
         method: "POST",
         body: JSON.stringify({ name, description, color }),
       });
@@ -66,7 +66,7 @@ export function useProjects(isLoggedIn: boolean) {
 
   const updateProject = useCallback(async (id: string, updates: Partial<Pick<Project, "name" | "description" | "color" | "archived">>) => {
     try {
-      const res = await sukgoFetch("/api/projects", {
+      const res = await signuxFetch("/api/projects", {
         method: "PATCH",
         body: JSON.stringify({ id, ...updates }),
       });

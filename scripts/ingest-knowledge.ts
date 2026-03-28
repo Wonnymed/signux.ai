@@ -227,7 +227,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('Sukgo Knowledge Base Ingest Pipeline');
+  console.log('Octux Knowledge Base Ingest Pipeline');
   console.log(`Source: ${basePath}`);
   console.log('');
 

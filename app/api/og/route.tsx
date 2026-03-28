@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
-  const title = req.nextUrl.searchParams.get("title") || "Sukgo AI Analysis";
+  const title = req.nextUrl.searchParams.get("title") || "Signux AI Analysis";
   const verdict = req.nextUrl.searchParams.get("verdict") || "";
   const score = req.nextUrl.searchParams.get("score") || "";
   const type = req.nextUrl.searchParams.get("type") || "simulate";
@@ -28,13 +28,13 @@ export async function GET(req: NextRequest) {
           fontSize: 18, fontWeight: 700, letterSpacing: 8,
           color: "#D4AF37", marginBottom: 8,
         }}>
-          SUKGO
+          SIGNUX AI
         </div>
         <div style={{
           fontSize: 12, color: "#666", marginBottom: 40,
           letterSpacing: 2,
         }}>
-          SIMULATE BEFORE YOU INVEST
+          DECISION INTELLIGENCE
         </div>
         <div style={{
           fontSize: 36, fontWeight: 700, color: "#fff",
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
         <div style={{
           position: "absolute", bottom: 40, fontSize: 14, color: "#444",
         }}>
-          Simulate before you invest — sukgo.ai
+          See what happens before it happens — signux.ai
         </div>
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0,

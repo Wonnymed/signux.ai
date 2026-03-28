@@ -1,5 +1,5 @@
 /**
- * Team Memory — Agno pattern for Sukgo.
+ * Team Memory — Agno pattern for Octux.
  *
  * Insights that emerge from agent INTERACTION, not individual analysis.
  * "When Regulatory and Unit Economics disagree, Regulatory is right 70% of the time."
@@ -67,7 +67,6 @@ export async function extractTeamInsights(
 
   try {
     const response = await callClaude({
-      tier: 'extraction',
       systemPrompt: `You analyze DEBATE DYNAMICS across multiple simulations to find TEAM-LEVEL patterns.
 
 Insight types:

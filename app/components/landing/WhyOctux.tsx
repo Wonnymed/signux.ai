@@ -5,44 +5,44 @@ const ROWS = [
     dimension: "Agents",
     chatgpt: "1 (GPT)",
     claude: "1 (Claude)",
-    sukgo: "10 specialists + Chair",
+    octux: "10 specialists + Chair",
   },
   {
     dimension: "Output",
     chatgpt: "Free text",
     claude: "Free text",
-    sukgo: "Structured verdict",
+    octux: "Structured verdict",
   },
   {
     dimension: "Self-eval",
     chatgpt: "None",
     claude: "Limited",
-    sukgo: "Grade A–F + metrics",
+    octux: "Grade A–F + metrics",
   },
   {
     dimension: "Audit trail",
     chatgpt: "None",
     claude: "Thinking mode",
-    sukgo: "Full trace + citations",
+    octux: "Full trace + citations",
   },
   {
     dimension: "Progress",
     chatgpt: "Spinner",
     claude: '"Thinking..."',
-    sukgo: "Phase-by-phase live",
+    octux: "Phase-by-phase live",
   },
   {
     dimension: "Learning",
     chatgpt: "Static",
     claude: "Basic memory",
-    sukgo: "Self-evolving system",
+    octux: "Self-evolving system",
   },
 ];
 
 const WEAK = "rgba(255,255,255,0.50)";
 const DIM_LABEL = "rgba(255,255,255,0.70)";
 const PURPLE = "#6B6560";
-const SUKGO_BG = "rgba(124,58,237,0.08)";
+const OCTUX_BG = "rgba(124,58,237,0.08)";
 const BORDER_ROW = "rgba(255,255,255,0.08)";
 const BORDER_HEADER = "rgba(255,255,255,0.10)";
 
@@ -73,7 +73,7 @@ export default function WhySukgo() {
 
       {/* Table container */}
       <div
-        className="why-sukgo-scroll"
+        className="why-octux-scroll"
         style={{
           maxWidth: 1000,
           margin: "0 auto",
@@ -196,11 +196,11 @@ export default function WhySukgo() {
                     fontSize: 14,
                     fontWeight: 500,
                     color: "#FFFFFF",
-                    background: SUKGO_BG,
+                    background: OCTUX_BG,
                     borderLeft: `2px solid ${PURPLE}`,
                   }}
                 >
-                  {row.sukgo}
+                  {row.octux}
                 </td>
               </tr>
             ))}
@@ -209,13 +209,13 @@ export default function WhySukgo() {
       </div>
 
       <style>{`
-        .why-sukgo-scroll::-webkit-scrollbar {
+        .why-octux-scroll::-webkit-scrollbar {
           height: 4px;
         }
-        .why-sukgo-scroll::-webkit-scrollbar-track {
+        .why-octux-scroll::-webkit-scrollbar-track {
           background: transparent;
         }
-        .why-sukgo-scroll::-webkit-scrollbar-thumb {
+        .why-octux-scroll::-webkit-scrollbar-thumb {
           background: rgba(255,255,255,0.15);
           border-radius: 999px;
         }

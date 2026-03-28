@@ -15,13 +15,13 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const saved = localStorage.getItem("sukgo-theme") as Theme | null;
+    const saved = localStorage.getItem("signux-theme") as Theme | null;
     if (saved) setTheme(saved);
     else setTheme("light");
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("sukgo-theme", theme);
+    localStorage.setItem("signux-theme", theme);
     const scheme = getEffectiveScheme(theme);
     if (theme === "auto") {
       document.documentElement.removeAttribute("data-theme");

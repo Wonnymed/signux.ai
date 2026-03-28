@@ -38,12 +38,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           justifyContent: 'center',
           padding: '60px 80px',
           background: 'linear-gradient(135deg, #0A0A0F 0%, #1A1A2E 50%, #0A0A0F 100%)',
-          fontFamily: 'system-ui, "Sora", sans-serif',
+          fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
         {/* Sukgo wordmark */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-          <span style={{ fontSize: '20px', fontWeight: 400, letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.85)' }}>sukgo</span>
+          <span style={{ fontSize: '18px', fontWeight: 300, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)' }}>octux</span>
           <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.2)' }}>·</span>
           <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>Decision Report</span>
         </div>
@@ -89,7 +89,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         {/* Footer */}
         <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.25)' }}>Analyzed by 10 AI specialists</span>
-          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>sukgo.ai</span>
+          <span style={{ fontSize: '14px', color: '#1A1815', fontWeight: 500 }}>octux.ai</span>
         </div>
       </div>
     ),

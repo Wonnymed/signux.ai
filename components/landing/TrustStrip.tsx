@@ -1,19 +1,16 @@
 export default function TrustStrip() {
   return (
     <section className="py-12 border-y border-border-subtle/30">
-      <div className="max-w-landing mx-auto px-6">
-        <p className="mb-6 text-center text-xs text-txt-tertiary">
-          Counts reflect completed simulations with structured verdicts and specialist positions.
-        </p>
+      <div className="max-w-4xl mx-auto px-6">
         {/* Stats */}
         <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 mb-8">
-          <Stat value="1,247" label="decisions simulated" />
+          <Stat value="1,247" label="decisions analyzed" />
           <StatDivider />
-          <Stat value="10" label="AI specialists" />
+          <Stat value="50" label="specialist agents" />
           <StatDivider />
-          <Stat value="1,000" label="market voices (swarm)" />
+          <Stat value="5" label="decision categories" />
           <StatDivider />
-          <Stat value="4" label="simulation modes" />
+          <Stat value="10" label="debate rounds per sim" />
         </div>
 
         {/* Tech logos */}

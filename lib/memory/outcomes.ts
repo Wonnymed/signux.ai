@@ -6,7 +6,6 @@
  */
 
 import { supabase } from './supabase';
-import { confidenceHistoryArray } from './confidence-history';
 
 export type OutcomeReport = {
   experienceId: string;
@@ -152,7 +151,7 @@ async function recalibrateFromOutcome(
 
   for (const opinion of opinions.slice(0, 10)) {
     const newConfidence = Math.max(0.05, Math.min(0.95, (opinion.confidence || 0.5) + delta));
-    const history = confidenceHistoryArray(opinion.confidence_history);
+    const history = Array.isArray(opinion.confidence_history) ? opinion.confidence_history : [];
     history.push({
       confidence: newConfidence,
       previous: opinion.confidence,

@@ -1,5 +1,5 @@
 /**
- * Procedural Memory — LangMem pattern for Sukgo.
+ * Procedural Memory — LangMem pattern for Octux.
  *
  * Agents learn RULES (behavioral patterns) from analyzing trajectories
  * across multiple simulations. Unlike P13 lessons (corrective),
@@ -119,7 +119,6 @@ Verdict: ${rec} (${prob}%)`
 
   try {
     const response = await callClaude({
-      tier: 'extraction',
       systemPrompt: `You analyze an AI agent's performance trajectory across multiple simulations to extract BEHAVIORAL RULES — consistent patterns of HOW the agent should approach analysis.
 
 RULE TYPES:

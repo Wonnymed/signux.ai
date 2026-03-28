@@ -1,5 +1,5 @@
 /**
- * Sukgo Token (ST) system.
+ * Signux Token (ST) system.
  * 1 ST ≈ cost of 1 chat message (~$0.01).
  */
 
@@ -201,7 +201,7 @@ export async function syncPlanTokens(userId: string, plan: string): Promise<void
 
 // ── Guest token functions (localStorage, client-side only) ──
 
-const GUEST_KEY = "sukgo-guest-tokens";
+const GUEST_KEY = "signux-guest-tokens";
 const GUEST_ALLOWANCE = 50;
 
 export function getGuestTokens(): number {

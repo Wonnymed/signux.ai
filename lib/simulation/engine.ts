@@ -46,7 +46,10 @@ import {
 import { selectRelevantAgents, calculateAgentBudget, type AgentSelection } from './agent-selection';
 import { extractVerdictClaims, type ConfidenceHeatmap } from './confidence-heatmap';
 import { generateCheckpoint, formatUserCorrection, HITL_CONFIG, type HITLResponse } from './hitl';
-import { hitlStore } from './hitl-store';
+import { waitForChiefInterventionResponse } from './intervention-store';
+import { runChiefInterventionQuestion } from '@/lib/prompts/chief-intervention';
+import { getPhaseInstruction } from '@/lib/prompts/phase-instructions';
+import { getPhaseLabelForEngineRound } from '@/lib/simulation/phase-labels';
 import { detectDomain, formatDomainConstraints, getDisclaimer, generateShareDigest, type DomainClassification } from './domain';
 import {
   getModeVerdictAppendix,
@@ -146,7 +149,26 @@ export type SimulationSSEEvent =
         segments_b?: { segment: string; count: number }[];
       };
     }
-  | { event: 'complete'; data: { simulation_id: string } };
+  | { event: 'complete'; data: { simulation_id: string } }
+  | { event: 'simulation_started'; data: { simulation_id: string } }
+  | {
+      event: 'phase_change';
+      data: { phase: string; label: string; engine_round?: number; rounds?: string };
+    }
+  | {
+      event: 'chief_intervention';
+      data: {
+        phase: 'analyzing' | 'asking' | 'incorporating' | 'skipped';
+        question?: string;
+        context?: string;
+        specialist?: string;
+        impact?: string;
+        answer?: string;
+        skipped?: boolean;
+        timedOut?: boolean;
+        reason?: string;
+      };
+    };
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -189,6 +211,13 @@ function getCurrentPositions(state: SimulationState): Record<string, string> {
     positions[agentId] = report.position || 'unknown';
   }
   return positions;
+}
+
+function formatReportsForChiefIntervention(reports: AgentReport[]): string {
+  return reports
+    .slice(-96)
+    .map((r) => `- [${r.agent_name}]: ${(r.key_argument || '').slice(0, 420)}`)
+    .join('\n');
 }
 
 // Retry wrapper for rate-limited calls
@@ -386,6 +415,7 @@ function buildDebateUserMessageForAgent(params: {
   task: string;
   debateCtx: string;
   instructionSuffix?: string;
+  midSimulationEnrichment?: string;
 }): string {
   const {
     agent,
@@ -397,13 +427,34 @@ function buildDebateUserMessageForAgent(params: {
     task,
     debateCtx,
     instructionSuffix,
+    midSimulationEnrichment = '',
   } = params;
-  const suffixBlock = instructionSuffix ? `\n\nROUND INSTRUCTION:\n${instructionSuffix}\n` : '';
+  const phaseLine =
+    chiefDesign?.kind === 'specialist' ? getPhaseInstruction(chiefMode, debateRoundLabel) : '';
+  const midBlock =
+    midSimulationEnrichment && debateRoundLabel >= 6 && chiefDesign?.kind === 'specialist'
+      ? midSimulationEnrichment
+      : '';
+  const mergedRoundParts = [
+    ...(agent.id === 'chief_operator' && chiefDesign?.kind === 'specialist' ? [] : phaseLine ? [phaseLine] : []),
+    instructionSuffix,
+  ].filter(Boolean);
+  const suffixBlock =
+    mergedRoundParts.length > 0
+      ? `\n\nROUND INSTRUCTION:\n${mergedRoundParts.join('\n\n')}\n`
+      : '';
   if (chiefDesign?.kind === 'specialist') {
     const prev = chiefPreviousResponses(state, agent.id);
     if (agent.id === 'chief_operator' && chiefDesign.operator) {
       return (
-        `${buildOperatorAgentPrompt(chiefDesign.operator, question, debateRoundLabel, prev)}\n\n` +
+        `${buildOperatorAgentPrompt(
+          chiefDesign.operator,
+          question,
+          debateRoundLabel,
+          prev,
+          phaseLine || undefined,
+          midBlock || undefined,
+        )}\n\n` +
         `ADDITIONAL CONTEXT:\n${debateCtx}\n` +
         suffixBlock +
         `\n` +
@@ -415,13 +466,14 @@ function buildDebateUserMessageForAgent(params: {
       return (
         `${buildDynamicSpecialistPrompt(specPlan, question, chiefMode, debateRoundLabel, prev)}\n\n` +
         `ADDITIONAL CONTEXT:\n${debateCtx}\n` +
+        (midBlock ? `${midBlock}\n` : '') +
         suffixBlock +
         `\n` +
         CHIEF_DEBATE_JSON_SUFFIX
       );
     }
   }
-  return `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}${suffixBlock}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
+  return `Question: ${question}\n\nYour task: ${task}\n\n${debateCtx}${midBlock}${suffixBlock}\n\nAnalyze from your perspective as ${agent.role}. Be specific with data. Respond with valid JSON only.`;
 }
 
 // ── Audited callAgent wrapper ──────────────────────────────
@@ -555,6 +607,9 @@ export async function* runSimulation(
 ): AsyncGenerator<SimulationSSEEvent> {
   const kernel = createKernel();
   const simId = `sim_${Date.now()}`;
+  let midSimulationEnrichment = '';
+  let midSimulationNoteForVerdict = '';
+  yield { event: 'simulation_started', data: { simulation_id: simId } };
   const agentDebateTier: ModelTier = options?.simMode === 'swarm' ? 'swarm' : 'specialist';
   const audit = createAudit(simId, question, engine);
   const state = createInitialState(simId, question, engine, options?.tier || 'free');
@@ -1144,6 +1199,15 @@ Respond with valid JSON only:
   // ━━ ROUND 3 — SPECIALIST WAVE 1 (WITH field intelligence) ━━
 
   yield { event: 'round_start', data: { round: 3, title: 'Specialist round — Wave 1', description: `First wave of specialists analyzing${fieldScans.length > 0 ? ' with field intelligence' : ''}`, total_rounds: 10 } };
+  yield {
+    event: 'phase_change',
+    data: {
+      phase: 'opening',
+      label: getPhaseLabelForEngineRound(options?.simMode, 3, false),
+      engine_round: 3,
+      rounds: '3',
+    },
+  };
 
   {
     const batchItems = thoroughWave1.map(({ agent, task }) => {
@@ -1157,6 +1221,7 @@ Respond with valid JSON only:
         question,
         task,
         debateCtx,
+        midSimulationEnrichment,
       });
       const promise = callAgent(
         agent, userMsg,
@@ -1308,6 +1373,15 @@ Respond with valid JSON only:
   // ━━ ROUND 5 — SPECIALIST WAVE 2 (WITH accumulated field intelligence) ━━
 
   yield { event: 'round_start', data: { round: 5, title: 'Specialist round — Wave 2', description: `Second wave of specialists${fieldScans.length > 1 ? ' with accumulated field intelligence' : ''}`, total_rounds: 10 } };
+  yield {
+    event: 'phase_change',
+    data: {
+      phase: 'deep',
+      label: getPhaseLabelForEngineRound(options?.simMode, 5, false),
+      engine_round: 5,
+      rounds: '3-5',
+    },
+  };
 
   {
     const batchItems2 = thoroughWave2.map(({ agent, task }) => {
@@ -1321,6 +1395,7 @@ Respond with valid JSON only:
         question,
         task,
         debateCtx,
+        midSimulationEnrichment,
       });
       const promise = callAgent(
         agent, userMsg,
@@ -1400,6 +1475,72 @@ Respond with valid JSON only:
 
   yield { event: 'round_complete', data: { round: 5 } };
   saveToWorkingBuffer(simId, options?.userId || 'anon', 5, 'specialist_analysis', `Specialist wave 2: ${allReports.length} total reports`, null, getCurrentPositions(state));
+
+  if (chiefPanelActive && chiefDesign?.kind === 'specialist') {
+    yield {
+      event: 'phase_change',
+      data: {
+        phase: 'intervention',
+        label: 'Chief check-in',
+        engine_round: 5,
+      },
+    };
+    yield { event: 'chief_intervention', data: { phase: 'analyzing' } };
+
+    const roundsSummary = formatReportsForChiefIntervention(allReports);
+    const chiefQ = await runChiefInterventionQuestion({
+      mode: chiefMode,
+      question,
+      operatorContext: operatorContextText,
+      roundsSummary,
+    });
+
+    yield {
+      event: 'chief_intervention',
+      data: {
+        phase: 'asking',
+        question: chiefQ.question,
+        context: chiefQ.context,
+        specialist: chiefQ.specialist_who_raised_it,
+        impact: chiefQ.impact,
+      },
+    };
+
+    const userMid = await waitForChiefInterventionResponse(simId, 60_000);
+
+    if (userMid.timedOut) {
+      yield {
+        event: 'chief_intervention',
+        data: {
+          phase: 'skipped',
+          timedOut: true,
+          reason:
+            'The simulation will continue. You can always run another simulation with more context.',
+        },
+      };
+      midSimulationNoteForVerdict =
+        'Note: The user did not respond within the time window at the mid-simulation check-in; continuing without additional context.';
+    } else if (userMid.skipped || !userMid.answer?.trim()) {
+      yield { event: 'chief_intervention', data: { phase: 'skipped', skipped: true } };
+      midSimulationNoteForVerdict =
+        'Note: The user chose not to provide additional context at the mid-simulation check-in.';
+    } else {
+      const ans = userMid.answer.trim().slice(0, 2000);
+      midSimulationEnrichment = `\n\nIMPORTANT — The user provided additional context after round 5:\n"${ans}"\nFactor this into your analysis. This is direct information from the person making this decision.`;
+      midSimulationNoteForVerdict = `USER'S MID-SIMULATION INPUT:\nQ: "${chiefQ.question}"\nA: "${ans}"\nSpecialists in rounds 6–10 factored this in where applicable.`;
+      yield { event: 'chief_intervention', data: { phase: 'incorporating', answer: ans } };
+    }
+
+    yield {
+      event: 'phase_change',
+      data: {
+        phase: 'targeted',
+        label: getPhaseLabelForEngineRound(options?.simMode, 6, false),
+        engine_round: 6,
+        rounds: '6-8',
+      },
+    };
+  }
 
   const godTarget = resolveGodViewVoiceTarget(options);
   if (godTarget > 0 && !godViewPipeline) {
@@ -1541,6 +1682,18 @@ Respond with valid JSON only:
 
   // ━━ ROUND 6 — RAPID ASSESSMENT (remaining 5 agents, WITH all field intelligence) ━━
 
+  if (!(chiefPanelActive && chiefDesign?.kind === 'specialist')) {
+    yield {
+      event: 'phase_change',
+      data: {
+        phase: 'targeted',
+        label: getPhaseLabelForEngineRound(options?.simMode, 6, false),
+        engine_round: 6,
+        rounds: '6-8',
+      },
+    };
+  }
+
   transitionPhase(state, 'quick_takes');
   yield { event: 'round_start', data: { round: 6, title: 'Rapid Assessment', description: `Remaining specialists provide quick perspectives${fieldScans.length > 0 ? ' with field intelligence' : ''}`, total_rounds: 10 } };
 
@@ -1560,6 +1713,7 @@ Respond with valid JSON only:
       task,
       debateCtx,
       instructionSuffix: `As ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments.`,
+      midSimulationEnrichment,
     });
     return callAgentWithRetry(agent, userMsg, 512, audit, 6, 'quick_takes', 2, agentDebateTier);
   });
@@ -1580,6 +1734,7 @@ Respond with valid JSON only:
       task,
       debateCtx,
       instructionSuffix: `As ${agent.role}, add your perspective. Focus on what others MISSED or got wrong. React to their specific arguments.`,
+      midSimulationEnrichment,
     });
     return callAgentWithRetry(agent, userMsg, 512, audit, 6, 'quick_takes', 2, agentDebateTier);
   });
@@ -1747,6 +1902,7 @@ Respond with valid JSON only:
             task: devilTask,
             debateCtx: devilCtx,
             instructionSuffix: `All agents currently lean toward "${majorityPosition}". The Chair demands a devil's advocate: give the STRONGEST argument AGAINST "${majorityPosition}". Reference specific claims others made. What could go catastrophically wrong?`,
+            midSimulationEnrichment,
           });
           const devilReport = await callAgent(
             targetAgent,
@@ -1799,6 +1955,7 @@ Respond with valid JSON only:
         task: chTask,
         debateCtx: challengerCtx,
         instructionSuffix: `You CHALLENGE ${defenderAgent.name}. They argued: "${defenderReport?.key_argument || 'their position'}". Attack the weakest point with counter-evidence; cite other agents where useful.`,
+        midSimulationEnrichment,
       });
       const challengeReport = await callAgent(
         challengerAgent,
@@ -1828,6 +1985,7 @@ Respond with valid JSON only:
         task: defTask,
         debateCtx: defenderCtx,
         instructionSuffix: `${challengerAgent.name} CHALLENGED you: "${challengerReport?.key_argument || 'disagreement'}". Defend with stronger evidence or update your position if the challenge is valid.`,
+        midSimulationEnrichment,
       });
       const defenseReport = await callAgent(
         defenderAgent,
@@ -1873,6 +2031,15 @@ Respond with valid JSON only:
 
   transitionPhase(state, 'convergence');
   yield { event: 'phase_start', data: { phase: 'convergence', status: 'active' } };
+  yield {
+    event: 'phase_change',
+    data: {
+      phase: 'convergence',
+      label: getPhaseLabelForEngineRound(options?.simMode, 9, false),
+      engine_round: 9,
+      rounds: '9-10',
+    },
+  };
   yield { event: 'round_start', data: { round: 9, title: 'Final Convergence', description: `All ${activeAgentCount} specialists declare final positions${fieldScans.length > 0 ? ' informed by field intelligence' : ''}`, total_rounds: 10 } };
 
   // Stagger convergence into 2 batches to avoid rate limits
@@ -1898,6 +2065,7 @@ Respond with valid JSON only:
       debateCtx: convergenceCtx,
       instructionSuffix:
         'The debate is concluding. Declare your FINAL position. If you changed your mind, explain what convinced you. Reference specific agents or evidence.',
+      midSimulationEnrichment,
     });
     return callAgentWithRetry(agent, convUser, 256, audit, 9, 'convergence', 2, agentDebateTier);
   });
@@ -1920,6 +2088,7 @@ Respond with valid JSON only:
       debateCtx: convergenceCtx,
       instructionSuffix:
         'The debate is concluding. Declare your FINAL position. If you changed your mind, explain what convinced you. Reference specific agents or evidence.',
+      midSimulationEnrichment,
     });
     return callAgentWithRetry(agent, convUser, 256, audit, 9, 'convergence', 2, agentDebateTier);
   });
@@ -2112,6 +2281,7 @@ DEBATE PROGRESS:
         operatorContext: operatorContextText,
         memoryForVerdict,
         specialistSourcesBlock,
+        midSimulationNote: midSimulationNoteForVerdict || undefined,
       });
 
       const opusMaxTokens = premiumMode === 'compare' ? 8192 : 6144;
@@ -2169,7 +2339,7 @@ DEBATE PROGRESS:
         (verdict as Record<string, unknown>).god_view = godViewSummaryForVerdict;
       }
     } else {
-      const verdictPrompt = `QUESTION: ${question}${memoryForVerdict}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n${taskLedgerSection}${consensusDirective}${crowdSignalText ? '\n' + crowdSignalText : ''}${specialistSourcesBlock}\n\nSynthesize ALL agent positions into a final Decision Object. Tailor your recommendation to the specific decision-maker's context if known. Weight by confidence and evidence quality. Use the Task Ledger to distinguish verified facts from assumptions — your verdict should rely on VERIFIED facts and flag unresolved assumptions as risks.${crowdSignalText ? ' Consider the crowd signal as an additional data point — it reflects diverse perspectives beyond the specialist panel.' : ''}\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }],\n  "one_liner": "optional — one short user-facing headline",\n  "sources": [{ "url": "https://...", "title": "..." }]\n}\nOptional "sources": 3–5 most important URLs supporting the verdict (from the list above and/or your verification searches).\n${getModeVerdictAppendix(options?.simMode)}`;
+      const verdictPrompt = `QUESTION: ${question}${memoryForVerdict}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n${taskLedgerSection}${consensusDirective}${crowdSignalText ? '\n' + crowdSignalText : ''}${specialistSourcesBlock}${midSimulationNoteForVerdict ? `\n\n${midSimulationNoteForVerdict}\n` : ''}\n\nSynthesize ALL agent positions into a final Decision Object. Tailor your recommendation to the specific decision-maker's context if known. Weight by confidence and evidence quality. Use the Task Ledger to distinguish verified facts from assumptions — your verdict should rely on VERIFIED facts and flag unresolved assumptions as risks.${crowdSignalText ? ' Consider the crowd signal as an additional data point — it reflects diverse perspectives beyond the specialist panel.' : ''}\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }],\n  "one_liner": "optional — one short user-facing headline",\n  "sources": [{ "url": "https://...", "title": "..." }]\n}\nOptional "sources": 3–5 most important URLs supporting the verdict (from the list above and/or your verification searches).\n${getModeVerdictAppendix(options?.simMode)}`;
       const verdictMaxTokens =
         options?.simMode === 'compare'
           ? 4096

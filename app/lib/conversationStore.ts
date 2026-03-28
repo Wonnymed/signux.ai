@@ -1,6 +1,6 @@
 "use client";
 
-const KEY = "sukgo-conversations";
+const KEY = "signux-conversations";
 
 export interface LocalConversation {
   id: string;

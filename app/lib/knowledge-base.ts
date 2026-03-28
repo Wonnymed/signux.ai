@@ -1,8 +1,8 @@
 /**
- * Sukgo proprietary knowledge base v2
+ * Signux Proprietary Knowledge Base v2
  * Compiled from 3,935 intelligence documents across 27 domains.
  * Each mode receives ONLY the relevant condensed frameworks.
- * Source: internal knowledge/ corpus (27 domains fully read by 8 research agents)
+ * Source: ~/signux-ai/knowledge/ corpus (27 domains fully read by 8 research agents)
  */
 
 const CHAT_KNOWLEDGE = `BUSINESS INTELLIGENCE FRAMEWORKS:

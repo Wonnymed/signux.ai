@@ -1,6 +1,5 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 
 type EntityState = 'idle' | 'chatting' | 'diving' | 'resting' | 'dormant' | 'active' | 'thinking';
@@ -63,9 +62,9 @@ export default function EntityVisual({ state, compact = false, size, className }
   const resolvedSize = size ?? (compact ? 'sm' : 'md');
   const isCompact = compact || resolvedSize === 'sm';
   const sizeMap = {
-    sm: { shell: 'w-10 h-10', sparkles: 16 },
-    md: { shell: 'w-20 h-20', sparkles: 32 },
-    lg: { shell: 'w-24 h-24', sparkles: 40 },
+    sm: { shell: 'w-10 h-10', emoji: 'text-sm' },
+    md: { shell: 'w-20 h-20', emoji: 'text-3xl' },
+    lg: { shell: 'w-24 h-24', emoji: 'text-4xl' },
   } as const;
   const selected = sizeMap[resolvedSize];
 
@@ -78,7 +77,7 @@ export default function EntityVisual({ state, compact = false, size, className }
           'transition-all duration-entity ease-out',
           s.scale, s.glow, s.breathe,
         )}>
-          <Sparkles size={selected.sparkles} className="text-white/95" strokeWidth={1.5} aria-hidden />
+          <span className={selected.emoji}>🐙</span>
         </div>
         {s.label && (
           <span className="absolute mt-12 text-micro text-txt-tertiary animate-fade-in">
@@ -101,13 +100,13 @@ export default function EntityVisual({ state, compact = false, size, className }
           'transition-all duration-entity ease-out',
           s.scale, s.glow, s.breathe,
         )}>
-          <Sparkles size={selected.sparkles} className="text-white/95" strokeWidth={1.5} aria-hidden />
+          <span className={selected.emoji}>🐙</span>
         </div>
       </div>
 
       {/* Wordmark */}
       <div className="text-center">
-        <h1 className="oct-wordmark text-2xl text-txt-primary">sukgo</h1>
+        <h1 className="oct-wordmark text-2xl text-txt-primary">octux</h1>
         <p className="text-xs text-txt-tertiary mt-1 tracking-wide uppercase">
           Never decide alone again
         </p>

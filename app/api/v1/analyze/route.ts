@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key");
   if (!apiKey) {
     return NextResponse.json(
-      { error: "Missing API key. Get one at sukgo.ai/settings", docs: "https://sukgo.ai/docs/api" },
+      { error: "Missing API key. Get one at signux.ai/settings", docs: "https://signux.ai/docs/api" },
       { status: 401 }
     );
   }

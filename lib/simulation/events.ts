@@ -5,13 +5,6 @@
  * Each event type has a specific data shape.
  */
 
-import type {
-  CompareVerdictData,
-  StressVerdictData,
-  PremortemFailureAnalysis,
-} from './mode-verdict';
-import type { CompareVerdict, PremortemOpusVerdict, StressOpusVerdict } from './types';
-
 export type SSEEvent =
   | PhaseStartEvent
   | PlanCompleteEvent
@@ -135,43 +128,19 @@ export interface SimulationCompleteEvent {
   data: VerdictResult;
 }
 
-/** God's View — Haiku market voice aggregate (optional on verdict). */
-export interface GodViewVerdictSlice {
-  totalVoices: number;
-  positive: number;
-  negative: number;
-  neutral: number;
-  topPositive: string;
-  topNegative: string;
-}
-
 export interface VerdictResult {
   simulation_id?: string;
-  recommendation: 'proceed' | 'proceed_with_conditions' | 'delay' | 'abandon';
+  recommendation: 'proceed' | 'delay' | 'abandon';
   probability: number;
   grade: string;
-  /** Headline / summary line for the verdict panel. */
-  one_liner?: string;
+  one_liner: string;
   main_risk: string;
   next_action: string;
   disclaimer: string;
   citations?: Citation[];
   agent_scoreboard?: AgentScoreEntry[];
-  /** Specialist risk rows; stress mode may also carry legacy-shaped rows derived from stress_data. */
   risk_matrix?: RiskEntry[];
   action_plan?: string[];
-  god_view?: GodViewVerdictSlice;
-  compare_data?: CompareVerdictData;
-  stress_data?: StressVerdictData;
-  failure_analysis?: PremortemFailureAnalysis;
-  /** URLs surfaced from web search during the simulation / verdict. */
-  sources?: { url: string; title: string }[];
-
-  /** Opus Chief premium JSON (compare / stress / pre-mortem). */
-  _mode?: 'compare' | 'stress_test' | 'premortem';
-  opus_compare?: CompareVerdict;
-  opus_stress?: StressOpusVerdict;
-  opus_premortem?: PremortemOpusVerdict;
 }
 
 export interface Citation {

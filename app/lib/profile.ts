@@ -17,7 +17,7 @@ export type UserProfile = {
   webSearchEnabled: boolean;
 };
 
-const PROFILE_KEY = "sukgo_profile";
+const PROFILE_KEY = "signux_profile";
 
 export function getProfile(): UserProfile | null {
   if (typeof window === "undefined") return null;

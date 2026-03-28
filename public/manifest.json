@@ -1,13 +1,14 @@
 {
-  "name": "Sukgo AI",
-  "short_name": "Sukgo",
-  "description": "Business simulation engine — simulate before you invest.",
-  "start_url": "/",
+  "name": "Signux AI",
+  "short_name": "Signux",
+  "description": "Beyond chat and beyond consulting. Signux turns uncertainty into structured decisions for founders, operators, and investors.",
+  "start_url": "/chat",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
+  "background_color": "#0a0a0a",
+  "theme_color": "#D4AF37",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/brand/sukgo-icon-dark.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "/icons/signux-icon-gold-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/signux-icon-gold-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

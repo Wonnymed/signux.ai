@@ -5,7 +5,7 @@ let cachedAt = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export async function GET(req: NextRequest) {
-  const clientToken = req.headers.get("x-sukgo-client");
+  const clientToken = req.headers.get("x-signux-client");
   if (clientToken !== process.env.NEXT_PUBLIC_CLIENT_TOKEN) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

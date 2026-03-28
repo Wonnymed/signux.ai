@@ -12,15 +12,21 @@ interface AssistantMessageProps {
   isCode?: boolean;
 }
 
-export default function AssistantMessage({ content, disclaimer, isCode }: AssistantMessageProps) {
+const TIER_LABELS: Record<string, string> = {
+  ink: 'Ink',
+  deep: 'Deep',
+  kraken: 'Kraken',
+};
+
+export default function AssistantMessage({ content, tier, disclaimer, isCode }: AssistantMessageProps) {
   return (
     <div className="mb-4 flex w-full flex-col items-start">
       <div className="flex items-start gap-3 max-w-[min(85%,42rem)] w-full">
         <div
-          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border-default bg-gradient-to-br from-surface-3 to-surface-2 shadow-sm shadow-black/20"
+          className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/60 to-amber-600/40 flex items-center justify-center shrink-0 mt-0.5 border border-border-default shadow-sm shadow-black/20"
           aria-hidden
         >
-          <Sparkles className="h-3.5 w-3.5 text-txt-secondary" strokeWidth={2} aria-hidden />
+          <span className="text-[10px] leading-none">🐙</span>
         </div>
         <div
           className={cn(
@@ -37,6 +43,12 @@ export default function AssistantMessage({ content, disclaimer, isCode }: Assist
           )}
         </div>
       </div>
+
+      {tier && TIER_LABELS[tier] && (
+        <span className="text-micro mt-1 ml-10 text-txt-tertiary">
+          {TIER_LABELS[tier]}
+        </span>
+      )}
 
       {disclaimer && <DisclaimerBanner text={disclaimer} className="mt-2 ml-10" />}
     </div>

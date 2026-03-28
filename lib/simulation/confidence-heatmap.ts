@@ -1,5 +1,5 @@
 /**
- * Simulation Confidence Heatmap — Sukgo OVERKILL innovation.
+ * Simulation Confidence Heatmap — Octux OVERKILL innovation.
  *
  * Decomposes a verdict into individual CLAIMS, each graded:
  *   GREEN:  High confidence — 3+ agents agree, evidence cited
@@ -60,7 +60,6 @@ export async function extractVerdictClaims(
 
   try {
     const response = await callClaude({
-      tier: 'extraction',
       systemPrompt: `You decompose a decision verdict into individual CLAIMS and grade each one.
 
 For each claim in the verdict:

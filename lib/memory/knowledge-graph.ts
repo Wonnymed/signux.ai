@@ -1,5 +1,5 @@
 /**
- * Knowledge Graph — Cognee cognify equivalent for Sukgo.
+ * Knowledge Graph — Cognee cognify equivalent for Octux.
  * Extracts entities + relationships from simulations and stores as navigable graph.
  *
  * Refs: Cognee (#22 — ECL pipeline, ontology grounding)
@@ -15,7 +15,7 @@ import { supabase } from './supabase';
 // Cognee pattern: grounded types make the graph QUERYABLE
 // ═══════════════════════════════════════════
 
-export const SUKGO_ENTITY_TYPES = [
+export const OCTUX_ENTITY_TYPES = [
   'person',       // founders, team members, advisors, competitors' leaders
   'company',      // startups, competitors, partners, suppliers
   'market',       // target markets, segments, niches
@@ -30,9 +30,9 @@ export const SUKGO_ENTITY_TYPES = [
   'resource',     // budget, team, equipment, technology
 ] as const;
 
-export type SukgoEntityType = typeof SUKGO_ENTITY_TYPES[number];
+export type OctuxEntityType = typeof OCTUX_ENTITY_TYPES[number];
 
-export const SUKGO_RELATION_TYPES = [
+export const OCTUX_RELATION_TYPES = [
   'targets_market',    // company → market
   'competes_with',     // company → company
   'requires',          // action → regulation/resource
@@ -50,7 +50,7 @@ export const SUKGO_RELATION_TYPES = [
   'regulated_by',      // market/product → regulation
 ] as const;
 
-export type SukgoRelationType = typeof SUKGO_RELATION_TYPES[number];
+export type OctuxRelationType = typeof OCTUX_RELATION_TYPES[number];
 
 // ═══════════════════════════════════════════
 // TYPES
@@ -58,7 +58,7 @@ export type SukgoRelationType = typeof SUKGO_RELATION_TYPES[number];
 
 export type ExtractedEntity = {
   name: string;
-  entity_type: SukgoEntityType;
+  entity_type: OctuxEntityType;
   description: string;
   properties?: Record<string, string | number>;
 };
@@ -66,7 +66,7 @@ export type ExtractedEntity = {
 export type ExtractedRelation = {
   source: string;      // entity name (must match an extracted entity)
   target: string;      // entity name (must match an extracted entity)
-  relation_type: SukgoRelationType;
+  relation_type: OctuxRelationType;
   description: string; // human-readable: "Gangnam requires food permit from Korean FDA"
   confidence: number;  // 0-1
 };
@@ -76,7 +76,6 @@ export type CognifyResult = {
   relations: ExtractedRelation[];
   entity_count: number;
   relation_count: number;
-  triplet_count: number;
 };
 
 // ═══════════════════════════════════════════
@@ -90,16 +89,13 @@ export async function cognify(
   verdictSummary: string,
   agentReportsSummary: string
 ): Promise<CognifyResult> {
-  if (!supabase) {
-    return { entities: [], relations: [], entity_count: 0, relation_count: 0, triplet_count: 0 };
-  }
+  if (!supabase) return { entities: [], relations: [], entity_count: 0, relation_count: 0 };
 
-  const entityTypes = SUKGO_ENTITY_TYPES.join(', ');
-  const relationTypes = SUKGO_RELATION_TYPES.join(', ');
+  const entityTypes = OCTUX_ENTITY_TYPES.join(', ');
+  const relationTypes = OCTUX_RELATION_TYPES.join(', ');
 
   const response = await callClaude({
-    tier: 'extraction',
-    systemPrompt: `You are a knowledge graph extractor for Sukgo AI. Given a business decision simulation, extract ENTITIES (people, companies, markets, locations, regulations, metrics, risks, etc.) and RELATIONSHIPS between them.
+    systemPrompt: `You are a knowledge graph extractor for Octux AI. Given a business decision simulation, extract ENTITIES (people, companies, markets, locations, regulations, metrics, risks, etc.) and RELATIONSHIPS between them.
 
 ONTOLOGY — use ONLY these types:
 
@@ -159,13 +155,13 @@ Extract entities and relationships. Return JSON:
 
     // Validate entity types
     const validEntities = extracted.entities.filter(e =>
-      SUKGO_ENTITY_TYPES.includes(e.entity_type as SukgoEntityType)
+      OCTUX_ENTITY_TYPES.includes(e.entity_type as OctuxEntityType)
     );
 
     // Validate relation types and that source/target exist
     const entityNames = new Set(validEntities.map(e => e.name));
     const validRelations = extracted.relations.filter(r =>
-      SUKGO_RELATION_TYPES.includes(r.relation_type as SukgoRelationType) &&
+      OCTUX_RELATION_TYPES.includes(r.relation_type as OctuxRelationType) &&
       entityNames.has(r.source) &&
       entityNames.has(r.target)
     );
@@ -173,27 +169,18 @@ Extract entities and relationships. Return JSON:
     // Store in Supabase
     const storedEntities = await upsertEntities(userId, simulationId, validEntities);
     const storedRelations = await upsertRelations(userId, simulationId, validRelations, storedEntities);
-    const tripletCount = await upsertKnowledgeTriplets(
-      userId,
-      simulationId,
-      validRelations,
-      validEntities,
-    );
 
-    console.log(
-      `[cognify] Extracted ${validEntities.length} entities, ${validRelations.length} relations, ${tripletCount} triplets from sim ${simulationId}`,
-    );
+    console.log(`[cognify] Extracted ${validEntities.length} entities, ${validRelations.length} relations from sim ${simulationId}`);
 
     return {
       entities: validEntities,
       relations: validRelations,
       entity_count: validEntities.length,
       relation_count: validRelations.length,
-      triplet_count: tripletCount,
     };
   } catch (err) {
     console.error('[cognify] Failed:', err, 'Raw:', response.substring(0, 500));
-    return { entities: [], relations: [], entity_count: 0, relation_count: 0, triplet_count: 0 };
+    return { entities: [], relations: [], entity_count: 0, relation_count: 0 };
   }
 }
 
@@ -333,61 +320,13 @@ async function upsertRelations(
   return stored;
 }
 
-/**
- * Materialize subject–predicate–object rows for recall strategy 5 (knowledge_triplets).
- * Requires unique index knowledge_triplets_user_src_tgt_rel_uidx (see migration 20260329).
- */
-async function upsertKnowledgeTriplets(
-  userId: string,
-  simulationId: string,
-  relations: ExtractedRelation[],
-  entities: ExtractedEntity[],
-): Promise<number> {
-  if (!supabase || relations.length === 0) return 0;
-
-  const typeByName = new Map(entities.map((e) => [e.name, e.entity_type]));
-  const now = new Date().toISOString();
-
-  const deduped = new Map<string, ExtractedRelation>();
-  for (const rel of relations) {
-    const key = `${rel.source}\0${rel.target}\0${rel.relation_type}`;
-    if (!deduped.has(key)) deduped.set(key, rel);
-  }
-
-  const rows = [...deduped.values()].map((rel) => ({
-    user_id: userId,
-    source_name: rel.source,
-    target_name: rel.target,
-    source_type: typeByName.get(rel.source) ?? null,
-    target_type: typeByName.get(rel.target) ?? null,
-    relation_type: rel.relation_type,
-    weight: Math.min(5, Math.max(0.2, 1 + rel.confidence)),
-    description: rel.description?.slice(0, 4000) ?? null,
-    metadata: { source_simulation_id: simulationId, confidence: rel.confidence },
-    is_active: true,
-    updated_at: now,
-  }));
-
-  const { error } = await supabase.from('knowledge_triplets').upsert(rows, {
-    onConflict: 'user_id,source_name,target_name,relation_type',
-  });
-
-  if (error) {
-    console.error('[MEMORY:ERROR] knowledge_triplets upsert failed:', error.message);
-    return 0;
-  }
-
-  console.log(`[MEMORY:KG] Saved ${rows.length} knowledge_triplets`);
-  return rows.length;
-}
-
 // ═══════════════════════════════════════════
 // GRAPH QUERIES — Retrieve knowledge for context
 // ═══════════════════════════════════════════
 
 export async function getEntities(
   userId: string,
-  entityType?: SukgoEntityType,
+  entityType?: OctuxEntityType,
   limit: number = 50
 ): Promise<Record<string, unknown>[]> {
   if (!supabase) return [];
@@ -467,8 +406,8 @@ export async function getConnected(
 
 export async function queryByTypeAndRelation(
   userId: string,
-  entityType: SukgoEntityType,
-  relationType: SukgoRelationType
+  entityType: OctuxEntityType,
+  relationType: OctuxRelationType
 ): Promise<Record<string, unknown>[]> {
   if (!supabase) return [];
 

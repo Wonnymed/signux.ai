@@ -1,5 +1,5 @@
 /**
- * Memory Scoring + Multi-Strategy Recall for Sukgo.
+ * Memory Scoring + Multi-Strategy Recall for Octux.
  *
  * Pipeline: recallMemories() → reciprocalRankFusion() → scoreMemory() → top K
  *
@@ -18,7 +18,7 @@ import { supabase } from './supabase';
 
 export type MemoryItem = {
   id: string;
-  network: 'world' | 'experience' | 'opinion' | 'observation' | 'knowledge_graph';
+  network: 'world' | 'experience' | 'opinion' | 'observation';
   content: string;
   confidence: number;
   learned_at: string;
@@ -273,43 +273,6 @@ export async function recallMemories(
     console.error('[recall] Observations failed:', err);
   }
 
-  // ── STRATEGY 5: Knowledge graph triplets (Cognee / cognify output) ──
-  try {
-    const { data } = await supabase
-      .from('knowledge_triplets')
-      .select('id, source_name, target_name, relation_type, weight, updated_at, created_at')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('weight', { ascending: false })
-      .limit(maxPerStrategy);
-
-    if (data && data.length > 0) {
-      const ranked: RankedList = [];
-      data.forEach((row, i) => {
-        ranked.push({ id: row.id, rank: i + 1 });
-        if (!itemMap.has(row.id)) {
-          const learned = row.updated_at || row.created_at || new Date().toISOString();
-          itemMap.set(row.id, {
-            id: row.id,
-            network: 'knowledge_graph',
-            content: `${row.source_name} —${row.relation_type}→ ${row.target_name}`,
-            confidence: Math.min(1, (row.weight as number) || 0.5),
-            learned_at: learned,
-            category: 'knowledge_graph',
-            rrf_score: 0,
-            relevance_score: 0,
-            recency_score: 0,
-            importance_score: 0,
-            final_score: 0,
-          });
-        }
-      });
-      rankedLists.push(ranked);
-    }
-  } catch (err) {
-    console.error('[recall] Knowledge graph failed:', err);
-  }
-
   // ── FUSE via Reciprocal Rank Fusion ──
   const rrfScores = reciprocalRankFusion(rankedLists);
   const items = Array.from(itemMap.values());
@@ -421,12 +384,6 @@ function formatMemoriesForContext(memories: MemoryItem[]): string {
   if (observations.length > 0) {
     sections.push('LEARNED PATTERNS (apply if relevant):');
     for (const m of observations) sections.push(`  • ${m.content}`);
-  }
-
-  const graph = memories.filter((m) => m.network === 'knowledge_graph');
-  if (graph.length > 0) {
-    sections.push('KNOWLEDGE GRAPH (entities & relations):');
-    for (const m of graph) sections.push(`  • ${m.content}`);
   }
 
   return [

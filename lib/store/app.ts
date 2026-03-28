@@ -9,7 +9,6 @@ export interface ConversationSummary {
   latest_verdict: string | null;
   latest_verdict_probability: number | null;
   is_pinned: boolean;
-  last_sim_mode?: string | null;
   message_count: number;
   simulation_count: number;
   updated_at: string;

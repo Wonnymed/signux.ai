@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     // TODO: Call Sukgo chat API internally
     // TODO: Send response back via WhatsApp API
-    // const response = await processSukgoChat(text, from);
+    // const response = await processSignuxChat(text, from);
     // await sendWhatsAppMessage(from, response);
 
     return NextResponse.json({ status: "ok" });

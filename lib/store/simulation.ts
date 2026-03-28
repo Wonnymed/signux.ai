@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { SimulationChargeType } from '@/lib/billing/token-costs';
 import { parseSimulationChargeType } from '@/lib/billing/token-costs';
 import type { GodViewVerdictSlice } from '@/lib/simulation/events';
+import { getPhaseLabelForEngineRound } from '@/lib/simulation/phase-labels';
 
 export type SimPhaseStatus = 'pending' | 'active' | 'complete';
 
@@ -73,6 +74,18 @@ type SimStatus =
   | 'complete'
   | 'error';
 
+export type ChiefInterventionUiState = {
+  phase: 'analyzing' | 'asking' | 'incorporating' | 'skipped';
+  question?: string;
+  context?: string;
+  specialist?: string;
+  impact?: string;
+  answer?: string;
+  skipped?: boolean;
+  timedOut?: boolean;
+  reason?: string;
+};
+
 interface SimulationState {
   status: SimStatus;
   setStatus: (status: SimStatus) => void;
@@ -97,6 +110,12 @@ interface SimulationState {
 
   result: any | null;
   simulationId: string | null;
+  /** From SSE `simulation_started` — used for mid-sim Chief POST /api/simulate/respond */
+  streamSimulationId: string | null;
+  streamEngineRound: number;
+  phaseDisplayLabel: string | null;
+  chiefIntervention: ChiefInterventionUiState | null;
+  chiefVisualState: 'hidden' | 'observing' | 'analyzing' | 'intervening' | 'speaking';
   setResult: (result: any, simulationId: string) => void;
 
   error: string | null;
@@ -119,6 +138,8 @@ interface SimulationState {
   _timerRef: ReturnType<typeof setInterval> | null;
 
   startSimulation: (streamBody: Record<string, unknown>) => void;
+
+  submitChiefIntervention: (opts: { answer?: string; skip?: boolean }) => Promise<void>;
 
   clearChiefAssembly: () => void;
 
@@ -229,7 +250,12 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   result: null,
   simulationId: null,
-  setResult: (result, simulationId) => set({ result, simulationId, status: 'complete' }),
+  streamSimulationId: null,
+  streamEngineRound: 0,
+  phaseDisplayLabel: null,
+  chiefIntervention: null,
+  chiefVisualState: 'hidden',
+  setResult: (result, simulationId) => set({ result, simulationId, status: 'complete', chiefVisualState: 'hidden' }),
 
   error: null,
   setError: (error) => set({ error, status: 'error' }),
@@ -249,6 +275,20 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   clearChiefAssembly: () => set({ chiefAssembly: null }),
 
+  submitChiefIntervention: async (opts) => {
+    const id = get().streamSimulationId;
+    if (!id) return;
+    await fetch('/api/simulate/respond', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        simulationId: id,
+        skip: Boolean(opts.skip),
+        answer: opts.skip ? undefined : String(opts.answer || '').trim(),
+      }),
+    }).catch(() => {});
+  },
+
   startSimulation: (streamBody) => {
     get().stopSimulation();
 
@@ -264,6 +304,12 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       verdictText: '',
       result: null,
       simulationId: null,
+      streamSimulationId: null,
+      streamEngineRound: 0,
+      phaseDisplayLabel: null,
+      chiefIntervention: null,
+      chiefVisualState:
+        activeChargeType !== 'swarm' ? 'observing' : 'hidden',
       error: null,
       activeChargeType,
       chiefAssembly: null,
@@ -364,7 +410,11 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
               const phase = (data.data as { phase?: string } | null)?.phase;
               if (phase) {
                 if (phase === 'opening') {
-                  set({ chiefAssembly: null });
+                  set({
+                    chiefAssembly: null,
+                    chiefVisualState:
+                      get().activeChargeType !== 'swarm' ? 'observing' : 'hidden',
+                  });
                 }
                 const phaseMap: Record<string, string> = {
                   planning: 'Research Plan',
@@ -477,6 +527,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
               set({
                 verdictGeneratingMessage:
                   raw.length > 0 ? raw : defaultVerdictGeneratingMessage(get().activeChargeType),
+                chiefVisualState: get().activeChargeType !== 'swarm' ? 'speaking' : get().chiefVisualState,
               });
               break;
             }
@@ -507,6 +558,53 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
             case 'hitl_pause':
             case 'hitl_checkpoint':
               break;
+
+            case 'simulation_started': {
+              const d = (data.data || {}) as { simulation_id?: string };
+              set({ streamSimulationId: typeof d.simulation_id === 'string' ? d.simulation_id : null });
+              break;
+            }
+
+            case 'round_start': {
+              const d = (data.data || {}) as { round?: number };
+              const r = typeof d.round === 'number' ? d.round : 0;
+              if (r > 0) {
+                set((s) => ({
+                  streamEngineRound: r,
+                  phaseDisplayLabel: getPhaseLabelForEngineRound(
+                    s.activeChargeType,
+                    r,
+                    s.chiefIntervention?.phase === 'asking' ||
+                      s.chiefIntervention?.phase === 'analyzing',
+                  ),
+                }));
+              }
+              break;
+            }
+
+            case 'phase_change': {
+              const d = (data.data || {}) as { label?: string; engine_round?: number };
+              if (typeof d.label === 'string' && d.label.trim()) {
+                set({ phaseDisplayLabel: d.label.trim() });
+              }
+              break;
+            }
+
+            case 'chief_intervention': {
+              const d = (data.data || {}) as ChiefInterventionUiState;
+              const phase = d.phase;
+              let chiefVisualState = get().chiefVisualState;
+              if (phase === 'analyzing') chiefVisualState = 'analyzing';
+              else if (phase === 'asking') chiefVisualState = 'intervening';
+              else if (phase === 'incorporating' || phase === 'skipped') chiefVisualState = 'observing';
+              set({
+                chiefIntervention: { ...d },
+                chiefVisualState,
+                phaseDisplayLabel:
+                  phase === 'asking' ? 'Chief check-in' : get().phaseDisplayLabel,
+              });
+              break;
+            }
           }
         };
 
@@ -568,6 +666,11 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       verdictText: '',
       result: null,
       simulationId: null,
+      streamSimulationId: null,
+      streamEngineRound: 0,
+      phaseDisplayLabel: null,
+      chiefIntervention: null,
+      chiefVisualState: 'hidden',
       error: null,
       activeChargeType: null,
       chiefAssembly: null,

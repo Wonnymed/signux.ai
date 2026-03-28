@@ -25,31 +25,31 @@ export function exportPrometheusMetrics(tracker: ConsensusTracker): string {
     lines.push(`${name} ${value}`);
   };
 
-  gauge('sukgo_consensus_global_pct', 'Consenso global atual (0-100)', round2(m.globalConsensusPct));
-  gauge('sukgo_consensus_bft_agreement_pct', 'Acordo BFT', round2(m.bftAgreementPct));
-  gauge('sukgo_consensus_participation_pct', 'Participacao na rodada', round2(m.participationPct));
-  gauge('sukgo_consensus_block_stability_pct', 'Estabilidade de bloco', round2(m.blockStabilityPct));
-  gauge('sukgo_consensus_state_divergence', 'Divergencia de estado', round2(m.stateDivergence));
-  gauge('sukgo_nodes_active_total', 'Nos em status sync', m.nodesActiveTotal);
-  gauge('sukgo_nodes_lagging_total', 'Nos em status lag', m.nodesLaggingTotal);
-  gauge('sukgo_nodes_offline_total', 'Nos em status offline', m.nodesOfflineTotal);
-  gauge('sukgo_proposals_active_total', 'Propostas em votacao', m.proposalsActiveTotal);
+  gauge('octux_consensus_global_pct', 'Consenso global atual (0-100)', round2(m.globalConsensusPct));
+  gauge('octux_consensus_bft_agreement_pct', 'Acordo BFT', round2(m.bftAgreementPct));
+  gauge('octux_consensus_participation_pct', 'Participacao na rodada', round2(m.participationPct));
+  gauge('octux_consensus_block_stability_pct', 'Estabilidade de bloco', round2(m.blockStabilityPct));
+  gauge('octux_consensus_state_divergence', 'Divergencia de estado', round2(m.stateDivergence));
+  gauge('octux_nodes_active_total', 'Nos em status sync', m.nodesActiveTotal);
+  gauge('octux_nodes_lagging_total', 'Nos em status lag', m.nodesLaggingTotal);
+  gauge('octux_nodes_offline_total', 'Nos em status offline', m.nodesOfflineTotal);
+  gauge('octux_proposals_active_total', 'Propostas em votacao', m.proposalsActiveTotal);
 
-  counter('sukgo_rounds_total', 'Total de rodadas concluidas', m.roundsTotal);
-  counter('sukgo_quorum_reached_total', 'Total de propostas que atingiram quorum', m.quorumReachedTotal);
+  counter('octux_rounds_total', 'Total de rodadas concluidas', m.roundsTotal);
+  counter('octux_quorum_reached_total', 'Total de propostas que atingiram quorum', m.quorumReachedTotal);
 
   // Votes by type
-  lines.push('# HELP sukgo_votes_total Total de votos por tipo');
-  lines.push('# TYPE sukgo_votes_total counter');
+  lines.push('# HELP octux_votes_total Total de votos por tipo');
+  lines.push('# TYPE octux_votes_total counter');
   for (const [type, count] of Object.entries(m.votesTotal)) {
-    lines.push(`sukgo_votes_total{type="${type}"} ${count}`);
+    lines.push(`octux_votes_total{type="${type}"} ${count}`);
   }
 
   // Node latencies
-  lines.push('# HELP sukgo_node_latency_ms Latencia por no');
-  lines.push('# TYPE sukgo_node_latency_ms gauge');
+  lines.push('# HELP octux_node_latency_ms Latencia por no');
+  lines.push('# TYPE octux_node_latency_ms gauge');
   for (const [nodeId, latency] of Object.entries(m.nodeLatencies)) {
-    lines.push(`sukgo_node_latency_ms{node_id="${nodeId}"} ${latency}`);
+    lines.push(`octux_node_latency_ms{node_id="${nodeId}"} ${latency}`);
   }
 
   return lines.join('\n') + '\n';

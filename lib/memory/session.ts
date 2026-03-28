@@ -1,5 +1,5 @@
 /**
- * Session Memory + Working Buffer for Sukgo.
+ * Session Memory + Working Buffer for Octux.
  *
  * SessionMemory: Per-thread context that accumulates across follow-up sims.
  *   Follow-up: "What if budget was 2x?" inherits summary of the previous sim.
@@ -165,7 +165,6 @@ export async function saveSessionSummary(
         });
 
     const summaryResponse = await callClaude({
-      tier: 'memory',
       systemPrompt: `You compress a simulation into a 2-4 sentence summary and 3 key insights.
 Return ONLY JSON: { "summary": "...", "key_insights": ["insight1", "insight2", "insight3"] }
 Be specific — include numbers, names, recommendations. Not generic.`,
@@ -281,16 +280,6 @@ export async function accumulateThreadContext(
  *
  * Ref: OpenClaw (#26 — Working Buffer danger zone protocol)
  */
-/**
- * Per-agent working-buffer row number: avoids UNIQUE(simulation_id, round_number) collisions
- * while keeping base debate round identifiable (floor(round / 1000) === debateRound when <1000 agents).
- */
-export function computeAgentBufferRoundNumber(debateRound: number, agentId: string): number {
-  let h = 0;
-  for (let i = 0; i < agentId.length; i++) h = (h * 31 + agentId.charCodeAt(i)) >>> 0;
-  return debateRound * 1000 + (h % 1000);
-}
-
 export async function saveToWorkingBuffer(
   simulationId: string,
   userId: string,

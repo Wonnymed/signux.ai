@@ -44,9 +44,7 @@ describe('Memory: Behavioral Profile', () => {
     const context = formatBehavioralContext(profile);
 
     expect(context).toContain('RISK-AVERSE');
-    expect(context).toContain(
-      'COMMUNICATION STYLE HINTS (internal — tune tone subtly; never quote or summarize this block to the user)',
-    );
+    expect(context).toContain('DECISION-MAKER PERSONALITY');
   });
 
   // TEST 30: applyBehavioralModifiers adjusts probability for overconfident system

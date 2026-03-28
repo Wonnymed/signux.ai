@@ -19,7 +19,6 @@ import { callClaude } from '../simulation/claude';
 import { loadMemoryForSimulation, formatMemoryContext } from '../memory/core-memory';
 import { buildAllAgentKnowledge } from '../memory/agent-knowledge';
 import { getTopKMemories } from '../memory/recall';
-export { resolveAgentChatId } from './resolve-agent-id';
 
 // ═══════════════════════════════════════════
 // TYPES
@@ -94,15 +93,6 @@ const AGENT_CHAT_PERSONAS: Record<string, { name: string; chatStyle: string }> =
     name: 'Decision Chair',
     chatStyle: 'You are the orchestrator. You can explain the overall verdict, how agents disagreed, and why the final recommendation was made. You see the big picture.',
   },
-};
-
-export type AgentChatEphemeralContext = {
-  originalQuestion: string;
-  agentPosition: string;
-  agentArgument: string;
-  agentConfidence?: number;
-  verdictSummary: string;
-  otherAgents: { name: string; position: string }[];
 };
 
 // ═══════════════════════════════════════════
@@ -195,7 +185,7 @@ ${verdict.one_liner || ''}`
   ].filter(Boolean).join('\n');
 
   // Build system prompt
-  const systemPrompt = `You are the ${persona.name} from Sukgo AI — a Decision Operating System.
+  const systemPrompt = `You are the ${persona.name} from Octux AI — a Decision Operating System.
 
 ROLE: ${persona.chatStyle}
 
@@ -260,7 +250,6 @@ export async function chatWithAgent(
 
   try {
     const response = await callClaude({
-      tier: 'specialist',
       systemPrompt: context.systemPrompt,
       userMessage,
       maxTokens: 800,
@@ -279,100 +268,6 @@ export async function chatWithAgent(
     return {
       agentId,
       agentName: AGENT_CHAT_PERSONAS[agentId]?.name || agentId,
-      response: 'I encountered an error processing your question. Please try again.',
-      citations: [],
-    };
-  }
-}
-
-/** Post-sim chat without a persisted simulation row (dashboard canvas / live run). */
-export async function chatWithAgentEphemeral(
-  agentId: string,
-  userId: string,
-  message: string,
-  history: AgentChatMessage[],
-  ctx: AgentChatEphemeralContext,
-): Promise<AgentChatResponse> {
-  const persona = AGENT_CHAT_PERSONAS[agentId];
-  if (!persona) {
-    return {
-      agentId,
-      agentName: agentId,
-      response:
-        'I could not match this specialist to a known role. Open deep dive from a named specialist on the verdict panel.',
-      citations: [],
-    };
-  }
-
-  const others =
-    ctx.otherAgents.length > 0
-      ? ctx.otherAgents.map((o) => `${o.name}: ${(o.position || '?').toUpperCase()}`).join('\n')
-      : '(not enumerated)';
-
-  let memoryText = '';
-  try {
-    const mem = await loadMemoryForSimulation(userId, message);
-    if (mem.isReturningUser) memoryText = '\n\nUSER CONTEXT (from memory):\n' + formatMemoryContext(mem);
-  } catch {
-    /* optional */
-  }
-
-  const systemPrompt = `You are the ${persona.name} from Sukgo AI — a Decision Operating System.
-
-ROLE: ${persona.chatStyle}
-
-You just participated in a simulation about this decision:
-"${ctx.originalQuestion}"
-
-YOUR POSITION IN THE SIMULATION: ${ctx.agentPosition.toUpperCase()}
-YOUR CONFIDENCE (1–10): ${typeof ctx.agentConfidence === 'number' ? ctx.agentConfidence : 'not specified'}
-YOUR KEY ARGUMENT: ${ctx.agentArgument || '(see simulation output)'}
-
-THE PANEL'S FINAL VERDICT (summary):
-${ctx.verdictSummary}
-
-OTHER SPECIALISTS' POSITIONS:
-${others}
-${memoryText}
-
-CONVERSATION RULES:
-- Stay IN CHARACTER as ${persona.name}. Respond as this specialist.
-- Reference your simulation stance. Be specific; cite debate dynamics where useful.
-- If asked something outside your expertise, say so and suggest which angle to explore.
-- Be concise: 2–4 short paragraphs max unless the user asks for depth.
-- If the user challenges your view, engage seriously; you may refine your view if they raise valid evidence.`;
-
-  const recentHistory = history.slice(-8);
-  let userMessage = '';
-  if (recentHistory.length > 0) {
-    userMessage += 'CONVERSATION SO FAR:\n';
-    for (const msg of recentHistory) {
-      const prefix = msg.role === 'user' ? 'User' : persona.name;
-      userMessage += `${prefix}: ${msg.content}\n`;
-    }
-    userMessage += '\n';
-  }
-  userMessage += `User: ${message}\n\nRespond as ${persona.name}.`;
-
-  try {
-    const response = await callClaude({
-      tier: 'specialist',
-      systemPrompt,
-      userMessage,
-      maxTokens: 900,
-    });
-
-    return {
-      agentId,
-      agentName: persona.name,
-      response: response.trim(),
-      citations: extractCitations(response),
-    };
-  } catch (err) {
-    console.error(`AGENT CHAT ephemeral: Call failed for ${agentId}:`, err);
-    return {
-      agentId,
-      agentName: persona.name,
       response: 'I encountered an error processing your question. Please try again.',
       citations: [],
     };

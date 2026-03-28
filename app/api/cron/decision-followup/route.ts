@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
       );
 
       await getResend().emails.send({
-        from: "Sukgo AI <notifications@sukgo.ai>",
+        from: "Sukgo AI <notifications@signux-ai.vercel.app>",
         to: userData.user.email,
         subject: `How did it go? Your decision from ${daysAgo} days ago`,
         html: `

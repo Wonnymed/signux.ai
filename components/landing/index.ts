@@ -1,7 +1,5 @@
 export { default as LandingPage } from './LandingPage';
 export { default as HeroSection } from './HeroSection';
-export { default as SimulationPreviewBand } from './SimulationPreviewBand';
-export { default as SimulationModes } from './SimulationModes';
 export { default as TrustStrip } from './TrustStrip';
 export { default as HowItWorks } from './HowItWorks';
 export { default as LiveExample } from './LiveExample';

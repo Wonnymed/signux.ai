@@ -30,7 +30,7 @@ function getInitials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-export default function OctAvatar({ type = 'agent', size = 'md', category = 'business', agentIndex = 0, agentIcon, name, imageUrl, state = 'dormant', className }: OctAvatarProps) {
+export default function OctAvatar({ type = 'agent', size = 'md', category = 'life', agentIndex = 0, agentIcon, name, imageUrl, state = 'dormant', className }: OctAvatarProps) {
   const s = sizeStyles[size];
 
   if (type === 'agent') {
@@ -62,7 +62,7 @@ export default function OctAvatar({ type = 'agent', size = 'md', category = 'bus
         'bg-gradient-to-br from-accent to-entity-bioluminescent', s.container,
         glowClass[state], state === 'dormant' && 'animate-breathe', className,
       )}>
-        <Sparkles className={cn('text-white', s.icon)} strokeWidth={2} aria-hidden />
+        <span className={s.text}>🐙</span>
       </div>
     );
   }

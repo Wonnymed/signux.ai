@@ -1,9 +1,9 @@
 /**
- * Bi-Temporal Fact Tracking — Graphiti pattern for Sukgo.
+ * Bi-Temporal Fact Tracking — Graphiti pattern for Octux.
  *
  * Two time dimensions per fact:
  *   Real-world: valid_from → valid_until (when TRUE in the world)
- *   System:     learned_at → expired_at  (when Sukgo knew about it)
+ *   System:     learned_at → expired_at  (when Octux knew about it)
  *
  * Three operations:
  *   addFact()               — insert with both timestamp dimensions
@@ -243,7 +243,6 @@ export async function resolveContradictions(
 
     try {
       const response = await callClaude({
-        tier: 'memory',
         systemPrompt: `You detect contradictions between facts about a user's business.
 A contradiction = two facts that CANNOT both be true at the same time.
 

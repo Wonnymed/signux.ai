@@ -1,5 +1,5 @@
 /**
- * Per-Agent Self-Reflection — PraisonAI pattern for Sukgo.
+ * Per-Agent Self-Reflection — PraisonAI pattern for Octux.
  *
  * Evaluator-Optimizer loop:
  *   Agent generates report → Haiku evaluates (score 1-10) → score < threshold?
@@ -87,7 +87,6 @@ export async function reflectOnOwnOutput(
 
   try {
     const response = await callClaude({
-      tier: 'reflection',
       systemPrompt: `You evaluate an AI agent's analysis report in a decision simulation.
 Assess:
 1. SPECIFICITY: "12% growth" vs "the market is growing" (specific = better)
@@ -178,7 +177,6 @@ export async function runReflectionLoop(
     // Re-generate with critique as feedback
     try {
       const revisedResponse = await callClaude({
-        tier: 'reflection',
         systemPrompt: agentSystemPrompt,
         userMessage: `${debateContext}
 

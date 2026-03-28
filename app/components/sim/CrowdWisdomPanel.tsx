@@ -2,19 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
-import {
-  Users,
-  ChevronDown,
-  Lightbulb,
-  User,
-  Swords,
-  GraduationCap,
-  Building2,
-  Package,
-  Briefcase,
-  Sparkles,
-} from "lucide-react";
+import { Users, ChevronDown, Lightbulb, User } from "lucide-react";
+import { icons } from "lucide-react";
 import type { CrowdWisdomResult, AdvisorPersona } from "@/lib/agents/advisors";
 
 type CrowdWisdomPanelProps = {
@@ -23,14 +12,14 @@ type CrowdWisdomPanelProps = {
   isLoading: boolean;
 };
 
-const STAKEHOLDER_LABELS: Record<string, { Icon: LucideIcon; label: string }> = {
-  customers: { Icon: Users, label: "Customers" },
-  competitors: { Icon: Swords, label: "Competitors" },
-  experts: { Icon: GraduationCap, label: "Experts" },
-  community: { Icon: Building2, label: "Community" },
-  supply_chain: { Icon: Package, label: "Supply Chain" },
-  indirect: { Icon: Briefcase, label: "Indirect" },
-  wildcards: { Icon: Sparkles, label: "Wildcards" },
+const STAKEHOLDER_LABELS: Record<string, { emoji: string; label: string }> = {
+  customers: { emoji: "👥", label: "Customers" },
+  competitors: { emoji: "⚔️", label: "Competitors" },
+  experts: { emoji: "🎓", label: "Experts" },
+  community: { emoji: "🏘️", label: "Community" },
+  supply_chain: { emoji: "📦", label: "Supply Chain" },
+  indirect: { emoji: "💼", label: "Indirect" },
+  wildcards: { emoji: "🃏", label: "Wildcards" },
 };
 
 function getPositionStyle(position: string) {
@@ -224,7 +213,6 @@ export default function CrowdWisdomPanel({ crowdResult, personas, isLoading }: C
                     {Object.entries(crowdResult.stakeholder_coverage).map(([type, count]) => {
                       const meta = STAKEHOLDER_LABELS[type];
                       if (!meta || count === 0) return null;
-                      const StakeIcon = meta.Icon;
                       return (
                         <span
                           key={type}
@@ -239,8 +227,7 @@ export default function CrowdWisdomPanel({ crowdResult, personas, isLoading }: C
                             color: "var(--text-tertiary)",
                           }}
                         >
-                          <StakeIcon size={14} strokeWidth={1.5} style={{ flexShrink: 0, opacity: 0.85 }} />
-                          {meta.label} {count}
+                          {meta.emoji} {meta.label} {count}
                         </span>
                       );
                     })}

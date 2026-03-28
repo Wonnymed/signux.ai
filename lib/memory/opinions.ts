@@ -4,7 +4,6 @@
 
 import { callClaude, parseJSON } from '../simulation/claude';
 import { supabase } from './supabase';
-import { confidenceHistoryArray } from './confidence-history';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -47,7 +46,6 @@ export async function extractOpinionsAndObservations(
     : 'No existing opinions.';
 
   const response = await callClaude({
-    tier: 'extraction',
     systemPrompt: `You extract OPINIONS and OBSERVATIONS from a completed decision simulation.
 
 OPINIONS = Beliefs the system should form or update. These are SUBJECTIVE assessments:
@@ -125,12 +123,12 @@ export async function applyOpinionActions(
           belief: op.belief,
           domain: op.domain || 'general',
           confidence: op.confidence || 0.5,
-          confidence_history: [{
+          confidence_history: JSON.stringify([{
             confidence: op.confidence || 0.5,
             sim_id: simulationId,
             reason: op.reason || 'initial formation',
             timestamp: new Date().toISOString(),
-          }],
+          }]),
           supporting_evidence: [op.reason],
           formed_from_simulation: simulationId,
           last_evaluated_simulation: simulationId,
@@ -147,7 +145,7 @@ export async function applyOpinionActions(
 
         if (existing) {
           const newConfidence = Math.min(0.95, (existing.confidence || 0.5) + 0.1);
-          const history = confidenceHistoryArray(existing.confidence_history);
+          const history = Array.isArray(existing.confidence_history) ? existing.confidence_history : [];
           history.push({ confidence: newConfidence, sim_id: simulationId, reason: op.reason || 'reinforced', timestamp: new Date().toISOString() });
           const evidence = Array.isArray(existing.supporting_evidence) ? existing.supporting_evidence : [];
           evidence.push(op.reason);
@@ -155,7 +153,7 @@ export async function applyOpinionActions(
           const { error } = await supabase.from('decision_opinions')
             .update({
               confidence: newConfidence,
-              confidence_history: history,
+              confidence_history: JSON.stringify(history),
               supporting_evidence: evidence.slice(-10),
               last_evaluated_simulation: simulationId,
               evaluation_count: (existing.evaluation_count || 1) + 1,
@@ -174,7 +172,7 @@ export async function applyOpinionActions(
 
         if (existing) {
           const newConfidence = Math.max(0.1, (existing.confidence || 0.5) - 0.15);
-          const history = confidenceHistoryArray(existing.confidence_history);
+          const history = Array.isArray(existing.confidence_history) ? existing.confidence_history : [];
           history.push({ confidence: newConfidence, sim_id: simulationId, reason: op.reason || 'contradicted', timestamp: new Date().toISOString() });
           const contradictions = Array.isArray(existing.contradicting_evidence) ? existing.contradicting_evidence : [];
           contradictions.push(op.reason);
@@ -183,7 +181,7 @@ export async function applyOpinionActions(
           const { error } = await supabase.from('decision_opinions')
             .update({
               confidence: newConfidence,
-              confidence_history: history,
+              confidence_history: JSON.stringify(history),
               contradicting_evidence: contradictions.slice(-10),
               last_evaluated_simulation: simulationId,
               evaluation_count: (existing.evaluation_count || 1) + 1,

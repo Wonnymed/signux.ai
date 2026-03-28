@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Sukgo AI <intel@sukgo.ai>",
+            from: "Sukgo AI <intel@signux.ai>",
             to: email,
             subject: `Your weekly intelligence brief — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
             html: emailBody,

@@ -12,15 +12,11 @@
 
 export type LLMProvider = 'anthropic' | 'openai' | 'naver';
 
-import type { ModelTier } from '@/lib/config/model-tiers';
-
 export type LLMCallOptions = {
   systemPrompt: string;
   userMessage: string;
   maxTokens?: number;
   model?: string;
-  /** When set (and `model` is not), routes via lib/config/model-tiers. */
-  tier?: ModelTier;
   temperature?: number;
   provider?: LLMProvider;
 };
@@ -71,7 +67,6 @@ async function callAnthropic(options: LLMCallOptions): Promise<string> {
     userMessage: options.userMessage,
     maxTokens: options.maxTokens,
     model: options.model,
-    tier: options.tier,
   });
 }
 

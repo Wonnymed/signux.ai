@@ -7,7 +7,7 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('sukgo-theme') as Theme | null;
+    const saved = localStorage.getItem('octux-theme') as Theme | null;
     if (saved) {
       setTheme(saved);
       document.documentElement.classList.toggle('dark', saved === 'dark');
@@ -18,7 +18,7 @@ export function useTheme() {
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    localStorage.setItem('sukgo-theme', next);
+    localStorage.setItem('octux-theme', next);
     document.documentElement.classList.toggle('dark', next === 'dark');
     document.documentElement.classList.toggle('light', next === 'light');
   };

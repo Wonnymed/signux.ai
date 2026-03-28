@@ -1,5 +1,5 @@
 /**
- * Reflect Loop — Hindsight pattern for Sukgo.
+ * Reflect Loop — Hindsight pattern for Octux.
  *
  * The system periodically REASONS about its own memories:
  *   reflectOnExperiences() — orchestrator, runs every 5 sims
@@ -7,7 +7,7 @@
  *   deriveObservations()   — extract patterns from accumulated experiences
  *   memoryOfMisses()       — identify wrong predictions, save as observations
  *
- * This is the loop that makes Sukgo LEARN, not just REMEMBER.
+ * This is the loop that makes Octux LEARN, not just REMEMBER.
  *
  * Ref: Hindsight (#28 — retain/recall/reflect, opinion confidence evolution,
  *       memory of misses, 91.4% LongMemEval)
@@ -15,7 +15,6 @@
 
 import { supabase } from './supabase';
 import { callClaude, parseJSON } from '../simulation/claude';
-import { confidenceHistoryArray } from './confidence-history';
 
 // ═══════════════════════════════════════════
 // TYPES
@@ -38,29 +37,14 @@ type ReflectResult = { opinions: number; observations: number; misses: number };
 // reflectOnExperiences() — Orchestrator
 // ═══════════════════════════════════════════
 
-/** Check if reflect will trigger (every 5th experience row). Returns trigger count or 0. */
+/** Check if reflect will trigger (every 5th sim). Used for SSE event. */
 export async function shouldReflect(userId: string): Promise<number> {
   if (!supabase) return 0;
-  try {
-    const { count, error } = await supabase
-      .from('decision_experiences')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('[MEMORY:REFLECT] Experience count query failed:', error.message, { userId });
-      return 0;
-    }
-
-    const c = count ?? 0;
-    const should = c > 0 && c % 5 === 0;
-    console.log('[MEMORY:REFLECT] Experience count:', c, 'Should reflect:', should);
-    return should ? c : 0;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[MEMORY:REFLECT] Experience count threw:', msg, { userId });
-    return 0;
-  }
+  const { count } = await supabase
+    .from('decision_experiences')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  return (count && count % 5 === 0) ? count : 0;
 }
 
 export async function reflectOnExperiences(
@@ -141,7 +125,6 @@ async function formOpinion(
 
   try {
     const response = await callClaude({
-      tier: 'reflection',
       systemPrompt: `You are the Reflect engine for a decision system. You analyze accumulated experiences and form/update BELIEFS (opinions).
 
 RULES:
@@ -227,7 +210,7 @@ JSON array:
             if (!current) break;
 
             const newConfidence = Math.min(Math.max(action.new_confidence, 0.05), 0.95);
-            const history = confidenceHistoryArray(current.confidence_history);
+            const history = Array.isArray(current.confidence_history) ? current.confidence_history : [];
             history.push({
               confidence: newConfidence,
               previous: current.confidence,
@@ -267,7 +250,7 @@ JSON array:
               .eq('id', action.existing_opinion_id)
               .single();
 
-            const history = confidenceHistoryArray(current?.confidence_history);
+            const history = Array.isArray(current?.confidence_history) ? current.confidence_history : [];
             history.push({
               confidence: 0,
               reason: action.reason,
@@ -332,7 +315,6 @@ async function deriveObservations(
 
   try {
     const response = await callClaude({
-      tier: 'reflection',
       systemPrompt: `You analyze decision experiences to find PATTERNS — recurring themes that would help future decisions.
 
 Good patterns are:
@@ -463,7 +445,6 @@ async function memoryOfMisses(
 
   try {
     const response = await callClaude({
-      tier: 'reflection',
       systemPrompt: `You analyze prediction MISSES — cases where the decision system got it wrong.
 For each miss, identify:
 1. WHAT went wrong (over-estimated a factor? under-estimated a risk?)

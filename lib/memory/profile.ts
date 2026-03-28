@@ -44,8 +44,7 @@ export async function generateDecisionProfile(userId: string): Promise<DecisionP
     .join('\n');
 
   const response = await callClaude({
-    tier: 'memory',
-    systemPrompt: `You are the Profile Generator for Sukgo AI. You create a concise Decision Profile from a user's accumulated facts and simulation history.
+    systemPrompt: `You are the Profile Generator for Octux AI. You create a concise Decision Profile from a user's accumulated facts and simulation history.
 
 The profile should read like a briefing document — imagine you're briefing 10 specialist consultants before they analyze this person's next question.
 

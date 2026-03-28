@@ -32,8 +32,7 @@ export async function critiqueVerdict(
     .join('\n');
 
   const response = await callClaude({
-    tier: 'orchestrator',
-    systemPrompt: `You are the Quality Critic for Sukgo AI. You evaluate Decision Objects synthesized from multi-agent adversarial debates.
+    systemPrompt: `You are the Quality Critic for Octux AI. You evaluate Decision Objects synthesized from multi-agent adversarial debates.
 
 You are harsh but fair. You check:
 1. COHERENCE: Does the recommendation match the evidence? If 8/10 agents said "delay" but verdict says "proceed", flag it.
@@ -111,7 +110,6 @@ export async function refineVerdict(
     : '';
 
   const response = await callClaude({
-    tier: 'orchestrator',
     systemPrompt: `You are the Decision Chair performing a REFINEMENT pass. A quality critic identified weaknesses. Produce an IMPROVED verdict that:
 - Fixes the specific weaknesses identified
 - Makes next_action MORE specific and actionable (include WHO does WHAT by WHEN)

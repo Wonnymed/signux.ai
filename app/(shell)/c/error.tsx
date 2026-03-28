@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Sparkles } from 'lucide-react';
 
 export default function ChatError({
   error,
@@ -18,7 +17,7 @@ export default function ChatError({
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-6">
       <div className="text-center max-w-md">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#1A1815]/80 to-[#4BBEAB]/60 flex items-center justify-center mx-auto mb-4">
-          <Sparkles className="text-white/90" size={28} strokeWidth={1.5} aria-hidden />
+          <span className="text-2xl">🐙</span>
         </div>
         <h1 className="text-xl font-medium text-white/90 mb-2">Something went wrong</h1>
         <p className="text-sm text-txt-tertiary mb-6">
