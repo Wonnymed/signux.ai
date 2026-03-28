@@ -11,35 +11,40 @@ const MODES: {
   name: string;
   description: string;
   Icon: LucideIcon;
-  iconBg: string;
+  iconBoxClass: string;
+  iconClass: string;
 }[] = [
   {
     id: 'simulate',
     name: 'Simulate',
     description: '10 specialists analyze your decision',
     Icon: Zap,
-    iconBg: DARK_THEME.accent,
+    iconBoxClass: 'bg-[rgba(232,89,60,0.12)]',
+    iconClass: 'text-[#e8593c]',
   },
   {
     id: 'compare',
     name: 'Compare',
     description: 'A vs B — which path wins?',
     Icon: ArrowLeftRight,
-    iconBg: DARK_THEME.info,
+    iconBoxClass: 'bg-[rgba(96,165,250,0.12)]',
+    iconClass: 'text-[#60a5fa]',
   },
   {
     id: 'stress',
     name: 'Stress test',
     description: 'Find every way this plan can fail',
     Icon: ShieldAlert,
-    iconBg: DARK_THEME.danger,
+    iconBoxClass: 'bg-[rgba(248,113,113,0.12)]',
+    iconClass: 'text-[#f87171]',
   },
   {
     id: 'premortem',
     name: 'Pre-mortem',
     description: 'It failed in 1 year. Why?',
     Icon: Skull,
-    iconBg: DARK_THEME.warning,
+    iconBoxClass: 'bg-[rgba(251,191,36,0.12)]',
+    iconClass: 'text-[#fbbf24]',
   },
 ];
 
@@ -75,10 +80,12 @@ export default function SidebarModes({
                 }}
               >
                 <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: m.iconBg + '33' }}
+                  className={cn(
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                    m.iconBoxClass,
+                  )}
                 >
-                  <m.Icon className="h-4 w-4" style={{ color: m.iconBg }} strokeWidth={1.75} />
+                  <m.Icon size={16} strokeWidth={1.75} className={m.iconClass} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[12px] font-medium text-white/90">{m.name}</span>
