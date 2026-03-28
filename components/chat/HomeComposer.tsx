@@ -112,28 +112,29 @@ export default function HomeComposer({ onSend, loading = false }: HomeComposerPr
   }
 
   return (
-    <div className="mx-auto w-full max-w-[930px]">
+    <div className="mx-auto w-full max-w-[min(100%,760px)]">
       <input ref={fileInputRef} type="file" multiple className="hidden" />
-      <div className="rounded-[22px] border border-border-subtle bg-surface-raised shadow-premium">
+      {/* Claude-scale composer: wide pill, tall input, soft shadow */}
+      <div className="rounded-[28px] border border-border-subtle/90 bg-surface-raised shadow-[0_2px_16px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_20px_rgba(0,0,0,0.25)]">
         <textarea
           data-chat-input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={onKeyDown}
-          rows={2}
+          rows={5}
           placeholder="How can I help you today?"
-          className="w-full resize-none rounded-t-[22px] bg-transparent px-7 pb-2 pt-6 text-[18px] leading-[1.5] text-txt-primary outline-none placeholder:text-txt-tertiary/90"
+          className="min-h-[132px] w-full resize-none rounded-t-[28px] bg-transparent px-6 pb-2 pt-5 text-[15px] leading-[1.55] text-txt-primary outline-none placeholder:text-txt-tertiary/80"
         />
 
-        <div className="flex items-center justify-between px-5 pb-4 pt-2">
+        <div className="flex items-center justify-between px-4 pb-3.5 pt-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-radius-lg border border-border-subtle bg-surface-1 text-txt-secondary transition-colors hover:text-txt-primary"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-subtle bg-surface-1 text-txt-secondary transition-colors hover:text-txt-primary"
                 aria-label="Composer tools"
               >
-                <Plus size={22} />
+                <Plus size={20} strokeWidth={2} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -219,7 +220,7 @@ export default function HomeComposer({ onSend, loading = false }: HomeComposerPr
 
           <div className="flex items-center gap-2">
             <TooltipProvider delayDuration={220}>
-              <div className="flex items-center rounded-radius-lg border border-border-subtle bg-surface-1 p-1">
+              <div className="flex items-center rounded-xl border border-border-subtle bg-surface-1 p-0.5">
                 {(['ink', 'deep', 'kraken'] as const).map((tier) => {
                   const config = TIER_CONFIGS[tier];
                   const cost = tier === 'ink' ? 0 : TOKEN_COSTS[tier === 'kraken' ? 'kraken' : 'deep'];
@@ -231,7 +232,7 @@ export default function HomeComposer({ onSend, loading = false }: HomeComposerPr
                           type="button"
                           onClick={() => handleTierClick(tier)}
                           className={cn(
-                            'inline-flex items-center gap-1 rounded-radius-md px-2.5 py-1 text-xs font-medium transition-colors',
+                            'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
                             selectedTier === tier
                               ? 'bg-accent text-txt-on-accent'
                               : locked
@@ -267,12 +268,12 @@ export default function HomeComposer({ onSend, loading = false }: HomeComposerPr
               onClick={send}
               disabled={!canSend}
               className={cn(
-                'flex h-11 w-11 items-center justify-center rounded-radius-lg transition-colors',
+                'flex h-9 w-9 items-center justify-center rounded-xl transition-colors',
                 canSend ? 'bg-accent text-txt-on-accent hover:bg-accent-hover' : 'bg-surface-2 text-txt-disabled',
               )}
               aria-label="Send message"
             >
-              <ArrowUp size={18} />
+              <ArrowUp size={17} strokeWidth={2.25} />
             </button>
           </div>
         </div>

@@ -108,8 +108,8 @@ export default function HomePage() {
   return (
     <>
       {/* ═══ MAIN CHAT VIEW ═══ */}
-      <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-x-hidden px-4 pb-10 pt-20 sm:px-6">
-        <div className="relative z-10 mx-auto w-full max-w-[980px] text-center">
+      <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-x-hidden px-4 pb-10 pt-16 sm:px-8 sm:pt-20">
+        <div className="relative z-10 mx-auto w-full max-w-[min(100%,780px)] text-center">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

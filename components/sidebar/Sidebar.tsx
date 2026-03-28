@@ -47,8 +47,8 @@ const COLLAPSED_W = 56;
 /** Top chrome — same as ChatLayout header (h-12, px-3 sm:px-4) */
 const TOP_BAR_H = 'h-12';
 const TOP_BAR_PAD = 'px-3 sm:px-4';
-/** Okara nav icons ~20px outlined */
-const NAV_ICON = 20;
+/** Claude-style nav: compact icons */
+const NAV_ICON = 18;
 
 /** Okara flyout order: Compare → Risk Matrix → Templates → Journal */
 const TOOLS_FLYOUT_ORDER = ['compare', 'risk-matrix', 'templates', 'journal'] as const;
@@ -239,7 +239,7 @@ function SidebarExpanded() {
           </button>
         </div>
 
-        <div className="space-y-1 px-3 pt-2">
+        <div className="space-y-0.5 px-2.5 pt-1.5">
           <NavItemButton
             icon={Plus}
             label="New chat"
@@ -255,10 +255,10 @@ function SidebarExpanded() {
           <ToolsFlyoutMenu pathname={pathname} variant="expanded" toolsActive={toolsNavActive} />
         </div>
 
-        <div className="mx-4 my-2 h-px bg-border-subtle" />
+        <div className="mx-3 my-2 h-px bg-border-subtle/80" />
 
         <LayoutGroup id="sidebar-conversations">
-          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-3 pt-1">
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-2.5 pt-0.5">
             {loading ? (
               <SidebarLoadingSkeleton />
             ) : (
@@ -290,40 +290,24 @@ function SidebarExpanded() {
           </div>
         </LayoutGroup>
 
-        <div className="shrink-0 space-y-2 p-3 pt-2">
+        <div className="shrink-0 space-y-2 border-t border-border-subtle/60 p-2.5 pt-2">
           {tier === 'free' ? (
             <button
               type="button"
               onClick={() => router.push('/pricing')}
-              className="group w-full rounded-xl border border-accent/[0.08] bg-gradient-to-br from-accent/[0.08] to-accent/[0.03] p-2.5 text-left transition-all hover:border-accent/[0.15]"
+              className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-txt-secondary transition-colors hover:bg-surface-2 hover:text-txt-primary"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent/10 transition-colors group-hover:bg-accent/15">
-                  <Zap size={13} className="text-accent" strokeWidth={ICON_STROKE} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-medium text-txt-secondary">Upgrade to Pro</p>
-                  <p className="text-[10px] text-txt-tertiary">
-                    Tokens = 10-specialist simulations · {pro.priceLabel}
-                    {pro.period}
-                  </p>
-                </div>
-                <ChevronRight
-                  size={12}
-                  className="shrink-0 text-txt-disabled transition-colors group-hover:text-txt-tertiary"
-                  strokeWidth={ICON_STROKE}
-                />
-              </div>
+              <Zap size={NAV_ICON} className="shrink-0 text-txt-tertiary" strokeWidth={ICON_STROKE} />
+              <span className="min-w-0 flex-1 truncate text-[13px] font-normal">
+                Upgrade · {pro.priceLabel}
+                {pro.period}
+              </span>
+              <ChevronRight size={14} className="shrink-0 text-txt-disabled" strokeWidth={ICON_STROKE} />
             </button>
           ) : (
-            <div className="rounded-xl border border-border-subtle bg-surface-2/60 px-2 py-2">
-              <div className="mb-1.5 flex items-center gap-2">
-                <Zap size={13} className="shrink-0 text-accent/70" strokeWidth={ICON_STROKE} />
-                <span className="text-[10px] text-txt-tertiary">
-                  {tokensRemaining}/{tokensTotal} tokens
-                </span>
-              </div>
-              <div className="h-1 overflow-hidden rounded-full bg-surface-3">
+            <div className="flex items-center gap-2 px-2 py-1">
+              <Zap size={14} className="shrink-0 text-txt-disabled" strokeWidth={ICON_STROKE} />
+              <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-3">
                 <div
                   className={cn(
                     'h-full rounded-full transition-all duration-300',
@@ -338,9 +322,12 @@ function SidebarExpanded() {
                   }}
                 />
               </div>
+              <span className="shrink-0 tabular-nums text-[11px] text-txt-tertiary">
+                {tokensRemaining}/{tokensTotal}
+              </span>
             </div>
           )}
-          <div className="rounded-xl border border-accent/15 bg-surface-2/60 p-1.5">
+          <div className="rounded-xl border border-border-default bg-surface-0 p-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-border-subtle dark:bg-surface-1 dark:shadow-none">
             <ProfileMenu variant="expanded" tier={tier} />
           </div>
         </div>
@@ -371,25 +358,25 @@ function NavItemButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-10 w-full items-center gap-2.5 rounded-xl px-2.5 text-left transition-colors duration-150',
+        'flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left transition-colors duration-150',
         active
-          ? 'bg-accent-subtle text-txt-primary'
-          : 'text-txt-secondary hover:bg-surface-2 hover:text-txt-primary',
+          ? 'bg-surface-2 text-txt-primary'
+          : 'text-txt-secondary hover:bg-surface-2/80 hover:text-txt-primary',
       )}
     >
       <Icon
         size={NAV_ICON}
         strokeWidth={ICON_STROKE}
-        className={cn('shrink-0', active ? 'text-txt-primary' : 'text-txt-tertiary', iconClassName)}
+        className={cn('shrink-0 opacity-80', active ? 'text-txt-primary opacity-100' : 'text-txt-tertiary', iconClassName)}
       />
-      <span className="flex-1 text-[14px] font-normal leading-5">{label}</span>
+      <span className="flex-1 text-[13px] font-normal leading-snug">{label}</span>
     </button>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="mb-1 block px-2 text-[10px] font-medium uppercase tracking-[0.08em] text-txt-disabled">
+    <span className="mb-0.5 block px-2 pt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-txt-disabled">
       {children}
     </span>
   );
@@ -397,9 +384,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function SectionGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mb-2.5">
+    <div className="mb-2">
       <SectionLabel>{label}</SectionLabel>
-      <div className="space-y-0.5">{children}</div>
+      <div className="space-y-px">{children}</div>
     </div>
   );
 }
@@ -428,18 +415,21 @@ function ToolsFlyoutMenu({
           <button
             type="button"
             className={cn(
-              'flex h-10 w-full items-center gap-2.5 rounded-xl px-2.5 text-left transition-colors duration-150',
+              'flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left transition-colors duration-150',
               toolsActive || open
-                ? 'bg-accent-subtle text-txt-primary'
-                : 'text-txt-secondary hover:bg-surface-2 hover:text-txt-primary',
+                ? 'bg-surface-2 text-txt-primary'
+                : 'text-txt-secondary hover:bg-surface-2/80 hover:text-txt-primary',
             )}
           >
             <Settings2
               size={NAV_ICON}
               strokeWidth={ICON_STROKE}
-              className={cn('shrink-0', toolsActive || open ? 'text-txt-primary' : 'text-txt-tertiary')}
+              className={cn(
+                'shrink-0 opacity-80',
+                toolsActive || open ? 'text-txt-primary opacity-100' : 'text-txt-tertiary',
+              )}
             />
-            <span className="flex-1 text-[14px] font-normal leading-5">Tools</span>
+            <span className="flex-1 text-[13px] font-normal leading-snug">Tools</span>
             <ChevronRight
               size={14}
               strokeWidth={ICON_STROKE}
@@ -573,18 +563,18 @@ function ProfileMenu({ variant, tier }: { variant: 'expanded' | 'collapsed'; tie
   const triggerExpanded = (
     <button
       type="button"
-      className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all hover:bg-surface-2"
+      className="flex w-full items-center gap-3 rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-surface-2/60"
     >
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15">
-        <span className="text-[10px] font-bold text-accent">{initial}</span>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
+        <span className="text-[12px] font-semibold text-accent">{initial}</span>
       </div>
       <div className="min-w-0 flex-1 text-left">
-        <p className="truncate text-[12px] text-txt-secondary">{displayName}</p>
+        <p className="truncate text-[13px] font-semibold text-txt-primary">{displayName}</p>
         {!isAuthenticated && (
-          <p className="text-[10px] text-accent/60">Sign In</p>
+          <p className="text-[11px] text-accent">Sign in</p>
         )}
         {isAuthenticated && user?.email && (
-          <p className="truncate text-[10px] text-txt-disabled">{user.email}</p>
+          <p className="truncate text-[11px] text-txt-tertiary">{user.email}</p>
         )}
       </div>
       <TierPill tier={tier} />
@@ -704,15 +694,14 @@ function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isAc
   const [hovered, setHovered] = useState(false);
 
   const title = convo.title || 'New conversation';
-  const meta = getConversationMeta(convo);
 
   return (
     <div
       className={cn(
-        'group relative flex min-h-[40px] cursor-pointer items-start gap-2 rounded-lg py-[7px] pl-2.5 pr-1.5 transition-colors duration-150',
+        'group relative flex min-h-[32px] cursor-pointer items-start gap-2 rounded-md py-1 pl-2 pr-1 transition-colors duration-150',
         isActive
-          ? 'border border-accent/20 bg-gradient-to-r from-accent-subtle/90 to-accent-subtle/30 font-medium text-txt-primary shadow-[inset_0_0_0_1px_rgba(124,58,237,0.06)]'
-          : 'text-txt-secondary hover:bg-surface-2 hover:text-txt-primary',
+          ? 'bg-surface-2 text-txt-primary'
+          : 'text-txt-tertiary hover:bg-surface-2/70 hover:text-txt-secondary',
       )}
       onClick={() => {
         if (!renaming) router.push(`/c/${convo.id}`);
@@ -720,15 +709,7 @@ function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isAc
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {isActive && (
-        <motion.div
-          layoutId="sidebar-active-indicator"
-          className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-full bg-accent"
-          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-          aria-hidden
-        />
-      )}
-      <ConvoIcon convo={convo} />
+      <ConvoIconMinimal convo={convo} />
 
       <div className="min-w-0 flex-1">
         {renaming ? (
@@ -740,8 +721,7 @@ function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isAc
           />
         ) : (
           <>
-            <span className="block truncate text-[12px] leading-tight">{title}</span>
-            <span className="mt-0.5 block truncate text-[10px] text-txt-disabled">{meta}</span>
+            <span className="block truncate text-[12px] font-normal leading-snug">{title}</span>
           </>
         )}
       </div>
@@ -778,28 +758,10 @@ function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isAc
   );
 }
 
-function getConversationMeta(convo: ConversationSummary): string {
-  const updated = relativeTime(convo.updated_at);
-  if (convo.has_simulation && convo.latest_verdict) {
-    return `${convo.latest_verdict.toUpperCase()} · ${updated}`;
-  }
-  return updated;
-}
-
-function relativeTime(isoDate: string): string {
-  const diffMs = Date.now() - new Date(isoDate).getTime();
-  const min = Math.floor(diffMs / 60000);
-  if (min < 1) return 'now';
-  if (min < 60) return `${min}m`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h`;
-  const day = Math.floor(hr / 24);
-  return `${day}d`;
-}
-
-function ConvoIcon({ convo }: { convo: ConversationSummary }) {
+/** Plain recents row — tiny marker only when useful (Claude-style list). */
+function ConvoIconMinimal({ convo }: { convo: ConversationSummary }) {
   if (convo.is_pinned) {
-    return <Pin size={13} className="shrink-0 text-accent/50" strokeWidth={ICON_STROKE} />;
+    return <Pin size={11} className="mt-0.5 shrink-0 text-accent/45" strokeWidth={ICON_STROKE} />;
   }
   if (convo.has_simulation && convo.latest_verdict) {
     const colors: Record<string, string> = {
@@ -809,12 +771,12 @@ function ConvoIcon({ convo }: { convo: ConversationSummary }) {
     };
     return (
       <span
-        className="h-2 w-2 shrink-0 rounded-full ring-1 ring-border-default"
+        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
         style={{ backgroundColor: colors[convo.latest_verdict || ''] || '#7C3AED' }}
       />
     );
   }
-  return <MessageSquare size={13} className="shrink-0 text-txt-disabled" strokeWidth={ICON_STROKE} />;
+  return <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-transparent" aria-hidden />;
 }
 
 function TierPill({ tier }: { tier: TierType }) {
