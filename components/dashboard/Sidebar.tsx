@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { PanelLeftClose } from 'lucide-react';
 import { useBillingStore } from '@/lib/store/billing';
 import { useDashboardUiStore } from '@/lib/store/dashboard-ui';
 import { useSimulationStore } from '@/lib/store/simulation';
@@ -57,10 +57,15 @@ export default function DashboardSidebar({ onRequestClose }: { onRequestClose?: 
           <button
             type="button"
             onClick={onRequestClose}
+            title="Close sidebar"
             aria-label="Close sidebar"
-            className="shrink-0 rounded-md p-1 text-white/30 transition-colors hover:text-white/60"
+            className="group shrink-0 rounded-md p-1 transition-colors"
           >
-            <X size={16} strokeWidth={1.75} />
+            <PanelLeftClose
+              size={18}
+              strokeWidth={1.75}
+              className="text-white/30 transition-colors group-hover:text-white/60"
+            />
           </button>
         ) : null}
       </div>

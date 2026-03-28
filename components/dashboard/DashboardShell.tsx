@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import DashboardSidebar from '@/components/dashboard/Sidebar';
@@ -29,16 +30,18 @@ function OctuxSidebarRevealButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
+      title="Open sidebar"
       aria-label="Open sidebar"
       className={cn(
-        'fixed left-4 top-4 z-[120] flex h-11 w-11 cursor-pointer items-center justify-center rounded-[10px]',
-        'border border-white/[0.06] bg-[rgba(10,10,15,0.6)] backdrop-blur-[8px]',
-        'transition-colors hover:bg-white/[0.04]',
+        'group fixed left-3 top-3 z-50 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg',
+        'border border-white/[0.06] bg-[rgba(10,10,15,0.7)] backdrop-blur-md',
+        'transition-all duration-200 hover:bg-white/[0.06]',
       )}
     >
-      <span
-        className="h-[10px] w-[10px] shrink-0 rounded-full bg-[#e8593c]"
-        style={{ boxShadow: '0 0 8px rgba(232,89,60,0.5)' }}
+      <PanelLeft
+        size={18}
+        strokeWidth={1.75}
+        className="text-white/40 transition-colors group-hover:text-white/60"
       />
     </button>
   );
@@ -143,7 +146,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         style={{ backgroundColor: DARK_THEME.bg_primary, color: DARK_THEME.text_primary }}
       >
         {!sidebarOpen && <OctuxSidebarRevealButton onClick={openSidebar} />}
-        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
+        <div
+          className={cn(
+            'min-h-0 min-w-0 flex-1 overflow-hidden transition-all duration-[250ms]',
+            !sidebarOpen && 'pl-14',
+          )}
+        >
+          {children}
+        </div>
 
         {sidebarOpen && (
           <>
@@ -194,7 +204,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {!sidebarOpen && <OctuxSidebarRevealButton onClick={openSidebar} />}
-        <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+        <div
+          className={cn(
+            'min-h-0 flex-1 overflow-hidden transition-all duration-[250ms]',
+            !sidebarOpen && 'pl-14',
+          )}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
