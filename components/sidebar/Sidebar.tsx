@@ -152,7 +152,9 @@ function SidebarCollapsed() {
           <Zap size={NAV_ICON} className="text-accent" strokeWidth={ICON_STROKE} />
         </CollapsedIconButton>
 
-        <ProfileMenu variant="collapsed" tier={tier} />
+        <div className="pb-2">
+          <ProfileMenu variant="collapsed" tier={tier} />
+        </div>
       </div>
     </TooltipProvider>
   );
@@ -696,12 +698,13 @@ function ProfileMenu({ variant, tier }: { variant: 'expanded' | 'collapsed'; tie
   const triggerCollapsed = (
     <button
       type="button"
-      className="flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:bg-surface-2/80"
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-full bg-accent/20 transition-colors hover:bg-accent/28',
+        BRAND_LOGO_BOX,
+      )}
       aria-label="Profile"
     >
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/15">
-        <span className="text-[9px] font-bold text-accent">{initial}</span>
-      </div>
+      <span className="text-[13px] font-semibold leading-none text-accent">{initial}</span>
     </button>
   );
 
