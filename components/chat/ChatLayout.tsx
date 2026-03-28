@@ -92,6 +92,8 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
 
   const showDesktopSidebar = viewport === 'desktop';
   const showMobileDrawer = viewport === 'mobile' && sidebarExpanded;
+  /** Top strip only on small viewports; desktop uses sidebar + profile for auth (no header line). */
+  const showMainHeader = viewport !== 'desktop';
 
   return (
     <div className="flex min-h-0 h-[100dvh] overflow-x-hidden bg-surface-0">
@@ -106,12 +108,12 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
         tabIndex={-1}
         className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto outline-none focus:outline-none supports-[padding:max(0px)]:pb-[max(0px,env(safe-area-inset-bottom))]"
       >
-        <header
-          className={cn(
-            'sticky top-0 z-30 flex h-12 shrink-0 items-center border-b border-border-subtle/60 bg-surface-0/95 px-3 backdrop-blur-sm supports-[padding:max(0px)]:pt-[max(0px,env(safe-area-inset-top))] sm:px-4',
-          )}
-        >
-          {isMobile && (
+        {showMainHeader && (
+          <header
+            className={cn(
+              'sticky top-0 z-30 flex h-12 shrink-0 items-center bg-surface-0/95 px-3 backdrop-blur-sm supports-[padding:max(0px)]:pt-[max(0px,env(safe-area-inset-top))] sm:px-4',
+            )}
+          >
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <button
                 type="button"
@@ -124,35 +126,28 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
               </button>
               <span className="truncate text-sm font-medium tracking-tight text-txt-primary">octux</span>
             </div>
-          )}
 
-          {!isMobile && <div className="flex-1" />}
-
-          {showAuthButtons && (
-            <div
-              className={cn(
-                'flex items-center gap-2',
-                isMobile && 'ml-auto shrink-0',
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'login' } }))}
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-0 px-3 text-sm font-medium text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 sm:px-4"
-              >
-                Log in
-              </button>
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'signup' } }))}
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-0 px-3 text-sm font-medium text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 sm:px-4"
-              >
-                <span className="sm:hidden">Sign up</span>
-                <span className="hidden sm:inline">Sign up for free</span>
-              </button>
-            </div>
-          )}
-        </header>
+            {showAuthButtons && (
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'login' } }))}
+                  className="inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-0 px-3 text-sm font-medium text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 sm:px-4"
+                >
+                  Log in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'signup' } }))}
+                  className="inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-0 px-3 text-sm font-medium text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 sm:px-4"
+                >
+                  <span className="sm:hidden">Sign up</span>
+                  <span className="hidden sm:inline">Sign up for free</span>
+                </button>
+              </div>
+            )}
+          </header>
+        )}
 
         {children}
       </main>
