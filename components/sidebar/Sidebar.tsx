@@ -7,7 +7,6 @@ import {
   Plus,
   PanelLeftClose,
   MessageSquare,
-  Pin,
   MoreHorizontal,
   Dna,
   Settings2,
@@ -204,9 +203,7 @@ function SidebarExpanded() {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleSidebar]);
 
-  const pinned = conversations.filter((c) => c.is_pinned);
-  const unpinned = conversations.filter((c) => !c.is_pinned);
-  const groups = groupByDate(unpinned);
+  const recentsOrdered = sortRecents(conversations);
 
   const handleNew = useCallback(() => router.push('/'), [router]);
   const pro = TIERS.pro;
@@ -263,21 +260,16 @@ function SidebarExpanded() {
               <SidebarLoadingSkeleton />
             ) : (
               <>
-                {pinned.length > 0 && (
-                  <SectionGroup label="Pinned">
-                    {pinned.map((c) => (
-                      <ConversationRow key={c.id} convo={c} isActive={pathname === `/c/${c.id}`} />
-                    ))}
-                  </SectionGroup>
+                {recentsOrdered.length > 0 && (
+                  <div className="mb-1">
+                    <RecentsHeading />
+                    <div className="space-y-0">
+                      {recentsOrdered.map((c) => (
+                        <ConversationRow key={c.id} convo={c} isActive={pathname === `/c/${c.id}`} />
+                      ))}
+                    </div>
+                  </div>
                 )}
-
-                {groups.map((group) => (
-                  <SectionGroup key={group.label} label={group.label}>
-                    {group.conversations.map((c) => (
-                      <ConversationRow key={c.id} convo={c} isActive={pathname === `/c/${c.id}`} />
-                    ))}
-                  </SectionGroup>
-                ))}
 
                 {conversations.length === 0 && (
                   <div className="py-10 text-center">
@@ -374,19 +366,10 @@ function NavItemButton({
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function RecentsHeading() {
   return (
-    <span className="mb-0.5 block px-2 pt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-txt-disabled">
-      {children}
-    </span>
-  );
-}
-
-function SectionGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-2">
-      <SectionLabel>{label}</SectionLabel>
-      <div className="space-y-px">{children}</div>
+    <div className="px-2 pb-2 pt-1">
+      <span className="text-[12px] font-medium text-txt-tertiary">Recents</span>
     </div>
   );
 }
@@ -691,27 +674,22 @@ function PopoverRow({
 function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isActive: boolean }) {
   const router = useRouter();
   const [renaming, setRenaming] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   const title = convo.title || 'New conversation';
 
   return (
     <div
       className={cn(
-        'group relative flex min-h-[32px] cursor-pointer items-start gap-2 rounded-md py-1 pl-2 pr-1 transition-colors duration-150',
+        'group relative flex min-h-[38px] cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition-colors duration-150',
         isActive
           ? 'bg-surface-2 text-txt-primary'
-          : 'text-txt-tertiary hover:bg-surface-2/70 hover:text-txt-secondary',
+          : 'text-txt-primary hover:bg-[#f0efea]/80 dark:hover:bg-surface-2/80',
       )}
       onClick={() => {
         if (!renaming) router.push(`/c/${convo.id}`);
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      <ConvoIconMinimal convo={convo} />
-
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 pr-1">
         {renaming ? (
           <InlineRename
             conversationId={convo.id}
@@ -720,15 +698,11 @@ function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isAc
             onDone={() => setRenaming(false)}
           />
         ) : (
-          <>
-            <span className="block truncate text-[12px] font-normal leading-snug">{title}</span>
-          </>
+          <span className="block truncate text-[13px] font-normal leading-[1.4] tracking-[-0.01em] text-txt-primary">
+            {title}
+          </span>
         )}
       </div>
-
-      {convo.is_pinned && !hovered && !renaming && (
-        <Pin size={9} className="shrink-0 text-accent/30" strokeWidth={ICON_STROKE} />
-      )}
 
       {!renaming && (
         <ConversationContextMenu
@@ -736,47 +710,27 @@ function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isAc
           title={title}
           isPinned={!!convo.is_pinned}
           onRename={() => setRenaming(true)}
-          onShare={() => navigator.clipboard.writeText(`${window.location.origin}/c/${convo.id}/report`)}
         >
-          <motion.button
+          <button
             type="button"
-            initial={false}
-            animate={{ opacity: hovered ? 1 : 0 }}
-            transition={{ duration: 0.1 }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              'flex h-5 w-5 shrink-0 items-center justify-center rounded text-txt-disabled transition-colors hover:bg-surface-2 hover:text-txt-tertiary',
-              hovered ? 'pointer-events-auto' : 'pointer-events-none',
+              'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+              'bg-[#f0efea] text-txt-secondary shadow-none dark:bg-surface-3 dark:text-txt-tertiary',
+              'opacity-0 transition-opacity duration-150',
+              'pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100',
+              'hover:bg-[#e8e6e1] dark:hover:bg-surface-2',
+              'data-[state=open]:pointer-events-auto data-[state=open]:opacity-100',
+              'focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--sidebar-bg)]',
             )}
-            aria-label="More"
+            aria-label="Conversation options"
           >
-            <MoreHorizontal size={12} strokeWidth={ICON_STROKE} />
-          </motion.button>
+            <MoreHorizontal size={14} strokeWidth={ICON_STROKE} className="translate-y-px" />
+          </button>
         </ConversationContextMenu>
       )}
     </div>
   );
-}
-
-/** Plain recents row — tiny marker only when useful (Claude-style list). */
-function ConvoIconMinimal({ convo }: { convo: ConversationSummary }) {
-  if (convo.is_pinned) {
-    return <Pin size={11} className="mt-0.5 shrink-0 text-accent/45" strokeWidth={ICON_STROKE} />;
-  }
-  if (convo.has_simulation && convo.latest_verdict) {
-    const colors: Record<string, string> = {
-      proceed: '#10b981',
-      delay: '#f59e0b',
-      abandon: '#ef4444',
-    };
-    return (
-      <span
-        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: colors[convo.latest_verdict || ''] || '#7C3AED' }}
-      />
-    );
-  }
-  return <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-transparent" aria-hidden />;
 }
 
 function TierPill({ tier }: { tier: TierType }) {
@@ -789,45 +743,25 @@ function TierPill({ tier }: { tier: TierType }) {
 
 function SidebarLoadingSkeleton() {
   return (
-    <div className="space-y-3 px-1 py-1">
+    <div className="space-y-2 px-2 py-1">
+      <Skeleton className="mb-2 h-3 w-14 rounded bg-surface-3" />
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-2 py-1.5">
-          <Skeleton className="h-2 w-2 shrink-0 rounded-full bg-surface-3" />
-          <Skeleton className="h-3 flex-1 rounded bg-surface-3" />
+          <Skeleton className="h-[13px] flex-1 rounded bg-surface-3" />
+          <Skeleton className="h-7 w-7 shrink-0 rounded-md bg-surface-3" />
         </div>
       ))}
     </div>
   );
 }
 
-function groupByDate(convos: ConversationSummary[]) {
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
-  const weekAgo = new Date(todayStart.getTime() - 7 * 86400000);
-
-  const buckets = {
-    today: [] as ConversationSummary[],
-    yesterday: [] as ConversationSummary[],
-    week: [] as ConversationSummary[],
-    older: [] as ConversationSummary[],
-  };
-
-  for (const c of convos) {
-    const d = new Date(c.updated_at);
-    if (d >= todayStart) buckets.today.push(c);
-    else if (d >= yesterdayStart) buckets.yesterday.push(c);
-    else if (d >= weekAgo) buckets.week.push(c);
-    else buckets.older.push(c);
-  }
-
-  const groups: { label: string; conversations: ConversationSummary[] }[] = [];
-  if (buckets.today.length) groups.push({ label: 'Today', conversations: buckets.today });
-  if (buckets.yesterday.length) groups.push({ label: 'Yesterday', conversations: buckets.yesterday });
-  if (buckets.week.length) groups.push({ label: 'This week', conversations: buckets.week });
-  if (buckets.older.length) groups.push({ label: 'Older', conversations: buckets.older });
-
-  return groups;
+function sortRecents(convos: ConversationSummary[]): ConversationSummary[] {
+  return [...convos].sort((a, b) => {
+    const ap = a.is_pinned ? 1 : 0;
+    const bp = b.is_pinned ? 1 : 0;
+    if (ap !== bp) return bp - ap;
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+  });
 }
 
 function isInputFocused(): boolean {
