@@ -133,9 +133,12 @@ export default function GlobalFooter({
         )}
 
         <div className="mt-8 flex flex-col items-start justify-between gap-2 border-t border-border-subtle/70 pt-4 text-xs text-txt-disabled sm:flex-row sm:items-center">
-          <p>
-            © 2026 Sukgo AI · 숙고 (sukgo) — deep deliberation before an important decision
-          </p>
+          <div className="space-y-1">
+            <p>© 2026 Sukgo AI · The world&apos;s first AI business simulation engine</p>
+            <p className="text-txt-tertiary/80">
+              숙고 (sukgo) — the Korean practice of deep deliberation before an important decision.
+            </p>
+          </div>
           <p className="flex items-center gap-2">
             <span>Infra:</span>
             <a href="https://supabase.com" className="hover:text-txt-tertiary">Supabase</a>

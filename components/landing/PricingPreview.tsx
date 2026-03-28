@@ -80,10 +80,10 @@ export default function PricingPreview({ forLoggedInUser = false }: { forLoggedI
       <div className="max-w-landing mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-section text-txt-primary mb-3">
-            Simple pricing
+            Start simulating for free.
           </h2>
           <p className="text-sm text-txt-tertiary">
-            Three tiers. Tokens power simulations; follow-up Q&amp;A is included where noted.
+            2 free simulations per month. No credit card. Upgrade when you&apos;re hooked.
           </p>
         </div>
 

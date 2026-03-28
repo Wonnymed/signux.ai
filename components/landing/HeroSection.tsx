@@ -8,8 +8,8 @@ import { cn } from '@/lib/design/cn';
 import { openAuthModal, HERO_QUESTION_KEY } from '@/lib/auth/openAuthModal';
 
 const TRY_CHIPS = [
-  'Open a cafe in Seoul',
-  'Import smartphones from China to Brazil',
+  'Open a café in Gangnam',
+  'Import electronics from Shenzhen',
   'Launch a SaaS in Latin America',
 ] as const;
 
@@ -76,20 +76,19 @@ export default function HeroSection({
         <div className="absolute left-1/2 top-1/4 h-[min(520px,70vw)] w-[min(520px,70vw)] -translate-x-1/2 rounded-full bg-accent/[0.06] blur-[100px]" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[min(100%,720px)] text-center">
-        <p className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-accent">Business simulation engine</p>
-
-        <h1 className="text-balance text-[2rem] font-semibold leading-[1.12] tracking-[-0.03em] text-txt-primary sm:text-[2.75rem]">
-          Simulate before you invest.
+      <div className="relative z-10 mx-auto w-full max-w-[min(100%,800px)] text-center">
+        <h1 className="text-balance text-[2rem] font-semibold leading-[1.1] tracking-[-0.03em] text-txt-primary sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
+          The world&apos;s first AI business simulation engine.
         </h1>
-        <p className="mt-2 text-xs font-normal tracking-wide text-txt-tertiary sm:text-sm">
-          숙고 (sukgo) — deliberate deeply before acting
+
+        <p className="mx-auto mt-5 max-w-[640px] text-pretty text-lg leading-relaxed text-txt-secondary sm:text-xl">
+          Before Sukgo, you either asked one AI for one opinion — or spent thousands on consultants. We built a third
+          option.
         </p>
 
-        <p className="mx-auto mt-5 max-w-[540px] text-pretty text-base leading-relaxed text-txt-secondary sm:text-lg">
-          <span className="text-txt-primary font-medium">10 AI specialists</span> debate your business decision.{' '}
-          <span className="text-txt-primary font-medium">1,000 market voices</span> validate demand.{' '}
-          <span className="text-txt-primary font-medium">Verdict in ~60 seconds.</span>
+        <p className="mx-auto mt-4 max-w-[500px] text-pretty text-sm leading-relaxed text-txt-tertiary sm:text-base">
+          10 AI specialists debate your decision. 1,000 market voices validate demand. 4 simulation modes. Structured
+          verdict in 60 seconds.
         </p>
 
         {forLoggedInUser ? (
@@ -143,7 +142,7 @@ export default function HeroSection({
                         : 'cursor-not-allowed bg-surface-2 text-txt-disabled',
                     )}
                   >
-                    {loading ? 'Starting…' : 'Run free simulation'}
+                    {loading ? 'Starting…' : 'Simulate free →'}
                     {!loading && <ArrowRight className="h-4 w-4" aria-hidden />}
                   </button>
                 </div>
@@ -160,7 +159,7 @@ export default function HeroSection({
                     className="text-txt-secondary underline decoration-border-subtle underline-offset-2 transition-colors hover:text-accent"
                     onClick={() => runChip(chip)}
                   >
-                    {chip}
+                    &ldquo;{chip}&rdquo;
                   </button>
                 </span>
               ))}

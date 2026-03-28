@@ -2,15 +2,6 @@
 
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { cn } from '@/lib/design/cn';
-
-const ROWS: { chatgpt: string; sukgo: string }[] = [
-  { chatgpt: '1 AI, 1 opinion', sukgo: '10 specialists, adversarial rounds' },
-  { chatgpt: 'No fixed structure', sukgo: 'Probability, grade, and risk blocks every time' },
-  { chatgpt: 'Forgets prior sessions', sukgo: 'Memory across your simulations (paid tiers)' },
-  { chatgpt: 'Generic business advice', sukgo: 'Role-based specialists (economics, regulation, demand…)' },
-  { chatgpt: 'Chat interface', sukgo: 'Visual simulation dashboard + verdict panel' },
-];
 
 export default function WhyNotChatGPT() {
   const ref = useRef<HTMLElement | null>(null);
@@ -18,7 +9,7 @@ export default function WhyNotChatGPT() {
 
   return (
     <section ref={ref} className="px-6 py-20 sm:py-28">
-      <div className="mx-auto max-w-[720px]">
+      <div className="mx-auto max-w-[920px]">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -26,67 +17,68 @@ export default function WhyNotChatGPT() {
           className="text-center"
         >
           <h2 className="text-2xl font-medium tracking-tight text-txt-primary sm:text-3xl">
-            ChatGPT gives you an opinion.
-            <br />
-            <span className="text-accent">Sukgo gives you a simulation.</span>
+            &ldquo;Why not just use ChatGPT?&rdquo;
           </h2>
-          <p className="mx-auto mt-3 max-w-reading text-sm text-txt-tertiary sm:text-base">
-            Same LLM era — different product shape. Sukgo is built for decisions that need tension, structure, and traceability.
+          <p className="mx-auto mt-4 max-w-[580px] text-pretty text-sm leading-relaxed text-txt-secondary sm:text-base">
+            Because ChatGPT is a chatbot. Sukgo is a simulation engine.
+            <br />
+            They&apos;re different categories.
+            <br />
+            <br />
+            ChatGPT gives you one voice, one opinion, one perspective.
+            <br />
+            Sukgo gives you a boardroom.
           </p>
         </motion.div>
 
-        {/* Desktop */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.1, duration: 0.4 }}
-          className="mt-10 hidden overflow-hidden rounded-2xl border border-border-subtle bg-surface-1 shadow-premium sm:block"
+          initial={{ opacity: 0, y: 12 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.08, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-12 flex flex-col items-center gap-6 lg:flex-row lg:items-stretch lg:justify-center"
         >
-          <div className="grid grid-cols-[1fr_1fr] gap-0 border-b border-border-subtle bg-surface-0/80">
-            <div className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-txt-disabled">
-              ChatGPT
-            </div>
-            <div className="border-l border-border-subtle px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-accent">
-              Sukgo
-            </div>
+          <div className="flex w-full max-w-md flex-1 flex-col items-center lg:max-w-none">
+            <article
+              className="w-full rounded-2xl border border-border-subtle bg-surface-1/80 p-6 text-left opacity-40 shadow-[0_2px_24px_rgba(15,23,42,0.04)] sm:p-7"
+              aria-label="Chatbot category"
+            >
+              <p className="text-sm font-semibold text-txt-tertiary">💬 Chatbot</p>
+              <p className="mt-4 text-sm leading-relaxed text-txt-secondary">
+                &ldquo;I think opening a café in Gangnam could work because…&rdquo;
+              </p>
+              <ul className="mt-5 space-y-2 text-sm text-txt-tertiary">
+                <li>→ 1 opinion</li>
+                <li>→ No debate</li>
+                <li>→ No stress test</li>
+                <li>→ No crowd validation</li>
+                <li>→ You hope it&apos;s right</li>
+              </ul>
+            </article>
           </div>
-          {ROWS.map((row, i) => (
-            <div
-              key={i}
-              className={cn(
-                'grid grid-cols-[1fr_1fr] gap-0 text-sm',
-                i > 0 && 'border-t border-border-subtle/80',
-              )}
-            >
-              <div className="px-5 py-3.5 text-txt-tertiary leading-relaxed">{row.chatgpt}</div>
-              <div className="border-l border-border-subtle bg-accent-subtle/25 px-5 py-3.5 font-medium leading-relaxed text-txt-primary">
-                {row.sukgo}
-              </div>
-            </div>
-          ))}
-        </motion.div>
 
-        {/* Mobile */}
-        <div className="mt-8 space-y-3 sm:hidden">
-          {ROWS.map((row, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.08 * i, duration: 0.35 }}
-              className="overflow-hidden rounded-xl border border-border-subtle bg-surface-1"
+          <div className="shrink-0 py-2 text-center text-sm font-medium text-txt-disabled lg:py-0 lg:pt-24">vs.</div>
+
+          <div className="flex w-full max-w-md flex-1 flex-col items-center lg:max-w-none">
+            <article
+              className="w-full rounded-2xl border-2 p-6 text-left shadow-[0_4px_32px_rgba(232,89,60,0.12)] sm:p-7"
+              style={{ borderColor: 'rgba(232, 89, 60, 0.55)', background: 'var(--surface-1)' }}
+              aria-label="Simulation engine category"
             >
-              <div className="border-b border-border-subtle/80 bg-surface-0/60 px-4 py-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-txt-disabled">ChatGPT</span>
-                <p className="mt-1 text-sm text-txt-tertiary">{row.chatgpt}</p>
-              </div>
-              <div className="bg-accent-subtle/20 px-4 py-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-accent">Sukgo</span>
-                <p className="mt-1 text-sm font-medium text-txt-primary">{row.sukgo}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              <p className="text-sm font-semibold text-accent">🔬 Simulation engine</p>
+              <p className="mt-4 text-sm font-medium leading-relaxed text-txt-primary">
+                10 specialists argue FOR and AGAINST your decision.
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-txt-secondary">1,000 voices validate demand.</p>
+              <p className="mt-2 text-sm leading-relaxed text-txt-secondary">4 modes test every angle.</p>
+              <ul className="mt-5 space-y-2 text-sm text-txt-secondary">
+                <li>→ Structured verdict</li>
+                <li>→ Confidence scores</li>
+                <li>→ Risk map</li>
+                <li>→ You KNOW before you invest</li>
+              </ul>
+            </article>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

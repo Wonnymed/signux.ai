@@ -27,20 +27,29 @@ const themeInitScript = `
 
 export const metadata: Metadata = {
   title: {
-    default: "Sukgo — Business Simulation Engine",
+    default: "Sukgo — The World's First AI Business Simulation Engine",
     template: "%s — Sukgo AI",
   },
   description:
-    "10 AI specialists debate your business decision. 1,000 market voices validate demand. Verdict in 60 seconds.",
+    "Simulate any business decision with 10 AI specialists debating in real time. 1,000 market voices validate demand. 4 modes. Verdict in 60 seconds. Free to start.",
+  keywords: [
+    "AI business simulation",
+    "business decision AI",
+    "simulate business idea",
+    "multi-agent AI debate",
+    "startup validation AI",
+    "pre-mortem AI",
+    "business stress test",
+  ],
   metadataBase: new URL("https://sukgo.ai"),
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Sukgo — Business Simulation Engine",
+    title: "Sukgo — The World's First AI Business Simulation Engine",
     description:
-      "Simulate before you invest. 숙고 — deliberate deeply before acting.",
+      "Before Sukgo, there was no way to simulate a business decision with AI. Now there is.",
     url: "https://sukgo.ai",
     siteName: "Sukgo AI",
     locale: "en_US",
@@ -49,8 +58,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sukgo — Business Simulation Engine",
-    description: "Simulate before you invest.",
+    title: "Sukgo — The World's First AI Business Simulation Engine",
+    description:
+      "Before Sukgo, there was no way to simulate a business decision with AI. Now there is.",
     images: ["/og-image.png"],
   },
 };

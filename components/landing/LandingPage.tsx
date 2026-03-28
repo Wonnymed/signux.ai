@@ -1,6 +1,7 @@
 'use client';
 
 import HeroSection from './HeroSection';
+import NewCategorySection from './NewCategorySection';
 import SimulationPreviewBand from './SimulationPreviewBand';
 import SimulationModes from './SimulationModes';
 import TrustStrip from './TrustStrip';
@@ -8,6 +9,7 @@ import HowItWorks from './HowItWorks';
 import LiveExample from './LiveExample';
 import WhyNotChatGPT from './WhyNotChatGPT';
 import PricingPreview from './PricingPreview';
+import BuiltInSeoulSection from './BuiltInSeoulSection';
 import LandingFooter from './LandingFooter';
 import { openAuthModal } from '@/lib/auth/openAuthModal';
 import SukgoLogo from '@/components/brand/SukgoLogo';
@@ -28,10 +30,13 @@ export default function LandingPage() {
 
       <HeroSection requireAuth />
 
+      <NewCategorySection />
+
       <div className="landing-marketing-stack">
         <SimulationPreviewBand />
         <TrustStrip />
         <SimulationModes />
+        <BuiltInSeoulSection />
         <LiveExample />
         <HowItWorks />
         <WhyNotChatGPT />

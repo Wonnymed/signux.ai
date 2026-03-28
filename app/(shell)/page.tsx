@@ -6,6 +6,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/lib/store/app';
 import DashboardHome from '@/components/dashboard/DashboardHome';
 import HeroSection from '@/components/landing/HeroSection';
+import NewCategorySection from '@/components/landing/NewCategorySection';
 import SimulationPreviewBand from '@/components/landing/SimulationPreviewBand';
 import SimulationModes from '@/components/landing/SimulationModes';
 import TrustStrip from '@/components/landing/TrustStrip';
@@ -13,6 +14,7 @@ import HowItWorks from '@/components/landing/HowItWorks';
 import LiveExample from '@/components/landing/LiveExample';
 import WhyNotChatGPT from '@/components/landing/WhyNotChatGPT';
 import PricingPreview from '@/components/landing/PricingPreview';
+import BuiltInSeoulSection from '@/components/landing/BuiltInSeoulSection';
 import SiteFooter from '@/components/landing/LandingFooter';
 import { pendingFirstMessageKey, pendingSimulationKey } from '@/lib/chat/firstMessageBootstrap';
 import {
@@ -209,9 +211,11 @@ export default function HomePage() {
     <>
       <div className="min-h-screen overflow-x-hidden bg-surface-0 text-txt-primary">
         <HeroSection requireAuth loading={loading} />
+        <NewCategorySection />
         <SimulationPreviewBand />
         <TrustStrip />
         <SimulationModes />
+        <BuiltInSeoulSection />
         <LiveExample />
         <HowItWorks />
         <WhyNotChatGPT />
