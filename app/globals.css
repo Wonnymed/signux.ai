@@ -228,7 +228,7 @@
   --shadow-depth-lg: var(--shadow-lg);
 
   --sidebar-width-collapsed: 56px;
-  --sidebar-width-expanded: 200px;
+  --sidebar-width-expanded: 288px;
   --sidebar-bg: var(--surface-1);
   --chat-max-width: 768px;
   --container-narrow: var(--chat-max-width);

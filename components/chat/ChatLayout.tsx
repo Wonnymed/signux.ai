@@ -168,7 +168,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
           />
           <aside
             className={cn(
-              'fixed inset-y-0 left-0 z-[110] flex w-[min(200px,92vw)] max-w-full flex-col',
+              'fixed inset-y-0 left-0 z-[110] flex w-[min(288px,92vw)] max-w-full flex-col',
               'border-r border-border-subtle bg-surface-1 shadow-xl',
               'animate-slide-in-left pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]',
             )}

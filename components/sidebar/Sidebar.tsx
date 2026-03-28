@@ -5,19 +5,16 @@ import { useRouter, usePathname } from 'next/navigation';
 import { motion, LayoutGroup } from 'framer-motion';
 import {
   Plus,
-  Search,
   PanelLeftClose,
   MessageSquare,
   Pin,
   MoreHorizontal,
-  Home,
   Dna,
   Settings2,
   Zap,
   ChevronRight,
   LogIn,
   LogOut,
-  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { useAppStore, type ConversationSummary } from '@/lib/store/app';
@@ -43,8 +40,8 @@ import InlineRename from './InlineRename';
 import { ThemeToggleCompact } from '@/components/theme/ThemeToggle';
 
 const ICON_STROKE = 1.5;
-/** BUILD PLAN §2.1 — expanded rail (matches --sidebar-width-expanded) */
-const EXPANDED_W = 200;
+/** Expanded rail — Okara-scale width (matches --sidebar-width-expanded) */
+const EXPANDED_W = 288;
 /** BUILD PLAN §2.1 / §3.1 collapsed rail */
 const COLLAPSED_W = 56;
 /** Top chrome — same as ChatLayout header (h-12, px-3 sm:px-4) */
@@ -84,7 +81,6 @@ function SidebarCollapsed() {
   const router = useRouter();
   const pathname = usePathname();
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
-  const setSidebarExpanded = useAppStore((s) => s.setSidebarExpanded);
   const tier = useBillingStore((s) => s.tier);
 
   const toolsActive = pathname.startsWith('/tools');
@@ -111,16 +107,12 @@ function SidebarCollapsed() {
 
         <div className="h-2 shrink-0" />
 
-        <CollapsedIconButton onClick={() => router.push('/')} tooltip="New conversation">
-          <Plus size={NAV_ICON} strokeWidth={ICON_STROKE} />
-        </CollapsedIconButton>
-
         <CollapsedIconButton
           onClick={() => router.push('/')}
-          tooltip="Home"
+          tooltip="New chat"
           active={pathname === '/'}
         >
-          <Home size={NAV_ICON} strokeWidth={ICON_STROKE} />
+          <Plus size={NAV_ICON} strokeWidth={ICON_STROKE} />
         </CollapsedIconButton>
 
         <CollapsedIconButton
@@ -132,10 +124,6 @@ function SidebarCollapsed() {
         </CollapsedIconButton>
 
         <ToolsFlyoutMenu pathname={pathname} variant="collapsed" toolsActive={toolsActive} />
-
-        <CollapsedIconButton onClick={() => setSidebarExpanded(true)} tooltip="Chat">
-          <Clock size={NAV_ICON} strokeWidth={ICON_STROKE} />
-        </CollapsedIconButton>
 
         <div className="min-h-2 flex-1" />
 
@@ -185,14 +173,13 @@ function CollapsedIconButton({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Expanded — 200px
+// Expanded — 288px (Okara-like)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SidebarExpanded() {
   const router = useRouter();
   const pathname = usePathname();
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
-  const setExpanded = useAppStore((s) => s.setSidebarExpanded);
   const conversations = useAppStore((s) => s.conversations);
   const loading = useAppStore((s) => s.conversationsLoading);
   const setActiveId = useAppStore((s) => s.setActiveConversationId);
@@ -200,9 +187,6 @@ function SidebarExpanded() {
   const tier = useBillingStore((s) => s.tier);
   const tokensRemaining = useBillingStore((s) => s.tokensRemaining);
   const tokensTotal = useBillingStore((s) => s.tokensTotal);
-
-  const [searchActive, setSearchActive] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const match = pathname?.match(/^\/c\/(.+)/);
@@ -220,30 +204,16 @@ function SidebarExpanded() {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleSidebar]);
 
-  useEffect(() => {
-    const focusSearch = () => {
-      setExpanded(true);
-      setTimeout(() => setSearchActive(true), 120);
-    };
-    window.addEventListener('octux:focus-sidebar-search', focusSearch);
-    return () => window.removeEventListener('octux:focus-sidebar-search', focusSearch);
-  }, [setExpanded]);
-
-  const filtered = searchQuery.trim()
-    ? conversations.filter((c) => c.title?.toLowerCase().includes(searchQuery.toLowerCase()))
-    : conversations;
-
-  const pinned = filtered.filter((c) => c.is_pinned);
-  const unpinned = filtered.filter((c) => !c.is_pinned);
+  const pinned = conversations.filter((c) => c.is_pinned);
+  const unpinned = conversations.filter((c) => !c.is_pinned);
   const groups = groupByDate(unpinned);
 
   const handleNew = useCallback(() => router.push('/'), [router]);
   const pro = TIERS.pro;
 
-  const homeActive = pathname === '/';
+  const newChatActive = pathname === '/';
   const agentLabActive = pathname === '/agents';
   const toolsNavActive = pathname.startsWith('/tools');
-  const chatActive = pathname.startsWith('/c/');
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -269,18 +239,12 @@ function SidebarExpanded() {
           </button>
         </div>
 
-        <div className="px-3">
-          <NavItemButton icon={Plus} label="New conversation" onClick={handleNew} />
-        </div>
-
-        <div className="mx-4 my-2 h-px bg-border-subtle" />
-
-        <div className="space-y-1 px-3">
+        <div className="space-y-1 px-3 pt-2">
           <NavItemButton
-            icon={Home}
-            label="Home"
-            active={homeActive}
-            onClick={() => router.push('/')}
+            icon={Plus}
+            label="New chat"
+            active={newChatActive}
+            onClick={handleNew}
           />
           <NavItemButton
             icon={Dna}
@@ -289,53 +253,9 @@ function SidebarExpanded() {
             onClick={() => router.push('/agents')}
           />
           <ToolsFlyoutMenu pathname={pathname} variant="expanded" toolsActive={toolsNavActive} />
-          <NavItemButton
-            icon={Clock}
-            label="Chat"
-            active={chatActive}
-            onClick={() => setSearchActive(true)}
-          />
         </div>
 
         <div className="mx-4 my-2 h-px bg-border-subtle" />
-
-        <div className="mb-1 px-3">
-          {searchActive ? (
-            <div className="flex h-9 items-center gap-2 rounded-xl border border-border-subtle bg-surface-2/80 px-3">
-              <Search size={13} className="shrink-0 text-txt-disabled" strokeWidth={ICON_STROKE} />
-              <input
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onBlur={() => {
-                  if (!searchQuery.trim()) setSearchActive(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setSearchQuery('');
-                    setSearchActive(false);
-                  }
-                }}
-                placeholder="Search conversations..."
-                className="min-w-0 flex-1 bg-transparent text-[12px] text-txt-primary outline-none placeholder:text-txt-disabled"
-              />
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setSearchActive(true)}
-              className="flex h-9 w-full items-center gap-2.5 rounded-xl px-3 text-txt-disabled transition-all hover:bg-surface-2/60 hover:text-txt-secondary"
-            >
-              <Search size={14} strokeWidth={ICON_STROKE} />
-              <span className="flex-1 text-left text-[12px]">Search...</span>
-              <kbd className="rounded px-1.5 py-0.5 font-mono text-[9px] text-txt-disabled bg-surface-2/80">
-                ⌘K
-              </kbd>
-            </button>
-          )}
-        </div>
-
-        <div className="mx-4 mb-1 h-px bg-border-subtle" />
 
         <LayoutGroup id="sidebar-conversations">
           <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-3 pt-1">
@@ -359,12 +279,10 @@ function SidebarExpanded() {
                   </SectionGroup>
                 ))}
 
-                {filtered.length === 0 && (
+                {conversations.length === 0 && (
                   <div className="py-10 text-center">
                     <MessageSquare size={18} className="mx-auto mb-2 text-txt-disabled" strokeWidth={ICON_STROKE} />
-                    <p className="text-[11px] text-txt-disabled">
-                      {searchQuery.trim() ? 'No results' : 'No conversations yet'}
-                    </p>
+                    <p className="text-[11px] text-txt-disabled">No conversations yet</p>
                   </div>
                 )}
               </>
@@ -373,9 +291,6 @@ function SidebarExpanded() {
         </LayoutGroup>
 
         <div className="shrink-0 space-y-2 p-3 pt-2">
-          <div className="rounded-xl border border-accent/15 bg-surface-2/60 p-1.5">
-            <ProfileMenu variant="expanded" tier={tier} />
-          </div>
           {tier === 'free' ? (
             <button
               type="button"
@@ -425,6 +340,9 @@ function SidebarExpanded() {
               </div>
             </div>
           )}
+          <div className="rounded-xl border border-accent/15 bg-surface-2/60 p-1.5">
+            <ProfileMenu variant="expanded" tier={tier} />
+          </div>
         </div>
       </div>
     </TooltipProvider>
