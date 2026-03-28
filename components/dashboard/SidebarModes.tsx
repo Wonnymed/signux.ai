@@ -1,6 +1,7 @@
 'use client';
 
-import { Zap, ArrowLeftRight, AlertTriangle, Skull } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { Zap, ArrowLeftRight, ShieldAlert, Skull } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import type { DashboardMode } from '@/lib/store/dashboard-ui';
@@ -9,7 +10,7 @@ const MODES: {
   id: DashboardMode;
   name: string;
   description: string;
-  Icon: typeof Zap;
+  Icon: LucideIcon;
   iconBg: string;
 }[] = [
   {
@@ -30,7 +31,7 @@ const MODES: {
     id: 'stress',
     name: 'Stress test',
     description: 'Find every way this plan can fail',
-    Icon: AlertTriangle,
+    Icon: ShieldAlert,
     iconBg: DARK_THEME.danger,
   },
   {
@@ -77,7 +78,7 @@ export default function SidebarModes({
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
                   style={{ backgroundColor: m.iconBg + '33' }}
                 >
-                  <m.Icon className="h-4 w-4 text-white/90" strokeWidth={1.75} />
+                  <m.Icon className="h-4 w-4" style={{ color: m.iconBg }} strokeWidth={1.75} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[12px] font-medium text-white/90">{m.name}</span>

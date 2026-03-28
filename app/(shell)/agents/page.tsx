@@ -19,6 +19,7 @@ import {
   Target,
   AlertTriangle,
   Gauge,
+  Shuffle,
 } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import {
@@ -388,8 +389,8 @@ function JokerCard({ joker, onEdit }: { joker: JokerProfile; onEdit: () => void 
   return (
     <div className={cn('rounded-xl border p-5 transition-all', joker.joker_enabled ? 'border-accent/15 bg-accent-subtle' : 'border-border-subtle bg-surface-1')}>
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-surface-3 to-surface-2">
-          <span className="text-xl">🃏</span>
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-surface-3 to-surface-2 text-txt-secondary">
+          <Shuffle size={22} strokeWidth={1.75} aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-2">

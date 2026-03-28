@@ -185,11 +185,21 @@ export const SHORTCUTS: Shortcut[] = [
 
   // ─── UI ───
   {
+    id: 'cmd-b',
+    keys: '⌘B',
+    keySequence: ['Meta+b'],
+    label: 'Toggle sidebar',
+    description: 'Show or hide the sidebar (Ctrl+B on Windows)',
+    category: 'ui',
+    action: 'toggle-sidebar',
+    allowInInput: true,
+  },
+  {
     id: 'bracket',
     keys: '[',
     keySequence: ['['],
     label: 'Toggle sidebar',
-    description: 'Collapse/expand sidebar',
+    description: 'Collapse/expand sidebar (alternate)',
     category: 'ui',
     action: 'toggle-sidebar',
   },

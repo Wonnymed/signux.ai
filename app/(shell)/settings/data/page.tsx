@@ -82,8 +82,8 @@ export default function SettingsDataPage() {
       <Divider />
 
       <SettingSection
-        title="Delete all conversations"
-        description="Permanently delete all conversations. Cannot be undone."
+        title="Delete all simulations"
+        description="Permanently delete all simulations and their data. Cannot be undone."
       >
         <button
           type="button"
@@ -92,9 +92,9 @@ export default function SettingsDataPage() {
             setDelPhrase('');
             setDelErr(null);
           }}
-          className="rounded-lg border border-red-500/40 bg-transparent px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/[0.06]"
+          className="rounded-lg border border-[rgba(248,113,113,0.3)] bg-transparent px-4 py-2 text-sm font-medium text-[#f87171] hover:bg-[rgba(248,113,113,0.08)]"
         >
-          Delete all conversations
+          Delete all simulations
         </button>
       </SettingSection>
 
@@ -113,16 +113,16 @@ export default function SettingsDataPage() {
               <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" />
               <div>
                 <h3 id="del-conv-title" className="text-base font-medium text-txt-primary">
-                  Delete all conversations?
+                  Delete all simulations?
                 </h3>
                 <p className="mt-1 text-sm text-txt-tertiary">
-                  This removes every conversation and message from Octux. Simulations history in the export may still exist until you delete your account.
+                  This removes every simulation and related messages from Octux. Exported files are not affected until you delete your account.
                 </p>
               </div>
             </div>
             <label className="mb-2 block text-xs font-medium text-txt-secondary">Type DELETE to confirm</label>
             <input
-              className="field-input mb-4 w-full rounded-lg px-3 py-2 text-sm"
+              className="field-input mb-4 w-full text-sm"
               value={delPhrase}
               onChange={(e) => setDelPhrase(e.target.value)}
               autoComplete="off"

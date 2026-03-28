@@ -66,7 +66,7 @@ export default function SettingsAccountPage() {
     <div className="mx-auto max-w-container-narrow space-y-10 pb-8">
       <SettingSection title="User ID" description="Your unique identifier. Useful for support.">
         <div className="flex flex-wrap items-center gap-2">
-          <code className="field-input flex-1 min-w-0 overflow-x-auto rounded-lg px-3 py-2 font-mono text-xs text-txt-secondary">
+          <code className="field-input flex-1 min-w-0 overflow-x-auto font-mono text-xs text-txt-secondary">
             {userId}
           </code>
           <button
@@ -96,7 +96,7 @@ export default function SettingsAccountPage() {
 
       <SettingSection
         title="Delete account"
-        description="Permanently delete your account and all data. Cannot be reversed."
+        description="Permanently delete your account, all simulations, and all data. Cannot be reversed."
       >
         <button
           type="button"
@@ -105,7 +105,7 @@ export default function SettingsAccountPage() {
             setAcctPhrase('');
             setAcctErr(null);
           }}
-          className="rounded-lg border border-red-500/40 bg-transparent px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/[0.06]"
+          className="rounded-lg border border-[rgba(248,113,113,0.3)] bg-transparent px-4 py-2 text-sm font-medium text-[#f87171] hover:bg-[rgba(248,113,113,0.08)]"
         >
           Delete account
         </button>
@@ -130,15 +130,15 @@ export default function SettingsAccountPage() {
             </p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-txt-secondary">
               <li>Your profile and preferences</li>
-              <li>All conversations and messages</li>
-              <li>Simulations and verdicts</li>
+              <li>All simulations, messages, and verdicts</li>
+              <li>Conversation history tied to your account</li>
               <li>Billing subscription data</li>
             </ul>
             <label className="mb-2 mt-4 block text-xs font-medium text-txt-secondary">
               Type DELETE MY ACCOUNT to confirm
             </label>
             <input
-              className="field-input mb-4 w-full rounded-lg px-3 py-2 text-sm"
+              className="field-input mb-4 w-full text-sm"
               value={acctPhrase}
               onChange={(e) => setAcctPhrase(e.target.value)}
               autoComplete="off"

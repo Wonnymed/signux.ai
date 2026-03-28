@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
 import { useBillingStore } from '@/lib/store/billing';
 import { useDashboardUiStore } from '@/lib/store/dashboard-ui';
 import { useSimulationStore } from '@/lib/store/simulation';
@@ -11,7 +12,7 @@ import SidebarModes from '@/components/dashboard/SidebarModes';
 import SidebarHistory from '@/components/dashboard/SidebarHistory';
 import UserProfilePopover from '@/components/dashboard/UserProfilePopover';
 
-export default function DashboardSidebar() {
+export default function DashboardSidebar({ onRequestClose }: { onRequestClose?: () => void }) {
   const router = useRouter();
   const tier = useBillingStore((s) => s.tier);
   const fetchBalance = useBillingStore((s) => s.fetchBalance);
@@ -42,17 +43,26 @@ export default function DashboardSidebar() {
     >
       {/* Brand */}
       <div
-        className="flex shrink-0 items-center gap-2 border-b px-4 py-3"
+        className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-3"
         style={{ borderColor: DARK_THEME.border_default }}
       >
-        <span
-          className="h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{
-            backgroundColor: DARK_THEME.accent,
-            boxShadow: `0 0 12px ${DARK_THEME.accent}99`,
-          }}
-        />
-        <span className="text-[14px] font-medium tracking-tight text-white/90">Octux</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="h-[10px] w-[10px] shrink-0 rounded-full bg-[#e8593c]"
+            style={{ boxShadow: '0 0 8px rgba(232,89,60,0.5)' }}
+          />
+          <span className="truncate text-[14px] font-medium tracking-tight text-white/90">Octux</span>
+        </div>
+        {onRequestClose ? (
+          <button
+            type="button"
+            onClick={onRequestClose}
+            aria-label="Close sidebar"
+            className="shrink-0 rounded-md p-1 text-white/30 transition-colors hover:text-white/60"
+          >
+            <X size={16} strokeWidth={1.75} />
+          </button>
+        ) : null}
       </div>
 
       <div className="px-3 pt-3">

@@ -83,8 +83,22 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   const openMobileMenu = useCallback(() => setSidebarExpanded(true), [setSidebarExpanded]);
   const closeMobileMenu = useCallback(() => setSidebarExpanded(false), [setSidebarExpanded]);
 
+  const useDashboardShell = isAuthenticated && !isLoading;
+
+  const toggleDashboardSidebar = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('octux:dashboard-sidebar-toggle'));
+  }, []);
+
+  const handleToggleSidebar = useCallback(() => {
+    if (useDashboardShell) {
+      toggleDashboardSidebar();
+    } else {
+      toggleSidebar();
+    }
+  }, [useDashboardShell, toggleDashboardSidebar, toggleSidebar]);
+
   useKeyboardShortcuts({
-    onToggleSidebar: toggleSidebar,
+    onToggleSidebar: handleToggleSidebar,
     onFocusInput: () => document.querySelector<HTMLTextAreaElement>('[data-chat-input]')?.focus(),
     onExpandVerdict: () => window.dispatchEvent(new CustomEvent('octux:toggle-verdict-expand')),
     onStartSpecialistSim: () =>
@@ -94,8 +108,6 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   });
 
   const showAuthButtons = !isLoading && !isAuthenticated;
-
-  const useDashboardShell = isAuthenticated && !isLoading;
 
   /** Logged-in users use DashboardShell; legacy Sidebar only for authenticated non-dashboard routes (none today). Guests never see the app sidebar (FIX G). */
   const showDesktopSidebar =

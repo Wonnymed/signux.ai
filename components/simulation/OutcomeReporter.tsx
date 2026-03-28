@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CircleDot } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 
 type Props = {
@@ -56,7 +57,8 @@ export default function OutcomeReporter({ experienceId, currentOutcome }: Props)
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-radius-md border border-border-default bg-transparent px-4 py-2 text-[13px] text-txt-secondary transition-colors hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
       >
-        <span className="text-base leading-none">◎</span> Did this decision work out?
+        <CircleDot size={18} className="shrink-0 text-txt-tertiary" strokeWidth={1.75} aria-hidden />
+        Did this decision work out?
       </button>
     );
   }

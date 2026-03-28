@@ -16,6 +16,7 @@ import {
   ChevronRight,
   LogIn,
   LogOut,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { useAppStore, type ConversationSummary } from '@/lib/store/app';
@@ -53,7 +54,6 @@ const COLLAPSED_W = 56;
 const SIDEBAR_HEADER_PAD = 'px-3 sm:px-4 py-3';
 /** Brand mark — matches wordmark scale (Okara-like prominence) */
 const BRAND_LOGO_BOX = 'h-11 w-11';
-const BRAND_LOGO_EMOJI = 'text-[20px]';
 const BRAND_WORDMARK = 'text-[16px]';
 /** Claude-style nav: compact icons */
 const NAV_ICON = 18;
@@ -107,7 +107,7 @@ function SidebarCollapsed() {
                 )}
                 aria-label="Open sidebar"
               >
-                <span className={cn('leading-none', BRAND_LOGO_EMOJI)}>🐙</span>
+                <Sparkles className="text-txt-secondary" size={20} strokeWidth={1.75} aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">Open sidebar</TooltipContent>
@@ -239,7 +239,7 @@ function SidebarExpanded() {
                 BRAND_LOGO_BOX,
               )}
             >
-              <span className={cn('leading-none', BRAND_LOGO_EMOJI)}>🐙</span>
+              <Sparkles className="text-txt-secondary" size={20} strokeWidth={1.75} aria-hidden />
             </div>
             <span className={cn('truncate font-semibold tracking-tight text-txt-primary lowercase', BRAND_WORDMARK)}>
               octux

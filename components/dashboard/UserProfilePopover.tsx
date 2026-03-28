@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Globe, Gem, LogOut } from 'lucide-react';
+import { Settings, Globe, Gem, LogOut, Sun, Moon, Monitor } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useBillingStore } from '@/lib/store/billing';
 import { useThemeStore, type ThemeMode } from '@/lib/store/theme';
@@ -150,14 +150,14 @@ export default function UserProfilePopover() {
 
             <div className="my-1 h-px" style={{ backgroundColor: DIVIDER }} />
 
-            <div style={{ padding: '8px 12px' }}>
+            <div style={{ padding: '6px 10px 8px' }}>
               <div
                 style={{
-                  fontSize: '10px',
+                  fontSize: '9px',
                   textTransform: 'uppercase',
-                  letterSpacing: '1.5px',
+                  letterSpacing: '1.2px',
                   color: 'rgba(255,255,255,0.25)',
-                  marginBottom: '6px',
+                  marginBottom: '4px',
                 }}
               >
                 Theme
@@ -165,31 +165,45 @@ export default function UserProfilePopover() {
               <div
                 style={{
                   display: 'flex',
-                  gap: '2px',
+                  gap: 2,
                   background: 'rgba(255,255,255,0.04)',
-                  borderRadius: '8px',
-                  padding: '2px',
+                  borderRadius: 8,
+                  padding: 2,
+                  maxHeight: 36,
                 }}
               >
-                {(['light', 'system', 'dark'] as const).map((t) => (
+                {(
+                  [
+                    { id: 'light' as const, label: 'Light', Icon: Sun },
+                    { id: 'system' as const, label: 'System', Icon: Monitor },
+                    { id: 'dark' as const, label: 'Dark', Icon: Moon },
+                  ] as const
+                ).map(({ id: t, label, Icon }) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => onPickTheme(t)}
+                    title={label}
                     style={{
                       flex: 1,
-                      padding: '5px 0',
-                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                      padding: '4px 2px',
+                      borderRadius: 6,
                       border: 'none',
-                      fontSize: '12px',
+                      fontSize: 11,
                       fontWeight: 500,
+                      lineHeight: 1,
                       cursor: 'pointer',
-                      transition: 'all 0.15s',
+                      transition: 'background 0.15s, color 0.15s',
                       background: mode === t ? 'rgba(255,255,255,0.1)' : 'transparent',
                       color: mode === t ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.35)',
                     }}
                   >
-                    {t === 'light' ? '☀ Light' : t === 'system' ? 'System' : '🌙 Dark'}
+                    <Icon size={14} strokeWidth={2} />
+                    <span className="hidden min-[380px]:inline">{label}</span>
                   </button>
                 ))}
               </div>

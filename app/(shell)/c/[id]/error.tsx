@@ -1,5 +1,7 @@
 'use client';
 
+import { Sparkles } from 'lucide-react';
+
 export default function ConversationError({
   error,
   reset,
@@ -10,7 +12,7 @@ export default function ConversationError({
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent/80 to-entity-bioluminescent/60 flex items-center justify-center">
-        <span className="text-2xl">🐙</span>
+        <Sparkles className="text-white/90" size={28} strokeWidth={1.5} aria-hidden />
       </div>
       <h2 className="text-lg font-medium text-txt-primary">Something went wrong</h2>
       <p className="text-sm text-txt-tertiary max-w-sm text-center">

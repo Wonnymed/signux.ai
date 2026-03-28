@@ -65,7 +65,7 @@ export function ThemeToggleCompact() {
       >
         <Icon size={15} />
       </motion.span>
-      <span className="flex-1 text-[13px]">Appearance</span>
+      <span className="flex-1 text-[13px]">Theme</span>
       <span className="text-[11px] text-txt-tertiary tabular-nums">{modeShort}</span>
     </button>
   );

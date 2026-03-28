@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/memory/supabase';
+import { Sparkles } from 'lucide-react';
 import { Metadata } from 'next';
 
 type Props = { params: Promise<{ id: string }> };
@@ -78,7 +79,9 @@ export default async function PublicSimPage({ params }: Props) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-0, #fff)' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🐙</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center', color: 'var(--accent, #e8593c)' }}>
+            <Sparkles size={48} strokeWidth={1.25} aria-hidden />
+          </div>
           <div style={{ fontSize: '20px', fontWeight: 300, color: 'var(--text-primary)' }}>Decision not found</div>
           <div style={{ fontSize: '14px', color: 'var(--text-tertiary)', marginTop: '8px' }}>This tentacle doesn&apos;t reach that far.</div>
           <a href="/" style={{ display: 'inline-block', marginTop: '24px', padding: '10px 24px', borderRadius: '8px', background: '#1A1815', color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>

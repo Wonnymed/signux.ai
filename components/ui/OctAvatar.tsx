@@ -1,3 +1,4 @@
+import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { getAgentColor, type CategoryType } from '@/lib/design/tokens';
 import { type ReactNode } from 'react';
@@ -61,7 +62,7 @@ export default function OctAvatar({ type = 'agent', size = 'md', category = 'bus
         'bg-gradient-to-br from-accent to-entity-bioluminescent', s.container,
         glowClass[state], state === 'dormant' && 'animate-breathe', className,
       )}>
-        <span className={s.text}>🐙</span>
+        <Sparkles className={cn('text-white', s.icon)} strokeWidth={2} aria-hidden />
       </div>
     );
   }

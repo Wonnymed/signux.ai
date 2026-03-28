@@ -82,7 +82,7 @@ export default function SettingsProfilePage() {
         <div className="grid gap-6 sm:grid-cols-2">
           <SettingField label="Full name">
             <input
-              className="field-input w-full rounded-lg px-3 py-2 text-sm"
+              className="field-input w-full text-sm"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               autoComplete="name"
@@ -90,7 +90,7 @@ export default function SettingsProfilePage() {
           </SettingField>
           <SettingField label="Display name" hint="How Octux addresses you">
             <input
-              className="field-input w-full rounded-lg px-3 py-2 text-sm"
+              className="field-input w-full text-sm"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               autoComplete="nickname"
@@ -99,7 +99,7 @@ export default function SettingsProfilePage() {
         </div>
         <SettingField label="Email" hint="Contact support to change">
           <input
-            className="field-input w-full cursor-not-allowed rounded-lg px-3 py-2 text-sm opacity-80"
+            className="field-input w-full cursor-not-allowed text-sm opacity-80"
             value={email}
             disabled
             readOnly
@@ -114,7 +114,7 @@ export default function SettingsProfilePage() {
         description="Tell Octux about your situation so simulations are more personalized."
       >
         <textarea
-          className="field-input min-h-[104px] w-full resize-y rounded-lg px-3 py-2 text-sm leading-relaxed"
+          className="field-input min-h-[104px] w-full resize-y text-sm leading-relaxed"
           placeholder="I'm a 28-year-old entrepreneur in Seoul..."
           rows={4}
           value={decisionContext}
@@ -138,7 +138,7 @@ export default function SettingsProfilePage() {
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-95 disabled:opacity-50"
+          className="rounded-[8px] bg-[#e8593c] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-95 disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>

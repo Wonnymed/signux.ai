@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Zap } from 'lucide-react';
 import { SettingSection, Divider, SettingSkeleton } from '../_components';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getTierConfig, type TierType } from '@/lib/billing/tiers';
@@ -98,8 +98,8 @@ export default function SettingsBillingPage() {
       <SettingSection title="Current plan" description="Your active subscription.">
         <div className="flex flex-col gap-4 rounded-xl border border-border-subtle bg-surface-1 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-xl" aria-hidden>
-              ⚡
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent" aria-hidden>
+              <Zap size={22} strokeWidth={1.75} />
             </span>
             <div>
               <p className={cn('text-lg font-semibold', tierConfig.color)}>{tierConfig.name}</p>
@@ -110,7 +110,7 @@ export default function SettingsBillingPage() {
           </div>
           <Link
             href="/pricing"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-surface-2 px-4 py-2 text-sm font-medium text-txt-primary transition-colors hover:bg-surface-2/80"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/15 bg-transparent px-4 py-2 text-sm font-medium text-txt-primary transition-colors hover:bg-white/[0.06]"
           >
             Adjust plan
           </Link>
