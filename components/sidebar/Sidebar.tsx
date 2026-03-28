@@ -43,10 +43,13 @@ import InlineRename from './InlineRename';
 import { ThemeToggleCompact } from '@/components/theme/ThemeToggle';
 
 const ICON_STROKE = 1.5;
-/** Landing shell parity — narrower expanded rail */
-const EXPANDED_W = 172;
+/** BUILD PLAN §2.1 — expanded rail (matches --sidebar-width-expanded) */
+const EXPANDED_W = 200;
 /** BUILD PLAN §2.1 / §3.1 collapsed rail */
 const COLLAPSED_W = 56;
+/** Top chrome — same as ChatLayout header (h-12, px-3 sm:px-4) */
+const TOP_BAR_H = 'h-12';
+const TOP_BAR_PAD = 'px-3 sm:px-4';
 /** Okara nav icons ~20px outlined */
 const NAV_ICON = 20;
 
@@ -89,22 +92,24 @@ function SidebarCollapsed() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex h-full w-full flex-col items-center py-3">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/70 to-cyan-500/40 shadow-sm transition-transform hover:scale-[1.02]"
-              aria-label="Open sidebar"
-            >
-              <span className="text-[15px] leading-none">🐙</span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Open sidebar</TooltipContent>
-        </Tooltip>
+      <div className="flex h-full w-full flex-col items-center">
+        <div className={cn('flex w-full shrink-0 items-center justify-center border-b border-border-subtle/60', TOP_BAR_H)}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/70 to-cyan-500/40 shadow-sm transition-transform hover:scale-[1.02]"
+                aria-label="Open sidebar"
+              >
+                <span className="text-[14px] leading-none">🐙</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Open sidebar</TooltipContent>
+          </Tooltip>
+        </div>
 
-        <div className="h-1.5 shrink-0" />
+        <div className="h-2 shrink-0" />
 
         <CollapsedIconButton onClick={() => router.push('/')} tooltip="New conversation">
           <Plus size={NAV_ICON} strokeWidth={ICON_STROKE} />
@@ -243,8 +248,8 @@ function SidebarExpanded() {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex h-full w-full min-w-0 flex-col overflow-hidden">
-        {/* Header — brand + Okara-style close (only toggle here when expanded) */}
-        <div className="flex h-14 shrink-0 items-center justify-between px-4">
+        {/* Header — aligned 1:1 with main shell header (Log in / Sign up row) */}
+        <div className={cn('flex shrink-0 items-center justify-between border-b border-border-subtle/60', TOP_BAR_H, TOP_BAR_PAD)}>
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/70 to-cyan-500/40 shadow-sm">
               <span className="text-[13px] leading-none">🐙</span>
@@ -384,7 +389,7 @@ function SidebarExpanded() {
                 <div className="min-w-0 flex-1">
                   <p className="text-[12px] font-medium text-txt-secondary">Upgrade to Pro</p>
                   <p className="text-[10px] text-txt-tertiary">
-                    Tokens = simulacoes com 10 especialistas · {pro.priceLabel}
+                    Tokens = 10-specialist simulations · {pro.priceLabel}
                     {pro.period}
                   </p>
                 </div>

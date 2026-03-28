@@ -108,8 +108,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       >
         <header
           className={cn(
-            'sticky top-0 z-30 flex h-12 shrink-0 items-center bg-surface-0/95 px-3 backdrop-blur-sm supports-[padding:max(0px)]:pt-[max(0px,env(safe-area-inset-top))] sm:px-4',
-            isMobile && 'border-b border-border-subtle/60',
+            'sticky top-0 z-30 flex h-12 shrink-0 items-center border-b border-border-subtle/60 bg-surface-0/95 px-3 backdrop-blur-sm supports-[padding:max(0px)]:pt-[max(0px,env(safe-area-inset-top))] sm:px-4',
           )}
         >
           {isMobile && (
@@ -139,16 +138,17 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'login' } }))}
-                className="rounded-md border border-border-default bg-surface-0 px-4 py-2 text-sm text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+                className="inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-0 px-3 text-sm font-medium text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 sm:px-4"
               >
                 Log in
               </button>
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('octux:show-auth', { detail: { mode: 'signup' } }))}
-                className="rounded-md border border-border-default bg-surface-0 px-4 py-2 text-sm text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+                className="inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-0 px-3 text-sm font-medium text-txt-primary transition-colors duration-normal ease-out hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 sm:px-4"
               >
-                Sign up for free
+                <span className="sm:hidden">Sign up</span>
+                <span className="hidden sm:inline">Sign up for free</span>
               </button>
             </div>
           )}
@@ -168,7 +168,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
           />
           <aside
             className={cn(
-              'fixed inset-y-0 left-0 z-[110] flex w-[min(288px,92vw)] max-w-full flex-col',
+              'fixed inset-y-0 left-0 z-[110] flex w-[min(200px,92vw)] max-w-full flex-col',
               'border-r border-border-subtle bg-surface-1 shadow-xl',
               'animate-slide-in-left pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]',
             )}
