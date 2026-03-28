@@ -33,7 +33,7 @@ const MENU_SURFACE = 'rgba(15,15,20,0.97)';
 const MENU_BORDER = 'rgba(255,255,255,0.1)';
 const DIVIDER = 'rgba(255,255,255,0.06)';
 
-export default function UserProfilePopover() {
+export default function UserProfilePopover({ variant = 'full' }: { variant?: 'full' | 'rail' }) {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const tier = useBillingStore((s) => s.tier);
@@ -78,52 +78,85 @@ export default function UserProfilePopover() {
   const email = user?.email || '';
   const pill = planPillClass(tier);
 
+  const isRail = variant === 'rail';
+
   return (
-    <div ref={rootRef} className="relative shrink-0 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+    <div
+      ref={rootRef}
+      className={
+        isRail
+          ? 'relative flex shrink-0 justify-center py-1'
+          : 'relative shrink-0 border-t'
+      }
+      style={isRail ? undefined : { borderColor: 'rgba(255,255,255,0.06)' }}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center gap-2.5 px-[14px] py-3 text-left transition-colors hover:bg-white/[0.03]"
+        title={name}
+        className={
+          isRail
+            ? 'flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-[12px] font-medium transition-colors hover:bg-white/[0.06]'
+            : 'flex w-full cursor-pointer items-center gap-2.5 px-[14px] py-3 text-left transition-colors hover:bg-white/[0.03]'
+        }
+        style={
+          isRail
+            ? {
+                backgroundColor: 'rgba(232,89,60,0.15)',
+                color: '#e8593c',
+              }
+            : undefined
+        }
         aria-expanded={open}
       >
-        <div
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-medium"
-          style={{
-            backgroundColor: 'rgba(232,89,60,0.15)',
-            color: '#e8593c',
-          }}
-        >
-          {initialsFromUser(user)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-medium text-white/90">{name}</p>
-          {email ? (
-            <p className="truncate text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              {email}
-            </p>
-          ) : null}
-          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-              style={{ backgroundColor: pill.bg, color: pill.fg }}
+        {isRail ? (
+          initialsFromUser(user)
+        ) : (
+          <>
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-medium"
+              style={{
+                backgroundColor: 'rgba(232,89,60,0.15)',
+                color: '#e8593c',
+              }}
             >
-              {planLabel(tier)}
-            </span>
-            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              {tokensRemaining} tokens left
-            </span>
-          </div>
-        </div>
+              {initialsFromUser(user)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium text-white/90">{name}</p>
+              {email ? (
+                <p className="truncate text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  {email}
+                </p>
+              ) : null}
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  style={{ backgroundColor: pill.bg, color: pill.fg }}
+                >
+                  {planLabel(tier)}
+                </span>
+                <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  {tokensRemaining} tokens left
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </button>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
+            initial={isRail ? { opacity: 0, x: -8 } : { opacity: 0, y: 8 }}
+            animate={isRail ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
+            exit={isRail ? { opacity: 0, x: -8 } : { opacity: 0, y: 8 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute bottom-full left-2 right-2 z-[80] mb-2 overflow-hidden rounded-[10px] p-1 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
+            className={
+              isRail
+                ? 'absolute bottom-0 left-[calc(100%+8px)] z-[90] w-[min(288px,calc(100vw-80px))] overflow-hidden rounded-[10px] p-1 shadow-[0_8px_30px_rgba(0,0,0,0.35)]'
+                : 'absolute bottom-full left-2 right-2 z-[80] mb-2 overflow-hidden rounded-[10px] p-1 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]'
+            }
             style={{
               backgroundColor: MENU_SURFACE,
               border: `1px solid ${MENU_BORDER}`,

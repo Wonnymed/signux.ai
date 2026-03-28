@@ -6,7 +6,7 @@ import { cn } from '@/lib/design/cn';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import type { DashboardMode } from '@/lib/store/dashboard-ui';
 
-const MODES: {
+export const DASHBOARD_SIDEBAR_MODES: {
   id: DashboardMode;
   name: string;
   description: string;
@@ -64,7 +64,7 @@ export default function SidebarModes({
         Simulation modes
       </p>
       <ul className="flex flex-col gap-1">
-        {MODES.map((m) => {
+        {DASHBOARD_SIDEBAR_MODES.map((m) => {
           const active = activeMode === m.id;
           return (
             <li key={m.id}>

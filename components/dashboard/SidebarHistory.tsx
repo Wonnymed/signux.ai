@@ -66,7 +66,7 @@ function sortByPinnedThenDate(list: ConversationSummary[], pinnedIds: string[]):
   });
 }
 
-export default function SidebarHistory() {
+export default function SidebarHistory({ variant = 'full' }: { variant?: 'full' | 'rail' }) {
   const router = useRouter();
   const pathname = usePathname();
   const conversations = useAppStore((s) => s.conversations);
@@ -96,6 +96,8 @@ export default function SidebarHistory() {
   );
   const pinnedRows = useMemo(() => sorted.filter((c) => pinnedIds.includes(c.id)), [sorted, pinnedIds]);
   const historyRows = useMemo(() => sorted.filter((c) => !pinnedIds.includes(c.id)), [sorted, pinnedIds]);
+
+  const railItems = useMemo(() => sortByPinnedThenDate(conversations, pinnedIds).slice(0, 5), [conversations, pinnedIds]);
 
   const currentConversationId = pathname?.match(/^\/c\/([^/]+)/)?.[1] ?? null;
 
@@ -134,6 +136,54 @@ export default function SidebarHistory() {
       void fetchConversations({ silent: true });
     }
   }, [deleteTarget, removeConversation, currentConversationId, router, fetchConversations]);
+
+  if (variant === 'rail') {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-1 py-1">
+        {railItems.length === 0 ? (
+          <span className="text-[9px]" style={{ color: DARK_THEME.text_tertiary }}>
+            —
+          </span>
+        ) : (
+          <ul className="flex flex-col items-center gap-2">
+            {railItems.map((c) => {
+              const result = c.has_simulation ? resultFromVerdict(c.latest_verdict) : 'proceed';
+              const pinned = pinnedIds.includes(c.id);
+              const active = currentConversationId === c.id;
+              return (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    title={c.title}
+                    onClick={() => router.push(`/c/${c.id}`)}
+                    className="relative flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-white/[0.06]"
+                    style={{
+                      boxShadow: active ? `0 0 0 1px ${DARK_THEME.accent}` : undefined,
+                    }}
+                  >
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{
+                        backgroundColor: c.has_simulation ? RESULT_DOT[result] : DARK_THEME.text_tertiary,
+                      }}
+                    />
+                    {pinned ? (
+                      <Pin
+                        size={9}
+                        className="absolute -right-0.5 -top-0.5 text-amber-400/95"
+                        strokeWidth={2.5}
+                        aria-hidden
+                      />
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    );
+  }
 
   const renderSection = (label: string, rows: ConversationSummary[]) => {
     if (rows.length === 0) return null;

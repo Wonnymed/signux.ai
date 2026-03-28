@@ -2,55 +2,37 @@
 
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { PanelLeft } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import DashboardSidebar from '@/components/dashboard/Sidebar';
 
 const MD = 768;
-const STORAGE_KEY = 'octux_sidebar_open';
+const STORAGE_EXPANDED = 'octux_sidebar_expanded';
+const LEGACY_OPEN = 'octux_sidebar_open';
 
-function readDesktopPreference(): boolean {
+function readDesktopExpanded(): boolean {
   if (typeof window === 'undefined') return true;
-  const v = localStorage.getItem(STORAGE_KEY);
-  if (v === null) return true;
-  return v === 'true';
+  const v = localStorage.getItem(STORAGE_EXPANDED);
+  if (v !== null) return v === 'true';
+  const legacy = localStorage.getItem(LEGACY_OPEN);
+  if (legacy === 'false') return false;
+  return true;
 }
 
-function persistDesktop(open: boolean) {
+function persistDesktopExpanded(expanded: boolean) {
   try {
-    localStorage.setItem(STORAGE_KEY, String(open));
+    localStorage.setItem(STORAGE_EXPANDED, String(expanded));
   } catch {
     /* ignore */
   }
 }
 
-function OctuxSidebarRevealButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title="Open sidebar"
-      aria-label="Open sidebar"
-      className={cn(
-        'group fixed left-3 top-3 z-50 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg',
-        'border border-white/[0.06] bg-[rgba(10,10,15,0.7)] backdrop-blur-md',
-        'transition-all duration-200 hover:bg-white/[0.06]',
-      )}
-    >
-      <PanelLeft
-        size={18}
-        strokeWidth={1.75}
-        className="text-white/40 transition-colors group-hover:text-white/60"
-      />
-    </button>
-  );
-}
-
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [viewport, setViewport] = useState<'mobile' | 'desktop' | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [desktopExpanded, setDesktopExpanded] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const viewportRef = useRef<'mobile' | 'desktop' | null>(null);
   viewportRef.current = viewport;
 
@@ -58,12 +40,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   useLayoutEffect(() => {
     const mobile = window.innerWidth < MD;
-    const next = mobile ? 'mobile' : 'desktop';
-    setViewport(next);
+    setViewport(mobile ? 'mobile' : 'desktop');
     if (mobile) {
-      setSidebarOpen(false);
+      setMobileDrawerOpen(false);
     } else {
-      setSidebarOpen(readDesktopPreference());
+      setDesktopExpanded(readDesktopExpanded());
     }
   }, []);
 
@@ -72,9 +53,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       const mobile = window.innerWidth < MD;
       setViewport(mobile ? 'mobile' : 'desktop');
       if (mobile) {
-        setSidebarOpen(false);
+        setMobileDrawerOpen(false);
       } else {
-        setSidebarOpen(readDesktopPreference());
+        setDesktopExpanded(readDesktopExpanded());
       }
     };
     window.addEventListener('resize', onResize);
@@ -83,50 +64,51 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   useEffect(() => {
     const onToggle = () => {
-      setSidebarOpen((prev) => {
-        const next = !prev;
-        if (viewportRef.current !== 'mobile') {
-          persistDesktop(next);
-        }
-        return next;
-      });
+      if (viewportRef.current === 'mobile') {
+        setMobileDrawerOpen((o) => !o);
+      } else {
+        setDesktopExpanded((e) => {
+          const next = !e;
+          persistDesktopExpanded(next);
+          return next;
+        });
+      }
     };
     window.addEventListener('octux:dashboard-sidebar-toggle', onToggle);
     return () => window.removeEventListener('octux:dashboard-sidebar-toggle', onToggle);
   }, []);
 
-  const openSidebar = useCallback(() => {
-    setSidebarOpen(true);
-    if (viewportRef.current !== 'mobile') {
-      persistDesktop(true);
-    }
-  }, []);
-
-  const closeSidebar = useCallback(() => {
-    setSidebarOpen(false);
-    if (viewportRef.current !== 'mobile') {
-      persistDesktop(false);
-    }
-  }, []);
+  const openMobileDrawer = useCallback(() => setMobileDrawerOpen(true), []);
+  const closeMobileDrawer = useCallback(() => setMobileDrawerOpen(false), []);
 
   useEffect(() => {
-    if (!isMobile || !sidebarOpen) return;
+    if (!isMobile || !mobileDrawerOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeSidebar();
+      if (e.key === 'Escape') closeMobileDrawer();
     };
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener('keydown', onKey);
     };
-  }, [isMobile, sidebarOpen, closeSidebar]);
+  }, [isMobile, mobileDrawerOpen, closeMobileDrawer]);
 
   useEffect(() => {
     if (!isMobile) return;
-    closeSidebar();
-  }, [pathname, isMobile, closeSidebar]);
+    closeMobileDrawer();
+  }, [pathname, isMobile, closeMobileDrawer]);
+
+  const collapseDesktop = useCallback(() => {
+    setDesktopExpanded(false);
+    persistDesktopExpanded(false);
+  }, []);
+
+  const expandDesktop = useCallback(() => {
+    setDesktopExpanded(true);
+    persistDesktopExpanded(true);
+  }, []);
 
   if (viewport === null) {
     return (
@@ -145,23 +127,32 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         className="relative flex min-h-0 h-[100dvh] w-full flex-col overflow-hidden"
         style={{ backgroundColor: DARK_THEME.bg_primary, color: DARK_THEME.text_primary }}
       >
-        {!sidebarOpen && <OctuxSidebarRevealButton onClick={openSidebar} />}
-        <div
-          className={cn(
-            'min-h-0 min-w-0 flex-1 overflow-hidden transition-all duration-[250ms]',
-            !sidebarOpen && 'pl-14',
-          )}
-        >
-          {children}
-        </div>
+        {!mobileDrawerOpen && (
+          <header
+            className="flex h-12 shrink-0 items-center gap-2 border-b px-3"
+            style={{ borderColor: DARK_THEME.border_default, backgroundColor: DARK_THEME.bg_primary }}
+          >
+            <button
+              type="button"
+              onClick={openMobileDrawer}
+              className="rounded-md p-2 text-white/70 transition-colors hover:bg-white/[0.06]"
+              aria-label="Open menu"
+            >
+              <Menu size={20} strokeWidth={1.75} />
+            </button>
+            <span className="text-[14px] font-medium text-white/90">Octux</span>
+          </header>
+        )}
 
-        {sidebarOpen && (
+        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
+
+        {mobileDrawerOpen && (
           <>
             <button
               type="button"
               aria-label="Close menu"
               className="fixed inset-0 z-[100] bg-black/50"
-              onClick={closeSidebar}
+              onClick={closeMobileDrawer}
             />
             <aside
               className={cn(
@@ -173,13 +164,15 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 borderRight: `1px solid ${DARK_THEME.border_default}`,
               }}
             >
-              <DashboardSidebar onRequestClose={closeSidebar} />
+              <DashboardSidebar layout="drawer" onCollapse={closeMobileDrawer} onExpand={() => {}} />
             </aside>
           </>
         )}
       </div>
     );
   }
+
+  const railWidth = desktopExpanded ? 250 : 56;
 
   return (
     <div
@@ -189,29 +182,27 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       <div
         className={cn(
           'shrink-0 overflow-hidden border-r',
-          sidebarOpen
-            ? 'w-[250px] min-w-[250px] transition-[width,min-width] duration-[250ms] ease-out'
-            : 'w-0 min-w-0 border-transparent transition-[width,min-width] duration-200 ease-in',
+          desktopExpanded
+            ? 'transition-[width] duration-[250ms] ease-out'
+            : 'transition-[width] duration-200 ease-in',
         )}
         style={{
-          borderColor: sidebarOpen ? DARK_THEME.border_default : 'transparent',
+          width: railWidth,
+          minWidth: railWidth,
+          maxWidth: railWidth,
+          borderColor: DARK_THEME.border_default,
+          transitionProperty: 'width, min-width, max-width',
         }}
       >
-        <div className="flex h-full w-[250px] flex-col">
-          <DashboardSidebar onRequestClose={closeSidebar} />
-        </div>
+        <DashboardSidebar
+          layout={desktopExpanded ? 'expanded' : 'collapsed'}
+          onCollapse={collapseDesktop}
+          onExpand={expandDesktop}
+        />
       </div>
 
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        {!sidebarOpen && <OctuxSidebarRevealButton onClick={openSidebar} />}
-        <div
-          className={cn(
-            'min-h-0 flex-1 overflow-hidden transition-all duration-[250ms]',
-            !sidebarOpen && 'pl-14',
-          )}
-        >
-          {children}
-        </div>
+        <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       </div>
     </div>
   );
