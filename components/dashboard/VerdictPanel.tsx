@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSimulationStore } from '@/lib/store/simulation';
 import { useDashboardUiStore } from '@/lib/store/dashboard-ui';
+import { useDeepDiveStore } from '@/lib/store/deep-dive';
 import { useBillingStore } from '@/lib/store/billing';
+import { resolveAgentChatId } from '@/lib/agent-chat/resolve-agent-id';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import { cn } from '@/lib/design/cn';
 import type { VerdictResult, AgentScoreEntry, RiskEntry } from '@/lib/simulation/events';
@@ -29,6 +31,35 @@ function normalizeRecommendation(
   if (s === 'delay') return 'delay';
   if (s === 'abandon') return 'abandon';
   return 'proceed';
+}
+
+type NormRec = ReturnType<typeof normalizeRecommendation>;
+
+function verdictDisagreeBucket(rec: NormRec): 'proceed' | 'delay' | 'abandon' {
+  if (rec === 'proceed_with_conditions') return 'proceed';
+  return rec;
+}
+
+function agentDisagreeBucket(pos: string): 'proceed' | 'delay' | 'abandon' {
+  const p = (pos || '').toLowerCase();
+  if (p === 'abandon') return 'abandon';
+  if (p === 'delay') return 'delay';
+  return 'proceed';
+}
+
+function pickDissentingAgentId(
+  verdictRec: string | undefined,
+  scoreboard: AgentScoreEntry[],
+  agentsMap: Map<string, AgentStreamState>,
+): string | null {
+  if (scoreboard.length === 0) return null;
+  const vb = verdictDisagreeBucket(normalizeRecommendation(verdictRec));
+  for (const row of scoreboard) {
+    if (agentDisagreeBucket(row.position) !== vb) {
+      return resolveAgentChatId(row.agent_name, agentsMap);
+    }
+  }
+  return resolveAgentChatId(scoreboard[0].agent_name, agentsMap);
 }
 
 function positionColors(
@@ -99,6 +130,7 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
   const result = useSimulationStore((s) => s.result) as VerdictResult | null;
   const consensus = useSimulationStore((s) => s.consensus);
   const agentsMap = useSimulationStore((s) => s.agents);
+  const openDeepDive = useDeepDiveStore((s) => s.open);
 
   const [collapsed, setCollapsed] = useState(false);
 
@@ -159,6 +191,19 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
     useDashboardUiStore.getState().resetSession();
     router.push('/');
   }, [router]);
+
+  const onDeepDiveClick = useCallback(() => {
+    const id = pickDissentingAgentId(verdict?.recommendation, scoreboard, agentsMap);
+    if (id) openDeepDive(id);
+  }, [verdict?.recommendation, scoreboard, agentsMap, openDeepDive]);
+
+  const onSpecialistRowClick = useCallback(
+    (agentName: string) => {
+      const id = resolveAgentChatId(agentName, agentsMap);
+      openDeepDive(id);
+    },
+    [agentsMap, openDeepDive],
+  );
 
   const outlineBtn =
     'inline-flex items-center justify-center rounded-lg border border-white/10 bg-transparent px-4 py-2 text-[12px] font-medium text-white/50 transition-colors hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-40';
@@ -311,9 +356,14 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
                           ? DARK_THEME.warning
                           : DARK_THEME.danger;
                     return (
-                      <div key={`${a.agent_name}-${i}`} className="flex items-center gap-2 text-[12px]">
+                      <button
+                        key={`${a.agent_name}-${i}`}
+                        type="button"
+                        onClick={() => onSpecialistRowClick(a.agent_name)}
+                        className="flex w-full items-center gap-2 rounded-lg py-1.5 pl-1 pr-0 text-left text-[12px] text-white/50 transition-colors hover:bg-white/[0.04] hover:text-white/70"
+                      >
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: dot }} />
-                        <span className="min-w-0 flex-1 truncate text-white/50">{a.agent_name}</span>
+                        <span className="min-w-0 flex-1 truncate">{a.agent_name}</span>
                         <span
                           className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase text-white/80"
                           style={{
@@ -324,7 +374,7 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
                           {pos}
                         </span>
                         <span className="shrink-0 text-[10px] text-white/25">{Math.round(a.confidence)}/10</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -387,7 +437,12 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
               <button type="button" disabled className={outlineBtn}>
                 Share link
               </button>
-              <button type="button" disabled className={outlineBtn}>
+              <button
+                type="button"
+                onClick={onDeepDiveClick}
+                disabled={scoreboard.length === 0}
+                className={outlineBtn}
+              >
                 Deep dive
               </button>
               <button

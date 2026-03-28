@@ -74,6 +74,7 @@ export function createSimulationRenderer(
   start: () => void;
   stop: () => void;
   resize: () => void;
+  getSpecialistHitTargets: () => Map<string, { x: number; y: number }>;
   dispose: () => void;
 } {
   let ctx = canvas.getContext('2d', { alpha: false });
@@ -95,6 +96,7 @@ export function createSimulationRenderer(
   let forceNodes: ForceNode[] = [];
   let lastSpecialistCount = -1;
   let lastLayoutKey = '';
+  let lastSpecialistHitMap = new Map<string, { x: number; y: number }>();
 
   const stressThreats = ['Capital', 'Regulation', 'Demand', 'Execution', 'Competition', 'Team'];
   const premortemCauses = ['Pricing', 'CAC', 'Churn', 'Product', 'Hiring'];
@@ -366,6 +368,17 @@ export function createSimulationRenderer(
 
     const posMap = nodePositions(snap, cx, cy, minDim, h);
 
+    if (snap.mode === 'simulate' && snap.tier === 'specialist') {
+      lastSpecialistHitMap = new Map();
+      for (const ag of snap.agents) {
+        if (ag.id.startsWith('placeholder-')) continue;
+        const p = posMap.get(ag.id);
+        if (p) lastSpecialistHitMap.set(ag.id, p);
+      }
+    } else {
+      lastSpecialistHitMap = new Map();
+    }
+
     // Edges (specialist simulate only — and demo/compare stress premortem variants)
     if (snap.mode === 'simulate' && snap.tier === 'specialist' && snap.agents.length > 1) {
       const flicker = 0.7 + 0.3 * Math.sin(t * 0.02);
@@ -523,16 +536,34 @@ export function createSimulationRenderer(
         const phase = (ag.id.charCodeAt(0) % 8) * 0.7;
         const pulse = pulseBase + Math.sin(t * 0.003 + phase) * 2;
         const rDraw = ag.isActive ? pulse + 2 : pulse;
+        const highlighted = snap.highlightAgentId && ag.id === snap.highlightAgentId;
         const col = posColor(ag.position);
         const glow = posGlow(ag.position);
         ctx.beginPath();
         ctx.fillStyle = glow;
-        ctx.arc(pt.x, pt.y, rDraw + (ag.isActive ? 14 : 10), 0, TAU);
+        ctx.arc(
+          pt.x,
+          pt.y,
+          rDraw + (highlighted ? 18 : ag.isActive ? 14 : 10),
+          0,
+          TAU,
+        );
         ctx.fill();
+        if (highlighted) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(232,89,60,0.55)';
+          ctx.lineWidth = 2;
+          ctx.arc(pt.x, pt.y, rDraw + 6, 0, TAU);
+          ctx.stroke();
+        }
         ctx.beginPath();
         ctx.fillStyle = col;
-        ctx.strokeStyle = ag.isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)';
-        ctx.lineWidth = ag.isActive ? 1.2 : 0.8;
+        ctx.strokeStyle = ag.isActive
+          ? 'rgba(255,255,255,0.5)'
+          : highlighted
+            ? 'rgba(232,89,60,0.85)'
+            : 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = ag.isActive ? 1.2 : highlighted ? 1.4 : 0.8;
         ctx.arc(pt.x, pt.y, rDraw, 0, TAU);
         ctx.fill();
         ctx.stroke();
@@ -629,6 +660,9 @@ export function createSimulationRenderer(
       cancelAnimationFrame(raf);
     },
     resize,
+    getSpecialistHitTargets(): Map<string, { x: number; y: number }> {
+      return lastSpecialistHitMap;
+    },
     dispose() {
       this.stop();
     },

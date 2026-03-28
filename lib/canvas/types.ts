@@ -58,6 +58,8 @@ export interface CanvasSnapshot {
   verdict: VerdictData | null;
   voiceCount: number;
   elapsedSec: number;
+  /** Specialist node to emphasize (e.g. deep-dive panel open for this agent). */
+  highlightAgentId?: string | null;
 }
 
 export interface SimulationCanvasProps {

@@ -1,14 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDashboardUiStore } from '@/lib/store/dashboard-ui';
 import { useSimulationStore } from '@/lib/store/simulation';
+import { useDeepDiveStore } from '@/lib/store/deep-dive';
 import { getCanvasSnapshot } from '@/lib/canvas/build-snapshot';
 import { createSimulationRenderer } from '@/lib/canvas/simulation-renderer';
+import { getClickedSpecialistAgentId } from '@/lib/canvas/specialist-hit-test';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import { cn } from '@/lib/design/cn';
 import type { CanvasSimStatus } from '@/lib/canvas/types';
 import VerdictPanel from '@/components/dashboard/VerdictPanel';
+import DeepDivePanel from '@/components/dashboard/DeepDivePanel';
 
 const RUNNING: CanvasSimStatus[] = [
   'connecting',
@@ -24,9 +27,6 @@ export default function SimulationCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<ReturnType<typeof createSimulationRenderer> | null>(null);
 
-  const activeMode = useDashboardUiStore((s) => s.activeMode);
-  const activeTier = useDashboardUiStore((s) => s.activeTier);
-
   const simStatus = useSimulationStore((s) => s.status);
   const simError = useSimulationStore((s) => s.error);
   const agents = useSimulationStore((s) => s.agents);
@@ -36,33 +36,44 @@ export default function SimulationCanvas() {
 
   const activeChargeType = useSimulationStore((s) => s.activeChargeType);
 
+  const deepDiveOpen = useDeepDiveStore((s) => s.isOpen);
+
   const getSnapshot = useCallback(() => {
     const dash = useDashboardUiStore.getState();
     const sim = useSimulationStore.getState();
-    return getCanvasSnapshot(dash, {
-      status: sim.status as CanvasSimStatus,
-      error: sim.error,
-      agents: sim.agents,
-      consensus: sim.consensus,
-      result: sim.result,
-      elapsed: sim.elapsed,
-      activeChargeType: sim.activeChargeType,
-    });
+    const dd = useDeepDiveStore.getState();
+    return {
+      ...getCanvasSnapshot(dash, {
+        status: sim.status as CanvasSimStatus,
+        error: sim.error,
+        agents: sim.agents,
+        consensus: sim.consensus,
+        result: sim.result,
+        elapsed: sim.elapsed,
+        activeChargeType: sim.activeChargeType,
+      }),
+      highlightAgentId: dd.isOpen && dd.selectedAgentId ? dd.selectedAgentId : null,
+    };
   }, []);
 
-  const snap = useMemo(
-    () =>
-      getCanvasSnapshot(useDashboardUiStore.getState(), {
-        status: simStatus as CanvasSimStatus,
-        error: simError,
-        agents,
-        consensus,
-        result,
-        elapsed,
-        activeChargeType,
-      }),
-    [simStatus, simError, agents, consensus, result, elapsed, activeChargeType, activeMode, activeTier],
-  );
+  const snap = getSnapshot();
+
+  const onCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    const engine = engineRef.current;
+    if (!canvas || !engine) return;
+    const sim = useSimulationStore.getState();
+    if (sim.status !== 'complete') return;
+    const snapNow = getSnapshot();
+    const live = engine.getSpecialistHitTargets();
+    const id = getClickedSpecialistAgentId(e.clientX, e.clientY, canvas, snapNow, live);
+    if (id) useDeepDiveStore.getState().open(id);
+  }, [getSnapshot]);
+
+  const canClickSpecialists =
+    simStatus === 'complete' &&
+    snap.mode === 'simulate' &&
+    snap.tier === 'specialist';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -106,10 +117,25 @@ export default function SimulationCanvas() {
   } as const;
 
   return (
-    <div ref={containerRef} className="relative min-h-0 flex-1 overflow-hidden">
-      <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" aria-hidden />
+    <div
+      ref={containerRef}
+      className={cn(
+        'relative min-h-0 flex-1 overflow-hidden transition-[padding] duration-300 ease-out',
+        deepDiveOpen && 'pr-[min(380px,40vw)]',
+      )}
+    >
+      <canvas
+        ref={canvasRef}
+        className={cn(
+          'absolute inset-0 block h-full w-full',
+          canClickSpecialists && 'cursor-pointer',
+        )}
+        aria-hidden={!canClickSpecialists}
+        onClick={canClickSpecialists ? onCanvasClick : undefined}
+      />
 
       <VerdictPanel visible={showFullVerdict} />
+      <DeepDivePanel />
 
       {showOverlays && (
         <>
