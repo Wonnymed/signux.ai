@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/design/cn';
 import { OctButton } from '@/components/octux';
+import { openAuthModal, POST_AUTH_REDIRECT_KEY } from '@/lib/auth/openAuthModal';
 
 const tiers = [
   {
@@ -48,11 +49,19 @@ const tiers = [
   },
 ];
 
-interface PricingPreviewProps {
-  onSignIn: () => void;
-}
-
-export default function PricingPreview({ onSignIn }: PricingPreviewProps) {
+export default function PricingPreview() {
+  const onTierCta = (tierName: string) => {
+    if (tierName === 'Free') {
+      openAuthModal({ tab: 'signup' });
+      return;
+    }
+    try {
+      sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, '/pricing');
+    } catch {
+      /* private mode */
+    }
+    openAuthModal({ tab: 'signup' });
+  };
   return (
     <section className="py-20 sm:py-28 px-6 bg-surface-1/30">
       <div className="max-w-landing mx-auto">
@@ -101,7 +110,7 @@ export default function PricingPreview({ onSignIn }: PricingPreviewProps) {
                 variant={tier.popular ? 'default' : 'secondary'}
                 size="sm"
                 fullWidth
-                onClick={onSignIn}
+                onClick={() => onTierCta(tier.name)}
               >
                 {tier.cta}
               </OctButton>

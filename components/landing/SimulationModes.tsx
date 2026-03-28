@@ -2,6 +2,7 @@
 
 import { Zap, ArrowLeftRight, AlertTriangle, Skull } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
+import { openAuthModal } from '@/lib/auth/openAuthModal';
 
 const MODES = [
   {
@@ -47,11 +48,13 @@ export default function SimulationModes() {
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {MODES.map((m) => (
-            <div
+            <button
               key={m.name}
+              type="button"
+              onClick={() => openAuthModal({ tab: 'signup' })}
               className={cn(
-                'flex flex-col rounded-2xl border border-border-subtle bg-surface-1 p-5 shadow-[0_4px_24px_rgba(15,23,42,0.04)]',
-                'transition-shadow duration-300 hover:shadow-[0_8px_32px_rgba(15,23,42,0.08)]',
+                'flex flex-col rounded-2xl border border-border-subtle bg-surface-1 p-5 text-left shadow-[0_4px_24px_rgba(15,23,42,0.04)]',
+                'transition-shadow duration-300 hover:shadow-[0_8px_32px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring',
               )}
             >
               <div className={cn('mb-4 flex h-11 w-11 items-center justify-center rounded-xl', m.iconWrap)}>
@@ -63,7 +66,7 @@ export default function SimulationModes() {
                 <br />
                 {m.line2}
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

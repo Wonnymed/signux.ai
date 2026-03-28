@@ -1,15 +1,12 @@
 import GlobalFooter from '@/components/layout/GlobalFooter';
+import { openAuthModal } from '@/lib/auth/openAuthModal';
 
-interface LandingFooterProps {
-  onSignIn: () => void;
-}
-
-export default function LandingFooter({ onSignIn }: LandingFooterProps) {
-  void onSignIn;
+export default function LandingFooter() {
   return (
     <GlobalFooter
       ctaLabel="Run a simulation"
-      ctaHref="/pricing"
+      onCtaClick={() => openAuthModal({ tab: 'signup' })}
+      onAppLinkClick={() => openAuthModal({ tab: 'signup' })}
       oneLiner="Business simulation engine — 10 specialists debating your decisions in seconds."
     />
   );

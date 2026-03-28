@@ -281,6 +281,16 @@ export async function accumulateThreadContext(
  *
  * Ref: OpenClaw (#26 — Working Buffer danger zone protocol)
  */
+/**
+ * Per-agent working-buffer row number: avoids UNIQUE(simulation_id, round_number) collisions
+ * while keeping base debate round identifiable (floor(round / 1000) === debateRound when <1000 agents).
+ */
+export function computeAgentBufferRoundNumber(debateRound: number, agentId: string): number {
+  let h = 0;
+  for (let i = 0; i < agentId.length; i++) h = (h * 31 + agentId.charCodeAt(i)) >>> 0;
+  return debateRound * 1000 + (h % 1000);
+}
+
 export async function saveToWorkingBuffer(
   simulationId: string,
   userId: string,

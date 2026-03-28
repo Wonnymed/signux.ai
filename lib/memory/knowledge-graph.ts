@@ -76,6 +76,7 @@ export type CognifyResult = {
   relations: ExtractedRelation[];
   entity_count: number;
   relation_count: number;
+  triplet_count: number;
 };
 
 // ═══════════════════════════════════════════
@@ -89,7 +90,9 @@ export async function cognify(
   verdictSummary: string,
   agentReportsSummary: string
 ): Promise<CognifyResult> {
-  if (!supabase) return { entities: [], relations: [], entity_count: 0, relation_count: 0 };
+  if (!supabase) {
+    return { entities: [], relations: [], entity_count: 0, relation_count: 0, triplet_count: 0 };
+  }
 
   const entityTypes = OCTUX_ENTITY_TYPES.join(', ');
   const relationTypes = OCTUX_RELATION_TYPES.join(', ');
@@ -170,18 +173,27 @@ Extract entities and relationships. Return JSON:
     // Store in Supabase
     const storedEntities = await upsertEntities(userId, simulationId, validEntities);
     const storedRelations = await upsertRelations(userId, simulationId, validRelations, storedEntities);
+    const tripletCount = await upsertKnowledgeTriplets(
+      userId,
+      simulationId,
+      validRelations,
+      validEntities,
+    );
 
-    console.log(`[cognify] Extracted ${validEntities.length} entities, ${validRelations.length} relations from sim ${simulationId}`);
+    console.log(
+      `[cognify] Extracted ${validEntities.length} entities, ${validRelations.length} relations, ${tripletCount} triplets from sim ${simulationId}`,
+    );
 
     return {
       entities: validEntities,
       relations: validRelations,
       entity_count: validEntities.length,
       relation_count: validRelations.length,
+      triplet_count: tripletCount,
     };
   } catch (err) {
     console.error('[cognify] Failed:', err, 'Raw:', response.substring(0, 500));
-    return { entities: [], relations: [], entity_count: 0, relation_count: 0 };
+    return { entities: [], relations: [], entity_count: 0, relation_count: 0, triplet_count: 0 };
   }
 }
 
@@ -319,6 +331,54 @@ async function upsertRelations(
   }
 
   return stored;
+}
+
+/**
+ * Materialize subject–predicate–object rows for recall strategy 5 (knowledge_triplets).
+ * Requires unique index knowledge_triplets_user_src_tgt_rel_uidx (see migration 20260329).
+ */
+async function upsertKnowledgeTriplets(
+  userId: string,
+  simulationId: string,
+  relations: ExtractedRelation[],
+  entities: ExtractedEntity[],
+): Promise<number> {
+  if (!supabase || relations.length === 0) return 0;
+
+  const typeByName = new Map(entities.map((e) => [e.name, e.entity_type]));
+  const now = new Date().toISOString();
+
+  const deduped = new Map<string, ExtractedRelation>();
+  for (const rel of relations) {
+    const key = `${rel.source}\0${rel.target}\0${rel.relation_type}`;
+    if (!deduped.has(key)) deduped.set(key, rel);
+  }
+
+  const rows = [...deduped.values()].map((rel) => ({
+    user_id: userId,
+    source_name: rel.source,
+    target_name: rel.target,
+    source_type: typeByName.get(rel.source) ?? null,
+    target_type: typeByName.get(rel.target) ?? null,
+    relation_type: rel.relation_type,
+    weight: Math.min(5, Math.max(0.2, 1 + rel.confidence)),
+    description: rel.description?.slice(0, 4000) ?? null,
+    metadata: { source_simulation_id: simulationId, confidence: rel.confidence },
+    is_active: true,
+    updated_at: now,
+  }));
+
+  const { error } = await supabase.from('knowledge_triplets').upsert(rows, {
+    onConflict: 'user_id,source_name,target_name,relation_type',
+  });
+
+  if (error) {
+    console.error('[MEMORY:ERROR] knowledge_triplets upsert failed:', error.message);
+    return 0;
+  }
+
+  console.log(`[MEMORY:KG] Saved ${rows.length} knowledge_triplets`);
+  return rows.length;
 }
 
 // ═══════════════════════════════════════════

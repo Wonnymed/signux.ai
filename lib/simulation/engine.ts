@@ -18,7 +18,6 @@ import { evaluateSimulation, type SimulationEval } from './evals';
 import { saveSimulation } from '../memory/persistence';
 import { loadMemoryForSimulation, formatMemoryContext, formatAgentMemory, type MemoryPayload } from '../memory/core-memory';
 import { saveToWorkingBuffer } from '../memory/session';
-import { shouldReflect } from '../memory/reflect';
 import { runReflectionLoop, agentShouldReflect } from '../memory/agent-reflection';
 import {
   preSimHook,
@@ -45,6 +44,12 @@ import { extractVerdictClaims, type ConfidenceHeatmap } from './confidence-heatm
 import { generateCheckpoint, formatUserCorrection, HITL_CONFIG, type HITLResponse } from './hitl';
 import { hitlStore } from './hitl-store';
 import { detectDomain, formatDomainConstraints, getDisclaimer, generateShareDigest, type DomainClassification } from './domain';
+import {
+  getModeVerdictAppendix,
+  coerceVerdictCore,
+  mergeModeVerdictFields,
+  ensureVerdictOneLiner,
+} from './mode-verdict';
 import { getOrCreateProfile, formatBehavioralContext, applyBehavioralModifiers, type BehavioralProfile } from '../memory/behavioral';
 import type { AdvisorPersona } from '../agents/advisors';
 import type { AgentId, AgentConfig, AgentReport, SimulationPlan, DecisionObject, Citation } from '../agents/types';
@@ -426,6 +431,8 @@ export async function* runSimulation(
     memory: { coreMemory: { human: '', business: '', preferences: '', history: '' }, isReturningUser: false, relevantFacts: [], profile: null, previousSimCount: 0, opinions: [], observations: [], graphContext: '' },
     networkMemoryText: '', agentKnowledgeMap: new Map(), agentLessonsMap: new Map(), agentRulesMap: new Map(), promptOverrides: new Map(),
     activeThreadId: '', recalledMemoryText: '', threadContext: '', walFactsExtracted: 0,
+    behavioralProfile: null,
+    behavioralContextText: '',
   };
 
   if (options?.userId) {
@@ -511,16 +518,26 @@ export async function* runSimulation(
     },
   };
 
-  // ═══ BEHAVIORAL PARAMETERS — user decision personality ═══
+  // ═══ BEHAVIORAL PARAMETERS — user decision personality (prefer preSimHook load) ═══
   let behavioralProfile: BehavioralProfile | null = null;
   let behavioralContextText = '';
 
   if (options?.userId) {
     try {
-      behavioralProfile = await getOrCreateProfile(options.userId);
-      behavioralContextText = formatBehavioralContext(behavioralProfile);
-      if (behavioralContextText) {
+      if (preSim.behavioralProfile) {
+        behavioralProfile = preSim.behavioralProfile;
+        behavioralContextText = preSim.behavioralContextText || '';
+      }
+      if (!behavioralProfile) {
+        behavioralProfile = await getOrCreateProfile(options.userId);
+        behavioralContextText = formatBehavioralContext(behavioralProfile);
+      }
+      if (behavioralProfile && behavioralContextText) {
         console.log(`BEHAVIORAL: Profile loaded — risk: ${(behavioralProfile.risk_tolerance * 100).toFixed(0)}%, confidence: ${(behavioralProfile.inference_confidence * 100).toFixed(0)}%`);
+      } else if (behavioralProfile) {
+        console.log(
+          `BEHAVIORAL: Profile present — inference_confidence: ${(behavioralProfile.inference_confidence * 100).toFixed(0)}% (context suppressed until threshold met)`,
+        );
       }
     } catch (err) {
       console.error('Behavioral profile load failed (non-blocking):', err);
@@ -950,7 +967,14 @@ Respond with valid JSON only:
           }
           allReports.push(report);
           addAgentReport(state, report);
-          const rl = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
+          const rl = postAgentHook(
+            report.agent_id,
+            report.agent_name || report.agent_id,
+            report,
+            options?.userId
+              ? { userId: options.userId, simulationId: simId, question, debateRound: 3 }
+              : undefined,
+          );
           if (rl.facts_discovered.length > 0 || rl.key_claims.length > 0) roundDiscoveries.push(rl);
           yield { event: 'agent_complete', data: report };
         }
@@ -1091,7 +1115,14 @@ Respond with valid JSON only:
           }
           allReports.push(report);
           addAgentReport(state, report);
-          const rl = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
+          const rl = postAgentHook(
+            report.agent_id,
+            report.agent_name || report.agent_id,
+            report,
+            options?.userId
+              ? { userId: options.userId, simulationId: simId, question, debateRound: 5 }
+              : undefined,
+          );
           if (rl.facts_discovered.length > 0 || rl.key_claims.length > 0) roundDiscoveries.push(rl);
           yield { event: 'agent_complete', data: report };
         }
@@ -1226,7 +1257,14 @@ Respond with valid JSON only:
       if (!filtered) {
         allReports.push(report);
         addAgentReport(state, report);
-        const rl6 = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
+        const rl6 = postAgentHook(
+          report.agent_id,
+          report.agent_name || report.agent_id,
+          report,
+          options?.userId
+            ? { userId: options.userId, simulationId: simId, question, debateRound: 6 }
+            : undefined,
+        );
         if (rl6.facts_discovered.length > 0 || rl6.key_claims.length > 0) roundDiscoveries.push(rl6);
         yield { event: 'agent_complete', data: report };
         await wait(200);
@@ -1484,7 +1522,14 @@ Respond with valid JSON only:
         finalReports.push(report);
         allReports.push(report);
         addAgentReport(state, report);
-        const rl9 = postAgentHook(report.agent_id, report.agent_name || report.agent_id, report);
+        const rl9 = postAgentHook(
+          report.agent_id,
+          report.agent_name || report.agent_id,
+          report,
+          options?.userId
+            ? { userId: options.userId, simulationId: simId, question, debateRound: 9 }
+            : undefined,
+        );
         if (rl9.facts_discovered.length > 0 || rl9.key_claims.length > 0) roundDiscoveries.push(rl9);
         yield { event: 'agent_complete', data: report };
       }
@@ -1585,11 +1630,17 @@ DEBATE PROGRESS:
       ? `\n\nDECISION-MAKER CONTEXT:\n${memory.profile ? memory.profile.profile_text : 'Limited user context available.'}\nPast simulations: ${memory.previousSimCount}\nKnown facts: ${memory.relevantFacts.slice(0, 5).map(f => f.content).join('; ')}${networkMemoryText ? '\n' + networkMemoryText : ''}\n`
       : '';
 
-    const verdictPrompt = `QUESTION: ${question}${memoryForVerdict}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n${taskLedgerSection}${consensusDirective}${crowdSignalText ? '\n' + crowdSignalText : ''}\n\nSynthesize ALL agent positions into a final Decision Object. Tailor your recommendation to the specific decision-maker's context if known. Weight by confidence and evidence quality. Use the Task Ledger to distinguish verified facts from assumptions — your verdict should rely on VERIFIED facts and flag unresolved assumptions as risks.${crowdSignalText ? ' Consider the crowd signal as an additional data point — it reflects diverse perspectives beyond the specialist panel.' : ''}\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }]\n}`;
+    const verdictPrompt = `QUESTION: ${question}${memoryForVerdict}\n\nFINAL AGENT POSITIONS:\n${finalSummary}\n\nFULL DEBATE HISTORY (${allReports.length} total reports across all rounds):\n${reportSummaryForChair}\n${taskLedgerSection}${consensusDirective}${crowdSignalText ? '\n' + crowdSignalText : ''}\n\nSynthesize ALL agent positions into a final Decision Object. Tailor your recommendation to the specific decision-maker's context if known. Weight by confidence and evidence quality. Use the Task Ledger to distinguish verified facts from assumptions — your verdict should rely on VERIFIED facts and flag unresolved assumptions as risks.${crowdSignalText ? ' Consider the crowd signal as an additional data point — it reflects diverse perspectives beyond the specialist panel.' : ''}\n\nRespond with valid JSON only:\n{\n  "recommendation": "proceed" | "proceed_with_conditions" | "delay" | "abandon",\n  "probability": 0-100,\n  "main_risk": "the single biggest risk",\n  "leverage_point": "the one thing that changes everything",\n  "next_action": "specific, actionable, doable this week",\n  "grade": "A" | "B+" | "B" | "C" | "D" | "F",\n  "grade_score": 0-100,\n  "citations": [{ "id": 1, "agent_id": "agent_id", "agent_name": "name", "claim": "specific claim", "confidence": 1-10 }],\n  "one_liner": "optional — one short user-facing headline"\n}${getModeVerdictAppendix(options?.simMode)}`;
+    const verdictMaxTokens =
+      options?.simMode === 'compare'
+        ? 4096
+        : options?.simMode === 'stress_test' || options?.simMode === 'premortem'
+          ? 3072
+          : 2048;
     const verdictRaw = await callClaude({
       systemPrompt: chair.systemPrompt,
       userMessage: verdictPrompt,
-      maxTokens: 2048,
+      maxTokens: verdictMaxTokens,
       tier: 'orchestrator',
     });
     addRound(audit, {
@@ -1601,7 +1652,10 @@ DEBATE PROGRESS:
       timestamp: new Date().toISOString(),
     });
     console.log(`[decision_chair] verdict: ${verdictRaw.length} chars`);
-    verdict = parseJSON<DecisionObject>(verdictRaw);
+    const parsedVerdict = parseJSON<Record<string, unknown>>(verdictRaw);
+    verdict = coerceVerdictCore(parsedVerdict) as DecisionObject;
+    Object.assign(verdict, mergeModeVerdictFields(parsedVerdict, options?.simMode));
+    ensureVerdictOneLiner(verdict as Record<string, unknown>, options?.simMode);
     if (godViewSummaryForVerdict) {
       (verdict as Record<string, unknown>).god_view = godViewSummaryForVerdict;
     }
@@ -1622,6 +1676,7 @@ DEBATE PROGRESS:
         claim: r.key_argument,
         confidence: r.confidence,
       })),
+      one_liner: 'Insufficient data to reach high-confidence decision',
     };
     if (godViewSummaryForVerdict) {
       (verdict as Record<string, unknown>).god_view = godViewSummaryForVerdict;
@@ -1647,7 +1702,21 @@ DEBATE PROGRESS:
       const consensusData = agentConsensusPercent >= 70
         ? { position: agentConsensusPosition, percent: agentConsensusPercent }
         : undefined;
+      const modeSnap = {
+        compare_data: verdict.compare_data,
+        stress_data: verdict.stress_data,
+        failure_analysis: verdict.failure_analysis,
+        one_liner: verdict.one_liner,
+        risk_matrix: (verdict as Record<string, unknown>).risk_matrix,
+        action_plan: (verdict as Record<string, unknown>).action_plan,
+      };
       verdict = await refineVerdict(question, verdict, critique, state, consensusData);
+      if (modeSnap.compare_data) verdict.compare_data = modeSnap.compare_data;
+      if (modeSnap.stress_data) verdict.stress_data = modeSnap.stress_data;
+      if (modeSnap.failure_analysis) verdict.failure_analysis = modeSnap.failure_analysis;
+      if (modeSnap.risk_matrix) (verdict as Record<string, unknown>).risk_matrix = modeSnap.risk_matrix;
+      if (modeSnap.action_plan) (verdict as Record<string, unknown>).action_plan = modeSnap.action_plan;
+      verdict.one_liner = verdict.one_liner || modeSnap.one_liner;
       console.log(`[self-refine] verdict REFINED: actionability ${critique.actionability_score} → improved`);
     }
   } catch (err) {
@@ -1872,22 +1941,23 @@ DEBATE PROGRESS:
   }).catch(err => console.error('[persistence] Save error:', err));
 
   // ═══ POST-SIM — Single hook replaces 9+ individual operations ═══
+  // reflect_triggered uses shouldReflect inside postSimHook AFTER saveExperience (no 1-cycle skew).
   if (options?.userId) {
     try {
-      const simCount = await shouldReflect(options.userId);
-      if (simCount > 0) {
-        yield { event: 'reflect_triggered', data: { sim_count: simCount } };
+      const { reflectSimCount } = await postSimHook(
+        options.userId,
+        simId,
+        question,
+        verdict,
+        state.latest_reports,
+        preSim.activeThreadId
+      );
+      if (reflectSimCount > 0) {
+        yield { event: 'reflect_triggered', data: { sim_count: reflectSimCount } };
       }
-    } catch { /* non-blocking */ }
-
-    await postSimHook(
-      options.userId,
-      simId,
-      question,
-      verdict,
-      state.latest_reports,
-      preSim.activeThreadId
-    ).catch(err => console.error('POST-SIM HOOK failed (non-blocking):', err));
+    } catch (err) {
+      console.error('POST-SIM HOOK failed (non-blocking):', err);
+    }
   }
 
   yield { event: 'complete', data: { simulation_id: simId } };

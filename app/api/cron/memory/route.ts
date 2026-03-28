@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runScheduledMaintenance } from '@/lib/memory/cron';
 
 export async function GET(req: NextRequest) {
-  // Verify cron secret (Vercel sends this header)
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    console.error('[CRON] CRON_SECRET is not set — refusing memory cron');
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 503 });
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

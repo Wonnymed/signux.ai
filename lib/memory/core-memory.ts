@@ -190,6 +190,28 @@ export async function loadMemoryForSimulation(
 
 // ── Format: Full memory context for debate injection ───────
 
+/** ~1000 tokens — caps core-memory + parallel recall/thread blocks injected into prompts. */
+export const MAX_MEMORY_CONTEXT_CHARS = 4000;
+
+export function truncateMemoryContext(context: string): string {
+  if (context.length <= MAX_MEMORY_CONTEXT_CHARS) return context;
+  return (
+    context.slice(0, MAX_MEMORY_CONTEXT_CHARS) +
+    '\n\n[Memory context truncated — most relevant items first; full history remains in storage.]'
+  );
+}
+
+/** Per-agent injection budget (knowledge + lessons + rules, separate from global network block). */
+export const MAX_AGENT_MEMORY_CHARS = 2000;
+
+export function truncateAgentMemoryContext(text: string): string {
+  if (text.length <= MAX_AGENT_MEMORY_CHARS) return text;
+  return (
+    text.slice(0, MAX_AGENT_MEMORY_CHARS) +
+    '\n[Per-agent memory truncated — full data remains in storage.]'
+  );
+}
+
 export function formatMemoryContext(payload: MemoryPayload): string {
   if (!payload.isReturningUser) return '';
 
@@ -210,7 +232,7 @@ export function formatMemoryContext(payload: MemoryPayload): string {
     '\n\n(This block is background only. Follow the chat system instructions on when to use it — do not dump or recite it by default.)';
   context += '\n═══════════════════════════════════════════════════════════════\n';
 
-  return context;
+  return truncateMemoryContext(context);
 }
 
 // ── Format: Agent-specific memory (MiroFish) ───────────────
@@ -225,5 +247,5 @@ export function formatAgentMemory(payload: MemoryPayload, agentId: string): stri
   agentFacts.forEach(f => {
     context += `\n  • ${f.content} (confidence: ${(f.confidence * 100).toFixed(0)}%)`;
   });
-  return context;
+  return truncateAgentMemoryContext(context);
 }

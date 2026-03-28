@@ -16,12 +16,16 @@ function getSupabase() {
   return _supabase;
 }
 
+export type GateDenyCode = 'insufficient_tokens' | 'tier_blocked' | 'no_subscription';
+
 export interface UsageCheckResult {
   allowed: boolean;
   reason?: string;
   tokensUsed?: number;
   tokensTotal?: number;
   upgradeRequired?: TierType;
+  /** Maps to HTTP 402 (tokens) vs 403 (tier / subscription). */
+  denyCode?: GateDenyCode;
 }
 
 function isModeAllowedForTier(tier: TierType, mode: SimulationChargeType): boolean {
@@ -81,6 +85,7 @@ export async function checkSimulationStart(
       allowed: false,
       reason: 'No subscription record found.',
       upgradeRequired: 'pro',
+      denyCode: 'no_subscription',
     };
   }
 
@@ -98,6 +103,7 @@ export async function checkSimulationStart(
       tokensUsed,
       tokensTotal,
       upgradeRequired: 'pro',
+      denyCode: 'tier_blocked',
     };
   }
 
@@ -109,6 +115,7 @@ export async function checkSimulationStart(
       tokensUsed,
       tokensTotal,
       upgradeRequired: next,
+      denyCode: 'insufficient_tokens',
     };
   }
 
@@ -138,6 +145,83 @@ export async function consumeTokens(userId: string, amount: number): Promise<voi
     .eq('user_id', userId);
 
   if (error) console.error('Token consumption failed:', error);
+}
+
+/**
+ * Atomically reserve tokens before a simulation starts (prevents concurrent double-starts).
+ * Uses optimistic locking on tokens_used. Pair with refundSimulationTokens if the run fails.
+ */
+export async function reserveSimulationTokens(
+  userId: string,
+  amount: number,
+  maxRetries = 8,
+): Promise<{ ok: boolean; message?: string; balanceAfter?: number }> {
+  if (!userId || userId.startsWith('anon_') || amount <= 0) {
+    return { ok: true, balanceAfter: undefined };
+  }
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const { data: sub, error: readErr } = await getSupabase()
+      .from('user_subscriptions')
+      .select('tokens_used, tokens_total')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (readErr || !sub) {
+      return { ok: false, message: readErr?.message || 'No subscription record' };
+    }
+
+    const used = sub.tokens_used || 0;
+    const total = sub.tokens_total || 0;
+    const remaining = total - used;
+
+    if (remaining < amount) {
+      return {
+        ok: false,
+        message: `Insufficient tokens (${remaining} remaining, ${amount} required)`,
+      };
+    }
+
+    const nextUsed = used + amount;
+    const { data: rows, error: writeErr } = await getSupabase()
+      .from('user_subscriptions')
+      .update({ tokens_used: nextUsed })
+      .eq('user_id', userId)
+      .eq('tokens_used', used)
+      .select('tokens_used');
+
+    if (writeErr) {
+      return { ok: false, message: writeErr.message };
+    }
+
+    if (rows && rows.length > 0) {
+      const newUsed = rows[0].tokens_used ?? nextUsed;
+      return { ok: true, balanceAfter: Math.max(0, total - newUsed) };
+    }
+  }
+
+  return { ok: false, message: 'Could not reserve tokens (busy); try again.' };
+}
+
+/** Restore reserved tokens when a simulation fails before a verdict is produced. */
+export async function refundSimulationTokens(userId: string, amount: number): Promise<void> {
+  if (!userId || userId.startsWith('anon_') || amount <= 0) return;
+
+  const { data: sub } = await getSupabase()
+    .from('user_subscriptions')
+    .select('tokens_used')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!sub) return;
+
+  const used = Math.max(0, (sub.tokens_used || 0) - amount);
+  const { error } = await getSupabase()
+    .from('user_subscriptions')
+    .update({ tokens_used: used })
+    .eq('user_id', userId);
+
+  if (error) console.error('[billing] refundSimulationTokens failed:', error);
 }
 
 export async function getTokenBalance(userId: string): Promise<{

@@ -8,7 +8,8 @@ import {
   ensureUserSubscription,
   checkSimulationStart,
   getTokenBalance,
-  consumeTokens,
+  reserveSimulationTokens,
+  refundSimulationTokens,
 } from "@/lib/billing/usage";
 import { parseSimulationChargeType, getTokenCost } from "@/lib/billing/token-costs";
 import { resolveEngineParams } from "@/lib/billing/sim-engine-params";
@@ -55,15 +56,31 @@ export async function POST(req: NextRequest) {
   const simMode = parseSimulationChargeType(body.simMode);
   const gate = await checkSimulationStart(userId, simMode);
   if (!gate.allowed) {
+    const status = gate.denyCode === "insufficient_tokens" ? 402 : 403;
     return new Response(
       JSON.stringify({
-        error: "forbidden",
+        error: status === 402 ? "payment_required" : "forbidden",
         message: gate.reason,
         upgradeRequired: gate.upgradeRequired,
         tokensUsed: gate.tokensUsed,
         tokensTotal: gate.tokensTotal,
+        denyCode: gate.denyCode,
       }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
+      { status, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const tokenCost = getTokenCost(simMode);
+  const reserved = await reserveSimulationTokens(userId, tokenCost);
+  if (!reserved.ok) {
+    return new Response(
+      JSON.stringify({
+        error: "Insufficient tokens",
+        message: reserved.message,
+        required: tokenCost,
+        balanceAfter: reserved.balanceAfter,
+      }),
+      { status: 402, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -72,7 +89,6 @@ export async function POST(req: NextRequest) {
     balance.tier,
     simMode,
   );
-  const tokenCost = getTokenCost(simMode);
 
   // `question` is usually client-framed (see lib/simulation/mode-framing.ts) before POST.
   const {
@@ -102,6 +118,23 @@ export async function POST(req: NextRequest) {
   );
 
   const encoder = new TextEncoder();
+
+  /** Tracks billing across start/cancel so client disconnect still refunds once if no verdict. */
+  const billingRef = {
+    simulationDelivered: false,
+    refundIssued: false,
+  };
+
+  const tryRefundReservedTokens = async () => {
+    if (billingRef.simulationDelivered || billingRef.refundIssued) return;
+    billingRef.refundIssued = true;
+    try {
+      await refundSimulationTokens(userId, tokenCost);
+    } catch (refundErr) {
+      console.error("[simulate/stream] token refund failed:", refundErr);
+      billingRef.refundIssued = false;
+    }
+  };
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -159,11 +192,8 @@ export async function POST(req: NextRequest) {
           if (sse.event === "verdict_artifact") {
             finalVerdict = sse.data;
             simulationId = (sse.data as any)?.simulation_id || "";
+            billingRef.simulationDelivered = true;
           }
-        }
-
-        if (finalVerdict) {
-          await consumeTokens(userId, tokenCost);
         }
 
         if (conversationId && finalVerdict && userId) {
@@ -179,6 +209,7 @@ export async function POST(req: NextRequest) {
               conversationId,
               finalVerdict,
               finalVerdict.domain || "general",
+              simMode,
             );
           } catch (e) {
             console.error("[simulate/stream] failed to save verdict to conversation:", e);
@@ -190,6 +221,9 @@ export async function POST(req: NextRequest) {
           message: err instanceof Error ? err.message : "Simulation failed",
         });
       } finally {
+        // Refund reserved tokens only when no verdict was delivered (billingRef.simulationDelivered stays false).
+        // Also invoked from ReadableStream cancel() on client disconnect so abandon-in-flight still refunds once.
+        await tryRefundReservedTokens();
         if (!closed) {
           try {
             controller.close();
@@ -198,6 +232,9 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+    },
+    cancel() {
+      void tryRefundReservedTokens();
     },
   });
 

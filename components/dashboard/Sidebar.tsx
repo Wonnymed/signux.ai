@@ -3,27 +3,17 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/auth/AuthProvider';
 import { useBillingStore } from '@/lib/store/billing';
 import { useDashboardUiStore } from '@/lib/store/dashboard-ui';
 import { useSimulationStore } from '@/lib/store/simulation';
-import type { TierType } from '@/lib/billing/tiers';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import SidebarModes from '@/components/dashboard/SidebarModes';
 import SidebarHistory from '@/components/dashboard/SidebarHistory';
-
-function initialsFromUser(user: { email?: string | null; user_metadata?: { full_name?: string } } | null) {
-  const name = user?.user_metadata?.full_name || user?.email || '?';
-  const parts = name.split(/[\s@]+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
+import UserProfilePopover from '@/components/dashboard/UserProfilePopover';
 
 export default function DashboardSidebar() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
   const tier = useBillingStore((s) => s.tier);
-  const tokensRemaining = useBillingStore((s) => s.tokensRemaining);
   const fetchBalance = useBillingStore((s) => s.fetchBalance);
 
   const activeMode = useDashboardUiStore((s) => s.activeMode);
@@ -40,8 +30,6 @@ export default function DashboardSidebar() {
       setActiveTier('swarm');
     }
   }, [tier, setActiveTier]);
-
-  const planLabel = (t: TierType) => (t === 'free' ? 'Free' : t === 'pro' ? 'Pro' : 'Max');
 
   return (
     <aside
@@ -108,33 +96,7 @@ export default function DashboardSidebar() {
         </div>
       )}
 
-      <div
-        className="flex shrink-0 items-center gap-2.5 border-t px-3 py-3"
-        style={{ borderColor: DARK_THEME.border_default }}
-      >
-        <div
-          className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
-          style={{ backgroundColor: DARK_THEME.accent }}
-        >
-          {initialsFromUser(user)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium text-white/85">
-            {user?.user_metadata?.full_name || user?.email || 'Account'}
-          </p>
-          <p className="text-[10px]" style={{ color: DARK_THEME.text_tertiary }}>
-            {planLabel(tier)} · {tokensRemaining} tokens left
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => signOut()}
-          className="text-[10px] font-medium underline-offset-2 hover:underline"
-          style={{ color: DARK_THEME.text_tertiary }}
-        >
-          Out
-        </button>
-      </div>
+      <UserProfilePopover />
     </aside>
   );
 }

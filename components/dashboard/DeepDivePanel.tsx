@@ -149,6 +149,7 @@ export default function DeepDivePanel() {
       setSending(true);
 
       try {
+        // Future: stream SSE from /api/agent-chat for progressive tokens (today: single JSON response).
         const res = await fetch('/api/agent-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

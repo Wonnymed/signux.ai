@@ -17,6 +17,17 @@ function resolveTheme(mode: ThemeMode): 'light' | 'dark' {
   return mode;
 }
 
+const THEME_STORAGE_KEYS = ['octux_theme', 'octux:theme'] as const;
+
+function readStoredThemeMode(): ThemeMode | null {
+  if (typeof window === 'undefined') return null;
+  for (const key of THEME_STORAGE_KEYS) {
+    const raw = localStorage.getItem(key) as ThemeMode | null;
+    if (raw === 'light' || raw === 'dark' || raw === 'system') return raw;
+  }
+  return null;
+}
+
 function applyThemeToDOM(resolved: 'light' | 'dark') {
   const root = document.documentElement;
   if (resolved === 'dark') {
@@ -40,6 +51,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   setMode: (mode) => {
     set({ mode });
     if (typeof window === 'undefined') return;
+    localStorage.setItem('octux_theme', mode);
     localStorage.setItem('octux:theme', mode);
     const resolved = resolveTheme(mode);
     applyThemeToDOM(resolved);
@@ -49,8 +61,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   initialize: () => {
     if (typeof window === 'undefined') return;
 
-    const saved = localStorage.getItem('octux:theme') as ThemeMode | null;
-    const mode = saved || 'system';
+    const mode = readStoredThemeMode() || 'system';
     const resolved = resolveTheme(mode);
     applyThemeToDOM(resolved);
     set({ mode, resolved });

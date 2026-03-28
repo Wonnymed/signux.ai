@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { cn } from '@/lib/design/cn';
 import { OctButton } from '@/components/octux';
 import { TIERS, type TierType } from '@/lib/billing/tiers';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { openAuthModal, POST_AUTH_REDIRECT_KEY } from '@/lib/auth/openAuthModal';
 
 export default function PricingPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleCheckout = async (tier: TierType) => {
@@ -91,8 +94,20 @@ export default function PricingPage() {
                 fullWidth
                 loading={loading === tier.id}
                 onClick={() => {
-                  if (tier.id === 'free') window.location.href = '/';
-                  else handleCheckout(tier.id);
+                  if (tier.id === 'free') {
+                    window.location.href = '/';
+                    return;
+                  }
+                  if (!authLoading && !isAuthenticated) {
+                    try {
+                      sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, '/pricing');
+                    } catch {
+                      /* private mode */
+                    }
+                    openAuthModal({ tab: 'signup' });
+                    return;
+                  }
+                  void handleCheckout(tier.id);
                 }}
               >
                 {tier.id === 'free' ? 'Start free' : `Go ${tier.name}`}

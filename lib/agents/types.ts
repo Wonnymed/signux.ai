@@ -1,3 +1,10 @@
+import type {
+  CompareVerdictData,
+  StressVerdictData,
+  PremortemFailureAnalysis,
+  LegacyRiskEntry,
+} from '../simulation/mode-verdict';
+
 export type AgentId =
   | 'decision_chair'
   | 'base_rate_archivist'
@@ -49,6 +56,15 @@ export type DecisionObject = {
   grade: string;
   grade_score: number;
   citations: Citation[];
+  /** Optional narrative headline for dashboards / VerdictPanel. */
+  one_liner?: string;
+  compare_data?: CompareVerdictData;
+  stress_data?: StressVerdictData;
+  failure_analysis?: PremortemFailureAnalysis;
+  /** Premortem prevention steps (mirrors VerdictResult.action_plan). */
+  action_plan?: string[];
+  /** Stress-mode legacy list shape (also used when mapping structured stress vectors). */
+  risk_matrix?: LegacyRiskEntry[];
 };
 
 export type Citation = {

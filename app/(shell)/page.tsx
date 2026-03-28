@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/lib/store/app';
-import AuthModal from '@/components/auth/AuthModal';
 import DashboardHome from '@/components/dashboard/DashboardHome';
 import HeroSection from '@/components/landing/HeroSection';
 import SimulationPreviewBand from '@/components/landing/SimulationPreviewBand';
@@ -16,14 +15,45 @@ import WhyNotChatGPT from '@/components/landing/WhyNotChatGPT';
 import PricingPreview from '@/components/landing/PricingPreview';
 import SiteFooter from '@/components/landing/LandingFooter';
 import { pendingFirstMessageKey, pendingSimulationKey } from '@/lib/chat/firstMessageBootstrap';
-import { dashboardModeToChargeType, useDashboardUiStore } from '@/lib/store/dashboard-ui';
+import {
+  dashboardModeToChargeType,
+  useDashboardUiStore,
+  type DashboardMode,
+  type DashboardTier,
+} from '@/lib/store/dashboard-ui';
 import { useBillingStore } from '@/lib/store/billing';
 import { frameQuestionForMode } from '@/lib/simulation/mode-framing';
+import { HERO_QUESTION_KEY, openAuthModal } from '@/lib/auth/openAuthModal';
+
+function parseOctuxPendingQuestion(raw: string):
+  | { kind: 'dashboard'; question: string; mode?: DashboardMode; tier?: DashboardTier }
+  | { kind: 'plain'; text: string } {
+  const t = raw.trim();
+  if (t.startsWith('{')) {
+    try {
+      const o = JSON.parse(t) as Record<string, unknown>;
+      const q = o.question;
+      if (typeof q === 'string' && q.trim()) {
+        const m = o.mode;
+        const tr = o.tier;
+        const mode =
+          typeof m === 'string' && ['simulate', 'compare', 'stress', 'premortem'].includes(m)
+            ? (m as DashboardMode)
+            : undefined;
+        const tier =
+          tr === 'swarm' || tr === 'specialist' ? (tr as DashboardTier) : undefined;
+        return { kind: 'dashboard', question: q, mode, tier };
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  return { kind: 'plain', text: raw };
+}
 
 export default function HomePage() {
-  const { isAuthenticated, isLoading, checkGuestLimit } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
   const router = useRouter();
   const addConversation = useAppStore((s) => s.addConversation);
 
@@ -33,10 +63,9 @@ export default function HomePage() {
 
       if (!isAuthenticated) {
         try {
-          localStorage.setItem('octux_pending_question', message.substring(0, 200));
+          sessionStorage.setItem(HERO_QUESTION_KEY, message.trim());
         } catch {}
-        if (!checkGuestLimit()) return;
-        setShowAuth(true);
+        openAuthModal({ tab: 'signup' });
         return;
       }
 
@@ -78,23 +107,38 @@ export default function HomePage() {
         setLoading(false);
       }
     },
-    [loading, isAuthenticated, checkGuestLimit, addConversation, router],
+    [loading, isAuthenticated, addConversation, router],
   );
 
-  // Recover pending question after auth
+  // After sign-in: hero question → dashboard input; then Agent Lab / legacy pending localStorage.
   useEffect(() => {
     if (!isAuthenticated || isLoading) return;
-    const pending = localStorage.getItem('octux_pending_question');
-    if (pending) {
-      localStorage.removeItem('octux_pending_question');
-      void handleSend(pending);
-    }
-  }, [isAuthenticated, isLoading, handleSend]);
 
-  const handleAuthSuccess = () => {
-    setShowAuth(false);
-    router.refresh();
-  };
+    try {
+      const hero = sessionStorage.getItem(HERO_QUESTION_KEY);
+      if (hero?.trim()) {
+        useDashboardUiStore.getState().setInputA(hero.trim());
+        sessionStorage.removeItem(HERO_QUESTION_KEY);
+      }
+    } catch {
+      /* private mode */
+    }
+
+    const raw = localStorage.getItem('octux_pending_question');
+    if (!raw) return;
+    localStorage.removeItem('octux_pending_question');
+
+    const parsed = parseOctuxPendingQuestion(raw);
+    if (parsed.kind === 'dashboard') {
+      const { setActiveMode, setActiveTier, setInputA } = useDashboardUiStore.getState();
+      if (parsed.mode) setActiveMode(parsed.mode);
+      if (parsed.tier) setActiveTier(parsed.tier);
+      setInputA(parsed.question);
+      return;
+    }
+
+    void handleSend(parsed.text);
+  }, [isAuthenticated, isLoading, handleSend]);
 
   const handleDashboardRun = useCallback(async () => {
     const { activeMode, activeTier, inputA, inputB } = useDashboardUiStore.getState();
@@ -164,22 +208,16 @@ export default function HomePage() {
   return (
     <>
       <div className="min-h-screen overflow-x-hidden bg-surface-0 text-txt-primary">
-        <HeroSection onSubmit={handleSend} loading={loading} />
+        <HeroSection requireAuth loading={loading} />
         <SimulationPreviewBand />
         <TrustStrip />
         <SimulationModes />
-        <LiveExample onSignIn={() => setShowAuth(true)} />
+        <LiveExample />
         <HowItWorks />
         <WhyNotChatGPT />
-        <PricingPreview onSignIn={() => setShowAuth(true)} />
-        <SiteFooter onSignIn={() => setShowAuth(true)} />
+        <PricingPreview />
+        <SiteFooter />
       </div>
-
-      <AuthModal
-        isOpen={showAuth}
-        onClose={() => setShowAuth(false)}
-        onAuthSuccess={handleAuthSuccess}
-      />
     </>
   );
 }

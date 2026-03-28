@@ -1,0 +1,224 @@
+'use client';
+
+import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Settings, Globe, Sun, Monitor, Moon, Gem, LogOut } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useBillingStore } from '@/lib/store/billing';
+import { useThemeStore, type ThemeMode } from '@/lib/store/theme';
+import type { TierType } from '@/lib/billing/tiers';
+
+function initialsFromUser(user: { email?: string | null; user_metadata?: { full_name?: string } } | null) {
+  const name = user?.user_metadata?.full_name || user?.email || '?';
+  const parts = name.split(/[\s@]+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function planLabel(t: TierType) {
+  if (t === 'free') return 'Free';
+  if (t === 'pro') return 'Pro';
+  return 'Max';
+}
+
+function planPillClass(t: TierType): { bg: string; fg: string } {
+  if (t === 'free') return { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)' };
+  if (t === 'pro') return { bg: 'rgba(232,89,60,0.2)', fg: '#e8a090' };
+  return { bg: 'rgba(234,179,8,0.18)', fg: '#facc15' };
+}
+
+const MENU_SURFACE = 'rgba(15,15,20,0.97)';
+const MENU_BORDER = 'rgba(255,255,255,0.1)';
+const DIVIDER = 'rgba(255,255,255,0.06)';
+
+export default function UserProfilePopover() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+  const tier = useBillingStore((s) => s.tier);
+  const tokensRemaining = useBillingStore((s) => s.tokensRemaining);
+  const mode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
+
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    const onPointer = (e: MouseEvent) => {
+      const el = rootRef.current;
+      if (el && !el.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onPointer);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onPointer);
+    };
+  }, [open]);
+
+  const onPickTheme = useCallback(
+    (m: ThemeMode) => {
+      setThemeMode(m);
+    },
+    [setThemeMode],
+  );
+
+  const handleLogout = useCallback(async () => {
+    setOpen(false);
+    await signOut();
+    router.push('/');
+  }, [signOut, router]);
+
+  const name = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Account';
+  const email = user?.email || '';
+  const pill = planPillClass(tier);
+
+  return (
+    <div ref={rootRef} className="relative shrink-0 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full cursor-pointer items-center gap-2.5 px-[14px] py-3 text-left transition-colors hover:bg-white/[0.03]"
+        aria-expanded={open}
+      >
+        <div
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-medium"
+          style={{
+            backgroundColor: 'rgba(232,89,60,0.15)',
+            color: '#e8593c',
+          }}
+        >
+          {initialsFromUser(user)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-medium text-white/90">{name}</p>
+          {email ? (
+            <p className="truncate text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              {email}
+            </p>
+          ) : null}
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+            <span
+              className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ backgroundColor: pill.bg, color: pill.fg }}
+            >
+              {planLabel(tier)}
+            </span>
+            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              {tokensRemaining} tokens left
+            </span>
+          </div>
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="absolute bottom-full left-2 right-2 z-[80] mb-2 overflow-hidden rounded-[10px] p-1 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
+            style={{
+              backgroundColor: MENU_SURFACE,
+              border: `1px solid ${MENU_BORDER}`,
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+            }}
+          >
+            <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-white/75 transition-colors hover:bg-white/[0.06] hover:text-white/90"
+            >
+              <Settings size={16} className="shrink-0 opacity-80" strokeWidth={1.75} />
+              Settings
+            </Link>
+            <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-white/75 transition-colors hover:bg-white/[0.06] hover:text-white/90"
+            >
+              <Globe size={16} className="shrink-0 opacity-80" strokeWidth={1.75} />
+              Language <span className="ml-auto text-[11px] text-white/35">English</span>
+            </Link>
+
+            <div className="my-1 h-px" style={{ backgroundColor: DIVIDER }} />
+
+            <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-white/35">Theme</p>
+            <ThemeRow
+              icon={<Sun size={16} strokeWidth={1.75} />}
+              label="Light"
+              selected={mode === 'light'}
+              onClick={() => onPickTheme('light')}
+            />
+            <ThemeRow
+              icon={<Monitor size={16} strokeWidth={1.75} />}
+              label="System (default)"
+              selected={mode === 'system'}
+              onClick={() => onPickTheme('system')}
+            />
+            <ThemeRow
+              icon={<Moon size={16} strokeWidth={1.75} />}
+              label="Dark"
+              selected={mode === 'dark'}
+              onClick={() => onPickTheme('dark')}
+            />
+
+            <div className="my-1 h-px" style={{ backgroundColor: DIVIDER }} />
+
+            <Link
+              href="/pricing"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-white/75 transition-colors hover:bg-white/[0.06] hover:text-white/90"
+            >
+              <Gem size={16} className="shrink-0 opacity-80" strokeWidth={1.75} />
+              View all plans
+            </Link>
+
+            <div className="my-1 h-px" style={{ backgroundColor: DIVIDER }} />
+
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] text-white/45 transition-colors hover:bg-red-500/10 hover:text-[#f87171]"
+            >
+              <LogOut size={16} className="shrink-0 opacity-80" strokeWidth={1.75} />
+              Log out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ThemeRow({
+  icon,
+  label,
+  selected,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-colors hover:bg-white/[0.06]"
+      style={{ color: selected ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)' }}
+    >
+      <span className="flex w-4 shrink-0 justify-center text-white/70">{icon}</span>
+      <span className="flex-1">{label}</span>
+      {selected ? <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#e8593c]" aria-hidden /> : null}
+    </button>
+  );
+}

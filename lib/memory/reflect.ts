@@ -15,6 +15,7 @@
 
 import { supabase } from './supabase';
 import { callClaude, parseJSON } from '../simulation/claude';
+import { confidenceHistoryArray } from './confidence-history';
 
 // ═══════════════════════════════════════════
 // TYPES
@@ -37,14 +38,29 @@ type ReflectResult = { opinions: number; observations: number; misses: number };
 // reflectOnExperiences() — Orchestrator
 // ═══════════════════════════════════════════
 
-/** Check if reflect will trigger (every 5th sim). Used for SSE event. */
+/** Check if reflect will trigger (every 5th experience row). Returns trigger count or 0. */
 export async function shouldReflect(userId: string): Promise<number> {
   if (!supabase) return 0;
-  const { count } = await supabase
-    .from('decision_experiences')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId);
-  return (count && count % 5 === 0) ? count : 0;
+  try {
+    const { count, error } = await supabase
+      .from('decision_experiences')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('[MEMORY:REFLECT] Experience count query failed:', error.message, { userId });
+      return 0;
+    }
+
+    const c = count ?? 0;
+    const should = c > 0 && c % 5 === 0;
+    console.log('[MEMORY:REFLECT] Experience count:', c, 'Should reflect:', should);
+    return should ? c : 0;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[MEMORY:REFLECT] Experience count threw:', msg, { userId });
+    return 0;
+  }
 }
 
 export async function reflectOnExperiences(
@@ -211,7 +227,7 @@ JSON array:
             if (!current) break;
 
             const newConfidence = Math.min(Math.max(action.new_confidence, 0.05), 0.95);
-            const history = Array.isArray(current.confidence_history) ? current.confidence_history : [];
+            const history = confidenceHistoryArray(current.confidence_history);
             history.push({
               confidence: newConfidence,
               previous: current.confidence,
@@ -251,7 +267,7 @@ JSON array:
               .eq('id', action.existing_opinion_id)
               .single();
 
-            const history = Array.isArray(current?.confidence_history) ? current.confidence_history : [];
+            const history = confidenceHistoryArray(current?.confidence_history);
             history.push({
               confidence: 0,
               reason: action.reason,

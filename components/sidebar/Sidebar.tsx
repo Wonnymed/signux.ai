@@ -10,21 +10,18 @@ import {
   MoreHorizontal,
   Dna,
   Settings,
-  Settings2,
   Globe,
   List,
   Zap,
   ChevronRight,
   LogIn,
   LogOut,
-  FolderKanban,
 } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { useAppStore, type ConversationSummary } from '@/lib/store/app';
 import { useBillingStore } from '@/lib/store/billing';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { TIERS, normalizeTierType, type TierType } from '@/lib/billing/tiers';
-import { OCTUX_TOOLS, type OctuxTool } from '@/lib/tools/config';
 import {
   Tooltip,
   TooltipContent,
@@ -43,13 +40,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/shadcn/dropdown-menu';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/shadcn/hover-card';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
 import ConversationContextMenu from './ConversationContextMenu';
 import InlineRename from './InlineRename';
 import { ThemeToggleCompact } from '@/components/theme/ThemeToggle';
-import { useProjects } from '@/app/lib/useProjects';
-
 const ICON_STROKE = 1.5;
 /** Expanded rail — Okara-scale width (matches --sidebar-width-expanded) */
 const EXPANDED_W = 288;
@@ -66,15 +60,6 @@ const NAV_ICON = 18;
 /** Match conversation title styling in the history list */
 const NAV_LABEL_CLASS =
   'flex-1 text-left text-[13px] font-medium leading-[1.4] tracking-[-0.01em] text-txt-primary';
-
-/** Okara flyout order: Compare → Risk Matrix → Templates → Journal */
-const TOOLS_FLYOUT_ORDER = ['compare', 'risk-matrix', 'templates', 'journal'] as const;
-
-function getToolsForFlyout(): OctuxTool[] {
-  return TOOLS_FLYOUT_ORDER.map((slug) => OCTUX_TOOLS.find((t) => t.slug === slug)).filter(
-    (t): t is OctuxTool => !!t,
-  );
-}
 
 export default function Sidebar() {
   const expanded = useAppStore((s) => s.sidebarExpanded);
@@ -100,9 +85,7 @@ function SidebarCollapsed() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const tier = useBillingStore((s) => s.tier);
 
-  const toolsActive = pathname.startsWith('/tools');
   const agentLabActive = pathname === '/agents';
-  const projectsNavActive = pathname === '/projects' || pathname.startsWith('/projects/');
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -135,7 +118,7 @@ function SidebarCollapsed() {
 
         <CollapsedIconButton
           onClick={() => router.push('/')}
-          tooltip="New chat"
+          tooltip="New simulation"
           active={pathname === '/'}
         >
           <Plus size={NAV_ICON} strokeWidth={ICON_STROKE} />
@@ -148,9 +131,6 @@ function SidebarCollapsed() {
         >
           <Dna size={NAV_ICON} strokeWidth={ICON_STROKE} />
         </CollapsedIconButton>
-
-        <ToolsFlyoutMenu pathname={pathname} variant="collapsed" toolsActive={toolsActive} />
-        <ProjectsFlyoutMenu variant="collapsed" projectsActive={projectsNavActive} />
 
         <div className="min-h-2 flex-1" />
 
@@ -241,8 +221,6 @@ function SidebarExpanded() {
 
   const newChatActive = pathname === '/';
   const agentLabActive = pathname === '/agents';
-  const toolsNavActive = pathname.startsWith('/tools');
-  const projectsNavActive = pathname === '/projects' || pathname?.startsWith('/projects/');
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -281,7 +259,7 @@ function SidebarExpanded() {
         <div className="space-y-0.5 px-2.5 pt-0">
           <NavItemButton
             icon={Plus}
-            label="New chat"
+            label="New simulation"
             active={newChatActive}
             onClick={handleNew}
           />
@@ -291,8 +269,6 @@ function SidebarExpanded() {
             active={agentLabActive}
             onClick={() => router.push('/agents')}
           />
-          <ToolsFlyoutMenu pathname={pathname} variant="expanded" toolsActive={toolsNavActive} />
-          <ProjectsFlyoutMenu variant="expanded" projectsActive={projectsNavActive} />
         </div>
 
         <div className="mx-3 my-2 h-px bg-border-subtle/80" />
@@ -435,241 +411,6 @@ function SidebarSectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Tools / Projects flyouts — HoverCard opens on hover (Claude-style)
-// ═══════════════════════════════════════════════════════════════════════════
-
-const FLYOUT_CONTENT_CLASS =
-  'z-[100] w-60 rounded-[12px] border border-border-default bg-[var(--bg-tertiary)] p-2 shadow-lg';
-
-function ToolsFlyoutMenu({
-  pathname,
-  variant,
-  toolsActive,
-}: {
-  pathname: string | null;
-  variant: 'expanded' | 'collapsed';
-  toolsActive: boolean;
-}) {
-  const router = useRouter();
-  const tools = getToolsForFlyout();
-  const [open, setOpen] = useState(false);
-
-  const panel = (
-    <>
-      <div className="mb-1 flex items-center gap-2 px-2 py-1.5">
-        <Settings2 size={14} className="text-txt-secondary" strokeWidth={ICON_STROKE} />
-        <span className="text-[12px] font-medium text-txt-tertiary">Tools</span>
-      </div>
-      {tools.map((tool) => {
-        const Icon = tool.icon;
-        const active = pathname === tool.href || pathname?.startsWith(`${tool.href}/`);
-        return (
-          <button
-            key={tool.href}
-            type="button"
-            onClick={() => {
-              router.push(tool.href);
-              setOpen(false);
-            }}
-            className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-2/80',
-              active ? 'bg-surface-2' : '',
-            )}
-          >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-hover)]">
-              <Icon size={14} className="text-txt-secondary" strokeWidth={ICON_STROKE} />
-            </div>
-            <span className="text-[13px] text-txt-secondary">{tool.name}</span>
-          </button>
-        );
-      })}
-    </>
-  );
-
-  if (variant === 'expanded') {
-    return (
-      <HoverCard open={open} onOpenChange={setOpen} openDelay={0} closeDelay={120}>
-        <HoverCardTrigger asChild>
-          <button
-            type="button"
-            className={cn(
-              'flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left transition-colors duration-150',
-              toolsActive || open
-                ? 'bg-surface-2'
-                : 'hover:bg-[#f0efea]/80 dark:hover:bg-surface-2/80',
-            )}
-          >
-            <Settings2
-              size={NAV_ICON}
-              strokeWidth={ICON_STROKE}
-              className={cn(
-                'shrink-0 text-txt-primary',
-                toolsActive || open ? 'opacity-100' : 'opacity-80',
-              )}
-            />
-            <span className={NAV_LABEL_CLASS}>Tools</span>
-            <ChevronRight
-              size={14}
-              strokeWidth={ICON_STROKE}
-              className={cn('shrink-0 text-txt-disabled transition-transform duration-150', open && 'rotate-90')}
-            />
-          </button>
-        </HoverCardTrigger>
-        <HoverCardContent side="right" align="start" sideOffset={8} className={FLYOUT_CONTENT_CLASS}>
-          {panel}
-        </HoverCardContent>
-      </HoverCard>
-    );
-  }
-
-  return (
-    <HoverCard open={open} onOpenChange={setOpen} openDelay={0} closeDelay={120}>
-      <HoverCardTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            'mb-1 flex h-10 w-10 items-center justify-center rounded-xl transition-colors duration-150',
-            toolsActive || open
-              ? 'bg-accent-subtle text-txt-primary'
-              : 'text-txt-primary/75 hover:bg-surface-2 hover:text-txt-primary',
-          )}
-          aria-label="Tools"
-          title="Tools"
-        >
-          <Settings2 size={NAV_ICON} strokeWidth={ICON_STROKE} />
-        </button>
-      </HoverCardTrigger>
-      <HoverCardContent side="right" align="start" sideOffset={8} className={FLYOUT_CONTENT_CLASS}>
-        {panel}
-      </HoverCardContent>
-    </HoverCard>
-  );
-}
-
-function ProjectsFlyoutMenu({
-  variant,
-  projectsActive,
-}: {
-  variant: 'expanded' | 'collapsed';
-  projectsActive: boolean;
-}) {
-  const router = useRouter();
-  const { isAuthenticated } = useAuth();
-  const { projects, loading, selectProject } = useProjects(isAuthenticated);
-  const [open, setOpen] = useState(false);
-
-  const recent = projects.slice(0, 8);
-
-  const panel = (
-    <>
-      <div className="mb-1 flex items-center gap-2 px-2 py-1.5">
-        <FolderKanban size={14} className="text-txt-secondary" strokeWidth={ICON_STROKE} />
-        <span className="text-[12px] font-medium text-txt-tertiary">Projects</span>
-      </div>
-      {!isAuthenticated ? (
-        <p className="px-2.5 py-2 text-[12px] leading-snug text-txt-secondary">Sign in to use projects.</p>
-      ) : loading ? (
-        <p className="px-2.5 py-2 text-[12px] text-txt-tertiary">Loading…</p>
-      ) : recent.length === 0 ? (
-        <p className="px-2.5 py-2 text-[12px] leading-snug text-txt-secondary">No projects yet.</p>
-      ) : (
-        recent.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => {
-              selectProject(p.id);
-              setOpen(false);
-              router.push('/');
-            }}
-            className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-2/80"
-          >
-            <span
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: p.color || '#D4AF37' }}
-              aria-hidden
-            />
-            <span className="min-w-0 flex-1 truncate text-[13px] text-txt-secondary">{p.name}</span>
-          </button>
-        ))
-      )}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen(false);
-          router.push('/projects');
-        }}
-        className="mt-1 w-full rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-accent transition-colors hover:bg-surface-2/80"
-      >
-        View all projects
-      </button>
-    </>
-  );
-
-  if (variant === 'expanded') {
-    return (
-      <HoverCard open={open} onOpenChange={setOpen} openDelay={0} closeDelay={120}>
-        <HoverCardTrigger asChild>
-          <button
-            type="button"
-            className={cn(
-              'flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left transition-colors duration-150',
-              projectsActive || open
-                ? 'bg-surface-2'
-                : 'hover:bg-[#f0efea]/80 dark:hover:bg-surface-2/80',
-            )}
-          >
-            <FolderKanban
-              size={NAV_ICON}
-              strokeWidth={ICON_STROKE}
-              className={cn(
-                'shrink-0 text-txt-primary',
-                projectsActive || open ? 'opacity-100' : 'opacity-80',
-              )}
-            />
-            <span className={NAV_LABEL_CLASS}>Projects</span>
-            <ChevronRight
-              size={14}
-              strokeWidth={ICON_STROKE}
-              className={cn(
-                'shrink-0 text-txt-disabled transition-transform duration-150',
-                open && 'rotate-90',
-              )}
-            />
-          </button>
-        </HoverCardTrigger>
-        <HoverCardContent side="right" align="start" sideOffset={8} className={FLYOUT_CONTENT_CLASS}>
-          {panel}
-        </HoverCardContent>
-      </HoverCard>
-    );
-  }
-
-  return (
-    <HoverCard open={open} onOpenChange={setOpen} openDelay={0} closeDelay={120}>
-      <HoverCardTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            'mb-1 flex h-10 w-10 items-center justify-center rounded-xl transition-colors duration-150',
-            projectsActive || open
-              ? 'bg-accent-subtle text-txt-primary'
-              : 'text-txt-primary/75 hover:bg-surface-2 hover:text-txt-primary',
-          )}
-          aria-label="Projects"
-          title="Projects"
-        >
-          <FolderKanban size={NAV_ICON} strokeWidth={ICON_STROKE} />
-        </button>
-      </HoverCardTrigger>
-      <HoverCardContent side="right" align="start" sideOffset={8} className={FLYOUT_CONTENT_CLASS}>
-        {panel}
-      </HoverCardContent>
-    </HoverCard>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // Profile — popover above (DropdownMenu side=top)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -687,10 +428,10 @@ function ProfileMenu({ variant, tier }: { variant: 'expanded' | 'collapsed'; tie
       ? user.user_metadata.full_name
       : isAuthenticated
         ? user?.email ?? 'User'
-        : 'Guest';
+        : 'Sign in';
 
   const initial =
-    isAuthenticated && user?.email ? user.email[0].toUpperCase() : 'G';
+    isAuthenticated && user?.email ? user.email[0].toUpperCase() : '?';
 
   const triggerExpanded = (
     <button
@@ -807,8 +548,8 @@ function ProfileMenu({ variant, tier }: { variant: 'expanded' | 'collapsed'; tie
         ) : (
           <>
             <div className="px-4 pb-2 pt-4">
-              <p className="text-[15px] font-semibold text-[#1A1A1A] dark:text-txt-primary">Guest</p>
-              <p className="mt-1 text-[13px] text-[#6B6560] dark:text-txt-secondary">Sign in to sync your account</p>
+              <p className="text-[15px] font-semibold text-[#1A1A1A] dark:text-txt-primary">Account required</p>
+              <p className="mt-1 text-[13px] text-[#6B6560] dark:text-txt-secondary">Sign in to use Octux</p>
             </div>
             <DropdownMenuSeparator className="m-0 bg-[#E5E5E5] dark:bg-border-subtle" />
             <div className="p-1.5">

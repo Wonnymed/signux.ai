@@ -9,12 +9,15 @@ import { supabase } from '../memory/supabase';
 
 export type Conversation = {
   id: string;
+  user_id?: string;
   title: string;
   domain: string;
   has_simulation: boolean;
   latest_verdict: string | null;
   latest_verdict_probability: number | null;
   is_pinned: boolean;
+  /** Billing charge type of the last completed simulation (swarm, specialist, compare, …). */
+  last_sim_mode?: string | null;
   message_count: number;
   simulation_count: number;
   updated_at: string;
@@ -143,7 +146,8 @@ export async function addMessage(
 export async function updateConversationAfterSim(
   conversationId: string,
   verdict: any,
-  domain: string
+  domain: string,
+  lastSimMode?: string | null,
 ): Promise<void> {
   if (!supabase) return;
   const rec = (verdict?.recommendation || '').toLowerCase();
@@ -154,6 +158,7 @@ export async function updateConversationAfterSim(
     latest_verdict: rec || null,
     latest_verdict_probability: prob || null,
     domain,
+    last_sim_mode: lastSimMode ?? null,
     updated_at: new Date().toISOString(),
   }).eq('id', conversationId);
 }
@@ -165,7 +170,10 @@ export async function togglePin(conversationId: string, pinned: boolean): Promis
 
 export async function updateTitle(conversationId: string, title: string): Promise<void> {
   if (!supabase) return;
-  await supabase.from('conversations').update({ title }).eq('id', conversationId);
+  await supabase
+    .from('conversations')
+    .update({ title, updated_at: new Date().toISOString() })
+    .eq('id', conversationId);
 }
 
 export async function deleteConversation(conversationId: string): Promise<void> {

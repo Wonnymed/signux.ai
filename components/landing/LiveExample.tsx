@@ -2,12 +2,9 @@
 
 import { cn } from '@/lib/design/cn';
 import { OctButton } from '@/components/octux';
+import { openAuthModal } from '@/lib/auth/openAuthModal';
 
-interface LiveExampleProps {
-  onSignIn: () => void;
-}
-
-export default function LiveExample({ onSignIn }: LiveExampleProps) {
+export default function LiveExample() {
   const verdict = {
     question: 'Should I open a coffee shop in Gangnam, Seoul?',
     recommendation: 'PROCEED',
@@ -35,7 +32,7 @@ export default function LiveExample({ onSignIn }: LiveExampleProps) {
           </h2>
           <p className="text-sm text-txt-tertiary max-w-lg mx-auto leading-relaxed">
             This is actual Octux output. Ten specialists debated this question.{' '}
-            <span className="text-txt-secondary">127 market voices</span> fed the God&apos;s view layer before the verdict locked.
+            <span className="text-txt-secondary">1,000 market voices</span> fed the God&apos;s view layer before the verdict locked.
           </p>
         </div>
 
@@ -99,7 +96,7 @@ export default function LiveExample({ onSignIn }: LiveExampleProps) {
 
           {/* CTA */}
           <div className="px-6 py-4 border-t border-border-subtle text-center bg-accent-subtle/30">
-            <OctButton variant="default" size="md" onClick={onSignIn}>
+            <OctButton variant="default" size="md" onClick={() => openAuthModal({ tab: 'signup' })}>
               Try your own decision &rarr;
             </OctButton>
           </div>

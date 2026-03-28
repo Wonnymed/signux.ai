@@ -7,10 +7,13 @@ import { useSimulationStore } from '@/lib/store/simulation';
 import { useDashboardUiStore } from '@/lib/store/dashboard-ui';
 import { useDeepDiveStore } from '@/lib/store/deep-dive';
 import { useBillingStore } from '@/lib/store/billing';
+import { TIERS } from '@/lib/billing/tiers';
+import UpgradePrompt from '@/components/billing/UpgradePrompt';
 import { resolveAgentChatId } from '@/lib/agent-chat/resolve-agent-id';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import { cn } from '@/lib/design/cn';
 import type { VerdictResult, AgentScoreEntry, RiskEntry } from '@/lib/simulation/events';
+import type { StressRiskVector } from '@/lib/simulation/mode-verdict';
 import type { SimulationChargeType } from '@/lib/billing/token-costs';
 import type { AgentStreamState } from '@/lib/store/simulation';
 
@@ -102,6 +105,40 @@ function parseCompareHeuristic(text: string): { winner: 'A' | 'B' | 'tie' | null
   return { winner, line: text.slice(0, 320) };
 }
 
+function stressImpactWeight(impact: string): number {
+  switch (impact) {
+    case 'fatal':
+      return 4;
+    case 'severe':
+      return 3;
+    case 'moderate':
+      return 2;
+    case 'minor':
+    default:
+      return 1;
+  }
+}
+
+function sortStressVectors(rows: StressRiskVector[]): StressRiskVector[] {
+  return [...rows].sort(
+    (a, b) => b.probability * stressImpactWeight(b.impact) - a.probability * stressImpactWeight(a.impact),
+  );
+}
+
+function impactBadgeClass(impact: string): string {
+  switch (impact) {
+    case 'fatal':
+      return 'text-red-300 bg-red-500/15';
+    case 'severe':
+      return 'text-orange-300 bg-orange-500/15';
+    case 'moderate':
+      return 'text-amber-200 bg-amber-500/12';
+    case 'minor':
+    default:
+      return 'text-white/50 bg-white/10';
+  }
+}
+
 function parseNumberList(text: string, max = 8): { label: string }[] {
   const lines = text
     .split(/[\n•]/)
@@ -131,8 +168,14 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
   const consensus = useSimulationStore((s) => s.consensus);
   const agentsMap = useSimulationStore((s) => s.agents);
   const openDeepDive = useDeepDiveStore((s) => s.open);
+  const simulationId = useSimulationStore((s) => s.simulationId);
 
   const [collapsed, setCollapsed] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [pdfUpsell, setPdfUpsell] = useState(false);
+  const [shareUpsell, setShareUpsell] = useState(false);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
 
   const panelMode = chargeTypeToPanelMode(activeChargeType);
   const verdict = result;
@@ -155,6 +198,12 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
     return parseCompareHeuristic(blob);
   }, [verdict]);
 
+  const stressVectorsStructured = useMemo(() => {
+    const raw = verdict?.stress_data?.risk_matrix;
+    if (!raw?.length) return [] as StressRiskVector[];
+    return sortStressVectors(raw);
+  }, [verdict?.stress_data?.risk_matrix]);
+
   const stressRisks: RiskEntry[] = useMemo(() => {
     if (!verdict?.risk_matrix?.length) return [];
     const rank = { high: 0, medium: 1, low: 2 };
@@ -163,6 +212,12 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
 
   const premortemCauses = useMemo(() => {
     if (!verdict) return [] as { label: string }[];
+    const fa = verdict.failure_analysis;
+    if (fa?.failure_causes?.length) {
+      return fa.failure_causes.map((c) => ({
+        label: `${c.cause} (${Math.round(c.probability * 100)}% · ${c.timeline || 'timing n/a'})`,
+      }));
+    }
     if (verdict.action_plan?.length) {
       return verdict.action_plan.slice(0, 8).map((s) => ({ label: s }));
     }
@@ -170,6 +225,8 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
     if (fromOne.length) return fromOne;
     return parseNumberList(verdict.main_risk || '');
   }, [verdict]);
+
+  const premortemNarrative = verdict?.failure_analysis?.failure_narrative || verdict?.one_liner || '';
 
   const godsView = useMemo(() => {
     const gv = verdict?.god_view;
@@ -221,6 +278,81 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
     router.push('/');
   }, [router]);
 
+  const canProExportShare = TIERS[tier].limits.pdf_export;
+
+  const handleExportPdf = useCallback(async () => {
+    if (!simulationId) {
+      setShareNotice('Save your simulation first (wait until the run finishes).');
+      return;
+    }
+    if (!canProExportShare) {
+      setPdfUpsell(true);
+      return;
+    }
+    setExportingPdf(true);
+    setShareNotice(null);
+    try {
+      const res = await fetch('/api/export/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ conversationId: simulationId }),
+      });
+      if (res.status === 403) {
+        setPdfUpsell(true);
+        return;
+      }
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `octux-report-${simulationId.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setShareNotice('PDF export failed. Try again in a moment.');
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [simulationId, canProExportShare]);
+
+  const handleShare = useCallback(async () => {
+    if (!simulationId) {
+      setShareNotice('Save your simulation first (wait until the run finishes).');
+      return;
+    }
+    if (!canProExportShare) {
+      setShareUpsell(true);
+      return;
+    }
+    setSharing(true);
+    setShareNotice(null);
+    try {
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ conversationId: simulationId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (res.status === 403) {
+        setShareUpsell(true);
+        return;
+      }
+      if (!res.ok || !data.url) {
+        setShareNotice(data.error || 'Could not create share link.');
+        return;
+      }
+      await navigator.clipboard.writeText(data.url);
+      setShareNotice('Link copied to clipboard.');
+    } catch {
+      setShareNotice('Share failed. Check clipboard permissions and try again.');
+    } finally {
+      setSharing(false);
+    }
+  }, [simulationId, canProExportShare]);
+
   const onDeepDiveClick = useCallback(() => {
     const id = pickDissentingAgentId(verdict?.recommendation, scoreboard, agentsMap);
     if (id) openDeepDive(id);
@@ -237,8 +369,10 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
   const outlineBtn =
     'inline-flex items-center justify-center rounded-lg border border-white/10 bg-transparent px-4 py-2 text-[12px] font-medium text-white/50 transition-colors hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-40';
 
+  const structuredCompare = verdict?.compare_data;
   const showCompareCard =
-    panelMode === 'compare' && compareHint != null && compareHint.winner !== null;
+    panelMode === 'compare' &&
+    Boolean(structuredCompare || (compareHint != null && compareHint.winner !== null));
 
   return (
     <AnimatePresence>
@@ -272,8 +406,46 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
           </button>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-2">
-            {/* Compare winner (heuristic) */}
-            {showCompareCard && compareHint && (
+            {/* Compare — structured or heuristic */}
+            {showCompareCard && structuredCompare && (
+              <div className="mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className={HEADER}>Winner</p>
+                <p className="mt-2 text-lg font-semibold text-white/90">{structuredCompare.winner_label}</p>
+                <p className="mt-2 text-[13px] text-white/55">
+                  Comparison confidence: {Math.round(structuredCompare.confidence)}% · Grade {verdict.grade}
+                </p>
+                <p className="mt-3 text-[13px] leading-relaxed text-white/55">{structuredCompare.summary}</p>
+                {structuredCompare.caveat ? (
+                  <p className="mt-2 border-l-2 border-amber-400/40 pl-3 text-[12px] leading-relaxed text-white/45">
+                    {structuredCompare.caveat}
+                  </p>
+                ) : null}
+                <p className={`${HEADER} mt-5`}>Dimensions</p>
+                <div className="mt-3 space-y-2">
+                  {structuredCompare.dimensions.map((d, i) => (
+                    <div
+                      key={`${d.name}-${i}`}
+                      className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[12px]"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium text-white/80">{d.name}</span>
+                        <span className="text-[10px] font-semibold uppercase text-white/40">
+                          {d.winner === 'tie' ? 'Tie' : `Option ${d.winner}`}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex gap-4 text-white/50">
+                        <span>A: {d.score_a}/10</span>
+                        <span>B: {d.score_b}/10</span>
+                      </div>
+                      {d.reasoning ? (
+                        <p className="mt-2 text-[11px] leading-relaxed text-white/40">{d.reasoning}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {showCompareCard && !structuredCompare && compareHint && (
               <div className="mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                 <p className={HEADER}>Winner</p>
                 <p className="mt-2 text-lg font-semibold text-white/90">
@@ -286,7 +458,7 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
                 </p>
                 <p className="mt-3 text-[13px] leading-relaxed text-white/45">{compareHint.line}</p>
                 <p className="mt-3 text-[11px] text-white/30">
-                  Dimension matrix will ship with structured compare results; showing narrative for now.
+                  Structured compare data was unavailable; showing parsed narrative from the verdict.
                 </p>
               </div>
             )}
@@ -328,8 +500,65 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
               </div>
             )}
 
-            {/* Stress */}
-            {panelMode === 'stress' && stressRisks.length > 0 && (
+            {/* Stress — structured vectors or legacy risk_matrix */}
+            {panelMode === 'stress' && stressVectorsStructured.length > 0 && (
+              <div className="mb-6">
+                <p className={HEADER}>Failure vectors</p>
+                {typeof verdict.stress_data?.overall_resiliency === 'number' ? (
+                  <p className="mt-2 text-[12px] text-white/45">
+                    Overall resiliency score:{' '}
+                    <span className="font-semibold text-white/70">
+                      {Math.round(verdict.stress_data.overall_resiliency)}/100
+                    </span>
+                  </p>
+                ) : null}
+                {verdict.stress_data?.critical_vulnerability ? (
+                  <p className="mt-2 border-l-2 border-red-400/50 pl-3 text-[12px] text-white/55">
+                    <span className="text-[10px] font-semibold uppercase text-red-300/90">Critical gap · </span>
+                    {verdict.stress_data.critical_vulnerability}
+                  </p>
+                ) : null}
+                <ul className="mt-3 space-y-2">
+                  {stressVectorsStructured.map((row, i) => (
+                    <li
+                      key={i}
+                      className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[13px] text-white/80"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <span className="min-w-0 flex-1 font-medium text-white/85">{row.threat}</span>
+                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                          <span
+                            className={cn(
+                              'rounded px-2 py-0.5 text-[9px] font-semibold uppercase',
+                              impactBadgeClass(row.impact),
+                            )}
+                          >
+                            {row.impact}
+                          </span>
+                          <span className="text-[10px] text-white/40">
+                            p≈{Math.round(row.probability * 100)}% · {row.category}
+                          </span>
+                        </div>
+                      </div>
+                      {row.mitigation ? (
+                        <p className="mt-2 text-[11px] leading-relaxed text-emerald-200/70">
+                          Mitigation: {row.mitigation}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                {verdict.stress_data?.survival_conditions ? (
+                  <p className="mt-4 border-l-2 border-emerald-400/40 pl-3 text-[12px] leading-relaxed text-white/50">
+                    <span className="text-[10px] font-semibold uppercase text-emerald-300/90">
+                      Survival conditions ·{' '}
+                    </span>
+                    {verdict.stress_data.survival_conditions}
+                  </p>
+                ) : null}
+              </div>
+            )}
+            {panelMode === 'stress' && stressVectorsStructured.length === 0 && stressRisks.length > 0 && (
               <div className="mb-6">
                 <p className={HEADER}>Failure vectors</p>
                 <ul className="mt-3 space-y-2">
@@ -348,8 +577,67 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
               </div>
             )}
 
-            {/* Pre-mortem */}
-            {panelMode === 'premortem' && premortemCauses.length > 0 && (
+            {/* Pre-mortem — structured failure_analysis or heuristic list */}
+            {panelMode === 'premortem' && verdict.failure_analysis?.failure_causes?.length ? (
+              <div className="mb-6">
+                <p className={HEADER}>Failure causes</p>
+                {verdict.failure_analysis.summary ? (
+                  <p className="mt-2 text-[12px] text-white/50">{verdict.failure_analysis.summary}</p>
+                ) : null}
+                <ul className="mt-3 space-y-3">
+                  {verdict.failure_analysis.failure_causes.map((c, i) => (
+                    <li
+                      key={i}
+                      className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[13px] text-white/80"
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="font-medium text-white/85">
+                          <span className="text-white/35">{i + 1}. </span>
+                          {c.cause}
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase text-white/40">
+                          {Math.round(c.probability * 100)}% · {c.timeline || '—'}
+                        </span>
+                      </div>
+                      {c.early_warnings?.length ? (
+                        <ul className="mt-2 list-inside list-disc text-[11px] text-amber-200/70">
+                          {c.early_warnings.map((w, j) => (
+                            <li key={j}>{w}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {c.prevention ? (
+                        <p className="mt-2 text-[11px] leading-relaxed text-emerald-200/70">
+                          Prevention: {c.prevention}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                {premortemNarrative ? (
+                  <p className="mt-4 border-l-2 border-amber-400/50 pl-3 text-[13px] leading-relaxed text-white/55">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-300/90">
+                      Failure narrative ·{' '}
+                    </span>
+                    {premortemNarrative}
+                  </p>
+                ) : null}
+                {verdict.failure_analysis.prevention_checklist?.length ? (
+                  <div className="mt-4">
+                    <p className={HEADER}>Prevention checklist</p>
+                    <ul className="mt-2 space-y-1.5 text-[12px] text-white/60">
+                      {verdict.failure_analysis.prevention_checklist.map((item, i) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="text-emerald-400/80">✓</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {panelMode === 'premortem' && !verdict.failure_analysis?.failure_causes?.length && premortemCauses.length > 0 && (
               <div className="mb-6">
                 <p className={HEADER}>Most likely failure path</p>
                 <ul className="mt-3 space-y-2">
@@ -474,16 +762,31 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2 border-t border-white/[0.06] pt-4">
-              <button type="button" disabled className={outlineBtn}>
-                Export PDF
-                {tier === 'free' && (
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                disabled={exportingPdf}
+                className={cn(outlineBtn, exportingPdf && 'opacity-60')}
+              >
+                {exportingPdf ? 'Exporting…' : 'Export PDF'}
+                {!canProExportShare && (
                   <span className="ml-1.5 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-white/50">
                     Pro
                   </span>
                 )}
               </button>
-              <button type="button" disabled className={outlineBtn}>
-                Share link
+              <button
+                type="button"
+                onClick={handleShare}
+                disabled={sharing}
+                className={cn(outlineBtn, sharing && 'opacity-60')}
+              >
+                {sharing ? 'Sharing…' : 'Share link'}
+                {!canProExportShare && (
+                  <span className="ml-1.5 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-white/50">
+                    Pro
+                  </span>
+                )}
               </button>
               <button
                 type="button"
@@ -501,6 +804,27 @@ export default function VerdictPanel({ visible }: { visible: boolean }) {
                 New simulation
               </button>
             </div>
+            {shareNotice ? (
+              <p className="mt-3 text-center text-[11px] text-white/45">{shareNotice}</p>
+            ) : null}
+            {pdfUpsell ? (
+              <div className="mt-4">
+                <UpgradePrompt
+                  reason="PDF export is included on Pro and Max."
+                  suggestedTier="pro"
+                  onDismiss={() => setPdfUpsell(false)}
+                />
+              </div>
+            ) : null}
+            {shareUpsell ? (
+              <div className="mt-4">
+                <UpgradePrompt
+                  reason="Shareable public links are included on Pro and Max."
+                  suggestedTier="pro"
+                  onDismiss={() => setShareUpsell(false)}
+                />
+              </div>
+            ) : null}
           </div>
         </motion.div>
       )}

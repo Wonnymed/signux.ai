@@ -12,28 +12,51 @@
  * Ref: PraisonAI (#7 — pre/post execution hooks, lifecycle management)
  */
 
-import { parseQuestionForFacts, applyFactActions, extractAndSaveFacts } from './facts';
+import { parseQuestionForFacts, applyFactActions, extractAndSaveFacts, extractFactsFromAgentReport } from './facts';
 import { resolveContradictions } from './temporal';
-import { loadMemoryForSimulation, formatMemoryContext, formatAgentMemory, type MemoryPayload } from './core-memory';
+import {
+  loadMemoryForSimulation,
+  truncateMemoryContext,
+  truncateAgentMemoryContext,
+  MAX_MEMORY_CONTEXT_CHARS,
+  type MemoryPayload,
+} from './core-memory';
 import { getTopKMemories } from './recall';
-import { getOrCreateThread, accumulateThreadContext, saveSessionSummary, clearWorkingBuffer } from './session';
+import {
+  getOrCreateThread,
+  accumulateThreadContext,
+  saveSessionSummary,
+  clearWorkingBuffer,
+  saveToWorkingBuffer,
+  computeAgentBufferRoundNumber,
+} from './session';
 import { loadAllAgentLessons, evaluateAgentPerformance, persistRoundLearnings, type RoundLearning } from './agent-improvement';
 import { buildAllAgentKnowledge } from './agent-knowledge';
 import { saveExperience, getUserExperiences, formatExperiencesForContext } from './experiences';
 import { extractOpinionsAndObservations, applyOpinionActions, saveObservations, getUserOpinions, formatOpinionsForContext, getUserObservations, formatObservationsForContext } from './opinions';
 import { cognify } from './knowledge-graph';
 import { maybeRegenerateProfile } from './profile';
-import { reflectOnExperiences } from './reflect';
+import { reflectOnExperiences, shouldReflect } from './reflect';
 import { runMemoryOptimization } from './optimize';
 import { extractAllAgentRules, loadAllAgentRules } from './procedural';
 import { getAllActivePrompts, recordEvalScore } from './prompt-optimizer';
 import { optimizeAllAgents, monitorAndRollback } from './multi-optimizer';
 import { extractTeamInsights, injectTeamContext } from './team-memory';
-import { inferBehavioralProfile } from './behavioral';
+import {
+  inferBehavioralProfile,
+  getOrCreateProfile,
+  formatBehavioralContext,
+  type BehavioralProfile,
+} from './behavioral';
 import { supabase } from './supabase';
 
 // Re-export for engine convenience
 export { formatRoundDiscoveries, type RoundLearning } from './agent-improvement';
+
+function memErr(fn: string, err: unknown, ctx: { userId: string; simulationId?: string }): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(`[MEMORY:ERROR] ${fn} failed:`, msg, ctx);
+}
 
 // ═══════════════════════════════════════════
 // TYPES
@@ -52,7 +75,32 @@ export type PreSimResult = {
   recalledMemoryText: string;
   threadContext: string;
   walFactsExtracted: number;
+  /** Loaded in preSim (same as engine behavioral modulation). */
+  behavioralProfile: BehavioralProfile | null;
+  behavioralContextText: string;
 };
+
+/** When set, postAgentHook persists per-agent buffer rows and incremental facts. */
+export type PostAgentMemoryContext = {
+  userId: string;
+  simulationId: string;
+  question: string;
+  /** Debate round number (3, 5, 6, 9, …) for this agent completion. */
+  debateRound: number;
+};
+
+const PRESIM_PARALLEL_LABELS = [
+  'networkMemory (experiences/opinions/observations)',
+  'buildAllAgentKnowledge',
+  'loadAllAgentLessons',
+  'loadAllAgentRules',
+  'getAllActivePrompts',
+  'injectTeamContext',
+  'getTopKMemories',
+  'getOrCreateThread + accumulateThreadContext',
+  'parseQuestionForFacts + applyFactActions (WAL)',
+  'getOrCreateProfile + formatBehavioralContext',
+] as const;
 
 // ═══════════════════════════════════════════
 // preSimHook() — ALL pre-simulation memory operations
@@ -79,6 +127,7 @@ export async function preSimHook(
   simId: string,
   options?: { threadId?: string }
 ): Promise<PreSimResult> {
+  console.log('[MEMORY:PRE] preSimHook called for user:', userId, 'sim:', simId);
   let memory: MemoryPayload = {
     coreMemory: { human: '', business: '', preferences: '', history: '' },
     isReturningUser: false,
@@ -98,6 +147,8 @@ export async function preSimHook(
   let recalledMemoryText = '';
   let threadContext = '';
   let walFactsExtracted = 0;
+  let behavioralProfile: BehavioralProfile | null = null;
+  let behavioralContextText = '';
 
   // 1. Core memory (Letta blocks)
   try {
@@ -110,7 +161,7 @@ export async function preSimHook(
   }
 
   // 2-7 can run in parallel (independent reads)
-  const [networkResult, knowledgeResult, lessonsResult, rulesResult, promptResult, teamResult, recallResult, threadResult, walResult] = await Promise.allSettled([
+  const parallelResults = await Promise.allSettled([
     // 2. 4-network memory (Hindsight pattern)
     (async () => {
       const [experiences, opinions, observations] = await Promise.all([
@@ -158,7 +209,33 @@ export async function preSimHook(
       }
       return walFacts.length;
     })(),
+
+    // 8b. Behavioral profile (same data engine uses for modulation)
+    (async () => {
+      const profile = await getOrCreateProfile(userId);
+      const text = formatBehavioralContext(profile);
+      return { profile, text };
+    })(),
   ]);
+
+  parallelResults.forEach((result, i) => {
+    if (result.status === 'rejected') {
+      memErr(PRESIM_PARALLEL_LABELS[i] || `parallel[${i}]`, result.reason, { userId, simulationId: simId });
+    }
+  });
+
+  const [
+    networkResult,
+    knowledgeResult,
+    lessonsResult,
+    rulesResult,
+    promptResult,
+    teamResult,
+    recallResult,
+    threadResult,
+    walResult,
+    behavioralResult,
+  ] = parallelResults;
 
   // Unpack results (each independently — failures don't cascade)
   if (networkResult.status === 'fulfilled' && networkResult.value) {
@@ -181,9 +258,7 @@ export async function preSimHook(
 
   if (rulesResult.status === 'fulfilled') {
     agentRulesMap = rulesResult.value;
-    if (agentRulesMap.size > 0) {
-      console.log(`HOOK PRE: Procedural rules for ${agentRulesMap.size} agents`);
-    }
+    console.log('[MEMORY:PRE] Loaded', agentRulesMap.size, 'procedural rule sets (agents)');
   }
 
   if (promptResult.status === 'fulfilled') {
@@ -202,6 +277,14 @@ export async function preSimHook(
 
   if (recallResult.status === 'fulfilled' && recallResult.value) {
     recalledMemoryText = recallResult.value;
+    const bulletMatches = recalledMemoryText.match(/  •/g);
+    console.log(
+      '[MEMORY:PRE] Recalled top-K memory block (~',
+      bulletMatches?.length ?? 0,
+      'bullets,',
+      recalledMemoryText.length,
+      'chars)',
+    );
     networkMemoryText = recalledMemoryText + (networkMemoryText ? '\n' + networkMemoryText : '');
   }
 
@@ -222,12 +305,33 @@ export async function preSimHook(
     }
   }
 
+  if (behavioralResult.status === 'fulfilled' && behavioralResult.value) {
+    behavioralProfile = behavioralResult.value.profile;
+    behavioralContextText = behavioralResult.value.text;
+    console.log(
+      '[MEMORY:PRE] Behavioral profile loaded, inference_confidence:',
+      behavioralProfile?.inference_confidence ?? 'n/a',
+    );
+  }
+
   // 8. Pre-sim contradiction resolution (fire-and-forget)
   resolveContradictions(userId)
-    .then(n => { if (n > 0) console.log(`HOOK PRE: ${n} contradictions resolved`); })
-    .catch(() => {});
+    .then((n) => {
+      if (n > 0) console.log(`HOOK PRE: ${n} contradictions resolved`);
+    })
+    .catch((err) => memErr('resolveContradictions', err, { userId, simulationId: simId }));
 
-  console.log(`HOOK PRE: Complete — memory: ${memory.isReturningUser ? 'returning' : 'new'}, knowledge: ${agentKnowledgeMap.size}, lessons: ${agentLessonsMap.size}`);
+  const rawNetworkLen = networkMemoryText.length;
+  networkMemoryText = truncateMemoryContext(networkMemoryText);
+  if (networkMemoryText.length < rawNetworkLen) {
+    console.log(
+      `[MEMORY:PRE] networkMemoryText truncated: ${rawNetworkLen} → ${networkMemoryText.length} chars (max ${MAX_MEMORY_CONTEXT_CHARS})`,
+    );
+  }
+
+  console.log(
+    `[MEMORY:PRE] Complete — returningUser: ${memory.isReturningUser}, knowledge agents: ${agentKnowledgeMap.size}, lessons: ${agentLessonsMap.size}, thread: ${activeThreadId || 'none'}`,
+  );
 
   return {
     memory,
@@ -240,6 +344,8 @@ export async function preSimHook(
     recalledMemoryText,
     threadContext,
     walFactsExtracted,
+    behavioralProfile,
+    behavioralContextText,
   };
 }
 
@@ -252,14 +358,40 @@ export async function preSimHook(
  *   1. Persist round learnings — extract key facts/claims for inter-round sharing
  *
  * Returns the RoundLearning for accumulation.
- * Always non-blocking — failures don't affect the sim.
+ * When `memoryCtx` is set: incremental fact extraction (Haiku) + per-agent working-buffer row (non-blocking).
  */
 export function postAgentHook(
   agentId: string,
   agentName: string,
   report: any,
+  memoryCtx?: PostAgentMemoryContext,
 ): RoundLearning {
-  return persistRoundLearnings(agentId, agentName, report);
+  const rl = persistRoundLearnings(agentId, agentName, report);
+
+  const uid = memoryCtx?.userId;
+  if (!uid || uid === 'anon') {
+    return rl;
+  }
+
+  const simId = memoryCtx.simulationId;
+  const bufRound = computeAgentBufferRoundNumber(memoryCtx.debateRound, agentId);
+  const summary = `${agentName}: ${String(report?.key_argument ?? '').slice(0, 1800)}`;
+
+  void saveToWorkingBuffer(simId, uid, bufRound, `agent_r${memoryCtx.debateRound}`, summary, agentId, null, null)
+    .then(() => {
+      console.log('[MEMORY:POST-AGENT] Saved to working buffer', agentName, 'bufRound', bufRound);
+    })
+    .catch((err) => memErr('saveToWorkingBuffer', err, { userId: uid, simulationId: simId }));
+
+  void extractFactsFromAgentReport(uid, simId, memoryCtx.question, agentName, report as Record<string, unknown>)
+    .then((n) => {
+      if (n > 0) {
+        console.log('[MEMORY:POST-AGENT] Extracted', n, 'applied fact(s) from', agentName);
+      }
+    })
+    .catch((err) => memErr('extractFactsFromAgentReport', err, { userId: uid, simulationId: simId }));
+
+  return rl;
 }
 
 // ═══════════════════════════════════════════
@@ -267,20 +399,22 @@ export function postAgentHook(
 // ═══════════════════════════════════════════
 
 /**
- * Consolidates everything that happens AFTER the simulation completes:
- *
- *   1. Extract and save facts (AWAITED — critical)
- *   2. Regenerate profile if needed (AWAITED — every 3 sims)
- *   3. Save experience (AWAITED — needed for reflect)
- *   4. Extract opinions + observations (AWAITED)
- *   5. Cognify — knowledge graph extraction (AWAITED — serverless)
- *   6. Evaluate agent performance (fire-and-forget)
- *   7. Save session summary + clear buffer (fire-and-forget)
- *   8. Reflect loop — every 5 sims (fire-and-forget)
- *   9. Memory optimization — every 10 sims (fire-and-forget)
+ * Post-sim order (sequential 1–4 must stay in order):
+ *   1. saveExperience — other steps may assume the row exists for counts / reflect
+ *   2. extractAndSaveFacts
+ *   3. extractOpinionsAndObservations + apply
+ *   4. cognify
+ *   Then fire-and-forget: evaluate (incl. writeAgentLessons), session, team, procedural,
+ *   reflect, runMemoryOptimization, optimizeAllAgents, monitorAndRollback, behavioral snapshot.
+ *   Finally: maybeRegenerateProfile (awaited last).
  *
  * NOTE: saveSimulation() is NOT included — engine calls it separately.
+ *
+ * Returns reflectSimCount for SSE: non-zero when experience count is a multiple of 5
+ * (after the row from saveExperience is visible — call only after step 1 completes).
  */
+export type PostSimHookResult = { reflectSimCount: number };
+
 export async function postSimHook(
   userId: string,
   simId: string,
@@ -288,37 +422,53 @@ export async function postSimHook(
   verdict: unknown,
   agentReports: Map<string, any>,
   activeThreadId: string
-): Promise<void> {
+): Promise<PostSimHookResult> {
   const reportsObj = Object.fromEntries(agentReports.entries());
+  const ctx = { userId, simulationId: simId };
 
-  // ── CRITICAL (awaited — serverless may shut down after generator ends) ──
+  console.log('[MEMORY:POST-SIM] postSimHook starting', ctx);
 
-  // 1. Extract and save facts
+  let factApplied = 0;
+  let opinionsApplied = 0;
+  let observationsSaved = 0;
+  let reflectSimCount = 0;
+
+  // ── 1. saveExperience (FIRST) ──
   try {
-    await extractAndSaveFacts(userId, simId, question, verdict, reportsObj);
-  } catch (err) {
-    console.error('HOOK POST: Fact extraction failed:', err);
-  }
-
-  // 2. Regenerate profile if needed
-  try {
-    await maybeRegenerateProfile(userId);
-  } catch (err) {
-    console.error('HOOK POST: Profile regen failed:', err);
-  }
-
-  // 3. Save experience
-  try {
+    console.log('[MEMORY:POST-SIM] Saving experience…');
     await saveExperience(userId, simId, question, verdict as Record<string, unknown>);
+    console.log('[MEMORY:POST-SIM] Experience saved');
   } catch (err) {
     console.error('HOOK POST: Experience save failed:', err);
   }
 
-  // 4. Extract opinions + observations (Hindsight Networks 3 & 4)
+  // ── 1b. Reflect cadence — must run after experience row exists ──
   try {
+    reflectSimCount = await shouldReflect(userId);
+    console.log('[MEMORY:POST-SIM] Reflection due count (after save):', reflectSimCount);
+  } catch (err) {
+    memErr('shouldReflect (post-save)', err, ctx);
+  }
+
+  // ── 2. Extract and save facts (full simulation) ──
+  try {
+    console.log('[MEMORY:POST-SIM] Extracting facts from full simulation…');
+    factApplied = await extractAndSaveFacts(userId, simId, question, verdict, reportsObj);
+    console.log('[MEMORY:POST-SIM] Full-run facts applied:', factApplied);
+  } catch (err) {
+    console.error('HOOK POST: Fact extraction failed:', err);
+  }
+
+  // ── 3. Opinions + observations ──
+  try {
+    console.log('[MEMORY:POST-SIM] Extracting opinions / observations…');
     const existingOpinions = await getUserOpinions(userId, 20);
     const { opinions, observations } = await extractOpinionsAndObservations(
-      userId, simId, question, verdict, reportsObj,
+      userId,
+      simId,
+      question,
+      verdict,
+      reportsObj,
       existingOpinions.map((o: Record<string, unknown>) => ({
         id: o.id as string,
         belief: o.belief as string,
@@ -327,19 +477,20 @@ export async function postSimHook(
       })),
     );
     if (opinions.length > 0) {
-      const applied = await applyOpinionActions(userId, simId, opinions);
-      console.log(`HOOK POST: ${applied} opinion(s) applied`);
+      opinionsApplied = await applyOpinionActions(userId, simId, opinions);
+      console.log(`HOOK POST: ${opinionsApplied} opinion(s) applied`);
     }
     if (observations.length > 0) {
-      const saved = await saveObservations(userId, simId, observations);
-      console.log(`HOOK POST: ${saved} observation(s) saved`);
+      observationsSaved = await saveObservations(userId, simId, observations);
+      console.log(`HOOK POST: ${observationsSaved} observation(s) saved`);
     }
   } catch (err) {
     console.error('HOOK POST: Opinion/observation extraction failed:', err);
   }
 
-  // 5. Cognify — knowledge graph extraction
+  // ── 4. Cognify — knowledge graph ──
   try {
+    console.log('[MEMORY:POST-SIM] Running cognify (knowledge graph)…');
     const v = verdict as Record<string, unknown> | null;
     const verdictSummary = v
       ? `Recommendation: ${v.recommendation}. Probability: ${v.probability}%. Risk: ${v.main_risk}. Action: ${v.next_action}.`
@@ -348,96 +499,121 @@ export async function postSimHook(
       .map(([id, r]) => `${r.agent_name || id} (${r.position}, ${r.confidence}/10): ${r.key_argument}`)
       .join('\n');
     const result = await cognify(userId, simId, question, verdictSummary, agentSummaries);
-    console.log(`HOOK POST: Cognify — ${result.entity_count} entities, ${result.relation_count} relations`);
+    console.log(
+      `HOOK POST: Cognify — ${result.entity_count} entities, ${result.relation_count} relations, ${result.triplet_count} triplets`,
+    );
   } catch (err) {
-    console.error('HOOK POST: Cognify failed:', err);
+    memErr('cognify', err, ctx);
   }
 
-  // ── BACKGROUND (fire-and-forget) ──
+  console.log(
+    '[MEMORY:POST-SIM] Pipeline critical path done. facts:',
+    factApplied,
+    'opinions:',
+    opinionsApplied,
+    'observations:',
+    observationsSaved,
+  );
 
-  // 6. Evaluate agent performance + write lessons + record eval scores per prompt version
+  // ── BACKGROUND (fire-and-forget) — ordered where dependencies matter ──
+
+  // 5. evaluateAgentPerformance → writeAgentLessons (internal) + recordEvalScore
   evaluateAgentPerformance(userId, simId, question, agentReports, verdict)
-    .then(evaluations => {
+    .then((evaluations) => {
       for (const eval_ of evaluations) {
-        recordEvalScore(userId, eval_.agent_id, eval_.score)
-          .catch(() => {});
+        recordEvalScore(userId, eval_.agent_id, eval_.score).catch((err) =>
+          memErr('recordEvalScore', err, { userId, simulationId: simId }),
+        );
       }
     })
-    .catch(err => console.error('HOOK POST: Agent eval failed:', err));
+    .catch((err) => memErr('evaluateAgentPerformance (includes writeAgentLessons)', err, ctx));
 
-  // 7. Save session summary + clear buffer
+  // Session + buffer (after critical persistence)
   if (activeThreadId) {
-    saveSessionSummary(activeThreadId, simId, userId, question, verdict, agentReports)
-      .catch(err => console.error('HOOK POST: Session summary failed:', err));
+    saveSessionSummary(activeThreadId, simId, userId, question, verdict, agentReports).catch((err) =>
+      memErr('saveSessionSummary', err, ctx),
+    );
   }
-  clearWorkingBuffer(simId)
-    .catch(err => console.error('HOOK POST: Buffer clear failed:', err));
+  clearWorkingBuffer(simId).catch((err) => memErr('clearWorkingBuffer', err, ctx));
 
-  // 8. Team insights — every 5 sims (Agno team memory)
+  // 6. Team insights
   extractTeamInsights(userId, simId)
-    .then(n => {
+    .then((n) => {
       if (n > 0) console.log(`HOOK POST: Team memory — ${n} insight(s) extracted/reinforced`);
     })
-    .catch(err => console.error('HOOK POST: Team memory failed:', err));
+    .catch((err) => memErr('extractTeamInsights', err, ctx));
 
-  // 9. Reflect loop — every 5 sims
+  // 7. Procedural rules
+  extractAllAgentRules(userId)
+    .then((n) => {
+      if (n > 0) console.log(`HOOK POST: Procedural — ${n} rule(s) extracted/updated`);
+    })
+    .catch((err) => memErr('extractAllAgentRules', err, ctx));
+
+  // 8. Reflect (needs experiences including this sim)
   reflectOnExperiences(userId)
-    .then(r => {
+    .then((r) => {
       if (r.opinions > 0 || r.observations > 0 || r.misses > 0) {
         console.log(`HOOK POST: Reflect — ${r.opinions} opinions, ${r.observations} observations, ${r.misses} misses`);
       }
     })
-    .catch(err => console.error('HOOK POST: Reflect failed:', err));
+    .catch((err) => memErr('reflectOnExperiences', err, ctx));
 
-  // 9. Memory optimization — every 10 sims
+  // Memory optimization (batch hygiene)
   runMemoryOptimization(userId)
-    .then(r => {
+    .then((r) => {
       if (r.consolidated > 0 || r.pruned > 0) {
         console.log(`HOOK POST: Optimize — consolidated=${r.consolidated}, pruned=${r.pruned}, strengthened=${r.strengthened}, derived=${r.derived}`);
       }
     })
-    .catch(err => console.error('HOOK POST: Optimize failed:', err));
+    .catch((err) => memErr('runMemoryOptimization', err, ctx));
 
-  // 10. Procedural rule extraction — every 10 sims (LangMem)
-  extractAllAgentRules(userId)
-    .then(n => {
-      if (n > 0) console.log(`HOOK POST: Procedural — ${n} rule(s) extracted/updated`);
-    })
-    .catch(err => console.error('HOOK POST: Procedural rules failed:', err));
-
-  // 11. Multi-prompt optimization — every 20 sims (LangMem coordinated)
-  // Replaces P19's per-agent loop with coordinated batch
+  // 9. Multi-prompt optimization (uses eval scores from step 5)
   optimizeAllAgents(userId)
-    .then(results => {
-      const promoted = results.filter(r => r.action === 'promoted');
+    .then((results) => {
+      const promoted = results.filter((r) => r.action === 'promoted');
       if (promoted.length > 0) {
-        console.log(`HOOK POST: Multi-opt — ${promoted.length} agents promoted: ${promoted.map(r => r.agentId).join(', ')}`);
+        console.log(`HOOK POST: Multi-opt — ${promoted.length} agents promoted: ${promoted.map((r) => r.agentId).join(', ')}`);
       }
     })
-    .catch(err => console.error('HOOK POST: Multi-opt failed:', err));
+    .catch((err) => memErr('optimizeAllAgents', err, ctx));
 
-  // 12. Regression monitoring — check if recently promoted agents are underperforming
-  // Cheap — just DB checks, no LLM calls. Runs every sim.
   monitorAndRollback(userId)
-    .then(rolledBack => {
+    .then((rolledBack) => {
       if (rolledBack.length > 0) {
         console.log(`HOOK POST: Rollback — ${rolledBack.join(', ')} reverted to previous version`);
       }
     })
-    .catch(err => console.error('HOOK POST: Monitor/rollback failed:', err));
+    .catch((err) => memErr('monitorAndRollback', err, ctx));
 
-  // 13. Behavioral profile inference — every 10 sims
+  // Behavioral re-inference (simulation count)
   if (supabase) {
-    Promise.resolve(supabase.from('simulations').select('id', { count: 'exact', head: true }).eq('user_id', userId))
-      .then(({ count: simCount }) => {
+    supabase
+      .from('simulations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .then(({ count: simCount, error }) => {
+        if (error) {
+          memErr('inferBehavioralProfile(precheck simulations count)', error, ctx);
+          return;
+        }
         if (simCount && simCount % 10 === 0 && simCount >= 5) {
           inferBehavioralProfile(userId)
             .then(() => console.log(`HOOK POST: Behavioral profile re-inferred after ${simCount} sims`))
-            .catch(err => console.error('HOOK POST: Behavioral inference failed:', err));
+            .catch((err) => memErr('inferBehavioralProfile', err, ctx));
         }
       })
-      .catch(() => {});
+      .catch((err) => memErr('simulations count query (behavioral)', err, ctx));
   }
+
+  // 10. Profile regen LAST (awaited — uses new facts / opinions / graph)
+  try {
+    await maybeRegenerateProfile(userId);
+  } catch (err) {
+    memErr('maybeRegenerateProfile', err, ctx);
+  }
+
+  return { reflectSimCount };
 }
 
 // ═══════════════════════════════════════════
@@ -457,5 +633,6 @@ export function buildAgentContext(
   const knowledge = agentKnowledgeMap.get(agentId) || '';
   const lessons = agentLessonsMap.get(agentId) || '';
   const rules = agentRulesMap?.get(agentId) || '';
-  return [knowledge, lessons, rules].filter(Boolean).join('\n');
+  const combined = [knowledge, lessons, rules].filter(Boolean).join('\n');
+  return truncateAgentMemoryContext(combined);
 }

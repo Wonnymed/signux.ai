@@ -5,6 +5,12 @@
  * Each event type has a specific data shape.
  */
 
+import type {
+  CompareVerdictData,
+  StressVerdictData,
+  PremortemFailureAnalysis,
+} from './mode-verdict';
+
 export type SSEEvent =
   | PhaseStartEvent
   | PlanCompleteEvent
@@ -140,18 +146,23 @@ export interface GodViewVerdictSlice {
 
 export interface VerdictResult {
   simulation_id?: string;
-  recommendation: 'proceed' | 'delay' | 'abandon';
+  recommendation: 'proceed' | 'proceed_with_conditions' | 'delay' | 'abandon';
   probability: number;
   grade: string;
-  one_liner: string;
+  /** Headline / summary line for the verdict panel. */
+  one_liner?: string;
   main_risk: string;
   next_action: string;
   disclaimer: string;
   citations?: Citation[];
   agent_scoreboard?: AgentScoreEntry[];
+  /** Specialist risk rows; stress mode may also carry legacy-shaped rows derived from stress_data. */
   risk_matrix?: RiskEntry[];
   action_plan?: string[];
   god_view?: GodViewVerdictSlice;
+  compare_data?: CompareVerdictData;
+  stress_data?: StressVerdictData;
+  failure_analysis?: PremortemFailureAnalysis;
 }
 
 export interface Citation {

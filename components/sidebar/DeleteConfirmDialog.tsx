@@ -32,12 +32,12 @@ export default function DeleteConfirmDialog({ open, onClose, onConfirm, title }:
             <AlertTriangle size={16} className="text-verdict-abandon" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium text-txt-primary mb-1">Delete conversation?</h3>
+            <h3 className="text-sm font-medium text-txt-primary mb-1">Delete this simulation?</h3>
             <p className="text-xs text-txt-tertiary mb-1">
               &ldquo;<span className="text-txt-secondary">{title}</span>&rdquo;
             </p>
             <p className="text-micro text-txt-disabled">
-              This will permanently delete the conversation and messages. This cannot be undone.
+              This will permanently delete this simulation and its messages. This cannot be undone.
             </p>
           </div>
           <button type="button" onClick={onClose} className="p-1 rounded text-txt-disabled hover:text-txt-tertiary">

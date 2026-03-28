@@ -328,6 +328,7 @@ export function useSimulationStream(
           latest_verdict: rec,
           latest_verdict_probability: verdict?.probability || null,
           simulation_count: 1,
+          last_sim_mode: lastSimModeRef.current,
         });
       }
 

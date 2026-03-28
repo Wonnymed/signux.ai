@@ -1,11 +1,14 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dna,
   Sparkles,
   Search,
+  ArrowRight,
   ChevronRight,
   ToggleLeft,
   ToggleRight,
@@ -25,6 +28,7 @@ import {
   DOMAIN_LABELS as CATALOG_DOMAIN_LABELS,
   type AgentDomain as CatalogAgentDomain,
 } from '@/lib/agents/catalog';
+import type { DashboardMode, DashboardTier } from '@/lib/store/dashboard-ui';
 
 const ALLOWED_SPECIALIST_DOMAINS = new Set<CatalogAgentDomain>(['investment', 'career', 'business']);
 import { LEGACY_AGENT_IDS } from '@/lib/agents/legacy-ids';
@@ -70,6 +74,15 @@ const DOMAIN_COLORS: Record<AgentDomain, string> = {
 
 /** Stable order for catalog agents (symmetric 5×2 grids per category). */
 const CATALOG_ORDER = new Map(AGENT_CATALOG.map((a, i) => [a.id, i]));
+
+/** Map catalog domain → dashboard mode + tier (Agent Lab → full simulation). */
+function agentLabDashboardDefaults(domain: AgentDomain): { mode: DashboardMode; tier: DashboardTier } {
+  const tier: DashboardTier = 'specialist';
+  if (domain === 'investment') return { mode: 'premortem', tier };
+  if (domain === 'career') return { mode: 'simulate', tier };
+  if (domain === 'business') return { mode: 'simulate', tier };
+  return { mode: 'simulate', tier };
+}
 
 export default function AgentLabPage() {
   const [joker, setJoker] = useState<JokerProfile>({
@@ -221,6 +234,13 @@ export default function AgentLabPage() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-landing px-6 py-10">
+        <div className="mb-8 rounded-xl border border-accent/20 bg-accent/5 px-4 py-3 text-sm leading-relaxed text-txt-secondary">
+          These specialists power every Octux simulation.{' '}
+          <Link href="/" className="font-medium text-accent underline-offset-2 hover:underline">
+            Start a simulation on the dashboard
+          </Link>{' '}
+          to see them debate your decision.
+        </div>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
           <div className="mb-2 flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10">
@@ -513,9 +533,31 @@ function AgentDetailPanel({
   onSaveOverride: (ov: AgentOverride) => void;
   onToggleDisable: () => void;
 }) {
+  const router = useRouter();
   const [weight, setWeight] = useState(override?.weight ?? 1);
   const [perspective, setPerspective] = useState(override?.perspective ?? '');
   const [notes, setNotes] = useState(override?.notes ?? '');
+
+  const startSimWithAgent = () => {
+    const seed = `${agent.name} lens — stress-test this decision: [describe your business move, market, and constraints]`;
+    const { mode, tier } = agentLabDashboardDefaults(agent.domain);
+    try {
+      localStorage.setItem(
+        'octux_pending_question',
+        JSON.stringify({
+          question: seed.slice(0, 500),
+          mode,
+          tier,
+          source: 'agent_lab',
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+    onClose();
+    router.push('/');
+  };
+
   return (
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-surface-overlay" onClick={onClose} />
@@ -531,6 +573,14 @@ function AgentDetailPanel({
             <button onClick={onClose} className="rounded-lg p-1.5 text-txt-disabled hover:bg-surface-2 hover:text-txt-tertiary">x</button>
           </div>
           <Field label="What this agent does"><p className="text-sm leading-relaxed text-txt-primary">{agent.description}</p></Field>
+          <button
+            type="button"
+            onClick={startSimWithAgent}
+            className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-accent/25 bg-accent/10 py-3 text-xs font-semibold text-accent transition-colors hover:bg-accent/15"
+          >
+            <ArrowRight size={14} aria-hidden />
+            Run simulation with this specialist
+          </button>
           <div className="my-6 h-px bg-border-subtle" />
           <h4 className="mb-4 flex items-center gap-1.5 text-xs font-medium text-accent"><Sparkles size={12} />Your customizations</h4>
           <Field label="Influence weight" hint="0.5x less influence -> 1.5x more influence">

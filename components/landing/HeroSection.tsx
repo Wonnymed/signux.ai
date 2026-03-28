@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
+import { openAuthModal, HERO_QUESTION_KEY } from '@/lib/auth/openAuthModal';
 
 const TRY_CHIPS = [
   'Open a cafe in Seoul',
@@ -12,20 +13,47 @@ const TRY_CHIPS = [
 ] as const;
 
 interface HeroSectionProps {
-  onSubmit: (message: string) => void;
+  /** When false, submit runs a simulation. When true, all actions open sign-up and optional question is stored for the dashboard. */
+  requireAuth?: boolean;
+  onSubmit?: (message: string) => void;
   loading?: boolean;
 }
 
-export default function HeroSection({ onSubmit, loading = false }: HeroSectionProps) {
+export default function HeroSection({ requireAuth = false, onSubmit, loading = false }: HeroSectionProps) {
   const [input, setInput] = useState('');
   const sectionRef = useRef<HTMLElement>(null);
   const heroInView = useInView(sectionRef, { once: true, margin: '-40px' });
 
   const run = () => {
+    if (loading) return;
+    if (requireAuth) {
+      const t = input.trim();
+      try {
+        if (t) sessionStorage.setItem(HERO_QUESTION_KEY, t);
+      } catch {
+        /* private mode */
+      }
+      openAuthModal({ tab: 'signup' });
+      return;
+    }
     const t = input.trim();
-    if (!t || loading) return;
-    onSubmit(t);
+    if (!t) return;
+    onSubmit?.(t);
     setInput('');
+  };
+
+  const runChip = (chip: string) => {
+    if (loading) return;
+    if (requireAuth) {
+      try {
+        sessionStorage.setItem(HERO_QUESTION_KEY, chip);
+      } catch {
+        /* private mode */
+      }
+      openAuthModal({ tab: 'signup' });
+      return;
+    }
+    setInput(chip);
   };
 
   return (
@@ -82,10 +110,10 @@ export default function HeroSection({ onSubmit, loading = false }: HeroSectionPr
               <button
                 type="button"
                 onClick={run}
-                disabled={!input.trim() || loading}
+                disabled={loading || (!requireAuth && !input.trim())}
                 className={cn(
                   'inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors sm:w-auto',
-                  input.trim() && !loading
+                  (requireAuth || input.trim()) && !loading
                     ? 'bg-accent text-txt-on-accent hover:bg-accent-hover'
                     : 'cursor-not-allowed bg-surface-2 text-txt-disabled',
                 )}
@@ -105,7 +133,7 @@ export default function HeroSection({ onSubmit, loading = false }: HeroSectionPr
               <button
                 type="button"
                 className="text-txt-secondary underline decoration-border-subtle underline-offset-2 transition-colors hover:text-accent"
-                onClick={() => setInput(chip)}
+                onClick={() => runChip(chip)}
               >
                 {chip}
               </button>

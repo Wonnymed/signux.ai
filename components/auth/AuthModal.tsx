@@ -1,18 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createBrowserClient } from '@/lib/auth/supabase-client';
 import { EASE_OUT } from '@/lib/motion/constants';
 
-type Props = { isOpen: boolean; onClose: () => void; onAuthSuccess: () => void };
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  /** Which tab to show when the modal opens (landing CTAs vs sign-in link). */
+  defaultTab?: 'signin' | 'signup';
+};
 
-export default function AuthModal({ isOpen, onClose, onAuthSuccess: _onAuthSuccess }: Props) {
+export default function AuthModal({ isOpen, onClose, defaultTab = 'signup' }: Props) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
+  const [mode, setMode] = useState<'signin' | 'signup'>(defaultTab);
   const supabase = createBrowserClient();
+
+  useEffect(() => {
+    if (isOpen) setMode(defaultTab);
+  }, [isOpen, defaultTab]);
 
   async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
