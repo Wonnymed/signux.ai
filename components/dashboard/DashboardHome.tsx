@@ -4,7 +4,7 @@ import { useBillingStore } from '@/lib/store/billing';
 import { useDashboardUiStore } from '@/lib/store/dashboard-ui';
 import TopBar from '@/components/dashboard/TopBar';
 import SimulationInput from '@/components/dashboard/SimulationInput';
-import CanvasPlaceholder from '@/components/dashboard/CanvasPlaceholder';
+import SimulationCanvas from '@/components/dashboard/SimulationCanvas';
 
 export default function DashboardHome({
   onSubmit,
@@ -27,7 +27,7 @@ export default function DashboardHome({
           await onSubmit(message);
         }}
       />
-      <CanvasPlaceholder />
+      <SimulationCanvas />
     </div>
   );
 }
