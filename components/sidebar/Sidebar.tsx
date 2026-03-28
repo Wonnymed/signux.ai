@@ -203,7 +203,8 @@ function SidebarExpanded() {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleSidebar]);
 
-  const recentsOrdered = sortRecents(conversations);
+  const starredOrdered = sortByUpdatedDesc(conversations.filter((c) => c.is_pinned));
+  const recentsOrdered = sortByUpdatedDesc(conversations.filter((c) => !c.is_pinned));
 
   const handleNew = useCallback(() => router.push('/'), [router]);
   const pro = TIERS.pro;
@@ -260,9 +261,20 @@ function SidebarExpanded() {
               <SidebarLoadingSkeleton />
             ) : (
               <>
+                {starredOrdered.length > 0 && (
+                  <div className="mb-3">
+                    <SidebarSectionHeading>Starred</SidebarSectionHeading>
+                    <div className="space-y-0">
+                      {starredOrdered.map((c) => (
+                        <ConversationRow key={c.id} convo={c} isActive={pathname === `/c/${c.id}`} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {recentsOrdered.length > 0 && (
                   <div className="mb-1">
-                    <RecentsHeading />
+                    <SidebarSectionHeading>Recents</SidebarSectionHeading>
                     <div className="space-y-0">
                       {recentsOrdered.map((c) => (
                         <ConversationRow key={c.id} convo={c} isActive={pathname === `/c/${c.id}`} />
@@ -366,10 +378,10 @@ function NavItemButton({
   );
 }
 
-function RecentsHeading() {
+function SidebarSectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-2 pb-2 pt-1">
-      <span className="text-[12px] font-medium text-txt-tertiary">Recents</span>
+    <div className="px-2 pb-2 pt-1 first:pt-0">
+      <span className="text-[12px] font-medium text-txt-tertiary">{children}</span>
     </div>
   );
 }
@@ -698,7 +710,7 @@ function ConversationRow({ convo, isActive }: { convo: ConversationSummary; isAc
             onDone={() => setRenaming(false)}
           />
         ) : (
-          <span className="block truncate text-[13px] font-normal leading-[1.4] tracking-[-0.01em] text-txt-primary">
+          <span className="block truncate text-[13px] font-medium leading-[1.4] tracking-[-0.01em] text-txt-primary">
             {title}
           </span>
         )}
@@ -743,25 +755,33 @@ function TierPill({ tier }: { tier: TierType }) {
 
 function SidebarLoadingSkeleton() {
   return (
-    <div className="space-y-2 px-2 py-1">
-      <Skeleton className="mb-2 h-3 w-14 rounded bg-surface-3" />
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2 py-1.5">
-          <Skeleton className="h-[13px] flex-1 rounded bg-surface-3" />
-          <Skeleton className="h-7 w-7 shrink-0 rounded-md bg-surface-3" />
-        </div>
-      ))}
+    <div className="space-y-4 px-2 py-1">
+      <div>
+        <Skeleton className="mb-2 h-3 w-14 rounded bg-surface-3" />
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={`s-${i}`} className="flex items-center gap-2 py-1.5">
+            <Skeleton className="h-[13px] flex-1 rounded bg-surface-3" />
+            <Skeleton className="h-7 w-7 shrink-0 rounded-md bg-surface-3" />
+          </div>
+        ))}
+      </div>
+      <div>
+        <Skeleton className="mb-2 h-3 w-16 rounded bg-surface-3" />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={`r-${i}`} className="flex items-center gap-2 py-1.5">
+            <Skeleton className="h-[13px] flex-1 rounded bg-surface-3" />
+            <Skeleton className="h-7 w-7 shrink-0 rounded-md bg-surface-3" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function sortRecents(convos: ConversationSummary[]): ConversationSummary[] {
-  return [...convos].sort((a, b) => {
-    const ap = a.is_pinned ? 1 : 0;
-    const bp = b.is_pinned ? 1 : 0;
-    if (ap !== bp) return bp - ap;
-    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-  });
+function sortByUpdatedDesc(convos: ConversationSummary[]): ConversationSummary[] {
+  return [...convos].sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+  );
 }
 
 function isInputFocused(): boolean {
