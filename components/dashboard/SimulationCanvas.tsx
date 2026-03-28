@@ -8,6 +8,7 @@ import { createSimulationRenderer } from '@/lib/canvas/simulation-renderer';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import { cn } from '@/lib/design/cn';
 import type { CanvasSimStatus } from '@/lib/canvas/types';
+import VerdictPanel from '@/components/dashboard/VerdictPanel';
 
 const RUNNING: CanvasSimStatus[] = [
   'connecting',
@@ -17,11 +18,6 @@ const RUNNING: CanvasSimStatus[] = [
   'converging',
   'verdict',
 ];
-
-function verdictLabel(v: { recommendation: string; probability?: number }): string {
-  const p = v.probability != null ? `${Math.round(v.probability)}% ` : '';
-  return `${p}${v.recommendation.toUpperCase()}`;
-}
 
 export default function SimulationCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -88,8 +84,13 @@ export default function SimulationCanvas() {
     return () => ro.disconnect();
   }, []);
 
-  const showOverlays = snap.demo || RUNNING.includes(snap.simStatus) || snap.simStatus === 'complete';
-  const showVerdictPanel = showOverlays && (snap.currentRound >= 1 || snap.demo || snap.simStatus === 'complete');
+  const showFullVerdict = simStatus === 'complete' && result != null;
+  const showOverlays =
+    snap.demo || RUNNING.includes(snap.simStatus) || (snap.simStatus === 'complete' && !showFullVerdict);
+  const showMiniVerdictHud =
+    showOverlays &&
+    !showFullVerdict &&
+    (snap.currentRound >= 1 || snap.demo || snap.simStatus === 'complete');
   const specialistCount =
     snap.mode === 'simulate' && snap.tier === 'specialist'
       ? Math.max(snap.agents.length, snap.demo ? 10 : 0)
@@ -107,6 +108,8 @@ export default function SimulationCanvas() {
   return (
     <div ref={containerRef} className="relative min-h-0 flex-1 overflow-hidden">
       <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" aria-hidden />
+
+      <VerdictPanel visible={showFullVerdict} />
 
       {showOverlays && (
         <>
@@ -195,12 +198,15 @@ export default function SimulationCanvas() {
             </ul>
           </div>
 
-          {showVerdictPanel && snap.verdict && (
+          {showMiniVerdictHud && snap.verdict && (
             <div className={cn('pointer-events-none absolute bottom-3 left-3 z-10 w-[min(220px,88vw)]', glass)} style={glassStyle}>
               <p className="text-[9px] font-medium uppercase tracking-[0.14em]" style={{ color: DARK_THEME.text_tertiary }}>
                 Verdict
               </p>
-              <p className="mt-1 text-lg font-semibold text-white/90">{verdictLabel(snap.verdict)}</p>
+              <p className="mt-1 text-lg font-semibold text-white/90">
+                {snap.verdict.probability != null ? `${Math.round(snap.verdict.probability)}% ` : ''}
+                {snap.verdict.recommendation.toUpperCase()}
+              </p>
               {snap.verdict.grade && (
                 <p className="text-[11px]" style={{ color: DARK_THEME.text_secondary }}>
                   · {snap.verdict.grade}
@@ -210,7 +216,7 @@ export default function SimulationCanvas() {
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
-                    width: `${Math.min(100, Math.max(0, snap.verdict.probability ?? snap.consensusTarget))}%`,
+                    width: `${Math.min(100, Math.max(0, snap.verdict.probability ?? 0))}%`,
                     backgroundColor: DARK_THEME.accent,
                   }}
                 />
@@ -218,7 +224,12 @@ export default function SimulationCanvas() {
             </div>
           )}
 
-          <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex items-center gap-1">
+          <div
+            className={cn(
+              'pointer-events-none absolute bottom-3 right-3 z-10 flex items-center gap-1',
+              showFullVerdict && 'hidden',
+            )}
+          >
             {Array.from({ length: snap.totalRounds }, (_, i) => {
               const n = i + 1;
               const done =
