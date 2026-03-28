@@ -3,7 +3,7 @@ import { create } from 'zustand';
 export type DashboardMode = 'simulate' | 'compare' | 'stress' | 'premortem';
 export type DashboardTier = 'swarm' | 'specialist';
 
-/** Maps sidebar / top bar to API simulation charge types. */
+/** Maps dashboard mode + tier to API simulation charge types. */
 export function dashboardModeToChargeType(
   mode: DashboardMode,
   tier: DashboardTier,

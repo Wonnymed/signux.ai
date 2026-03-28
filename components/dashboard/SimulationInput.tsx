@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { cn } from '@/lib/design/cn';
 import { DARK_THEME } from '@/lib/dashboard/theme';
 import { getTokenCost } from '@/lib/billing/token-costs';
@@ -48,6 +48,10 @@ const RUN_LABEL: Record<DashboardMode, string> = {
   premortem: 'Run pre-mortem',
 };
 
+function formatTokenCostPhrase(n: number): string {
+  return n === 1 ? '1 token' : `${n} tokens`;
+}
+
 function runButtonStyle(mode: DashboardMode): { bg: string; hover: string } {
   switch (mode) {
     case 'compare':
@@ -73,6 +77,7 @@ export default function SimulationInput({
 }) {
   const activeMode = useDashboardUiStore((s) => s.activeMode);
   const activeTier = useDashboardUiStore((s) => s.activeTier);
+  const setActiveTier = useDashboardUiStore((s) => s.setActiveTier);
   const inputA = useDashboardUiStore((s) => s.inputA);
   const inputB = useDashboardUiStore((s) => s.inputB);
   const setInputA = useDashboardUiStore((s) => s.setInputA);
@@ -81,13 +86,32 @@ export default function SimulationInput({
   const tokensRemaining = useBillingStore((s) => s.tokensRemaining);
   const canAffordMode = useBillingStore((s) => s.canAffordMode);
 
+  const [specialistBlockedHint, setSpecialistBlockedHint] = useState(false);
+  const freeUser = billingTier === 'free';
+  /** Free accounts always run swarm; keep toggle UI aligned before sidebar sync effect. */
+  const tierForUi: 'swarm' | 'specialist' = freeUser ? 'swarm' : activeTier;
+
   const chargeType = useMemo(
     () => dashboardModeToChargeType(activeMode, activeTier),
     [activeMode, activeTier],
   );
   const tokenCost = getTokenCost(chargeType);
   const affordable = canAffordMode(chargeType);
-  const freeBlocksSpecialist = billingTier === 'free' && activeTier === 'specialist';
+  const freeBlocksSpecialist = freeUser && activeTier === 'specialist';
+
+  const onPickSwarm = useCallback(() => {
+    setSpecialistBlockedHint(false);
+    setActiveTier('swarm');
+  }, [setActiveTier]);
+
+  const onPickSpecialist = useCallback(() => {
+    if (freeUser) {
+      setSpecialistBlockedHint(true);
+      return;
+    }
+    setSpecialistBlockedHint(false);
+    setActiveTier('specialist');
+  }, [freeUser, setActiveTier]);
 
   const messageForSubmit = useMemo(() => {
     if (activeMode === 'compare') {
@@ -100,15 +124,12 @@ export default function SimulationInput({
   }, [activeMode, inputA, inputB]);
 
   const disabled =
-    loading ||
-    !messageForSubmit ||
-    !affordable ||
-    freeBlocksSpecialist;
+    loading || !messageForSubmit || !affordable || freeBlocksSpecialist;
 
   const { bg, hover } = runButtonStyle(activeMode);
 
   return (
-    <div className="shrink-0 space-y-3 border-b px-4 py-4 sm:px-5" style={{ borderColor: DARK_THEME.border_default }}>
+    <div className="shrink-0 space-y-3 border-b px-4 py-3 sm:px-5" style={{ borderColor: DARK_THEME.border_default }}>
       {activeMode === 'compare' ? (
         <div className="mx-auto w-full max-w-[720px] space-y-2">
           <label className="block text-[11px] font-medium" style={{ color: DARK_THEME.text_secondary }}>
@@ -158,6 +179,46 @@ export default function SimulationInput({
         </div>
       )}
 
+      <div className="mx-auto flex w-full max-w-[720px] flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex w-fit items-center gap-1 rounded-lg bg-white/[0.04] p-0.5">
+            <button
+              type="button"
+              onClick={onPickSwarm}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-[12px] font-medium transition-all',
+                tierForUi === 'swarm'
+                  ? 'bg-white/[0.08] text-white/80'
+                  : 'text-white/35 hover:text-white/50',
+              )}
+            >
+              Swarm · 1000
+            </button>
+            <button
+              type="button"
+              onClick={onPickSpecialist}
+              className={cn(
+                'inline-flex items-center rounded-md px-3 py-1.5 text-[12px] font-medium transition-all',
+                tierForUi === 'specialist'
+                  ? 'bg-white/[0.08] text-white/80'
+                  : 'text-white/35 hover:text-white/50',
+              )}
+            >
+              Specialist · 10 + crowd
+              {freeUser ? (
+                <span className="ml-1 text-[9px] font-semibold text-[#e8593c]">PRO</span>
+              ) : null}
+            </button>
+          </div>
+          {specialistBlockedHint ? (
+            <p className="mt-1 max-w-[min(420px,100%)] text-[11px] leading-snug text-[#e8593c]">
+              Upgrade to Pro for specialist mode.
+            </p>
+          ) : null}
+        </div>
+        <span className="shrink-0 text-[11px] text-white/35">{tokensRemaining} tokens left</span>
+      </div>
+
       <div className="mx-auto flex w-full max-w-[720px] flex-wrap items-center gap-2">
         <button
           type="button"
@@ -175,13 +236,16 @@ export default function SimulationInput({
           }}
         >
           {RUN_LABEL[activeMode]}{' '}
-          <span className="ml-1.5 text-[12px] font-medium opacity-90">({tokenCost} tokens)</span>
+          <span className="ml-1.5 text-[12px] font-medium opacity-90">
+            ({formatTokenCostPhrase(tokenCost)})
+          </span>
         </button>
-        <span className="text-[11px]" style={{ color: DARK_THEME.text_tertiary }}>
-          {tokensRemaining} tokens left
-          {!affordable && ' · not enough tokens'}
-          {freeBlocksSpecialist && ' · upgrade for Specialist'}
-        </span>
+        {!affordable ? (
+          <span className="text-[11px] text-white/40">Not enough tokens for this run.</span>
+        ) : null}
+        {freeBlocksSpecialist ? (
+          <span className="text-[11px] text-[#e8593c]/90">Upgrade to Pro to run with Specialist.</span>
+        ) : null}
       </div>
 
       <div className="mx-auto flex w-full max-w-[720px] flex-wrap gap-2">
