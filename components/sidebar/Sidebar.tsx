@@ -14,6 +14,7 @@ import {
   List,
   Zap,
   ChevronRight,
+  UserRound,
   LogIn,
   LogOut,
   Sparkles,
@@ -86,6 +87,7 @@ function SidebarCollapsed() {
   const tier = useBillingStore((s) => s.tier);
 
   const agentLabActive = pathname === '/agents';
+  const operatorActive = pathname === '/operator';
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -130,6 +132,14 @@ function SidebarCollapsed() {
           active={agentLabActive}
         >
           <Dna size={NAV_ICON} strokeWidth={ICON_STROKE} />
+        </CollapsedIconButton>
+
+        <CollapsedIconButton
+          onClick={() => router.push('/operator')}
+          tooltip="My Operator"
+          active={operatorActive}
+        >
+          <UserRound size={NAV_ICON} strokeWidth={ICON_STROKE} />
         </CollapsedIconButton>
 
         <div className="min-h-2 flex-1" />
@@ -223,6 +233,7 @@ function SidebarExpanded() {
 
   const newChatActive = pathname === '/';
   const agentLabActive = pathname === '/agents';
+  const operatorActive = pathname === '/operator';
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -270,6 +281,12 @@ function SidebarExpanded() {
             label="Agent Lab"
             active={agentLabActive}
             onClick={() => router.push('/agents')}
+          />
+          <NavItemButton
+            icon={UserRound}
+            label="My Operator"
+            active={operatorActive}
+            onClick={() => router.push('/operator')}
           />
         </div>
 

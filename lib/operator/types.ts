@@ -1,87 +1,37 @@
-export type OperatorType = 'business_owner' | 'aspiring' | 'career' | 'investor';
+export type OperatorType = 'business_owner' | 'aspiring' | 'investor' | 'career';
 
+/**
+ * Flat operator profile (light onboarding). Branch fields are filled based on `operatorType`.
+ */
 export interface OperatorProfile {
-  // Identity (always)
   name: string;
-  age: number | null;
   location: string;
-  nationality: string;
-  languages: string[];
-
-  /** Persisted: user moved risk slider at least once (required for reward if still at 5). */
-  _riskTouched?: boolean;
-  /** Persisted: user moved decision-speed slider at least once. */
-  _speedTouched?: boolean;
-
-  // Branching
   operatorType: OperatorType | null;
 
-  // Branch A: Business Owner
-  businessOwner?: {
-    companyName: string;
-    industry: string;
-    businessStage: string;
-    teamSize: string;
-    role: string;
-    annualRevenue: string;
-    monthlyBurn: number | null;
-    availableCapital: string;
-    fundingStatus: string;
-    profitable: string;
-    currentFocus: string;
-    topChallenges: string[];
-    constraints: string;
-  };
+  /** Branch A — business owner */
+  industry: string;
+  businessStage: string;
+  currentFocus: string;
 
-  // Branch B: Aspiring Entrepreneur
-  aspiring?: {
-    businessIdea: string;
-    industry: string;
-    stage: string;
-    coFounders: string;
-    availableCapital: string;
-    currentEmployment: string;
-    monthlyIncome: string;
-    runwayMonths: string;
-    relevantExperience: string;
-    biggestFear: string;
-    helpNeeded: string[];
-  };
+  /** Branch B — building / aspiring */
+  businessIdea: string;
+  /** How far along (aspiring) */
+  stage: string;
+  availableCapital: string;
 
-  // Branch C: Career
-  career?: {
-    currentRole: string;
-    company: string;
-    industry: string;
-    yearsInRole: number | null;
-    yearsExperience: number | null;
-    seniority: string;
-    situation: string;
-    salaryRange: string;
-    locationFlexibility: string;
-    priorities: string[];
-    decisionContext: string;
-  };
+  /** Branch C — investor */
+  investorType: string;
+  checkSize: string;
+  currentEvaluation: string;
 
-  // Branch D: Investor
-  investor?: {
-    investorType: string;
-    investmentFocus: string;
-    checkSize: string;
-    portfolioSize: string;
-    currentEvaluation: string;
-    riskAppetite: number;
-    timeHorizon: string;
-  };
+  /** Branch D — career */
+  currentRole: string;
+  decisionContext: string;
 
-  // Decision style (always)
   riskTolerance: number;
   decisionSpeed: number;
-  priority: string;
-
-  // Goals (always)
-  sixMonthGoal: string;
-  oneYearGoal: string;
-  threeYearGoal: string;
-  domainExpertise: string[];
+  _riskTouched?: boolean;
+  _speedTouched?: boolean;
+  /** Primary goal (screen 3) */
+  goal: string;
 }

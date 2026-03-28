@@ -1,6 +1,6 @@
 'use client';
 
-import OperatorForm from '@/components/operator/OperatorForm';
+import OperatorWizard from '@/components/operator/OperatorWizard';
 
 export default function OperatorPage() {
   return (
@@ -14,7 +14,7 @@ export default function OperatorPage() {
           Your adaptive profile — Octux uses this to tailor simulations to your situation.
         </p>
         <div className="mt-8">
-          <OperatorForm />
+          <OperatorWizard />
         </div>
       </div>
     </div>

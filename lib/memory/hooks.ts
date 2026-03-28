@@ -50,7 +50,7 @@ import {
 } from './behavioral';
 import { supabase } from './supabase';
 import { fetchOperatorProfileForUser } from '@/lib/operator/db';
-import { formatOperatorContext } from '@/lib/operator/context';
+import { buildOperatorContext } from '@/lib/operator/context';
 import type { OperatorProfile } from '@/lib/operator/types';
 
 // Re-export for engine convenience
@@ -349,7 +349,7 @@ export async function preSimHook(
       if (row) {
         operatorProfile = row.profile;
         operatorCompleteness = row.completeness;
-        operatorContextText = formatOperatorContext(row.profile);
+        operatorContextText = buildOperatorContext(row.profile);
         if (operatorContextText) {
           console.log('[MEMORY:PRE] Operator profile loaded, completeness:', operatorCompleteness);
         }
