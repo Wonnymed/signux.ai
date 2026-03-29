@@ -6,12 +6,13 @@ import { motion } from "framer-motion";
 import { Download, Share2, RotateCw } from "lucide-react";
 import type { DecisionObject as DecisionObjectType } from "@/app/lib/types/simulation";
 import InlineCitation from "./InlineCitation";
+import { verdictColors } from "@/lib/design/tokens";
 
 const RECOMMENDATION_LABELS: Record<string, { label: string; color: string }> = {
-  proceed: { label: "PROCEED", color: "#10B981" },
-  proceed_with_conditions: { label: "PROCEED WITH CONDITIONS", color: "#1A1815" },
-  delay: { label: "DELAY", color: "#F59E0B" },
-  abandon: { label: "ABANDON", color: "#C9970D" },
+  proceed: { label: "PROCEED", color: verdictColors.proceed.solid },
+  proceed_with_conditions: { label: "PROCEED WITH CONDITIONS", color: "#c9a96e" },
+  delay: { label: "DELAY", color: verdictColors.delay.solid },
+  abandon: { label: "ABANDON", color: verdictColors.abandon.solid },
 };
 
 type DecisionObjectProps = {
@@ -38,7 +39,7 @@ const DecisionObjectCard = forwardRef<HTMLDivElement, DecisionObjectProps>(funct
       transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
       style={{
         border: "1px solid var(--border-default)",
-        borderTop: "3px solid #1A1815",
+        borderTop: "3px solid #c9a96e",
         borderRadius: "var(--radius-lg)",
         padding: 28,
         background: "var(--surface-raised)",
@@ -87,7 +88,7 @@ const DecisionObjectCard = forwardRef<HTMLDivElement, DecisionObjectProps>(funct
               cy={40}
               r={34}
               fill="none"
-              stroke="#1A1815"
+              stroke="#c9a96e"
               strokeWidth={6}
               strokeLinecap="round"
               strokeDasharray={`${(verdict.probability / 100) * 213.6} 213.6`}
@@ -185,11 +186,11 @@ const DecisionObjectCard = forwardRef<HTMLDivElement, DecisionObjectProps>(funct
           style={{
             padding: 16,
             borderRadius: "var(--radius-md)",
-            background: "rgba(124,58,237,0.06)",
-            border: "1px solid rgba(124,58,237,0.12)",
+            background: "rgba(201, 169, 110, 0.06)",
+            border: "1px solid rgba(201, 169, 110, 0.15)",
           }}
         >
-          <p style={{ fontSize: 11, fontWeight: 500, color: "#1A1815", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 4px" }}>
+          <p style={{ fontSize: 11, fontWeight: 500, color: "#8a8a82", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 4px" }}>
             Next Action
           </p>
           <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)", margin: 0, lineHeight: 1.5 }}>

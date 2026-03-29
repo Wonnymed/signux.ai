@@ -119,7 +119,7 @@ export default function AgentBrowser({
       {/* Category browse */}
       {!filteredAgents && (
         <div className="space-y-2">
-          {CATEGORY_ORDER.map(cat => {
+          {CATEGORY_ORDER.map((cat, catIndex) => {
             const agents = grouped[cat] || [];
             if (agents.length === 0) return null;
             const selectedInCat = agents.filter(a => selectedIds.has(a.id)).length;
@@ -133,7 +133,7 @@ export default function AgentBrowser({
                   <div className="flex items-center gap-2 w-full py-0.5">
                     <span
                       className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: getCategoryColor(cat) }}
+                      style={{ backgroundColor: getCategoryColor(cat, catIndex) }}
                     />
                     <span className="text-xs font-medium text-txt-primary capitalize flex-1">{cat}</span>
                     <span className="text-micro text-txt-disabled">

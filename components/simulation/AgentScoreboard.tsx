@@ -4,7 +4,14 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { useSimulationStore } from '@/lib/store/simulation';
-import { verdictColors, AGENT_GRADIENTS } from '@/lib/design/tokens';
+import { getAgentMonoGradient } from '@/lib/design/tokens';
+
+/** Post-verdict groups — bright / gold / dim (no green–red). */
+const STANCE_GROUP: Record<'proceed' | 'delay' | 'abandon', { solid: string; bar: string }> = {
+  proceed: { solid: '#f5f5f0', bar: 'rgba(245, 245, 240, 0.35)' },
+  delay: { solid: '#c9a96e', bar: 'rgba(201, 169, 110, 0.45)' },
+  abandon: { solid: '#8a8a82', bar: 'rgba(138, 138, 130, 0.35)' },
+};
 
 // ═══ POSITION GROUPS ═══
 
@@ -73,7 +80,7 @@ export default function AgentScoreboard() {
           const group = grouped[position];
           if (!group || group.length === 0) return null;
 
-          const colors = verdictColors[position];
+          const colors = STANCE_GROUP[position];
           const pct = Math.round((group.length / totalAgents) * 100);
 
           return (
@@ -99,7 +106,7 @@ export default function AgentScoreboard() {
               {/* Agent dots row */}
               <div className="flex items-center gap-1 ml-4">
                 {group.map((agent) => {
-                  const gradient = AGENT_GRADIENTS[agent.index % AGENT_GRADIENTS.length];
+                  const gradient = getAgentMonoGradient(agent.agent_id, agent.index);
                   const isChair = agent.agent_id === 'decision_chair';
                   return (
                     <motion.div
@@ -132,7 +139,7 @@ export default function AgentScoreboard() {
               <div className="ml-4 h-1 rounded-full bg-surface-2 overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ backgroundColor: colors.solid }}
+                  style={{ backgroundColor: colors.bar }}
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}

@@ -3,53 +3,49 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import type { AgentReport } from "@/app/lib/types/simulation";
+import { getAgentMonoGradient, getConfidenceColor } from "@/lib/design/tokens";
 
-const AGENT_COLORS: Record<string, string> = {
-  decision_chair: "#1A1815",
-  base_rate_archivist: "#8B6F4E",
-  demand_signal_analyst: "#F59E0B",
-  unit_economics_auditor: "#10B981",
-  regulatory_gatekeeper: "#C9970D",
-  competitive_intel: "#F97316",
-  execution_operator: "#6B6560",
-  capital_allocator: "#06B6D4",
-  scenario_planner: "#B8860B",
-  intervention_optimizer: "#14B8A6",
-  customer_reality: "#6B6560",
-  // Legacy mock IDs
-  "base-rate": "#8B6F4E",
-  "demand-signal": "#F59E0B",
-  "unit-econ": "#10B981",
-  regulatory: "#C9970D",
-  "competitive-intel": "#F97316",
-  execution: "#6B6560",
-  capital: "#06B6D4",
-  scenario: "#B8860B",
-  intervention: "#14B8A6",
-  chair: "#1A1815",
-};
-
-function getAgentColor(id: string): string {
-  return AGENT_COLORS[id] || "#1A1815";
+function avatarGradient(agentId: string, index: number): string {
+  const [a, b] = getAgentMonoGradient(agentId, index);
+  return `linear-gradient(135deg, ${a}, ${b})`;
 }
 
 function getPositionStyle(position: string) {
   switch (position) {
     case "proceed":
-      return { bg: "rgba(16,185,129,0.12)", color: "#10B981", label: "PROCEED" };
+      return {
+        border: "rgba(245, 245, 240, 0.3)",
+        bg: "rgba(245, 245, 240, 0.06)",
+        color: "#f5f5f0",
+        label: "PROCEED",
+      };
     case "delay":
-      return { bg: "rgba(245,158,11,0.12)", color: "#F59E0B", label: "DELAY" };
+      return {
+        border: "rgba(201, 169, 110, 0.25)",
+        bg: "rgba(201, 169, 110, 0.08)",
+        color: "#c9a96e",
+        label: "DELAY",
+      };
     case "abandon":
-      return { bg: "rgba(244,63,94,0.12)", color: "#C9970D", label: "ABANDON" };
+      return {
+        border: "#5a5a55",
+        bg: "rgba(90, 90, 85, 0.12)",
+        color: "#8a8a82",
+        label: "ABANDON",
+      };
     default:
-      return { bg: "var(--surface-2)", color: "var(--text-secondary)", label: position.toUpperCase() };
+      return {
+        border: "var(--border-default)",
+        bg: "var(--surface-2)",
+        color: "var(--text-secondary)",
+        label: position.toUpperCase(),
+      };
   }
 }
 
-function getConfidenceColor(c: number) {
-  if (c >= 7) return "#10B981";
-  if (c >= 4) return "#F59E0B";
-  return "#C9970D";
+/** `confidence` is 0–10; maps to shared 0–100 confidence colors. */
+function confColor10(c: number) {
+  return getConfidenceColor(Math.min(100, Math.max(0, c * 10)));
 }
 
 type AgentCardProps = {
@@ -61,9 +57,8 @@ type AgentCardProps = {
 };
 
 export default function AgentCard({ agent, index, expanded, onToggle, history = [] }: AgentCardProps) {
-  const color = getAgentColor(agent.agent_id);
   const pos = getPositionStyle(agent.position);
-  const confColor = getConfidenceColor(agent.confidence);
+  const confColor = confColor10(agent.confidence);
 
   return (
     <motion.div
@@ -88,8 +83,8 @@ export default function AgentCard({ agent, index, expanded, onToggle, history = 
             width: 36,
             height: 36,
             borderRadius: "50%",
-            background: `${color}1A`,
-            color,
+            background: avatarGradient(agent.agent_id, index),
+            color: "#f5f5f0",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -133,6 +128,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, history = 
           style={{
             padding: "3px 10px",
             borderRadius: "var(--radius-full)",
+            border: `1px solid ${pos.border}`,
             background: pos.bg,
             color: pos.color,
             fontSize: 11,
@@ -260,7 +256,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, history = 
                 <p
                   style={{
                     fontSize: 12,
-                    color: "#F59E0B",
+                    color: "#c9a96e",
                     fontStyle: "italic",
                   }}
                 >
@@ -302,6 +298,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, history = 
                             display: "inline-block",
                             padding: "1px 6px",
                             borderRadius: "var(--radius-full)",
+                            border: `1px solid ${prevPos.border}`,
                             background: prevPos.bg,
                             color: prevPos.color,
                             fontSize: 10,
@@ -312,7 +309,7 @@ export default function AgentCard({ agent, index, expanded, onToggle, history = 
                         >
                           {prevPos.label}
                         </span>
-                        <span style={{ color: getConfidenceColor(prev.confidence), fontWeight: 500 }}>
+                        <span style={{ color: confColor10(prev.confidence), fontWeight: 500 }}>
                           {prev.confidence}/10
                         </span>
                         {" — "}

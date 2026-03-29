@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/design/cn';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/shadcn/collapsible';
-import { verdictColors, getConfidenceLevel, AGENT_GRADIENTS } from '@/lib/design/tokens';
+import { getConfidenceColor, getAgentMonoGradient } from '@/lib/design/tokens';
+import { CANVAS } from '@/lib/canvas/palette';
 import type { AgentStreamState } from '@/lib/store/simulation';
 import { useSimulationStore } from '@/lib/store/simulation';
 
@@ -21,17 +22,42 @@ const POSITION_LABELS: Record<string, string> = {
   abandon: 'ABANDON',
 };
 
+function stanceStyle(position: string): { border: string; bg: string; color: string } | null {
+  switch (position) {
+    case 'proceed':
+      return {
+        border: 'rgba(245, 245, 240, 0.3)',
+        bg: 'rgba(245, 245, 240, 0.06)',
+        color: CANVAS.bright,
+      };
+    case 'delay':
+      return {
+        border: 'rgba(201, 169, 110, 0.25)',
+        bg: 'rgba(201, 169, 110, 0.08)',
+        color: CANVAS.gold,
+      };
+    case 'abandon':
+      return {
+        border: '#5a5a55',
+        bg: 'rgba(90, 90, 85, 0.12)',
+        color: '#8a8a82',
+      };
+    default:
+      return null;
+  }
+}
+
 function PositionBadge({ position }: { position: string }) {
-  const colors = verdictColors[position as keyof typeof verdictColors];
-  if (!colors) return null;
+  const st = stanceStyle(position);
+  if (!st) return null;
 
   return (
     <motion.span
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-      className="inline-flex items-center px-1.5 py-0.5 rounded-radius-sm text-[10px] font-bold tracking-wider"
-      style={{ backgroundColor: colors.muted, color: colors.solid }}
+      className="inline-flex items-center px-1.5 py-0.5 rounded-radius-sm text-[10px] font-bold tracking-wider border"
+      style={{ backgroundColor: st.bg, color: st.color, borderColor: st.border }}
     >
       {POSITION_LABELS[position] || position.toUpperCase()}
     </motion.span>
@@ -42,14 +68,14 @@ function PositionBadge({ position }: { position: string }) {
 
 function TrendIcon({ trend }: { trend?: 'up' | 'down' | 'stable' }) {
   if (!trend || trend === 'stable') return <Minus size={10} className="text-txt-disabled" />;
-  if (trend === 'up') return <TrendingUp size={10} className="text-verdict-proceed" />;
-  return <TrendingDown size={10} className="text-verdict-abandon" />;
+  if (trend === 'up') return <TrendingUp size={10} className="text-[#f5f5f0]" />;
+  return <TrendingDown size={10} className="text-[#8a8a82]" />;
 }
 
 // ═══ AVATAR ═══
 
-function AgentAvatar({ index, name }: { index: number; name: string }) {
-  const gradient = AGENT_GRADIENTS[index % AGENT_GRADIENTS.length];
+function AgentAvatar({ agentId, index, name }: { agentId: string; index: number; name: string }) {
+  const gradient = getAgentMonoGradient(agentId, index);
   const initial = name.charAt(0).toUpperCase();
 
   return (
@@ -88,8 +114,6 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isComplete = agent.status === 'complete';
   const isStreaming = agent.status === 'streaming';
-  const confidenceLevel = agent.confidence != null ? getConfidenceLevel(agent.confidence) : null;
-
   const simStatus = useSimulationStore((s) => s.status);
   const openSpecialistChat = useSimulationStore((s) => s.openSpecialistChat);
   const specialistChatOpen = useSimulationStore((s) => s.specialistChatOpen);
@@ -132,7 +156,7 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
               !(isComplete && agent.report) && 'cursor-default',
             )}
           >
-            <AgentAvatar index={index} name={agent.agent_name} />
+            <AgentAvatar agentId={agent.agent_id} index={index} name={agent.agent_name} />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -151,12 +175,8 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
                 {agent.position && <PositionBadge position={agent.position} />}
                 {agent.confidence != null && (
                   <span
-                    className={cn(
-                      'text-micro tabular-nums font-medium',
-                      confidenceLevel === 'high' ? 'text-verdict-proceed' :
-                      confidenceLevel === 'medium' ? 'text-verdict-delay' :
-                      'text-verdict-abandon',
-                    )}
+                    className="text-micro tabular-nums font-medium"
+                    style={{ color: getConfidenceColor(agent.confidence) }}
                   >
                     {agent.confidence}%
                   </span>
@@ -189,7 +209,7 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                 >
-                  <CheckCircle2 size={13} className="text-verdict-proceed" />
+                  <CheckCircle2 size={13} className="text-accent" />
                 </motion.div>
               )}
               {isComplete && agent.report && (
@@ -252,7 +272,7 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
                     </ul>
                   )}
                   {agent.report.risk_flag && (
-                    <p className="text-micro text-verdict-abandon">
+                    <p className="text-micro text-txt-tertiary">
                       Risk: {agent.report.risk_flag}
                     </p>
                   )}

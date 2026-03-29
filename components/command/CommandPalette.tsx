@@ -163,11 +163,11 @@ export default function CommandPalette({
               <>
                 <CommandSeparator />
                 <CommandGroup heading="Categories">
-                  {categoryResults.map((cmd) => (
+                  {categoryResults.map((cmd, i) => (
                     <CommandItem key={cmd.id} value={cmd.id} onSelect={handleSelect}>
                       <span
                         className="inline-block h-2 w-2 rounded-full shrink-0"
-                        style={{ backgroundColor: getCategoryColor(cmd.category) }}
+                        style={{ backgroundColor: getCategoryColor(cmd.category, i) }}
                       />
                       <span>{cmd.label}</span>
                       {cmd.description && (
@@ -231,11 +231,11 @@ export default function CommandPalette({
             <CommandSeparator />
 
             <CommandGroup heading="Categories">
-              {DEFAULT_CATEGORIES.map((cat) => (
+              {DEFAULT_CATEGORIES.map((cat, i) => (
                 <CommandItem key={cat.id} value={cat.id} onSelect={handleSelect}>
                   <span
                     className="inline-block h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: getCategoryColor(cat.category) }}
+                    style={{ backgroundColor: getCategoryColor(cat.category, i) }}
                   />
                   <span className="capitalize">{cat.label}</span>
                 </CommandItem>

@@ -4,6 +4,10 @@
  * NEVER for static styling — use Tailwind classes instead.
  */
 
+import { getAgentMonoGradient, AGENT_PALETTE, CANVAS } from '@/lib/canvas/palette';
+
+export { AGENT_PALETTE, CANVAS, getAgentMonoGradient };
+
 export const transitions = {
   fast: { duration: 0.1, ease: 'easeOut' },
   normal: { duration: 0.15, ease: 'easeOut' },
@@ -42,17 +46,23 @@ export const gradeColors: Record<string, string> = {
   'F': '#b85450',
 };
 
+/** Neutral + gold only — category is ignored for hue (R8 addendum). */
 export const categoryColors = {
-  investment: '#6366F1', relationships: '#EC4899', career: '#10B981', business: '#F59E0B', life: '#8B5CF6',
+  investment: '#8a8a82',
+  relationships: '#8a8a82',
+  career: '#8a8a82',
+  business: '#8a8a82',
+  life: '#8a8a82',
 } as const;
 export type CategoryType = keyof typeof categoryColors;
 
+/** Grayscale fills for legacy callers; prefer `getAgentMonoGradient` for avatars. */
 export const agentPalettes: Record<CategoryType, string[]> = {
-  investment: ['#6366F1', '#3B82F6', '#06B6D4', '#8B5CF6', '#14B8A6', '#2563EB', '#7C3AED', '#0EA5E9', '#4F46E5', '#0D9488'],
-  relationships: ['#EC4899', '#F43F5E', '#E879F9', '#FB7185', '#D946EF', '#F472B6', '#C084FC', '#FB923C', '#A855F7', '#F87171'],
-  career: ['#10B981', '#22C55E', '#14B8A6', '#34D399', '#06B6D4', '#2DD4BF', '#4ADE80', '#059669', '#0D9488', '#16A34A'],
-  business: ['#F59E0B', '#F97316', '#EAB308', '#FB923C', '#FBBF24', '#D97706', '#EA580C', '#CA8A04', '#DC2626', '#B45309'],
-  life: ['#8B5CF6', '#A855F7', '#C084FC', '#7C3AED', '#6D28D9', '#D946EF', '#E879F9', '#4F46E5', '#9333EA', '#7E22CE'],
+  investment: ['#3a3a36', '#424240', '#4a4a48', '#525250', '#5a5a58', '#626260', '#6a6a68', '#727270', '#7a7a78'],
+  relationships: ['#3a3a36', '#424240', '#4a4a48', '#525250', '#5a5a58', '#626260', '#6a6a68', '#727270', '#7a7a78'],
+  career: ['#3a3a36', '#424240', '#4a4a48', '#525250', '#5a5a58', '#626260', '#6a6a68', '#727270', '#7a7a78'],
+  business: ['#3a3a36', '#424240', '#4a4a48', '#525250', '#5a5a58', '#626260', '#6a6a68', '#727270', '#7a7a78'],
+  life: ['#3a3a36', '#424240', '#4a4a48', '#525250', '#5a5a58', '#626260', '#6a6a68', '#727270', '#7a7a78'],
 };
 
 export function getAgentColor(category: CategoryType, index: number): string {
@@ -60,26 +70,28 @@ export function getAgentColor(category: CategoryType, index: number): string {
   return palette[index % palette.length];
 }
 
-/** Resolve a palette color for command palette / nav categories (string-safe). */
-export function getCategoryColor(category: string): string {
-  const k = category as CategoryType;
-  if (k in categoryColors) return categoryColors[k];
-  return categoryColors.life;
+/**
+ * Command palette / category dots — neutral gray or gold tint by slot (no rainbow).
+ * Optional `slot` alternates gold vs neutral for visual rhythm.
+ */
+export function getCategoryColor(category: string, slot = 0): string {
+  void category;
+  return slot % 2 === 0 ? '#8a8a82' : '#c9a96e';
 }
 
 export const entityStates = {
-  dormant: { scale: 1, opacity: 0.6, glow: 'rgba(124, 58, 237, 0.15)', breatheDuration: 4 },
-  active: { scale: 1.05, opacity: 0.8, glow: 'rgba(124, 58, 237, 0.40)', breatheDuration: 2 },
-  engaged: { scale: 1.5, opacity: 1, glow: 'rgba(124, 58, 237, 0.70)', breatheDuration: 1.5 },
-  maximum: { scale: 2, opacity: 1, glow: 'rgba(124, 58, 237, 1.0)', breatheDuration: 0.8 },
+  dormant: { scale: 1, opacity: 0.6, glow: 'rgba(201, 169, 110, 0.08)', breatheDuration: 4 },
+  active: { scale: 1.05, opacity: 0.8, glow: 'rgba(201, 169, 110, 0.18)', breatheDuration: 2 },
+  engaged: { scale: 1.5, opacity: 1, glow: 'rgba(201, 169, 110, 0.28)', breatheDuration: 1.5 },
+  maximum: { scale: 2, opacity: 1, glow: 'rgba(201, 169, 110, 0.4)', breatheDuration: 0.8 },
 } as const;
 export type EntityState = keyof typeof entityStates;
 
 export const tierConfig = {
   free: { label: 'Free', color: 'rgba(255,255,255,0.40)', badgeClass: 'oct-badge-free' },
-  pro: { label: 'Pro', color: '#7C3AED', badgeClass: 'oct-badge-pro' },
-  max: { label: 'Max', color: '#F59E0B', badgeClass: 'oct-badge-max' },
-  kraken: { label: 'Kraken', color: '#4BBEAB', badgeClass: 'oct-badge-kraken' },
+  pro: { label: 'Pro', color: '#c9a96e', badgeClass: 'oct-badge-pro' },
+  max: { label: 'Max', color: '#dfc999', badgeClass: 'oct-badge-max' },
+  kraken: { label: 'Kraken', color: '#a88b4a', badgeClass: 'oct-badge-kraken' },
 } as const;
 
 export const layout = {
@@ -98,21 +110,13 @@ export function getConfidenceLevel(confidence: number): 'high' | 'medium' | 'low
 }
 
 export function getConfidenceColor(confidence: number): string {
-  if (confidence >= 75) return '#10B981';
-  if (confidence >= 50) return '#F59E0B';
-  return '#EF4444';
+  if (confidence >= 75) return '#f5f5f0';
+  if (confidence >= 50) return '#c0c0b8';
+  return '#8a8a82';
 }
 
-// Deterministic avatar gradient from agent index
-export const AGENT_GRADIENTS = [
-  ['#6366F1', '#8B5CF6'],
-  ['#EC4899', '#F43F5E'],
-  ['#10B981', '#14B8A6'],
-  ['#F59E0B', '#F97316'],
-  ['#3B82F6', '#06B6D4'],
-  ['#D946EF', '#E879F9'],
-  ['#EF4444', '#F87171'],
-  ['#22C55E', '#4ADE80'],
-  ['#0EA5E9', '#38BDF8'],
-  ['#A855F7', '#C084FC'],
-] as const;
+/** @deprecated Prefer `getAgentMonoGradient(agentId, index)` for chair/operator/specialist distinction. */
+export const AGENT_GRADIENTS: readonly (readonly [string, string])[] = Array.from({ length: 10 }, (_, i) => {
+  const g = getAgentMonoGradient('specialist', i);
+  return [g[0], g[1]] as const;
+});
