@@ -321,3 +321,22 @@ export async function getSubscription(userId: string) {
     .maybeSingle();
   return data;
 }
+
+/** One-time +1 bonus token after My Operator onboarding completes (DB only; caller sets user metadata flag). */
+export async function grantOperatorOnboardingBonus(userId: string): Promise<{ ok: boolean; error?: string }> {
+  if (!userId || userId.startsWith('anon_')) return { ok: false, error: 'invalid_user' };
+  await ensureUserSubscription(userId);
+  const { data: sub } = await getSupabase()
+    .from('user_subscriptions')
+    .select('bonus_tokens')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!sub) return { ok: false, error: 'no_subscription' };
+  const bonus = Number((sub as { bonus_tokens?: number }).bonus_tokens) || 0;
+  const { error } = await getSupabase()
+    .from('user_subscriptions')
+    .update({ bonus_tokens: bonus + 1 })
+    .eq('user_id', userId);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}

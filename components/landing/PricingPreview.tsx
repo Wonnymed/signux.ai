@@ -76,14 +76,21 @@ export default function PricingPreview({ forLoggedInUser = false }: { forLoggedI
   };
 
   return (
-    <section className="py-20 sm:py-28 px-6 bg-surface-1/30">
+    <section
+      className={cn(
+        'border-y px-6 py-20 sm:py-28',
+        forLoggedInUser
+          ? 'border-border-subtle/40 bg-surface-1/30'
+          : 'border-white/[0.06] bg-[#0a0a0f]',
+      )}
+    >
       <div className="max-w-landing mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-section text-txt-primary mb-3">
             Start simulating for free.
           </h2>
           <p className="text-sm text-txt-tertiary">
-            2 free simulations per month. No credit card. Upgrade when you&apos;re hooked.
+            2 free simulations. No credit card. Upgrade when you&apos;re hooked.
           </p>
         </div>
 

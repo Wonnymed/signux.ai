@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
   const supabase = createBrowserClient();
   const { isOpen: paletteOpen, open: openPalette, close: closePalette } = useCommandPalette();
   useGlobalShortcuts(openPalette);
@@ -49,9 +50,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onShowAuth = () => setShowAuthModal(true);
+    const onShowAuth = (e: Event) => {
+      const ce = e as CustomEvent<{ mode?: string }>;
+      const m = ce.detail?.mode;
+      setAuthModalMode(m === 'login' ? 'signin' : 'signup');
+      setShowAuthModal(true);
+    };
+    window.addEventListener('sukgo:show-auth', onShowAuth);
     window.addEventListener('octux:show-auth', onShowAuth);
-    return () => window.removeEventListener('octux:show-auth', onShowAuth);
+    return () => {
+      window.removeEventListener('sukgo:show-auth', onShowAuth);
+      window.removeEventListener('octux:show-auth', onShowAuth);
+    };
   }, []);
 
   const signOut = useCallback(async () => {
@@ -73,7 +83,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, signOut, checkGuestLimit }}>
       {children}
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} onAuthSuccess={() => { setShowAuthModal(false); localStorage.removeItem(GUEST_SIM_KEY); }} />
+      <AuthModal
+        isOpen={showAuthModal}
+        initialMode={authModalMode}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={() => {
+          setShowAuthModal(false);
+          localStorage.removeItem(GUEST_SIM_KEY);
+        }}
+      />
       <CommandPalette isOpen={paletteOpen} onClose={closePalette} />
     </AuthContext.Provider>
   );

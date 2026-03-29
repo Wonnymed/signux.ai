@@ -37,13 +37,13 @@ export default function DashboardSidebar({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const profileActive = pathname === '/settings/profile' || pathname.startsWith('/settings/profile/');
   const tier = useBillingStore((s) => s.tier);
   const fetchBalance = useBillingStore((s) => s.fetchBalance);
   const isFreeTier = normalizeTierType(tier) === 'free';
 
   const activeMode = useDashboardUiStore((s) => s.activeMode);
   const modeNavFocus = useDashboardUiStore((s) => s.modeNavFocus);
+  const operatorNavActive = pathname === '/' && modeNavFocus === 'operator';
   const setActiveMode = useDashboardUiStore((s) => s.setActiveMode);
   const setModeNavFocus = useDashboardUiStore((s) => s.setModeNavFocus);
   const setActiveTier = useDashboardUiStore((s) => s.setActiveTier);
@@ -113,8 +113,11 @@ export default function DashboardSidebar({
               tone="dark"
               icon={UserCircle}
               label="My Operator"
-              active={profileActive}
-              href="/settings/profile"
+              active={operatorNavActive}
+              onClick={() => {
+                setModeNavFocus('operator');
+                if (pathname !== '/') router.push('/');
+              }}
             />
           </div>
 
@@ -122,7 +125,7 @@ export default function DashboardSidebar({
 
           <div className="flex flex-col items-center gap-1">
             {DASHBOARD_SIDEBAR_MODES.map((m) => {
-              const active = activeMode === m.id;
+              const active = modeNavFocus === 'mode' && activeMode === m.id;
               return (
                 <RailIcon
                   key={m.id}
@@ -198,18 +201,22 @@ export default function DashboardSidebar({
           <Home size={16} strokeWidth={1.5} />
           Home
         </button>
-        <Link
-          href="/settings/profile"
+        <button
+          type="button"
+          onClick={() => {
+            setModeNavFocus('operator');
+            if (pathname !== '/') router.push('/');
+          }}
           className={cn(
             'flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[13px] font-medium transition-all',
-            profileActive
+            operatorNavActive
               ? 'border-[#c9a96e]/40 bg-[rgba(201,169,110,0.08)] text-[#f5f5f0]'
               : 'border-white/[0.08] text-white/60 hover:bg-white/[0.04] hover:text-white/70',
           )}
         >
           <UserCircle size={16} strokeWidth={1.5} />
           My Operator
-        </Link>
+        </button>
       </div>
 
       <div className="mt-4 min-h-0 flex flex-1 flex-col">

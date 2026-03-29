@@ -1,9 +1,10 @@
 import GlobalFooter from '@/components/layout/GlobalFooter';
 import { openAuthModal } from '@/lib/auth/openAuthModal';
 
-export default function LandingFooter() {
+export default function LandingFooter({ className }: { className?: string }) {
   return (
     <GlobalFooter
+      className={className}
       ctaLabel="Run a simulation"
       onCtaClick={() => openAuthModal({ tab: 'signup' })}
       onAppLinkClick={() => openAuthModal({ tab: 'signup' })}

@@ -1,17 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createBrowserClient } from '@/lib/auth/supabase-client';
 import { EASE_OUT } from '@/lib/motion/constants';
 
-type Props = { isOpen: boolean; onClose: () => void; onAuthSuccess: () => void };
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess: () => void;
+  /** Set when opening via `sukgo:show-auth` / `octux:show-auth`. */
+  initialMode?: 'signin' | 'signup';
+};
 
-export default function AuthModal({ isOpen, onClose, onAuthSuccess: _onAuthSuccess }: Props) {
+export default function AuthModal({
+  isOpen,
+  onClose,
+  onAuthSuccess: _onAuthSuccess,
+  initialMode = 'signup',
+}: Props) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
+  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
+
+  useEffect(() => {
+    if (isOpen) setMode(initialMode);
+  }, [isOpen, initialMode]);
   const supabase = createBrowserClient();
 
   async function handleEmailAuth(e: React.FormEvent) {
@@ -150,7 +165,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess: _onAuthSucce
                 </>
               ) : (
                 <>
-                  New to Octux?{' '}
+                  New to Sukgo?{' '}
                   <button
                     type="button"
                     onClick={() => setMode('signup')}

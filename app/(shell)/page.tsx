@@ -5,17 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/lib/store/app';
 import DashboardHome from '@/components/dashboard/DashboardHome';
-import HeroSection from '@/components/landing/HeroSection';
-import NewCategorySection from '@/components/landing/NewCategorySection';
-import SimulationPreviewBand from '@/components/landing/SimulationPreviewBand';
-import SimulationModes from '@/components/landing/SimulationModes';
-import TrustStrip from '@/components/landing/TrustStrip';
-import HowItWorks from '@/components/landing/HowItWorks';
-import LiveExample from '@/components/landing/LiveExample';
-import WhyNotChatGPT from '@/components/landing/WhyNotChatGPT';
-import PricingPreview from '@/components/landing/PricingPreview';
-import BuiltInSeoulSection from '@/components/landing/BuiltInSeoulSection';
-import SiteFooter from '@/components/landing/LandingFooter';
+import LandingPage from '@/components/landing/LandingPage';
 import { pendingFirstMessageKey, pendingSimulationKey } from '@/lib/chat/firstMessageBootstrap';
 import {
   dashboardModeToChargeType,
@@ -51,6 +41,19 @@ function parseSukgoPendingQuestion(raw: string):
     }
   }
   return { kind: 'plain', text: raw };
+}
+
+function HomeLoadingSkeleton() {
+  return (
+    <div className="min-h-[100dvh] bg-[#0a0a0f]" aria-busy aria-label="Loading">
+      <div className="mx-auto max-w-3xl px-6 pt-28">
+        <div className="h-10 w-4/5 max-w-xl animate-pulse rounded-lg bg-white/[0.06]" />
+        <div className="mt-4 h-4 w-full max-w-lg animate-pulse rounded bg-white/[0.04]" />
+        <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-white/[0.04]" />
+        <div className="mt-10 h-32 animate-pulse rounded-2xl bg-white/[0.05]" />
+      </div>
+    </div>
+  );
 }
 
 export default function HomePage() {
@@ -203,27 +206,13 @@ export default function HomePage() {
     }
   }, [addConversation, router]);
 
-  // ─── Logged-in: dark simulation dashboard ───
-  if (isAuthenticated && !isLoading) {
+  if (isLoading) {
+    return <HomeLoadingSkeleton />;
+  }
+
+  if (isAuthenticated) {
     return <DashboardHome onRunDashboard={handleDashboardRun} loading={loading} />;
   }
 
-  // ─── Loading / logged-out: marketing landing (light theme) ───
-  return (
-    <>
-      <div className="min-h-screen overflow-x-hidden bg-surface-0 text-txt-primary">
-        <HeroSection requireAuth loading={loading} />
-        <NewCategorySection />
-        <SimulationPreviewBand />
-        <TrustStrip />
-        <SimulationModes />
-        <BuiltInSeoulSection />
-        <LiveExample />
-        <HowItWorks />
-        <WhyNotChatGPT />
-        <PricingPreview />
-        <SiteFooter />
-      </div>
-    </>
-  );
+  return <LandingPage loading={loading} />;
 }

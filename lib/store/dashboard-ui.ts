@@ -2,8 +2,8 @@ import { create } from 'zustand';
 
 export type DashboardMode = 'simulate' | 'compare' | 'stress' | 'premortem';
 export type DashboardTier = 'swarm' | 'specialist';
-/** `home` = sidebar Home selected (no mode rail highlight). `mode` = a simulation mode is selected. */
-export type DashboardModeNavFocus = 'home' | 'mode';
+/** `home` = sidebar Home. `mode` = simulation mode rail. `operator` = My Operator onboarding (inline). */
+export type DashboardModeNavFocus = 'home' | 'mode' | 'operator';
 
 /** Maps dashboard mode + tier to API simulation charge types. */
 export function dashboardModeToChargeType(

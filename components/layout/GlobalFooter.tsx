@@ -135,7 +135,7 @@ export default function GlobalFooter({
         <div className="mt-8 flex flex-col items-start justify-between gap-2 border-t border-border-subtle/70 pt-4 text-xs text-txt-disabled sm:flex-row sm:items-center">
           <div className="space-y-1">
             <p>© 2026 Sukgo AI · The world&apos;s first AI business simulation engine</p>
-            <p className="text-txt-tertiary/80">
+            <p className="text-[11px] italic text-txt-tertiary/80">
               숙고 (sukgo) — the Korean practice of deep deliberation before an important decision.
             </p>
           </div>

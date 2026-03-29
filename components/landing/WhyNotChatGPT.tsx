@@ -17,17 +17,10 @@ export default function WhyNotChatGPT() {
           className="text-center"
         >
           <h2 className="text-2xl font-medium tracking-tight text-txt-primary sm:text-3xl">
-            &ldquo;Why not just use ChatGPT?&rdquo;
+            Why not just use ChatGPT?
           </h2>
           <p className="mx-auto mt-4 max-w-[580px] text-pretty text-sm leading-relaxed text-txt-secondary sm:text-base">
-            Because ChatGPT is a chatbot. Sukgo is a simulation engine.
-            <br />
-            They&apos;re different categories.
-            <br />
-            <br />
-            ChatGPT gives you one voice, one opinion, one perspective.
-            <br />
-            Sukgo gives you a boardroom.
+            Because ChatGPT is a chatbot. Sukgo is a simulation engine. They&apos;re different categories.
           </p>
         </motion.div>
 
@@ -39,20 +32,13 @@ export default function WhyNotChatGPT() {
         >
           <div className="flex w-full max-w-md flex-1 flex-col items-center lg:max-w-none">
             <article
-              className="w-full rounded-2xl border border-border-subtle bg-surface-1/80 p-6 text-left opacity-40 shadow-[0_2px_24px_rgba(15,23,42,0.04)] sm:p-7"
+              className="w-full rounded-2xl border border-border-subtle bg-surface-1/80 p-6 text-left opacity-50 shadow-[0_2px_24px_rgba(15,23,42,0.04)] sm:p-7"
               aria-label="Chatbot category"
             >
               <p className="text-sm font-semibold text-txt-tertiary">💬 Chatbot</p>
               <p className="mt-4 text-sm leading-relaxed text-txt-secondary">
-                &ldquo;I think opening a café in Gangnam could work because…&rdquo;
+                One opinion. No debate. No stress test. You hope it&apos;s right.
               </p>
-              <ul className="mt-5 space-y-2 text-sm text-txt-tertiary">
-                <li>→ 1 opinion</li>
-                <li>→ No debate</li>
-                <li>→ No stress test</li>
-                <li>→ No crowd validation</li>
-                <li>→ You hope it&apos;s right</li>
-              </ul>
             </article>
           </div>
 
@@ -60,22 +46,13 @@ export default function WhyNotChatGPT() {
 
           <div className="flex w-full max-w-md flex-1 flex-col items-center lg:max-w-none">
             <article
-              className="w-full rounded-2xl border-2 p-6 text-left shadow-[0_4px_32px_rgba(232,89,60,0.12)] sm:p-7"
-              style={{ borderColor: 'rgba(232, 89, 60, 0.55)', background: 'var(--surface-1)' }}
+              className="w-full rounded-2xl border-2 border-[#c9a96e]/55 bg-[rgba(201,169,110,0.03)] p-6 text-left shadow-[0_4px_32px_rgba(201,169,110,0.12)] sm:p-7"
               aria-label="Simulation engine category"
             >
-              <p className="text-sm font-semibold text-accent">🔬 Simulation engine</p>
-              <p className="mt-4 text-sm font-medium leading-relaxed text-txt-primary">
-                10 specialists argue FOR and AGAINST your decision.
+              <p className="text-sm font-semibold text-[#c9a96e]">🔬 Simulation engine</p>
+              <p className="mt-4 text-sm leading-relaxed text-txt-primary">
+                Structured verdict, confidence scores, risk map — you KNOW before you invest.
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-txt-secondary">1,000 voices validate demand.</p>
-              <p className="mt-2 text-sm leading-relaxed text-txt-secondary">4 modes test every angle.</p>
-              <ul className="mt-5 space-y-2 text-sm text-txt-secondary">
-                <li>→ Structured verdict</li>
-                <li>→ Confidence scores</li>
-                <li>→ Risk map</li>
-                <li>→ You KNOW before you invest</li>
-              </ul>
             </article>
           </div>
         </motion.div>

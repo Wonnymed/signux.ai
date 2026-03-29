@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useHydrate } from '@/lib/hooks/useHydrate';
+import { migrateStorageKeys } from '@/lib/storage-migration';
 import { useAppStore } from '@/lib/store/app';
 import { readConversationCache } from '@/lib/conversations-cache';
 import type { ConversationSummary } from '@/lib/store/app';
@@ -20,6 +21,10 @@ export default function HydrateClient({
   children,
 }: HydrateClientProps) {
   useHydrate(isAuthenticated);
+
+  useEffect(() => {
+    migrateStorageKeys();
+  }, []);
 
   const pathname = usePathname();
   const fetchConversations = useAppStore((s) => s.fetchConversations);

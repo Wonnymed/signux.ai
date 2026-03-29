@@ -63,12 +63,9 @@ export default function SimulationModes({ forLoggedInUser = false }: { forLogged
     <section className="px-6 py-20 sm:py-24">
       <div className="mx-auto max-w-landing">
         <h2 className="text-center text-2xl font-medium tracking-tight text-txt-primary sm:text-3xl">
-          Four ways to stress-test any decision
+          Four ways to stress-test any decision.
         </h2>
-        <p className="mx-auto mt-2 max-w-lg text-center text-sm text-txt-tertiary">
-          Each mode attacks your question from a different angle.
-        </p>
-        <p className="mx-auto mt-2 max-w-xl text-center text-[13px] leading-snug text-txt-tertiary/80">
+        <p className="mx-auto mt-2 max-w-xl text-center text-[13px] leading-snug text-txt-tertiary dark:text-white/30">
           No other tool offers even one of these.
         </p>
 

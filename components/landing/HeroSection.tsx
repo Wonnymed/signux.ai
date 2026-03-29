@@ -77,16 +77,16 @@ export default function HeroSection({
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[min(100%,800px)] text-center">
-        <h1 className="text-balance text-[2rem] font-semibold leading-[1.1] tracking-[-0.03em] text-txt-primary sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
+        <h1 className="font-display text-balance text-[clamp(2rem,4.5vw,4rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-txt-primary sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
           The world&apos;s first AI business simulation engine.
         </h1>
 
-        <p className="mx-auto mt-5 max-w-[640px] text-pretty text-lg leading-relaxed text-txt-secondary sm:text-xl">
+        <p className="mx-auto mt-5 max-w-[640px] text-pretty text-[18px] leading-relaxed text-txt-secondary sm:text-[20px]">
           Before Sukgo, you either asked one AI for one opinion — or spent thousands on consultants. We built a third
           option.
         </p>
 
-        <p className="mx-auto mt-4 max-w-[500px] text-pretty text-sm leading-relaxed text-txt-tertiary sm:text-base">
+        <p className="mx-auto mt-4 max-w-[500px] text-pretty text-[14px] leading-relaxed text-txt-tertiary sm:text-[16px]">
           10 AI specialists debate your decision. 1,000 market voices validate demand. 4 simulation modes. Structured
           verdict in 60 seconds.
         </p>
