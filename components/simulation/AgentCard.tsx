@@ -11,6 +11,7 @@ import { cn } from '@/lib/design/cn';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/shadcn/collapsible';
 import { verdictColors, getConfidenceLevel, AGENT_GRADIENTS } from '@/lib/design/tokens';
 import type { AgentStreamState } from '@/lib/store/simulation';
+import { useSimulationStore } from '@/lib/store/simulation';
 
 // ═══ POSITION BADGE ═══
 
@@ -89,6 +90,15 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
   const isStreaming = agent.status === 'streaming';
   const confidenceLevel = agent.confidence != null ? getConfidenceLevel(agent.confidence) : null;
 
+  const simStatus = useSimulationStore((s) => s.status);
+  const openSpecialistChat = useSimulationStore((s) => s.openSpecialistChat);
+  const specialistChatOpen = useSimulationStore((s) => s.specialistChatOpen);
+  const specialistChatAgentId = useSimulationStore((s) => s.specialistChatAgentId);
+  const postVerdict = simStatus === 'complete';
+  const canFollowUp =
+    postVerdict && isComplete && agent.agent_id !== 'decision_chair';
+  const isActiveChat = specialistChatOpen && specialistChatAgentId === agent.agent_id;
+
   return (
     <motion.div
       layout
@@ -96,6 +106,10 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.97 }}
       transition={{ duration: 0.25, delay: index * 0.05 }}
+      className={cn(
+        canFollowUp && 'group/card',
+        isActiveChat && 'relative z-[1]',
+      )}
     >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div
@@ -104,6 +118,9 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
             isStreaming && 'border-accent/30 bg-accent-subtle/10 ring-1 ring-inset ring-accent/15 shadow-premium',
             isComplete && 'border-border-subtle bg-surface-1/50',
             !isStreaming && !isComplete && 'border-border-subtle/50 bg-surface-1/30',
+            canFollowUp && 'hover:border-white/15',
+            isActiveChat && 'ring-2 ring-purple-400/25',
+            specialistChatOpen && canFollowUp && !isActiveChat && 'opacity-50',
           )}
         >
           {/* ─── HEADER ─── */}
@@ -150,6 +167,19 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
 
             {/* Status indicator */}
             <div className="shrink-0 flex items-center gap-1.5">
+              {canFollowUp && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openSpecialistChat(agent.agent_id);
+                  }}
+                  className="rounded-md border border-border-subtle/80 px-2 py-0.5 text-[10px] font-medium text-txt-tertiary transition-colors hover:border-accent/30 hover:text-accent"
+                  title={`Chat with ${agent.agent_name}`}
+                >
+                  Chat
+                </button>
+              )}
               {isStreaming && (
                 <Loader2 size={13} className="text-accent animate-spin" />
               )}
@@ -173,6 +203,11 @@ function AgentCardInner({ agent, index }: AgentCardProps) {
               )}
             </div>
           </CollapsibleTrigger>
+          {canFollowUp ? (
+            <p className="pointer-events-none px-3 pb-1 text-[10px] text-txt-disabled opacity-0 transition-opacity group-hover/card:opacity-100">
+              Chat with {agent.agent_name.split(' ')[0] || agent.agent_name}
+            </p>
+          ) : null}
 
           {/* ─── STREAMING TEXT ─── */}
           <AnimatePresence>

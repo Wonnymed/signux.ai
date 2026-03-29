@@ -20,6 +20,7 @@ const POSITION_LABELS: Record<string, string> = {
 export default function AgentScoreboard() {
   const agents = useSimulationStore((s) => s.agents);
   const status = useSimulationStore((s) => s.status);
+  const openSpecialistChat = useSimulationStore((s) => s.openSpecialistChat);
 
   const grouped = useMemo(() => {
     const groups: Record<string, { agent_id: string; agent_name: string; confidence?: number; index: number }[]> = {
@@ -99,6 +100,7 @@ export default function AgentScoreboard() {
               <div className="flex items-center gap-1 ml-4">
                 {group.map((agent) => {
                   const gradient = AGENT_GRADIENTS[agent.index % AGENT_GRADIENTS.length];
+                  const isChair = agent.agent_id === 'decision_chair';
                   return (
                     <motion.div
                       key={agent.agent_id}
@@ -107,15 +109,18 @@ export default function AgentScoreboard() {
                       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                       className="group relative"
                     >
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white cursor-default"
+                      <button
+                        type="button"
+                        disabled={isChair}
+                        onClick={() => !isChair && openSpecialistChat(agent.agent_id)}
+                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${isChair ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         style={{ background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` }}
                       >
                         {agent.agent_name.charAt(0).toUpperCase()}
-                      </div>
+                      </button>
                       {/* Tooltip */}
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-surface-3 border border-border-subtle rounded text-micro text-txt-secondary whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        {agent.agent_name}
+                        {isChair ? agent.agent_name : `Chat with ${agent.agent_name.split(' ')[0]}`}
                         {agent.confidence != null && ` · ${agent.confidence}%`}
                       </div>
                     </motion.div>

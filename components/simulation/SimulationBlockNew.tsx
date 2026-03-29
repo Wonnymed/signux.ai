@@ -275,6 +275,10 @@ function CompletedBody({
       <Separator className="bg-border-subtle/50" />
 
       <AgentScoreboard />
+
+      <Separator className="bg-border-subtle/50" />
+
+      <AgentCardsStream />
     </div>
   );
 }

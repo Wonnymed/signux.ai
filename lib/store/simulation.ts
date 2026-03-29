@@ -3,6 +3,9 @@ import type { SimulationChargeType } from '@/lib/billing/token-costs';
 import { parseSimulationChargeType } from '@/lib/billing/token-costs';
 import type { GodViewVerdictSlice } from '@/lib/simulation/events';
 import { getPhaseLabelForEngineRound } from '@/lib/simulation/phase-labels';
+import type { ChiefPanelSnapshot, SpecialistChatMessage } from '@/lib/specialist-chat/types';
+
+export type { ChiefPanelSnapshot };
 
 export type SimPhaseStatus = 'pending' | 'active' | 'complete';
 
@@ -143,6 +146,22 @@ interface SimulationState {
 
   clearChiefAssembly: () => void;
 
+  /** Last run question + optional operator string (for post-verdict specialist chat). */
+  lastSimQuestion: string;
+  operatorContextSnapshot: string;
+  chiefPanelSnapshot: ChiefPanelSnapshot | null;
+
+  specialistChatOpen: boolean;
+  specialistChatAgentId: string | null;
+  specialistChatShowSwitcher: boolean;
+  specialistChatsByAgent: Record<string, SpecialistChatMessage[]>;
+  openSpecialistChat: (agentId: string) => void;
+  closeSpecialistChat: () => void;
+  setSpecialistChatSwitcher: (open: boolean) => void;
+  setSpecialistChatThread: (agentId: string, messages: SpecialistChatMessage[]) => void;
+  /** Resolve display name from verdict / scoreboard to streaming agent id. */
+  openSpecialistChatByName: (name: string) => void;
+
   stopSimulation: () => void;
 
   reset: () => void;
@@ -255,7 +274,32 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   phaseDisplayLabel: null,
   chiefIntervention: null,
   chiefVisualState: 'hidden',
-  setResult: (result, simulationId) => set({ result, simulationId, status: 'complete', chiefVisualState: 'hidden' }),
+  lastSimQuestion: '',
+  operatorContextSnapshot: '',
+  chiefPanelSnapshot: null,
+  specialistChatOpen: false,
+  specialistChatAgentId: null,
+  specialistChatShowSwitcher: false,
+  specialistChatsByAgent: {},
+  setResult: (result, simulationId) =>
+    set((s) => {
+      let threads = { ...s.specialistChatsByAgent };
+      if (simulationId && typeof sessionStorage !== 'undefined') {
+        try {
+          const raw = sessionStorage.getItem(`sukgo_spec_chat_${simulationId}`);
+          if (raw) threads = { ...JSON.parse(raw), ...threads };
+        } catch {
+          /* ignore */
+        }
+      }
+      return {
+        result,
+        simulationId,
+        status: 'complete' as const,
+        chiefVisualState: 'hidden' as const,
+        specialistChatsByAgent: threads,
+      };
+    }),
 
   error: null,
   setError: (error) => set({ error, status: 'error' }),
@@ -274,6 +318,58 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   _timerRef: null,
 
   clearChiefAssembly: () => set({ chiefAssembly: null }),
+
+  openSpecialistChat: (agentId) => {
+    const simId = get().simulationId;
+    let threads = { ...get().specialistChatsByAgent };
+    if (simId && typeof sessionStorage !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem(`sukgo_spec_chat_${simId}`);
+        if (raw) threads = { ...JSON.parse(raw), ...threads };
+      } catch {
+        /* ignore */
+      }
+    }
+    set({
+      specialistChatsByAgent: threads,
+      specialistChatAgentId: agentId,
+      specialistChatOpen: true,
+      specialistChatShowSwitcher: false,
+    });
+  },
+
+  closeSpecialistChat: () =>
+    set({ specialistChatOpen: false, specialistChatAgentId: null, specialistChatShowSwitcher: false }),
+
+  setSpecialistChatSwitcher: (open) => set({ specialistChatShowSwitcher: open }),
+
+  setSpecialistChatThread: (agentId, messages) => {
+    set((s) => {
+      const specialistChatsByAgent = { ...s.specialistChatsByAgent, [agentId]: messages };
+      const simId = s.simulationId;
+      if (simId && typeof sessionStorage !== 'undefined') {
+        try {
+          sessionStorage.setItem(`sukgo_spec_chat_${simId}`, JSON.stringify(specialistChatsByAgent));
+        } catch {
+          /* ignore */
+        }
+      }
+      return { specialistChatsByAgent };
+    });
+  },
+
+  openSpecialistChatByName: (name) => {
+    const n = name.trim().toLowerCase();
+    if (!n) return;
+    for (const a of get().agents.values()) {
+      if ((a.agent_name || '').trim().toLowerCase() === n) {
+        get().openSpecialistChat(a.agent_id);
+        return;
+      }
+    }
+    const first = [...get().agents.values()].find((x) => x.status === 'complete');
+    if (first) get().openSpecialistChat(first.agent_id);
+  },
 
   submitChiefIntervention: async (opts) => {
     const id = get().streamSimulationId;
@@ -313,9 +409,18 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       error: null,
       activeChargeType,
       chiefAssembly: null,
+      chiefPanelSnapshot: null,
       verdictGeneratingMessage: null,
       startedAt: Date.now(),
       elapsed: 0,
+      lastSimQuestion: String((streamBody as { question?: string }).question || '').trim(),
+      operatorContextSnapshot: String(
+        (streamBody as { operatorContext?: string }).operatorContext || '',
+      ).slice(0, 8000),
+      specialistChatOpen: false,
+      specialistChatAgentId: null,
+      specialistChatShowSwitcher: false,
+      specialistChatsByAgent: {},
     });
 
     const timer = setInterval(() => {
@@ -378,12 +483,15 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
                 specialists: { id: string; name: string; role: string; team?: string }[];
                 operator: { name: string; highlight: boolean } | null;
               };
+              const specialists = d.specialists || [];
+              const operator = d.operator ?? null;
               set({
                 chiefAssembly: {
                   phase: 'panel',
-                  specialists: d.specialists || [],
-                  operator: d.operator ?? null,
+                  specialists,
+                  operator,
                 },
+                chiefPanelSnapshot: { specialists, operator },
               });
               break;
             }
@@ -674,9 +782,16 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       error: null,
       activeChargeType: null,
       chiefAssembly: null,
+      chiefPanelSnapshot: null,
       verdictGeneratingMessage: null,
       startedAt: null,
       elapsed: 0,
+      lastSimQuestion: '',
+      operatorContextSnapshot: '',
+      specialistChatOpen: false,
+      specialistChatAgentId: null,
+      specialistChatShowSwitcher: false,
+      specialistChatsByAgent: {},
     });
   },
 }));

@@ -51,3 +51,6 @@ export const SUKGO_TOOLS: SukgoTool[] = [
       'Pre-built frameworks for common decisions. Fill in the blanks.',
   },
 ];
+
+/** Legacy alias — tool pages still import `OCTUX_TOOLS`. */
+export const OCTUX_TOOLS = SUKGO_TOOLS;

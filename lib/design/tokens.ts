@@ -60,6 +60,13 @@ export function getAgentColor(category: CategoryType, index: number): string {
   return palette[index % palette.length];
 }
 
+/** Resolve a palette color for command palette / nav categories (string-safe). */
+export function getCategoryColor(category: string): string {
+  const k = category as CategoryType;
+  if (k in categoryColors) return categoryColors[k];
+  return categoryColors.life;
+}
+
 export const entityStates = {
   dormant: { scale: 1, opacity: 0.6, glow: 'rgba(124, 58, 237, 0.15)', breatheDuration: 4 },
   active: { scale: 1.05, opacity: 0.8, glow: 'rgba(124, 58, 237, 0.40)', breatheDuration: 2 },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ChevronDown, ChevronUp, Share2, MessageSquare,
@@ -16,6 +16,7 @@ import type { VerdictResult, Citation, RiskEntry } from '@/lib/simulation/events
 import AgentScoreboard from '@/components/simulation/AgentScoreboard';
 import ProbabilityRing from './ProbabilityRing';
 import RefinementInput from './RefinementInput';
+import { useSimulationStore } from '@/lib/store/simulation';
 
 interface VerdictCardProps {
   verdict: VerdictResult;
@@ -33,8 +34,17 @@ export default function VerdictCard({
 }: VerdictCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showRefine, setShowRefine] = useState(false);
+  const [showFollowUpHint, setShowFollowUpHint] = useState(false);
+  const openSpecialistChatByName = useSimulationStore((s) => s.openSpecialistChatByName);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowFollowUpHint(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   if (!verdict) return null;
+
+  const handleAgentChat = onAgentChat ?? ((name: string) => openSpecialistChatByName(name));
 
   const rec = verdict.recommendation || 'proceed';
   const color = verdictColors[rec]?.solid || verdictColors.proceed.solid;
@@ -92,6 +102,18 @@ export default function VerdictCard({
                 </p>
               )}
 
+              {showFollowUpHint ? (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="mb-2 text-[12px] text-white/25"
+                >
+                  💬 Click any specialist in the panel above or use Chat on an agent card to ask
+                  follow-up questions.
+                </motion.p>
+              ) : null}
+
               <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs">
                 {verdict.main_risk && (
                   <div className="flex items-center gap-1.5">
@@ -140,11 +162,11 @@ export default function VerdictCard({
               Share
             </OctButton>
 
-            {onAgentChat && verdict.agent_scoreboard && verdict.agent_scoreboard.length > 0 && (
+            {verdict.agent_scoreboard && verdict.agent_scoreboard.length > 0 && (
               <OctButton
                 variant="outline"
                 size="xs"
-                onClick={() => onAgentChat(verdict.agent_scoreboard![0].agent_name)}
+                onClick={() => handleAgentChat(verdict.agent_scoreboard![0].agent_name)}
               >
                 <MessageSquare size={12} className="mr-1" />
                 Talk to agents
@@ -182,7 +204,7 @@ export default function VerdictCard({
             className="overflow-hidden"
           >
             <Separator style={{ backgroundColor: `${color}15` }} />
-            <ExpandedAnalysis verdict={verdict} onAgentChat={onAgentChat} />
+            <ExpandedAnalysis verdict={verdict} onAgentChat={handleAgentChat} />
           </motion.div>
         )}
 

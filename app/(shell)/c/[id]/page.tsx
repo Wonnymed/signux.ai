@@ -29,6 +29,7 @@ export default function ConversationPage() {
   const clear = useChatStore((s) => s.clear);
 
   const simReset = useSimulationStore((s) => s.reset);
+  const specialistChatOpen = useSimulationStore((s) => s.specialistChatOpen);
   const setActiveConversationId = useAppStore((s) => s.setActiveConversationId);
 
   // ─── SIMULATION HOOK ───
@@ -172,7 +173,10 @@ export default function ConversationPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="flex min-h-0 flex-1 flex-col bg-[#0a0a0f]"
+      className={cn(
+        'flex min-h-0 flex-1 flex-col bg-[#0a0a0f] transition-[padding] duration-300',
+        specialistChatOpen && 'sm:pr-[380px]',
+      )}
     >
       <div className="flex min-h-[min(38vh,420px)] max-h-[min(52vh,560px)] shrink-0 border-b border-white/[0.06]">
         <SimulationCanvas />

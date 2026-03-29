@@ -1,4 +1,4 @@
-import { callClaude, parseJSON, MODELS } from './claude';
+import { callClaude } from './claude';
 import type { AdvisorPersona, AdvisorReport } from '../agents/advisors';
 import type { SimulationState } from './state';
 
@@ -71,8 +71,8 @@ export async function runFieldScan(
       const response = await callClaude({
         systemPrompt: `You are ${persona.name}. ${persona.role}. Give ONE specific fact or observation from your personal experience. Maximum 1 sentence. Be concrete — names, numbers, locations. No generic advice.`,
         userMessage: `Quick question about: "${question}"\nFocus on: ${focusArea}\nYour 1-sentence insight:`,
-        maxTokens: 100,  // Very short — just 1 sentence
-        model: MODELS.advisors,
+        maxTokens: 100, // Very short — just 1 sentence
+        tier: 'swarm',
       });
 
       // Parse as simple text, not JSON — faster and cheaper
